@@ -1,4 +1,4 @@
-import { bench, describe } from 'vitest';
+import { describe, test } from 'vitest';
 
 import { Random } from '@diagram-craft/utils/random';
 import { CubicBezier } from './bezier';
@@ -16,9 +16,8 @@ const dimension = 100;
 const opts = { time: 2000 };
 
 describe('bezier', () => {
-  bench(
-    'lengthAt + tAtLength',
-    () => {
+  test('lengthAt + tAtLength', async ({ bench }) => {
+    await bench('lengthAt + tAtLength', () => {
       const b = new CubicBezier(
         randomPoint(dimension),
         randomPoint(dimension),
@@ -29,13 +28,11 @@ describe('bezier', () => {
       const t = r.nextFloat();
       const p = b.lengthAtT(t);
       b.tAtLength(p);
-    },
-    opts
-  );
+    }).run(opts);
+  });
 
-  bench(
-    'intersection-line',
-    () => {
+  test('intersection-line', async ({ bench }) => {
+    await bench('intersection-line', () => {
       const b = new CubicBezier(
         randomPoint(dimension),
         randomPoint(dimension),
@@ -45,13 +42,11 @@ describe('bezier', () => {
       const l = Line.of(randomPoint(dimension), randomPoint(dimension));
 
       b.intersectsLine(l);
-    },
-    opts
-  );
+    }).run(opts);
+  });
 
-  bench(
-    'intersection-bezier',
-    () => {
+  test('intersection-bezier', async ({ bench }) => {
+    await bench('intersection-bezier', () => {
       const b = new CubicBezier(
         randomPoint(dimension),
         randomPoint(dimension),
@@ -66,19 +61,16 @@ describe('bezier', () => {
       );
 
       b.intersectsBezier(b2);
-    },
-    opts
-  );
+    }).run(opts);
+  });
 
-  bench(
-    'projectPoint',
-    () => {
+  test('projectPoint', async ({ bench }) => {
+    await bench('projectPoint', () => {
       const curve = new CubicBezier(_p(110, 150), _p(25, 190), _p(210, 30), _p(210, 30));
 
       const point = randomPoint(300);
 
       curve.projectPoint(point, 0.0001);
-    },
-    opts
-  );
+    }).run(opts);
+  });
 });

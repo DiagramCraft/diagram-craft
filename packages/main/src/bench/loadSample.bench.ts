@@ -1,4 +1,4 @@
-import { bench, describe } from 'vitest';
+import { describe, test } from 'vitest';
 import {
   defaultEdgeRegistry,
   defaultNodeRegistry,
@@ -26,49 +26,44 @@ const edges = defaultEdgeRegistry();
 const diagramFactory = makeDefaultDiagramFactory();
 const documentFactory = makeDefaultDocumentFactory({ nodes, edges, stencils });
 
+const useNoOpCRDT = () => {
+  CollaborationConfig.CRDTRoot = NoOpCRDTRoot;
+  CollaborationConfig.CRDTMap = NoOpCRDTMap;
+  return () => {
+    CollaborationConfig.CRDTRoot = origRoot;
+    CollaborationConfig.CRDTMap = origMap;
+  };
+};
+
 describe('loadSample', () => {
-  bench.skip(
-    'loadShapes',
-    async () => {
-      // biome-ignore lint/suspicious/noExplicitAny: false positive
-      const root = await documentFactory.loadCRDT(undefined, {} as any, () => {});
-      const document = await documentFactory.createDocument(root, undefined, () => {});
+  test.skip('loadShapes', async ({ bench }) => {
+    const restore = useNoOpCRDT();
+    try {
+      await bench('loadShapes', async () => {
+        // biome-ignore lint/suspicious/noExplicitAny: false positive
+        const root = await documentFactory.loadCRDT(undefined, {} as any, () => {});
+        const document = await documentFactory.createDocument(root, undefined, () => {});
 
-      // biome-ignore lint/suspicious/noExplicitAny: false positive
-      await deserializeDiagramDocument(shapes as any, document, diagramFactory);
-    },
-    {
-      ...opts,
-      setup: () => {
-        CollaborationConfig.CRDTRoot = NoOpCRDTRoot;
-        CollaborationConfig.CRDTMap = NoOpCRDTMap;
-      },
-      teardown: () => {
-        CollaborationConfig.CRDTRoot = origRoot;
-        CollaborationConfig.CRDTMap = origMap;
-      }
+        // biome-ignore lint/suspicious/noExplicitAny: false positive
+        await deserializeDiagramDocument(shapes as any, document, diagramFactory);
+      }).run(opts);
+    } finally {
+      restore();
     }
-  );
-  bench.skip(
-    'loadArrows',
-    async () => {
-      // biome-ignore lint/suspicious/noExplicitAny: false positive
-      const root = await documentFactory.loadCRDT(undefined, {} as any, () => {});
-      const document = await documentFactory.createDocument(root, undefined, () => {});
+  });
+  test.skip('loadArrows', async ({ bench }) => {
+    const restore = useNoOpCRDT();
+    try {
+      await bench('loadArrows', async () => {
+        // biome-ignore lint/suspicious/noExplicitAny: false positive
+        const root = await documentFactory.loadCRDT(undefined, {} as any, () => {});
+        const document = await documentFactory.createDocument(root, undefined, () => {});
 
-      // biome-ignore lint/suspicious/noExplicitAny: false positive
-      await deserializeDiagramDocument(arrows as any, document, diagramFactory);
-    },
-    {
-      ...opts,
-      setup: () => {
-        CollaborationConfig.CRDTRoot = NoOpCRDTRoot;
-        CollaborationConfig.CRDTMap = NoOpCRDTMap;
-      },
-      teardown: () => {
-        CollaborationConfig.CRDTRoot = origRoot;
-        CollaborationConfig.CRDTMap = origMap;
-      }
+        // biome-ignore lint/suspicious/noExplicitAny: false positive
+        await deserializeDiagramDocument(arrows as any, document, diagramFactory);
+      }).run(opts);
+    } finally {
+      restore();
     }
-  );
+  });
 });
