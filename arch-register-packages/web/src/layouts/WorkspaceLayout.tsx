@@ -28,6 +28,7 @@ import { RouteContentBoundary } from '../routes/RouteContentBoundary';
 import { AppErrorState } from '../components/AppErrorState';
 import { WorkspaceDetailLayout } from './WorkspaceDetailLayout';
 import { EntityDrawer } from '../sections/entities/entityDrawer/EntityDrawer';
+import { GovernanceCaseDrawer } from '../sections/governance/GovernanceCaseDrawer';
 import {
   EntityDrawerStackProvider,
   useEntityDrawer
@@ -539,7 +540,8 @@ const WorkspaceEntityDrawerStack = ({
   workspaceSlug: string;
   app: AppDefinition;
 }) => {
-  const { drawerStack, activeDrawerIndex, openEntityDrawer, closeEntityDrawer } = useEntityDrawer();
+  const { drawerStack, activeDrawerIndex, openEntityDrawer, openCaseDrawer, closeEntityDrawer } =
+    useEntityDrawer();
 
   if (activeDrawerIndex < 0) return null;
 
@@ -554,16 +556,32 @@ const WorkspaceEntityDrawerStack = ({
       />
       {activeEntries.map((entry, index) => {
         const active = index === activeDrawerIndex;
+        const stackOffset = (activeDrawerIndex - index) * 12;
+        if (entry.kind === 'case') {
+          return (
+            <GovernanceCaseDrawer
+              key={`case:${entry.caseId}`}
+              workspaceSlug={workspaceSlug}
+              caseId={entry.caseId}
+              onClose={closeEntityDrawer}
+              onOpenDataset={openEntityDrawer}
+              active={active}
+              stacked
+              stackOffset={stackOffset}
+            />
+          );
+        }
         return (
           <EntityDrawer
-            key={entry.entityId}
+            key={`entity:${entry.entityId}`}
             workspaceSlug={workspaceSlug}
             entityId={entry.entityId}
             onClose={closeEntityDrawer}
             onOpenEntity={openEntityDrawer}
+            onOpenGovernanceCase={openCaseDrawer}
             active={active}
             stacked
-            stackOffset={(activeDrawerIndex - index) * 12}
+            stackOffset={stackOffset}
           />
         );
       })}

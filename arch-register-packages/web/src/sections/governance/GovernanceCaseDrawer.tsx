@@ -73,19 +73,26 @@ export const GovernanceCaseDrawer = ({
   caseId,
   onClose,
   onOpenDataset,
-  entityNoun = 'entity'
+  entityNoun = 'entity',
+  active,
+  stacked,
+  stackOffset
 }: {
   workspaceSlug: string;
   caseId: string;
   onClose: () => void;
   /** Switches to the shared entity drawer for this case's subject, staying within My work rather
-   *  than navigating to the Stewardship section — only `DataStewardshipDashboardScreen.tsx` wires
-   *  this; other openers of this drawer fall back to the app-wide `useEntityDrawer()` stack. */
+   *  than navigating away; when omitted, falls back to the app-wide `useEntityDrawer()` stack. */
   onOpenDataset?: (datasetPublicId: string) => void;
   /** Lower-case noun for the case's subject in labels (e.g. 'dataset'). */
   entityNoun?: string;
+  /** Stack positioning, forwarded to `Drawer` when hosted in the workspace drawer stack. */
+  active?: boolean;
+  stacked?: boolean;
+  stackOffset?: number;
 }) => {
   const { openEntityDrawer } = useEntityDrawer();
+  const stackProps = { active, stacked, stackOffset };
   const dateTimeFormatPreference = useDateTimeFormatPreference();
   const formatTimestamp = (value: string | null): string =>
     value == null ? '—' : formatDateTime(value, '—', dateTimeFormatPreference);
@@ -98,14 +105,14 @@ export const GovernanceCaseDrawer = ({
 
   if (governanceCase.isLoading) {
     return (
-      <Drawer onClose={onClose} title="Loading…">
+      <Drawer onClose={onClose} title="Loading…" {...stackProps}>
         <div className={styles.empty}>Loading case…</div>
       </Drawer>
     );
   }
   if (governanceCase.isError || !governanceCase.data) {
     return (
-      <Drawer onClose={onClose} title="Unavailable">
+      <Drawer onClose={onClose} title="Unavailable" {...stackProps}>
         <div className={styles.empty}>This case is unavailable.</div>
       </Drawer>
     );
@@ -159,6 +166,7 @@ export const GovernanceCaseDrawer = ({
   return (
     <Drawer
       onClose={onClose}
+      {...stackProps}
       eyebrow={<span className="dim mono">{humanizeCaseKind(kase.status)}</span>}
       title={caseKindLabel(kase.caseKind, kase.payload)}
       badges={
