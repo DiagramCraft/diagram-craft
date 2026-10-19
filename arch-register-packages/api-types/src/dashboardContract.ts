@@ -16,7 +16,20 @@ const gridPositionShape = {
 
 export const dashboardWidgetFrameSchema = z.object({
   title: z.string().optional().describe('Title overriding the widget default'),
-  showFrame: z.boolean().optional().describe('Whether to show the frame; omit for widget default'),
+  style: z
+    .enum(['header', 'frame', 'none'])
+    .optional()
+    .describe(
+      'Frame style: header (border and header), frame (border only) or none; omit for default'
+    ),
+  tint: z
+    .enum(['gray', 'blue', 'green', 'amber', 'red', 'purple'])
+    .optional()
+    .describe('Background tint of the widget; omit for none'),
+  showFrame: z
+    .boolean()
+    .optional()
+    .describe('Deprecated: replaced by style (false = none, true = header)'),
   icon: z.string().optional().describe('Icon name overriding the widget default icon')
 });
 
@@ -346,7 +359,12 @@ export const personalDashboardContract = oc.tag('PersonalDashboard').router({
         description: 'Creates a new, empty personal dashboard for the caller in this workspace.',
         tags: ['PersonalDashboard']
       })
-      .input(z.object({ params: ws, body: createDashboardBodySchema.omit({ key: true }) }))
+      .input(
+        z.object({
+          params: ws,
+          body: createDashboardBodySchema.omit({ key: true })
+        })
+      )
       .output(personalDashboardSchema),
     get: oc
       .route({
@@ -369,7 +387,12 @@ export const personalDashboardContract = oc.tag('PersonalDashboard').router({
           'Updates an existing personal dashboard owned by the caller. Only provided fields will be updated; widgets, when provided, wholesale replace the existing layout.',
         tags: ['PersonalDashboard']
       })
-      .input(z.object({ params: wsAndUUID, body: updateDashboardBodySchema.omit({ key: true }) }))
+      .input(
+        z.object({
+          params: wsAndUUID,
+          body: updateDashboardBodySchema.omit({ key: true })
+        })
+      )
       .output(personalDashboardSchema),
     remove: oc
       .route({
@@ -427,7 +450,12 @@ export const projectDashboardContract = oc.tag('ProjectDashboard').router({
           'Updates the project dashboard. Widgets wholesale-replace the existing layout.',
         tags: ['ProjectDashboard']
       })
-      .input(z.object({ params: wsAndProjectId, body: updateProjectDashboardBodySchema }))
+      .input(
+        z.object({
+          params: wsAndProjectId,
+          body: updateProjectDashboardBodySchema
+        })
+      )
       .output(projectDashboardSchema)
   }
 });

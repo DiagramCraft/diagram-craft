@@ -8,10 +8,7 @@ import { getConfigDialogWidth } from '../../widgets/shared/configDialog';
 import { getWidgetDefinition, isValidComponentConfig } from '../../widgets/shared/widgetRegistry';
 import type { DashboardWidgetFrame } from '@arch-register/api-types/dashboardContract';
 import { WidgetFrameSettingsForm } from '../../widgets/shared/dashboard/WidgetFrameSettingsForm';
-import {
-  DEFAULT_SHOW_FRAME,
-  normalizeFrame
-} from '../../widgets/shared/dashboard/widgetFrameSettings';
+import { normalizeFrame } from '../../widgets/shared/dashboard/widgetFrameSettings';
 import styles from './WidgetConfigDialog.module.css';
 
 type Props = {
@@ -116,7 +113,6 @@ const WidgetConfigDialogContent = ({
                 frame={frame}
                 onChange={setFrame}
                 defaultTitle={spec.getTitle?.(config as never) ?? definition.name}
-                defaultShowFrame={DEFAULT_SHOW_FRAME}
               />
             </DialogContent>
           </Tabs.Content>

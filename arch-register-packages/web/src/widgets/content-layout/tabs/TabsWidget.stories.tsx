@@ -139,7 +139,7 @@ export const EmptyTab: Story = {
 
 export const WithFrame: Story = {
   ...RegisterAndMatrix,
-  args: { showFrame: true }
+  args: { frameStyle: 'header' }
 };
 
 export const ConfigDialog = configDialogStory('tabs');

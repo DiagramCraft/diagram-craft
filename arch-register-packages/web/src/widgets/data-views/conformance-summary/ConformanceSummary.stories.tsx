@@ -97,5 +97,5 @@ export const NoAccess: Story = {
 
 export const WithFrame: Story = {
   ...NoViolations,
-  args: { showFrame: true }
+  args: { frameStyle: 'header' }
 };

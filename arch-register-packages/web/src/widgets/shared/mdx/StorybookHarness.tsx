@@ -1,5 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
+  WIDGET_TINTS,
+  type WidgetFrameStyle,
+  type WidgetTint
+} from '../dashboard/widgetFrameSettings';
+import {
   createMemoryHistory,
   createRootRoute,
   createRouter,
@@ -175,24 +180,37 @@ export const dashboardWidget = (
   h
 });
 
-const WidgetFrameContext = createContext(false);
+type StoryFrame = { style: WidgetFrameStyle; tint?: WidgetTint };
+
+const WidgetFrameContext = createContext<StoryFrame>({ style: 'none' });
 
 /**
- * Meta fragment for stories of dashboard widgets: adds a `showFrame` control that shows the
- * dashboard widget frame (border and header) around the widgets of `DashboardStory`. Without it
- * stories render the widget bare, as it appears on a dashboard with the frame hidden.
+ * Meta fragment for stories of dashboard widgets: adds `frameStyle` and `tint` controls that
+ * decide how the widgets of `DashboardStory` are framed. By default stories render the widget
+ * without a frame, as it appears on a dashboard with the frame hidden.
  */
 export const frameControls = {
-  args: { showFrame: false },
+  args: { frameStyle: 'none', tint: undefined },
   argTypes: {
-    showFrame: {
-      control: 'boolean' as const,
-      description: 'Show the dashboard widget frame around the widget'
+    frameStyle: {
+      control: 'inline-radio' as const,
+      options: ['header', 'frame', 'none'],
+      description: 'Dashboard widget frame: with header, border only, or no frame'
+    },
+    tint: {
+      control: 'select' as const,
+      options: [undefined, ...WIDGET_TINTS],
+      description: 'Background tint of the widget'
     }
   },
   decorators: [
-    (Story: () => ReactNode, context: { args: { showFrame?: boolean } }) => (
-      <WidgetFrameContext.Provider value={!!context.args.showFrame}>
+    (
+      Story: () => ReactNode,
+      context: { args: { frameStyle?: WidgetFrameStyle; tint?: WidgetTint } }
+    ) => (
+      <WidgetFrameContext.Provider
+        value={{ style: context.args.frameStyle ?? 'none', tint: context.args.tint }}
+      >
         <Story />
       </WidgetFrameContext.Provider>
     )
@@ -200,12 +218,12 @@ export const frameControls = {
 };
 
 export const DashboardStory = ({ widgets }: { widgets: DashboardWidget[] }) => {
-  const showFrame = useContext(WidgetFrameContext);
+  const { style, tint } = useContext(WidgetFrameContext);
   return (
     <DashboardGrid
       widgets={widgets.map(widget => ({
         ...widget,
-        frame: { ...widget.frame, showFrame }
+        frame: { ...widget.frame, style, tint }
       }))}
       canEdit={false}
       isEditing={false}

@@ -168,7 +168,7 @@ export const NoConfiguredRelationFields: Story = {
 
 export const WithFrame: Story = {
   ...GroupedByRelationField,
-  args: { showFrame: true }
+  args: { frameStyle: 'header' }
 };
 
 export const ConfigDialog = configDialogStory('blast-radius');

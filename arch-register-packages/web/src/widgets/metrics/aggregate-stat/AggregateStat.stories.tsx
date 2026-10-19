@@ -78,7 +78,7 @@ export const ComplianceCoverage: Story = {
 
 export const WithFrame: Story = {
   ...ComplianceCoverage,
-  args: { showFrame: true }
+  args: { frameStyle: 'header' }
 };
 
 export const ConfigDialog = configDialogStory('AggregateStat');

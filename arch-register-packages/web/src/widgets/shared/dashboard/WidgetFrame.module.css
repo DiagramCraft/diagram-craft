@@ -1,12 +1,50 @@
 .frame {
   position: relative;
-  background: var(--panel-bg);
-  border: 1px solid var(--panel-border);
+  background: var(--_widget-tint, var(--panel-bg));
+  border: 1px solid var(--_widget-tint-border, var(--panel-border));
   border-radius: var(--r-md);
   overflow: auto;
   display: flex;
   flex-direction: column;
   height: 100%;
+}
+
+/* Radix scales swap between light and dark values with the theme */
+.frame[data-tint="gray"],
+.bare[data-tint="gray"] {
+  --_widget-tint: var(--gray-3);
+  --_widget-tint-border: var(--gray-6);
+}
+.frame[data-tint="blue"],
+.bare[data-tint="blue"] {
+  --_widget-tint: var(--blue-3);
+  --_widget-tint-border: var(--blue-6);
+}
+.frame[data-tint="green"],
+.bare[data-tint="green"] {
+  --_widget-tint: var(--green-3);
+  --_widget-tint-border: var(--green-6);
+}
+.frame[data-tint="amber"],
+.bare[data-tint="amber"] {
+  --_widget-tint: var(--amber-3);
+  --_widget-tint-border: var(--amber-6);
+}
+.frame[data-tint="red"],
+.bare[data-tint="red"] {
+  --_widget-tint: var(--red-3);
+  --_widget-tint-border: var(--red-6);
+}
+.frame[data-tint="purple"],
+.bare[data-tint="purple"] {
+  --_widget-tint: var(--purple-3);
+  --_widget-tint-border: var(--purple-6);
+}
+
+.bare[data-tint] {
+  background: var(--_widget-tint);
+  border-radius: var(--r-md);
+  overflow: auto;
 }
 
 .bare {
@@ -22,7 +60,7 @@
   justify-content: space-between;
   gap: 8px;
   padding: 8px 14px;
-  border-bottom: 1px solid var(--panel-border);
+  border-bottom: 1px solid var(--_widget-tint-border, var(--panel-border));
   flex-shrink: 0;
 }
 

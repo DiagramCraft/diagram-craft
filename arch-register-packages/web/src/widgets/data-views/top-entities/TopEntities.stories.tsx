@@ -177,7 +177,7 @@ export const MostConsumedApis: Story = {
 
 export const WithFrame: Story = {
   ...TopRisksByScore,
-  args: { showFrame: true }
+  args: { frameStyle: 'header' }
 };
 
 export const ConfigDialog = configDialogStory('TopEntities');

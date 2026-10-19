@@ -98,7 +98,7 @@ export const ObjectivesByStatus: Story = {
 
 export const WithFrame: Story = {
   ...ObjectivesByStatus,
-  args: { showFrame: true }
+  args: { frameStyle: 'header' }
 };
 
 export const ConfigDialog = configDialogStory('CountByField');

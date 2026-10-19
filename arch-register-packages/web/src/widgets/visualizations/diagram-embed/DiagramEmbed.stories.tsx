@@ -111,7 +111,7 @@ export const Default: Story = {
 
 export const WithFrame: Story = {
   render: () => renderDashboard(24),
-  args: { showFrame: true }
+  args: { frameStyle: 'header' }
 };
 
 export const ConfigDialog = configDialogStory('DiagramEmbed');

@@ -154,7 +154,7 @@ export const Minimal: Story = {
 
 export const WithFrame: Story = {
   ...SpendByVendor,
-  args: { showFrame: true }
+  args: { frameStyle: 'header' }
 };
 
 export const ConfigDialog = configDialogStory('GroupedRollupTable');

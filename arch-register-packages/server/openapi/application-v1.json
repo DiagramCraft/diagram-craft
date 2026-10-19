@@ -61746,9 +61746,30 @@
                                   "type": "string",
                                   "description": "Title overriding the widget default"
                                 },
+                                "style": {
+                                  "enum": [
+                                    "header",
+                                    "frame",
+                                    "none"
+                                  ],
+                                  "type": "string",
+                                  "description": "Frame style: header (border and header), frame (border only) or none; omit for default"
+                                },
+                                "tint": {
+                                  "enum": [
+                                    "gray",
+                                    "blue",
+                                    "green",
+                                    "amber",
+                                    "red",
+                                    "purple"
+                                  ],
+                                  "type": "string",
+                                  "description": "Background tint of the widget; omit for none"
+                                },
                                 "showFrame": {
                                   "type": "boolean",
-                                  "description": "Whether to show the frame; omit for widget default"
+                                  "description": "Deprecated: replaced by style (false = none, true = header)"
                                 },
                                 "icon": {
                                   "type": "string",
@@ -62399,9 +62420,30 @@
                                 "type": "string",
                                 "description": "Title overriding the widget default"
                               },
+                              "style": {
+                                "enum": [
+                                  "header",
+                                  "frame",
+                                  "none"
+                                ],
+                                "type": "string",
+                                "description": "Frame style: header (border and header), frame (border only) or none; omit for default"
+                              },
+                              "tint": {
+                                "enum": [
+                                  "gray",
+                                  "blue",
+                                  "green",
+                                  "amber",
+                                  "red",
+                                  "purple"
+                                ],
+                                "type": "string",
+                                "description": "Background tint of the widget; omit for none"
+                              },
                               "showFrame": {
                                 "type": "boolean",
-                                "description": "Whether to show the frame; omit for widget default"
+                                "description": "Deprecated: replaced by style (false = none, true = header)"
                               },
                               "icon": {
                                 "type": "string",
@@ -62911,9 +62953,30 @@
                               "type": "string",
                               "description": "Title overriding the widget default"
                             },
+                            "style": {
+                              "enum": [
+                                "header",
+                                "frame",
+                                "none"
+                              ],
+                              "type": "string",
+                              "description": "Frame style: header (border and header), frame (border only) or none; omit for default"
+                            },
+                            "tint": {
+                              "enum": [
+                                "gray",
+                                "blue",
+                                "green",
+                                "amber",
+                                "red",
+                                "purple"
+                              ],
+                              "type": "string",
+                              "description": "Background tint of the widget; omit for none"
+                            },
                             "showFrame": {
                               "type": "boolean",
-                              "description": "Whether to show the frame; omit for widget default"
+                              "description": "Deprecated: replaced by style (false = none, true = header)"
                             },
                             "icon": {
                               "type": "string",
@@ -137971,9 +138034,30 @@
                                   "type": "string",
                                   "description": "Title overriding the widget default"
                                 },
+                                "style": {
+                                  "enum": [
+                                    "header",
+                                    "frame",
+                                    "none"
+                                  ],
+                                  "type": "string",
+                                  "description": "Frame style: header (border and header), frame (border only) or none; omit for default"
+                                },
+                                "tint": {
+                                  "enum": [
+                                    "gray",
+                                    "blue",
+                                    "green",
+                                    "amber",
+                                    "red",
+                                    "purple"
+                                  ],
+                                  "type": "string",
+                                  "description": "Background tint of the widget; omit for none"
+                                },
                                 "showFrame": {
                                   "type": "boolean",
-                                  "description": "Whether to show the frame; omit for widget default"
+                                  "description": "Deprecated: replaced by style (false = none, true = header)"
                                 },
                                 "icon": {
                                   "type": "string",
@@ -138379,9 +138463,30 @@
                                 "type": "string",
                                 "description": "Title overriding the widget default"
                               },
+                              "style": {
+                                "enum": [
+                                  "header",
+                                  "frame",
+                                  "none"
+                                ],
+                                "type": "string",
+                                "description": "Frame style: header (border and header), frame (border only) or none; omit for default"
+                              },
+                              "tint": {
+                                "enum": [
+                                  "gray",
+                                  "blue",
+                                  "green",
+                                  "amber",
+                                  "red",
+                                  "purple"
+                                ],
+                                "type": "string",
+                                "description": "Background tint of the widget; omit for none"
+                              },
                               "showFrame": {
                                 "type": "boolean",
-                                "description": "Whether to show the frame; omit for widget default"
+                                "description": "Deprecated: replaced by style (false = none, true = header)"
                               },
                               "icon": {
                                 "type": "string",
@@ -138755,9 +138860,30 @@
                                 "type": "string",
                                 "description": "Title overriding the widget default"
                               },
+                              "style": {
+                                "enum": [
+                                  "header",
+                                  "frame",
+                                  "none"
+                                ],
+                                "type": "string",
+                                "description": "Frame style: header (border and header), frame (border only) or none; omit for default"
+                              },
+                              "tint": {
+                                "enum": [
+                                  "gray",
+                                  "blue",
+                                  "green",
+                                  "amber",
+                                  "red",
+                                  "purple"
+                                ],
+                                "type": "string",
+                                "description": "Background tint of the widget; omit for none"
+                              },
                               "showFrame": {
                                 "type": "boolean",
-                                "description": "Whether to show the frame; omit for widget default"
+                                "description": "Deprecated: replaced by style (false = none, true = header)"
                               },
                               "icon": {
                                 "type": "string",
@@ -139136,9 +139262,30 @@
                               "type": "string",
                               "description": "Title overriding the widget default"
                             },
+                            "style": {
+                              "enum": [
+                                "header",
+                                "frame",
+                                "none"
+                              ],
+                              "type": "string",
+                              "description": "Frame style: header (border and header), frame (border only) or none; omit for default"
+                            },
+                            "tint": {
+                              "enum": [
+                                "gray",
+                                "blue",
+                                "green",
+                                "amber",
+                                "red",
+                                "purple"
+                              ],
+                              "type": "string",
+                              "description": "Background tint of the widget; omit for none"
+                            },
                             "showFrame": {
                               "type": "boolean",
-                              "description": "Whether to show the frame; omit for widget default"
+                              "description": "Deprecated: replaced by style (false = none, true = header)"
                             },
                             "icon": {
                               "type": "string",
@@ -139398,9 +139545,30 @@
                                 "type": "string",
                                 "description": "Title overriding the widget default"
                               },
+                              "style": {
+                                "enum": [
+                                  "header",
+                                  "frame",
+                                  "none"
+                                ],
+                                "type": "string",
+                                "description": "Frame style: header (border and header), frame (border only) or none; omit for default"
+                              },
+                              "tint": {
+                                "enum": [
+                                  "gray",
+                                  "blue",
+                                  "green",
+                                  "amber",
+                                  "red",
+                                  "purple"
+                                ],
+                                "type": "string",
+                                "description": "Background tint of the widget; omit for none"
+                              },
                               "showFrame": {
                                 "type": "boolean",
-                                "description": "Whether to show the frame; omit for widget default"
+                                "description": "Deprecated: replaced by style (false = none, true = header)"
                               },
                               "icon": {
                                 "type": "string",
@@ -139822,9 +139990,30 @@
                                 "type": "string",
                                 "description": "Title overriding the widget default"
                               },
+                              "style": {
+                                "enum": [
+                                  "header",
+                                  "frame",
+                                  "none"
+                                ],
+                                "type": "string",
+                                "description": "Frame style: header (border and header), frame (border only) or none; omit for default"
+                              },
+                              "tint": {
+                                "enum": [
+                                  "gray",
+                                  "blue",
+                                  "green",
+                                  "amber",
+                                  "red",
+                                  "purple"
+                                ],
+                                "type": "string",
+                                "description": "Background tint of the widget; omit for none"
+                              },
                               "showFrame": {
                                 "type": "boolean",
-                                "description": "Whether to show the frame; omit for widget default"
+                                "description": "Deprecated: replaced by style (false = none, true = header)"
                               },
                               "icon": {
                                 "type": "string",
@@ -140183,9 +140372,30 @@
                                   "type": "string",
                                   "description": "Title overriding the widget default"
                                 },
+                                "style": {
+                                  "enum": [
+                                    "header",
+                                    "frame",
+                                    "none"
+                                  ],
+                                  "type": "string",
+                                  "description": "Frame style: header (border and header), frame (border only) or none; omit for default"
+                                },
+                                "tint": {
+                                  "enum": [
+                                    "gray",
+                                    "blue",
+                                    "green",
+                                    "amber",
+                                    "red",
+                                    "purple"
+                                  ],
+                                  "type": "string",
+                                  "description": "Background tint of the widget; omit for none"
+                                },
                                 "showFrame": {
                                   "type": "boolean",
-                                  "description": "Whether to show the frame; omit for widget default"
+                                  "description": "Deprecated: replaced by style (false = none, true = header)"
                                 },
                                 "icon": {
                                   "type": "string",
@@ -140368,9 +140578,30 @@
                                 "type": "string",
                                 "description": "Title overriding the widget default"
                               },
+                              "style": {
+                                "enum": [
+                                  "header",
+                                  "frame",
+                                  "none"
+                                ],
+                                "type": "string",
+                                "description": "Frame style: header (border and header), frame (border only) or none; omit for default"
+                              },
+                              "tint": {
+                                "enum": [
+                                  "gray",
+                                  "blue",
+                                  "green",
+                                  "amber",
+                                  "red",
+                                  "purple"
+                                ],
+                                "type": "string",
+                                "description": "Background tint of the widget; omit for none"
+                              },
                               "showFrame": {
                                 "type": "boolean",
-                                "description": "Whether to show the frame; omit for widget default"
+                                "description": "Deprecated: replaced by style (false = none, true = header)"
                               },
                               "icon": {
                                 "type": "string",
@@ -140525,9 +140756,30 @@
                                 "type": "string",
                                 "description": "Title overriding the widget default"
                               },
+                              "style": {
+                                "enum": [
+                                  "header",
+                                  "frame",
+                                  "none"
+                                ],
+                                "type": "string",
+                                "description": "Frame style: header (border and header), frame (border only) or none; omit for default"
+                              },
+                              "tint": {
+                                "enum": [
+                                  "gray",
+                                  "blue",
+                                  "green",
+                                  "amber",
+                                  "red",
+                                  "purple"
+                                ],
+                                "type": "string",
+                                "description": "Background tint of the widget; omit for none"
+                              },
                               "showFrame": {
                                 "type": "boolean",
-                                "description": "Whether to show the frame; omit for widget default"
+                                "description": "Deprecated: replaced by style (false = none, true = header)"
                               },
                               "icon": {
                                 "type": "string",
@@ -140691,9 +140943,30 @@
                               "type": "string",
                               "description": "Title overriding the widget default"
                             },
+                            "style": {
+                              "enum": [
+                                "header",
+                                "frame",
+                                "none"
+                              ],
+                              "type": "string",
+                              "description": "Frame style: header (border and header), frame (border only) or none; omit for default"
+                            },
+                            "tint": {
+                              "enum": [
+                                "gray",
+                                "blue",
+                                "green",
+                                "amber",
+                                "red",
+                                "purple"
+                              ],
+                              "type": "string",
+                              "description": "Background tint of the widget; omit for none"
+                            },
                             "showFrame": {
                               "type": "boolean",
-                              "description": "Whether to show the frame; omit for widget default"
+                              "description": "Deprecated: replaced by style (false = none, true = header)"
                             },
                             "icon": {
                               "type": "string",
@@ -140945,9 +141218,30 @@
                                 "type": "string",
                                 "description": "Title overriding the widget default"
                               },
+                              "style": {
+                                "enum": [
+                                  "header",
+                                  "frame",
+                                  "none"
+                                ],
+                                "type": "string",
+                                "description": "Frame style: header (border and header), frame (border only) or none; omit for default"
+                              },
+                              "tint": {
+                                "enum": [
+                                  "gray",
+                                  "blue",
+                                  "green",
+                                  "amber",
+                                  "red",
+                                  "purple"
+                                ],
+                                "type": "string",
+                                "description": "Background tint of the widget; omit for none"
+                              },
                               "showFrame": {
                                 "type": "boolean",
-                                "description": "Whether to show the frame; omit for widget default"
+                                "description": "Deprecated: replaced by style (false = none, true = header)"
                               },
                               "icon": {
                                 "type": "string",
@@ -141144,9 +141438,30 @@
                                 "type": "string",
                                 "description": "Title overriding the widget default"
                               },
+                              "style": {
+                                "enum": [
+                                  "header",
+                                  "frame",
+                                  "none"
+                                ],
+                                "type": "string",
+                                "description": "Frame style: header (border and header), frame (border only) or none; omit for default"
+                              },
+                              "tint": {
+                                "enum": [
+                                  "gray",
+                                  "blue",
+                                  "green",
+                                  "amber",
+                                  "red",
+                                  "purple"
+                                ],
+                                "type": "string",
+                                "description": "Background tint of the widget; omit for none"
+                              },
                               "showFrame": {
                                 "type": "boolean",
-                                "description": "Whether to show the frame; omit for widget default"
+                                "description": "Deprecated: replaced by style (false = none, true = header)"
                               },
                               "icon": {
                                 "type": "string",
@@ -141290,9 +141605,30 @@
                               "type": "string",
                               "description": "Title overriding the widget default"
                             },
+                            "style": {
+                              "enum": [
+                                "header",
+                                "frame",
+                                "none"
+                              ],
+                              "type": "string",
+                              "description": "Frame style: header (border and header), frame (border only) or none; omit for default"
+                            },
+                            "tint": {
+                              "enum": [
+                                "gray",
+                                "blue",
+                                "green",
+                                "amber",
+                                "red",
+                                "purple"
+                              ],
+                              "type": "string",
+                              "description": "Background tint of the widget; omit for none"
+                            },
                             "showFrame": {
                               "type": "boolean",
-                              "description": "Whether to show the frame; omit for widget default"
+                              "description": "Deprecated: replaced by style (false = none, true = header)"
                             },
                             "icon": {
                               "type": "string",
@@ -141394,9 +141730,30 @@
                                 "type": "string",
                                 "description": "Title overriding the widget default"
                               },
+                              "style": {
+                                "enum": [
+                                  "header",
+                                  "frame",
+                                  "none"
+                                ],
+                                "type": "string",
+                                "description": "Frame style: header (border and header), frame (border only) or none; omit for default"
+                              },
+                              "tint": {
+                                "enum": [
+                                  "gray",
+                                  "blue",
+                                  "green",
+                                  "amber",
+                                  "red",
+                                  "purple"
+                                ],
+                                "type": "string",
+                                "description": "Background tint of the widget; omit for none"
+                              },
                               "showFrame": {
                                 "type": "boolean",
-                                "description": "Whether to show the frame; omit for widget default"
+                                "description": "Deprecated: replaced by style (false = none, true = header)"
                               },
                               "icon": {
                                 "type": "string",

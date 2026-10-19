@@ -193,7 +193,7 @@ export const GovernanceCasesByDueWeek: Story = {
 
 export const WithFrame: Story = {
   ...MonthlyRenewals,
-  args: { showFrame: true }
+  args: { frameStyle: 'header' }
 };
 
 export const ConfigDialog = configDialogStory('DateCalendar');
