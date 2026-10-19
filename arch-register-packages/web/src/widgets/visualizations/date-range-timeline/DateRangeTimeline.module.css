@@ -8,6 +8,8 @@
 .scroll {
   overflow: auto;
   min-width: 0;
+  /* Prevent elastic overscroll, which makes the sticky columns bounce */
+  overscroll-behavior: none;
 }
 
 .inner {
