@@ -1,6 +1,6 @@
 # Domain-specific dashboard widgets: assessment (#3636)
 
-Per-widget inventory of what each domain widget renders, which generic code it already uses, what is truly domain-specific, and the proposed disposition. No code has moved yet.
+Per-widget inventory of what each domain widget renders, which generic code it already uses, what is truly domain-specific, and the proposed disposition. Implemented in #3636: the domain-specific widgets were replaced by the generic widgets described below.
 
 ## Inventory (what each widget relies on)
 
