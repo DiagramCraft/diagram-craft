@@ -184,6 +184,7 @@ const vendorSpendFacetQuery = {
 const vendorSpendRollup = (id: string, groupFieldId?: string): DashboardWidget => ({
   id,
   type: 'GroupedRollupTable',
+  frame: { showFrame: false },
   config: {
     schemaName: 'Vendor',
     entityQuery: vendorSpendFacetQuery,
@@ -268,7 +269,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           tone: 'warning',
           subtextTemplate: 'open change & deprecation cases'
         },
-        frame: { title: 'Needs attention' },
+        frame: { title: 'Needs attention', showFrame: false },
         x: 0,
         y: 0,
         w: 3,
@@ -284,7 +285,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           severity: { warnAt: 1 },
           showLink: false
         },
-        frame: { title: 'Crossing a boundary' },
+        frame: { title: 'Crossing a boundary', showFrame: false },
         x: 3,
         y: 0,
         w: 3,
@@ -301,7 +302,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           severity: { critAt: 1 },
           showLink: false
         },
-        frame: { title: 'Carrying restricted data' },
+        frame: { title: 'Carrying restricted data', showFrame: false },
         x: 6,
         y: 0,
         w: 3,
@@ -316,7 +317,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           consumerFieldName: 'Consumed by',
           coverageRelationSchemaName: 'Data Flow'
         },
-        frame: { title: 'Provider/consumer gaps' },
+        frame: { title: 'Provider/consumer gaps', showFrame: false },
         x: 9,
         y: 0,
         w: 3,
@@ -418,6 +419,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
       {
         id: 'seed-apis-tabs',
         type: 'tabs',
+        frame: { showFrame: false },
         config: {
           tabs: [
             {
@@ -537,6 +539,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
       {
         id: 'seed-integrations-tabs',
         type: 'tabs',
+        frame: { showFrame: false },
         config: {
           tabs: [
             {
@@ -643,7 +646,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
 
           subtextTemplate: 'past the scheduled date'
         },
-        frame: { title: 'Overdue' },
+        frame: { title: 'Overdue', showFrame: false },
         x: 0,
         y: 0,
         w: 3,
@@ -658,7 +661,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
 
           subtextTemplate: '{notStarted} not started'
         },
-        frame: { title: 'In progress' },
+        frame: { title: 'In progress', showFrame: false },
         x: 3,
         y: 0,
         w: 3,
@@ -673,7 +676,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
 
           subtextTemplate: 'no response recorded yet'
         },
-        frame: { title: 'Not started' },
+        frame: { title: 'Not started', showFrame: false },
         x: 6,
         y: 0,
         w: 3,
@@ -688,7 +691,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
 
           subtextTemplate: 'of {total} assessments'
         },
-        frame: { title: 'Complete' },
+        frame: { title: 'Complete', showFrame: false },
         x: 9,
         y: 0,
         w: 3,
@@ -698,7 +701,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
         id: 'seed-assessments-table',
         type: 'AssessmentProgressTable',
         config: { schemaName: 'Data Entity' },
-        frame: { title: 'Assessments' },
+        frame: { title: 'Assessments', showFrame: false },
         x: 0,
         y: 5,
         w: 12,
@@ -714,6 +717,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
       {
         id: 'seed-classification-tabs',
         type: 'tabs',
+        frame: { showFrame: false },
         config: {
           tabs: [
             {
@@ -731,7 +735,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                     severity: { critAt: 1 },
                     showLink: false
                   },
-                  frame: { title: 'Restricted datasets' },
+                  frame: { title: 'Restricted datasets', showFrame: false },
                   x: 0,
                   y: 0,
                   w: 4,
@@ -747,7 +751,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                     subtextTemplate: 'no regulatory tags or processing purposes',
                     showLink: false
                   },
-                  frame: { title: 'Missing lawful-basis proxy' },
+                  frame: { title: 'Missing lawful-basis proxy', showFrame: false },
                   x: 4,
                   y: 0,
                   w: 4,
@@ -762,7 +766,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                     subtextTemplate: 'under governance',
                     showLink: false
                   },
-                  frame: { title: 'Total datasets' },
+                  frame: { title: 'Total datasets', showFrame: false },
                   x: 8,
                   y: 0,
                   w: 4,
@@ -825,7 +829,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                     subtextTemplate: 'sensitive or highly sensitive',
                     showLink: false
                   },
-                  frame: { title: 'Restricted flows' },
+                  frame: { title: 'Restricted flows', showFrame: false },
                   x: 0,
                   y: 0,
                   w: 4,
@@ -841,7 +845,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                     severity: { critAt: 1 },
                     showLink: false
                   },
-                  frame: { title: 'Highly sensitive' },
+                  frame: { title: 'Highly sensitive', showFrame: false },
                   x: 4,
                   y: 0,
                   w: 4,
@@ -858,7 +862,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                     severity: { warnAt: 1 },
                     showLink: false
                   },
-                  frame: { title: 'Crossing a boundary' },
+                  frame: { title: 'Crossing a boundary', showFrame: false },
                   x: 8,
                   y: 0,
                   w: 4,
@@ -902,7 +906,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                     subtextTemplate: 'source and destination regions differ',
                     showLink: false
                   },
-                  frame: { title: 'Cross-boundary transfers' },
+                  frame: { title: 'Cross-boundary transfers', showFrame: false },
                   x: 0,
                   y: 0,
                   w: 4,
@@ -919,7 +923,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                     severity: { warnAt: 1 },
                     showLink: false
                   },
-                  frame: { title: 'Carrying personal data' },
+                  frame: { title: 'Carrying personal data', showFrame: false },
                   x: 4,
                   y: 0,
                   w: 4,
@@ -936,7 +940,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                     severity: { critAt: 1 },
                     showLink: false
                   },
-                  frame: { title: 'Unsafeguarded personal-data transfers' },
+                  frame: { title: 'Unsafeguarded personal-data transfers', showFrame: false },
                   x: 8,
                   y: 0,
                   w: 4,
@@ -1000,7 +1004,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           severity: 'due-date',
           status: '$status'
         },
-        frame: { title: 'Change cases' },
+        frame: { title: 'Change cases', showFrame: false },
         x: 0,
         y: 0,
         w: 12,
@@ -1036,7 +1040,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           severity: { warnAt: 60, direction: 'below' },
           showLink: false
         },
-        frame: { title: 'Fully covered' },
+        frame: { title: 'Fully covered', showFrame: false },
         x: 0,
         y: 0,
         w: 3,
@@ -1053,7 +1057,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
 
           showLink: false
         },
-        frame: { title: 'Missing an owner' },
+        frame: { title: 'Missing an owner', showFrame: false },
         x: 3,
         y: 0,
         w: 3,
@@ -1069,7 +1073,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
 
           showLink: false
         },
-        frame: { title: 'Reviews overdue' },
+        frame: { title: 'Reviews overdue', showFrame: false },
         x: 6,
         y: 0,
         w: 3,
@@ -1086,7 +1090,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
 
           showLink: false
         },
-        frame: { title: 'Missing a steward' },
+        frame: { title: 'Missing a steward', showFrame: false },
         x: 9,
         y: 0,
         w: 3,
@@ -1119,7 +1123,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           subtextTemplate: '{due} due within a week',
           dueWithinDays: 7
         },
-        frame: { title: 'Assigned to me' },
+        frame: { title: 'Assigned to me', showFrame: false },
         x: 0,
         y: 0,
         w: 3,
@@ -1136,7 +1140,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           subtextTemplate: 'across all assignees',
           dueWithinDays: 7
         },
-        frame: { title: 'Past due' },
+        frame: { title: 'Past due', showFrame: false },
         x: 3,
         y: 0,
         w: 3,
@@ -1153,7 +1157,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           subtextTemplate: 'change-case & deprecation approvals',
           dueWithinDays: 7
         },
-        frame: { title: 'Cases awaiting a decision' },
+        frame: { title: 'Cases awaiting a decision', showFrame: false },
         x: 6,
         y: 0,
         w: 3,
@@ -1168,7 +1172,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           severity: { warnAt: 1 },
           showLink: false
         },
-        frame: { title: 'Reviews overdue' },
+        frame: { title: 'Reviews overdue', showFrame: false },
         x: 9,
         y: 0,
         w: 3,
@@ -1249,7 +1253,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           subtextTemplate: '{count} of {total} capabilities have ≥1 application',
           showLink: false
         },
-        frame: { title: 'Application coverage' },
+        frame: { title: 'Application coverage', showFrame: false },
         x: 6,
         y: 0,
         w: 3,
@@ -1265,7 +1269,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           severity: { warnAt: 1 },
           showLink: false
         },
-        frame: { title: 'Orphan capabilities' },
+        frame: { title: 'Orphan capabilities', showFrame: false },
         x: 9,
         y: 0,
         w: 3,
@@ -1580,6 +1584,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
       {
         id: 'seed-traceability-tabs',
         type: 'tabs',
+        frame: { showFrame: false },
         config: {
           tabs: [
             {
@@ -1676,7 +1681,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           severity: { warnAt: 1 },
           showLink: false
         },
-        frame: { title: 'Outside appetite' },
+        frame: { title: 'Outside appetite', showFrame: false },
         x: 0,
         y: 0,
         w: 4,
@@ -1694,7 +1699,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           severity: { warnAt: 80, critAt: 50, direction: 'below' },
           showLink: false
         },
-        frame: { title: 'Control coverage' },
+        frame: { title: 'Control coverage', showFrame: false },
         x: 4,
         y: 0,
         w: 4,
@@ -1710,7 +1715,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
 
           subtext: 'open risk reviews and control tests'
         },
-        frame: { title: 'Due in 30 days' },
+        frame: { title: 'Due in 30 days', showFrame: false },
         x: 8,
         y: 0,
         w: 4,
@@ -1884,6 +1889,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
       {
         id: 'seed-assessments-tabs',
         type: 'tabs',
+        frame: { showFrame: false },
         config: {
           tabs: [
             {
@@ -1894,7 +1900,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                   id: 'seed-risk-assessments-table',
                   type: 'AssessmentProgressTable',
                   config: { schemaName: 'Risk' },
-                  frame: { title: 'Risk assessments' },
+                  frame: { title: 'Risk assessments', showFrame: false },
                   x: 0,
                   y: 0,
                   w: 12,
@@ -1910,7 +1916,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                   id: 'seed-control-assessments-table',
                   type: 'AssessmentProgressTable',
                   config: { schemaName: 'Control' },
-                  frame: { title: 'Control assessments' },
+                  frame: { title: 'Control assessments', showFrame: false },
                   x: 0,
                   y: 0,
                   w: 12,
@@ -1935,6 +1941,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
       {
         id: 'seed-risks-tabs',
         type: 'tabs',
+        frame: { showFrame: false },
         config: {
           tabs: [
             {
@@ -2056,6 +2063,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
       {
         id: 'seed-controls-tabs',
         type: 'tabs',
+        frame: { showFrame: false },
         config: {
           tabs: [
             {
@@ -2100,7 +2108,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                     subtextTemplate: '{count} of {total} controls',
                     showLink: false
                   },
-                  frame: { title: 'Effective' },
+                  frame: { title: 'Effective', showFrame: false },
                   x: 0,
                   y: 0,
                   w: 4,
@@ -2116,7 +2124,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                     severity: { warnAt: 1 },
                     showLink: false
                   },
-                  frame: { title: 'Never tested' },
+                  frame: { title: 'Never tested', showFrame: false },
                   x: 4,
                   y: 0,
                   w: 4,
@@ -2132,7 +2140,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
                     severity: { warnAt: 1, critAt: 1 },
                     showLink: false
                   },
-                  frame: { title: 'Uncontrolled risks' },
+                  frame: { title: 'Uncontrolled risks', showFrame: false },
                   x: 8,
                   y: 0,
                   w: 4,
@@ -2345,7 +2353,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           subtextTemplate: 'across {count} vendors',
           showLink: false
         },
-        frame: { title: 'Contracted spend' },
+        frame: { title: 'Contracted spend', showFrame: false },
         x: 0,
         y: 0,
         w: 3,
@@ -2363,7 +2371,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           severity: { warnAt: 1 },
           showLink: false
         },
-        frame: { title: 'Renewals in 90 days' },
+        frame: { title: 'Renewals in 90 days', showFrame: false },
         x: 3,
         y: 0,
         w: 3,
@@ -2379,7 +2387,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           severity: { critAt: 1 },
           showLink: false
         },
-        frame: { title: 'Vendors above tolerance' },
+        frame: { title: 'Vendors above tolerance', showFrame: false },
         x: 6,
         y: 0,
         w: 3,
@@ -2396,7 +2404,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           subtextTemplate: '{count} of {total} contracts · notice periods apply',
           showLink: false
         },
-        frame: { title: 'Auto-renewing' },
+        frame: { title: 'Auto-renewing', showFrame: false },
         x: 9,
         y: 0,
         w: 3,
@@ -2539,7 +2547,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           subtextTemplate: '{count} contracts',
           showLink: false
         },
-        frame: { title: 'Total annualised' },
+        frame: { title: 'Total annualised', showFrame: false },
         x: 0,
         y: 0,
         w: 3,
@@ -2556,7 +2564,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           subtextTemplate: 'not auto-renewing',
           showLink: false
         },
-        frame: { title: 'Fixed-term commitment' },
+        frame: { title: 'Fixed-term commitment', showFrame: false },
         x: 3,
         y: 0,
         w: 3,
@@ -2575,7 +2583,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           subtextTemplate: 'of annualised spend',
           showLink: false
         },
-        frame: { title: 'Strategic tier' },
+        frame: { title: 'Strategic tier', showFrame: false },
         x: 6,
         y: 0,
         w: 3,
@@ -2592,7 +2600,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           subtextTemplate: 'with vendor spend',
           showLink: false
         },
-        frame: { title: 'Cost centres' },
+        frame: { title: 'Cost centres', showFrame: false },
         x: 9,
         y: 0,
         w: 3,
@@ -2601,6 +2609,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
       {
         id: 'seed-spend-tabs',
         type: 'tabs',
+        frame: { showFrame: false },
         config: {
           tabs: [
             {
@@ -2653,7 +2662,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           severity: { critAt: 1 },
           showLink: false
         },
-        frame: { title: 'High risk' },
+        frame: { title: 'High risk', showFrame: false },
         x: 0,
         y: 0,
         w: 3,
@@ -2669,7 +2678,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           severity: { warnAt: 1 },
           showLink: false
         },
-        frame: { title: 'Concentration ≥ 4' },
+        frame: { title: 'Concentration ≥ 4', showFrame: false },
         x: 3,
         y: 0,
         w: 3,
@@ -2685,7 +2694,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           severity: { warnAt: 1 },
           showLink: false
         },
-        frame: { title: 'Technologies near EOL' },
+        frame: { title: 'Technologies near EOL', showFrame: false },
         x: 6,
         y: 0,
         w: 3,
@@ -2701,7 +2710,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           severity: { critAt: 1 },
           showLink: false
         },
-        frame: { title: 'Past end of life' },
+        frame: { title: 'Past end of life', showFrame: false },
         x: 9,
         y: 0,
         w: 3,
@@ -2828,6 +2837,7 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
       {
         id: 'seed-contracts-tabs',
         type: 'tabs',
+        frame: { showFrame: false },
         config: {
           tabs: [
             {

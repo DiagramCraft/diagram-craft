@@ -6,7 +6,7 @@ const spec = (frame?: DashboardWidgetSpec<any>['frame']) => ({ frame }) as Dashb
 
 describe('resolveWidgetFrame', () => {
   test('uses defaults when nothing is overridden', () => {
-    expect(resolveWidgetFrame(spec(), undefined, {})).toEqual({
+    expect(resolveWidgetFrame(spec(), undefined)).toEqual({
       title: undefined,
       iconName: undefined,
       showIcon: true,
@@ -15,29 +15,21 @@ describe('resolveWidgetFrame', () => {
     });
   });
 
-  test('spec hideOutsideEdit is the default but instance wins', () => {
-    const s = spec({ hideOutsideEdit: true });
-    expect(resolveWidgetFrame(s, undefined, {}).showFrame).toBe(false);
-    expect(resolveWidgetFrame(s, { showFrame: true }, {}).showFrame).toBe(true);
-  });
-
-  test('function hideOutsideEdit reads legacy config', () => {
-    const s = spec({ hideOutsideEdit: c => c.showFrame === false });
-    expect(resolveWidgetFrame(s, undefined, { showFrame: false }).showFrame).toBe(false);
-    expect(resolveWidgetFrame(s, { showFrame: true }, { showFrame: false }).showFrame).toBe(true);
+  test('instance showFrame overrides the default', () => {
+    expect(resolveWidgetFrame(spec(), { showFrame: false }).showFrame).toBe(false);
   });
 
   test('icon override enables icon even when spec hides it', () => {
     const s = spec({ showIcon: false });
-    expect(resolveWidgetFrame(s, undefined, {}).showIcon).toBe(false);
-    expect(resolveWidgetFrame(s, { icon: 'TbApi' }, {})).toMatchObject({
+    expect(resolveWidgetFrame(s, undefined).showIcon).toBe(false);
+    expect(resolveWidgetFrame(s, { icon: 'TbApi' })).toMatchObject({
       showIcon: true,
       iconName: 'TbApi'
     });
   });
 
   test('blank title is ignored', () => {
-    expect(resolveWidgetFrame(spec(), { title: '  ' }, {}).title).toBeUndefined();
+    expect(resolveWidgetFrame(spec(), { title: '  ' }).title).toBeUndefined();
   });
 });
 

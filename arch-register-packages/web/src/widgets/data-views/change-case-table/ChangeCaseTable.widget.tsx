@@ -17,6 +17,6 @@ export default defineWidget({
     defaultW: 12,
     defaultH: 20,
     surfaces: ['workspace'],
-    frame: { hideOutsideEdit: true, padded: false, showIcon: false }
+    frame: { padded: false, showIcon: false }
   }
 });

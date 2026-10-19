@@ -19,7 +19,6 @@ export default defineWidget({
     defaultH: 20,
     surfaces: ['workspace', 'project'],
     frame: {
-      hideOutsideEdit: config => config.showFrame === false,
       padded: false,
       showIcon: false
     }
