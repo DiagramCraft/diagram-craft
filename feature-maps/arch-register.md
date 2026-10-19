@@ -652,8 +652,7 @@
       application, with a dedicated left rail scoped to four sections (Overview, APIs, Integrations, Impact).
       Unlike Data Stewardship, Overview is a separate landing section rather than doubling with the first facet
       section. Overview summarizes API statistics, open change and deprecation cases, most-consumed APIs, and at-risk
-      integrations, with links into the APIs and Integrations sections. Its four panels are also available as workspace
-      dashboard widgets. The application is available to every member with application access; the
+      integrations, with links into the APIs and Integrations sections. It is built from generic dashboard widgets. The application is available to every member with application access; the
       `api-specification` capability binding (@id:ar.integrations.api-specification-sync, set up by the workspace
       template) remains what the Entities app's API artifact detail views read. Sync remains a scaffolded placeholder pending its own
       sub-issue of the API & Integration
@@ -662,8 +661,8 @@
 
         - @id:ar.api-integration-catalog.overview The Overview section (the app switcher's landing section) summarizes
           API statistics, open change and deprecation cases, most-consumed APIs, and integrations needing attention,
-          with links into the APIs and Integrations sections. The statistics and three list panels can also be added
-          separately to workspace dashboards, where users can set a title and choose a visible-item limit for lists.
+          with links into the APIs and Integrations sections. It is built from generic dashboard widgets (stat, case count, top
+          entities, relation table, needs-attention queue) that can also be added to workspace dashboards.
           The section itself is a seeded dashboard built from these widgets; users with dashboard-management permission
           can edit its layout, and it does not appear among the workspace home dashboards.
 
