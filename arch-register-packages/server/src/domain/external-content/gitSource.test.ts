@@ -1,8 +1,6 @@
-import { execFile } from 'node:child_process';
 import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { promisify } from 'node:util';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('./gitUrlSafety', () => ({
@@ -10,14 +8,13 @@ vi.mock('./gitUrlSafety', () => ({
 }));
 
 import { fetchGitSnapshot } from './gitSource';
-
-const execFileAsync = promisify(execFile);
+import { runFixtureGit } from './gitTestSupport';
 
 describe('fetchGitSnapshot', () => {
   let repository: string;
   let cache: string;
 
-  const git = (...args: string[]) => execFileAsync('git', args, { cwd: repository });
+  const git = (...args: string[]) => runFixtureGit(repository, ...args);
 
   beforeEach(async () => {
     repository = await mkdtemp(join(tmpdir(), 'external-content-source-'));

@@ -1,8 +1,6 @@
-import { execFile } from 'node:child_process';
 import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { promisify } from 'node:util';
 import { randomUUID } from 'node:crypto';
 import { expect, it, vi } from 'vitest';
 
@@ -15,12 +13,11 @@ import { runContractSuiteAgainstBothDrivers } from '../../db/contract-tests/harn
 import { createFixtureWorkspace } from '../../db/testSupport/fixtures';
 import type { DatabaseAdapter } from '../../db/database';
 import { syncExternalContentSource } from './externalContentSync';
-
-const execFileAsync = promisify(execFile);
+import { runFixtureGit } from './gitTestSupport';
 
 const createRepository = async () => {
   const repository = await mkdtemp(join(tmpdir(), 'external-content-sync-repo-'));
-  const git = (...args: string[]) => execFileAsync('git', args, { cwd: repository });
+  const git = (...args: string[]) => runFixtureGit(repository, ...args);
   await git('init', '-q', '-b', 'main');
   await git('config', 'user.email', 'test@example.com');
   await git('config', 'user.name', 'Test User');
