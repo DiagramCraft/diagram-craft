@@ -21,7 +21,14 @@ const changeCaseStatusSchema = z
 
 export const changeCaseMemberSchema = z.object({
   id: z.string().describe('Member identifier'),
-  entity_id: z.string().describe('Affected entity identifier'),
+  kind: z.enum(['entity', 'relation']).describe('Kind of record this member affects'),
+  entity_id: z
+    .string()
+    .describe('Affected record identifier (a relation identifier when kind is "relation")'),
+  relation_id: z
+    .string()
+    .nullable()
+    .describe('Affected relation identifier when kind is "relation", otherwise null'),
   base_version: z.number().describe('Entity version this member was planned against'),
   base_state: z.record(z.string(), z.unknown()).describe('Entity state at planning time'),
   proposed_state: z.record(z.string(), z.unknown()).describe('Proposed future state'),
@@ -161,6 +168,18 @@ export const changeCaseContract = oc.tag('ChangeCases').router({
         summary: 'List planned change cases touching an entity',
         description:
           'Retrieves all not-yet-superseded planned change cases that include this entity.',
+        tags: ['ChangeCases']
+      })
+      .input(z.object({ params: wsAndId }))
+      .output(z.array(changeCaseSchema)),
+    listByRelation: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/relations/{id}/change-cases',
+        inputStructure: 'detailed',
+        summary: 'List planned change cases touching a relation',
+        description:
+          'Retrieves all not-yet-superseded planned change cases that include this relation.',
         tags: ['ChangeCases']
       })
       .input(z.object({ params: wsAndId }))

@@ -37,7 +37,7 @@ export const FormGroup = ({
           ))}
         <span className={styles.eLabel}>{label}</span>
         {supplementaryLabel && (
-          <span className={styles.eLabel + ' ' + styles.eSupplementaryLabel}>
+          <span className={`${styles.eLabel} ${styles.eSupplementaryLabel}`}>
             {supplementaryLabel}
           </span>
         )}
