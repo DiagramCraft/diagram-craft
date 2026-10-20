@@ -854,9 +854,9 @@
           to field-group access control); these changes are saved together with the rest of the entity's edits in one
           atomic update. Each existing instance can also be expanded inline to edit its fields, or opened in a detail
           dialog showing its audit trail of create/update/delete events. Relation instances now retain version
-          history on create/update/delete and can be restored to an earlier version via the API, mirroring entity
-          version history's redaction and restore semantics; this is not yet surfaced in the relation instance UI
-          the way entity history is (@id:ar.entities.history). Relation instances can also go through
+          history on create/update/delete and can be restored to an earlier version, mirroring entity version
+          history's redaction and restore semantics (@id:ar.entities.history). The relation drawer lists these
+          versions and lets users with edit access restore one after reviewing a field-level diff. Relation instances can also go through
           change-approval: a relation can require approval before edits apply (same policy-override precedence as
           entities), a single-relation proposal can be submitted/resubmitted/withdrawn/bypassed via the API mirroring
           the entity change-approval workflow, and a project's planned-change case can include relation instances

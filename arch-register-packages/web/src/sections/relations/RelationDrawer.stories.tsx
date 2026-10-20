@@ -7,6 +7,7 @@ import {
   createStoryQueryClient
 } from '../../widgets/shared/mdx/StorybookHarness';
 import { entityKeys } from '../../queries/entities';
+import { relationVersionKeys } from '../../queries/relationVersions';
 import { RelationDrawer } from './RelationDrawer';
 
 const SCHEMA = {
@@ -56,6 +57,24 @@ const renderDrawer = (relation: RelationRecord, schema: RelationSchema | undefin
   for (const [id, name] of Object.entries(ENTITIES)) {
     client.setQueryData(entityKeys.detail(WORKSPACE, id), { _uid: id, _name: name, _publicId: id });
   }
+  client.setQueryData(relationVersionKeys.list(WORKSPACE, 'flow-1'), [
+    {
+      id: 'v2',
+      kind: 'saved_version',
+      created_at: '2026-10-01T10:00:00Z',
+      created_by_name: 'Alex',
+      commit_message: 'Switch protocol',
+      state: { data: { protocol: 'HTTP' } }
+    },
+    {
+      id: 'v1',
+      kind: 'autosave',
+      created_at: '2026-09-01T10:00:00Z',
+      created_by_name: null,
+      commit_message: null,
+      state: { data: { protocol: 'FTP' } }
+    }
+  ]);
   return (
     <StoryProviders client={client}>
       <RelationDrawer

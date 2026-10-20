@@ -3,6 +3,7 @@ import type { ChangeCase, ChangeCaseMember } from '@arch-register/api-types/chan
 import type { ChangeCaseMemberEntry } from './snapshotDisplay';
 import {
   detectConflicts,
+  diffRelationSnapshotState,
   diffSnapshotState,
   mapEntityLandscapeDiffToChangeRows
 } from './entityTimelineHelpers';
@@ -119,5 +120,44 @@ describe('detectConflicts', () => {
     const { conflictedProjectIds, conflictedSnapIds } = detectConflicts([a, b]);
     expect(conflictedProjectIds.size).toBe(0);
     expect(conflictedSnapIds.size).toBe(0);
+  });
+});
+
+describe('diffRelationSnapshotState', () => {
+  const schema = {
+    fields: [
+      { id: 'protocol', name: 'Protocol', type: 'text' },
+      { id: 'secure', name: 'Secure', type: 'boolean' },
+      { id: 'level', name: 'Level', type: 'select', options: [{ value: 'hi', label: 'High' }] }
+    ]
+  } as never;
+
+  it('returns no rows without a proposed state', () => {
+    expect(diffRelationSnapshotState({ data: {} }, undefined, schema)).toEqual([]);
+  });
+
+  it('reports changed values with resolved labels', () => {
+    const rows = diffRelationSnapshotState(
+      { data: { protocol: 'http', secure: false, level: null } },
+      { data: { protocol: 'grpc', secure: true, level: 'hi' } },
+      schema
+    );
+    expect(rows).toEqual([
+      { label: 'Protocol', from: 'http', to: 'grpc' },
+      { label: 'Secure', from: 'No', to: 'Yes' },
+      { label: 'Level', from: '—', to: 'High' }
+    ]);
+  });
+
+  it('treats differently-shaped empties as equal', () => {
+    expect(
+      diffRelationSnapshotState({ data: { protocol: null } }, { data: { protocol: '' } }, schema)
+    ).toEqual([]);
+  });
+
+  it('ignores fields absent from the version', () => {
+    expect(
+      diffRelationSnapshotState({ data: { protocol: 'http' } }, { data: {} }, schema)
+    ).toEqual([]);
   });
 });
