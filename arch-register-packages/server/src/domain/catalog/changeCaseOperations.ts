@@ -169,7 +169,7 @@ export const removeEntityFromChangeCase = async (
       );
       httpAssert.true(members.length > 1, {
         status: 400,
-        message: 'A change case must retain at least one entity'
+        message: 'A change case must retain at least one record'
       });
 
       const removed = await db.changeCase.removeMember(ws, memberId);

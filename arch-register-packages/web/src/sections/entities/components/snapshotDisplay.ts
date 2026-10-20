@@ -17,7 +17,11 @@ const isLiveChangeCase = (changeCase: ChangeCase) =>
 export const flattenChangeCaseMembers = (changeCases: ChangeCase[]): ChangeCaseMemberEntry[] =>
   changeCases
     .filter(isLiveChangeCase)
-    .flatMap(changeCase => changeCase.members.map(member => ({ changeCase, member })));
+    .flatMap(changeCase =>
+      changeCase.members
+        .filter(member => member.kind === 'entity')
+        .map(member => ({ changeCase, member }))
+    );
 
 // A change case targets either a raw target_date or a milestone (never both) — the milestone's
 // target_date is its effective date. These helpers centralize that resolution so every display

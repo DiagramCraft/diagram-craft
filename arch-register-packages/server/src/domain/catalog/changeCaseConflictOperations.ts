@@ -70,12 +70,12 @@ export const assertChangeCaseResolutions = (
 ) => {
   httpAssert.true(resolutions.length === members.length, {
     status: 400,
-    message: 'A resolution must be supplied for every member entity of this case'
+    message: 'A resolution must be supplied for every member record of this case'
   });
   for (const member of members) {
     httpAssert.true(
       resolutions.some(resolution => resolution.memberId === member.id),
-      { status: 400, message: `Missing resolution for entity '${member.entity_id}'` }
+      { status: 400, message: `Missing resolution for record '${member.entity_id}'` }
     );
   }
 };

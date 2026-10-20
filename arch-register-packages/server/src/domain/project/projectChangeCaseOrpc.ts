@@ -15,6 +15,7 @@ import {
 import {
   listChangeCasesByProject,
   listChangeCasesByEntity,
+  listChangeCasesByRelation,
   getChangeCase
 } from '../catalog/changeCaseReadOperations';
 import { createChangeCase, saveChangeCaseDraft } from '../catalog/changeCaseDraftOperations';
@@ -51,6 +52,16 @@ export const changeCaseORPCRouter = changeCaseRouter.router({
         context.event
       );
     }),
+    listByRelation: changeCaseRouter.changeCases.listByRelation.handler(
+      async ({ input, context }) => {
+        return await listChangeCasesByRelation(
+          context.db,
+          input.params.workspace,
+          input.params.id,
+          context.event
+        );
+      }
+    ),
     get: changeCaseRouter.changeCases.get.handler(async ({ input, context }) => {
       return await getChangeCase(
         context.db,

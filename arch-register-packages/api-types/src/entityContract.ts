@@ -418,6 +418,8 @@ const timelineMarkerSchema = z.object({
 const timelineVersionSchema = entityVersionSchema.omit({ state: true });
 
 const timelineChangeCaseMemberSchema = changeCaseMemberSchema.omit({
+  kind: true,
+  relation_id: true,
   base_state: true,
   proposed_state: true
 });

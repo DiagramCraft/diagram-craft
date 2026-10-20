@@ -5,6 +5,7 @@ import {
   changeCaseQuery,
   changeCasesByEntityQuery,
   changeCasesByProjectQuery,
+  changeCasesByRelationQuery,
   invalidateChangeCaseQueries
 } from '../queries/changeCases';
 import { orpcClient } from '../lib/orpcClient';
@@ -15,6 +16,9 @@ export const useChangeCasesByProject = (workspaceId: string, projectId: string, 
 
 export const useChangeCasesByEntity = (workspaceId: string, entityId: string, enabled = true) =>
   useQuery(changeCasesByEntityQuery(workspaceId, entityId, enabled));
+
+export const useChangeCasesByRelation = (workspaceId: string, relationId: string, enabled = true) =>
+  useQuery(changeCasesByRelationQuery(workspaceId, relationId, enabled));
 
 export const changeCasesByEntityQueryOptions = changeCasesByEntityQuery;
 

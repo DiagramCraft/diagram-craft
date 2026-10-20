@@ -8,6 +8,8 @@ export const changeCaseKeys = {
     [...changeCaseKeys.all, 'by-project', workspaceId, projectId] as const,
   byEntity: (workspaceId: string, entityId: string) =>
     [...changeCaseKeys.all, 'by-entity', workspaceId, entityId] as const,
+  byRelation: (workspaceId: string, relationId: string) =>
+    [...changeCaseKeys.all, 'by-relation', workspaceId, relationId] as const,
   detail: (workspaceId: string, caseId: string) =>
     [...changeCaseKeys.all, 'detail', workspaceId, caseId] as const,
   applyConflicts: (workspaceId: string, caseId: string) =>
@@ -28,6 +30,18 @@ export const changeCasesByEntityQuery = (workspaceId: string, entityId: string, 
     queryFn: () =>
       orpcClient.changeCases.listByEntity({ params: { workspace: workspaceId, id: entityId } }),
     enabled: enabled && !!workspaceId && !!entityId
+  });
+
+export const changeCasesByRelationQuery = (
+  workspaceId: string,
+  relationId: string,
+  enabled = true
+) =>
+  queryOptions({
+    queryKey: changeCaseKeys.byRelation(workspaceId, relationId),
+    queryFn: () =>
+      orpcClient.changeCases.listByRelation({ params: { workspace: workspaceId, id: relationId } }),
+    enabled: enabled && !!workspaceId && !!relationId
   });
 
 export const changeCaseQuery = (
@@ -82,6 +96,10 @@ export const invalidateChangeCaseQueries = async (
       ? [
           queryClient.invalidateQueries({
             queryKey: changeCaseKeys.byEntity(workspaceId, entityId)
+          }),
+          // Members are keyed by record id, so the id may belong to a relation
+          queryClient.invalidateQueries({
+            queryKey: changeCaseKeys.byRelation(workspaceId, entityId)
           })
         ]
       : [])

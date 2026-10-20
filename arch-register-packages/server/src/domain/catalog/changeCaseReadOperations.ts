@@ -131,10 +131,14 @@ export const toApiMember = (
 ) => {
   const baseState = member.base_state;
   const proposedState = member.proposed_state;
+  const kind = memberStateEndpoints(member) ? ('relation' as const) : ('entity' as const);
+  const relationId = kind === 'relation' ? member.entity_id : null;
   if (!endpointVisible) {
     return {
       id: member.id,
+      kind,
       entity_id: member.entity_id,
+      relation_id: relationId,
       base_version: member.base_version,
       base_state: { ...baseState, data: {} },
       proposed_state: { ...proposedState, data: {} },
@@ -145,7 +149,9 @@ export const toApiMember = (
   const proposedSchema = schemaById.get(String(proposedState['schema_id'] ?? '')) ?? baseSchema;
   return {
     id: member.id,
+    kind,
     entity_id: member.entity_id,
+    relation_id: relationId,
     base_version: member.base_version,
     base_state: redactMemberStateData(baseState, authCtx, baseSchema),
     proposed_state: redactMemberStateData(proposedState, authCtx, proposedSchema),
@@ -196,6 +202,41 @@ export const listChangeCasesByEntity = async (
       );
 
       const rows = await db.changeCase.listCasesByEntity(ws, entity.id);
+      return Promise.all(rows.map(row => toApiChangeCase(db, ws, row, authCtx)));
+    }
+  });
+};
+
+export const listChangeCasesByRelation = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  relationId: string,
+  event: AuthenticatedEvent
+): Promise<ChangeCase[]> => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'entity', workspace: workspace },
+    fallback: 'Failed to retrieve change cases',
+    operation: async ({ ws, authCtx }) => {
+      const relation = await db.relation.getRelation(ws, relationId);
+      httpAssert.present(relation, { status: 404, message: `Relation '${relationId}' not found` });
+      const { inSchema, outSchema } = await getRelationOwnerSchemas(db, ws, relation);
+      httpAssert.true(
+        canViewTypedRelation(
+          authCtx,
+          [
+            { schema: inSchema, direction: 'in' },
+            { schema: outSchema, direction: 'out' }
+          ],
+          relation.schema_id,
+          relation.owner
+        ),
+        { status: 404, message: `Relation '${relationId}' not found` }
+      );
+
+      // Members are keyed by record id, so the entity lookup also covers relation ids
+      const rows = await db.changeCase.listCasesByEntity(ws, relation.id);
       return Promise.all(rows.map(row => toApiChangeCase(db, ws, row, authCtx)));
     }
   });
