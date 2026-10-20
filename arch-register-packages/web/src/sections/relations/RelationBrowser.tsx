@@ -427,10 +427,7 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
               </Table.EmptyRow>
             ) : (
               sorted.map(relation => (
-                <Table.Row
-                  key={relation._uid}
-                  onClick={() => setSelectedRelationId(relation._uid)}
-                >
+                <Table.Row key={relation._uid} onClick={() => setSelectedRelationId(relation._uid)}>
                   <Table.Cell>{relation._in.name}</Table.Cell>
                   <Table.Cell>{relation._out.name}</Table.Cell>
                   <Table.Cell>{relation._schema.name}</Table.Cell>

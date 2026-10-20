@@ -38,7 +38,11 @@ export const RestoreSnapshotDialog = ({
   };
 
   return (
-    <Dialog open={isOpen} onClose={onClose} title={`Restore ${subject === 'entity' ? 'Entity' : 'Relation'} Version`}>
+    <Dialog
+      open={isOpen}
+      onClose={onClose}
+      title={`Restore ${subject === 'entity' ? 'Entity' : 'Relation'} Version`}
+    >
       <div className={styles.content}>
         <div className={styles.warning}>
           <strong>Warning:</strong> This will restore the {subject} to a previous state. The current

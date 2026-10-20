@@ -156,8 +156,8 @@ describe('diffRelationSnapshotState', () => {
   });
 
   it('ignores fields absent from the version', () => {
-    expect(
-      diffRelationSnapshotState({ data: { protocol: 'http' } }, { data: {} }, schema)
-    ).toEqual([]);
+    expect(diffRelationSnapshotState({ data: { protocol: 'http' } }, { data: {} }, schema)).toEqual(
+      []
+    );
   });
 });

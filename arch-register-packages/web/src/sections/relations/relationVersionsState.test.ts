@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  isRestorableRelationVersionKind,
-  relationVersionTypeLabel
-} from './relationVersionsState';
+import { isRestorableRelationVersionKind, relationVersionTypeLabel } from './relationVersionsState';
 
 describe('isRestorableRelationVersionKind', () => {
   it('allows autosave, saved and applied versions', () => {
