@@ -21,7 +21,6 @@ import { FilterDropdown } from '../../components/FilterDropdown';
 import { Table } from '../../components/table/Table';
 import { useTableSort } from '../../components/table/useTableSort';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
-import { EntityNavigationLink } from '../../components/EntityNavigationLink';
 import { useEntityDrawer } from '../entities/entityDrawer/useEntityDrawer';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useTeams, useLifecycleStates } from '../../hooks/useWorkspaceConfig';
@@ -29,7 +28,7 @@ import { useSavedViews, useCreateSavedView, useUpdateSavedView } from '../../hoo
 import { useDeleteRelation } from '../../hooks/useRelations';
 import { useEntitiesByIds } from '../../hooks/useEntities';
 import { relationIds } from '../../lib/entityEditState';
-import { RelationDetailPopover } from '../entities/components/RelationDetailPopover';
+import { RelationDrawer } from './RelationDrawer';
 import { RelationBlastRadiusDialog } from './RelationBlastRadiusDialog';
 import { SaveViewDialog } from '../entities/components/EntityBrowser';
 import { RelationEditDialog } from '../../dialogs/RelationEditDialog';
@@ -61,9 +60,9 @@ import { useDateTimeFormatPreference } from '../../hooks/useDateTimeFormatPrefer
 // narrow to exactly one schema (`activeSchema`), since which fields exist depends on which schema a
 // given row belongs to — that's the one place activeSchema is still needed.
 //
-// Row detail, entity links, and saved views (#2699): clicking a row opens the same
-// RelationDetailPopover used elsewhere for typed relations (graph/topology views); "In"/"Out" cells
-// link out to the entity detail screen via EntityNavigationLink, same as RelationRecordList.tsx.
+// Row detail, entity links, and saved views (#2699): clicking a row opens the
+// RelationDrawer (which links on to the In/Out entities); the graph view still uses the
+// RelationDetailPopover for edges.
 // Saved views reuse the entity browser's SaveViewDialog and useSavedViews hooks as-is — relation-rooted
 // saved views persist the canonical query plus the selected table/graph mode.
 export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
@@ -99,7 +98,7 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
   const { openEntityDrawer } = useEntityDrawer();
   const { permissions } = useWorkspaceContext();
 
-  const [detail, setDetail] = useState<{ relationId: string; x: number; y: number } | null>(null);
+  const [selectedRelationId, setSelectedRelationId] = useState<string | null>(null);
   const [blastRadiusRelationId, setBlastRadiusRelationId] = useState<string | null>(null);
   const [isSavingView, setIsSavingView] = useState(false);
   const [editRelationId, setEditRelationId] = useState<string | null>(null);
@@ -241,6 +240,7 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
       compareFieldValues(getFieldValue(a, fieldId), getFieldValue(b, fieldId));
   }
   const { sorted, sort, toggleSort } = useTableSort(relations, comparators);
+  const selectedRelation = relations.find(relation => relation._uid === selectedRelationId);
 
   const handleSaveView = async (
     name: string,
@@ -427,30 +427,9 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
               </Table.EmptyRow>
             ) : (
               sorted.map(relation => (
-                <Table.Row
-                  key={relation._uid}
-                  onClick={e =>
-                    setDetail({ relationId: relation._uid, x: e.clientX, y: e.clientY })
-                  }
-                >
-                  <Table.Cell>
-                    <EntityNavigationLink
-                      publicId={relation._in.id}
-                      className={styles.entityLink}
-                      onClick={e => e.stopPropagation()}
-                    >
-                      {relation._in.name}
-                    </EntityNavigationLink>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <EntityNavigationLink
-                      publicId={relation._out.id}
-                      className={styles.entityLink}
-                      onClick={e => e.stopPropagation()}
-                    >
-                      {relation._out.name}
-                    </EntityNavigationLink>
-                  </Table.Cell>
+                <Table.Row key={relation._uid} onClick={() => setSelectedRelationId(relation._uid)}>
+                  <Table.Cell>{relation._in.name}</Table.Cell>
+                  <Table.Cell>{relation._out.name}</Table.Cell>
                   <Table.Cell>{relation._schema.name}</Table.Cell>
                   <Table.Cell>{relation._owner?.name ?? ''}</Table.Cell>
                   <Table.Cell>{relation._lifecycle?.name ?? ''}</Table.Cell>
@@ -569,13 +548,12 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
         </div>
       )}
 
-      {detail && (
-        <RelationDetailPopover
-          workspaceId={workspaceId}
-          relationId={detail.relationId}
-          x={detail.x}
-          y={detail.y}
-          onClose={() => setDetail(null)}
+      {selectedRelation && (
+        <RelationDrawer
+          workspaceSlug={workspaceId}
+          relation={selectedRelation}
+          relationSchema={relationSchemas.find(schema => schema.id === selectedRelation._schema.id)}
+          onClose={() => setSelectedRelationId(null)}
         />
       )}
 

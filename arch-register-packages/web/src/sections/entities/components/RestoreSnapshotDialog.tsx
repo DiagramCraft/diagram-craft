@@ -3,11 +3,7 @@ import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
-import type { EntityVersion } from '@arch-register/api-types/entityVersionContract';
-import type { EntitySchema } from '@arch-register/api-types/schemaContract';
-import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
-import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
-import { diffSnapshotState } from './entityTimelineHelpers';
+import type { ChangeRow } from './entityTimelineHelpers';
 import styles from './RestoreSnapshotDialog.module.css';
 import { formatDateTime } from '../../../utils/dateFormat';
 import { Table } from '../../../components/table/Table';
@@ -16,12 +12,14 @@ type RestoreSnapshotDialogProps = {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: (commitMessage?: string) => void;
-  version: EntityVersion;
-  currentState: Record<string, unknown>;
-  schema: EntitySchema | null;
-  lifecycleStates: WorkspaceLifecycleState[];
-  teams: WorkspaceTeam[];
+  version: {
+    created_at: string;
+    created_by_name: string | null;
+    commit_message: string | null;
+  };
+  changes: ChangeRow[];
   isRestoring: boolean;
+  subject?: 'entity' | 'relation';
 };
 
 export const RestoreSnapshotDialog = ({
@@ -29,25 +27,25 @@ export const RestoreSnapshotDialog = ({
   onClose,
   onConfirm,
   version,
-  currentState,
-  schema,
-  lifecycleStates,
-  teams,
-  isRestoring
+  changes,
+  isRestoring,
+  subject = 'entity'
 }: RestoreSnapshotDialogProps) => {
   const [commitMessage, setCommitMessage] = useState('');
-
-  const changes = diffSnapshotState(currentState, version.state, schema, lifecycleStates, teams);
 
   const handleConfirm = () => {
     onConfirm(commitMessage ?? undefined);
   };
 
   return (
-    <Dialog open={isOpen} onClose={onClose} title="Restore Entity Version">
+    <Dialog
+      open={isOpen}
+      onClose={onClose}
+      title={`Restore ${subject === 'entity' ? 'Entity' : 'Relation'} Version`}
+    >
       <div className={styles.content}>
         <div className={styles.warning}>
-          <strong>Warning:</strong> This will restore the entity to a previous state. The current
+          <strong>Warning:</strong> This will restore the {subject} to a previous state. The current
           state will be saved as an autosave snapshot.
         </div>
 

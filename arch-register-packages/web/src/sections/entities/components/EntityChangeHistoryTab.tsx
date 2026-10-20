@@ -8,6 +8,7 @@ import { useAuditLog } from '../../../hooks/useAudit';
 import { useRestoreEntityVersion } from '../../../hooks/useEntityVersions';
 import { formatDateTime } from '../../../utils/dateFormat';
 import { RestoreSnapshotDialog } from './RestoreSnapshotDialog';
+import { diffSnapshotState } from './entityTimelineHelpers';
 import styles from './EntityChangeHistoryTab.module.css';
 import { Table } from '../../../components/table/Table';
 import { DropdownMenu } from '../../../components/DropdownMenu';
@@ -124,18 +125,21 @@ export const EntityChangeHistoryTab = ({
           onClose={() => setRestoreDialogVersion(null)}
           onConfirm={handleRestore}
           version={restoreDialogVersion}
-          currentState={{
-            name: entity._name,
-            description: entity._description,
-            lifecycle: entity._lifecycle?.id ?? null,
-            target_lifecycle: entity._targetLifecycle?.id ?? null,
-            target_lifecycle_date: entity._targetLifecycleDate,
-            owner: entity._owner?.id ?? null,
-            data: schema ? Object.fromEntries(schema.fields.map(f => [f.id, entity[f.id]])) : {}
-          }}
-          schema={schema}
-          lifecycleStates={lifecycleStates}
-          teams={teams}
+          changes={diffSnapshotState(
+            {
+              name: entity._name,
+              description: entity._description,
+              lifecycle: entity._lifecycle?.id ?? null,
+              target_lifecycle: entity._targetLifecycle?.id ?? null,
+              target_lifecycle_date: entity._targetLifecycleDate,
+              owner: entity._owner?.id ?? null,
+              data: schema ? Object.fromEntries(schema.fields.map(f => [f.id, entity[f.id]])) : {}
+            },
+            restoreDialogVersion.state,
+            schema,
+            lifecycleStates,
+            teams
+          )}
           isRestoring={restoreVersion.isPending}
         />
       )}

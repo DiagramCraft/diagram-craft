@@ -6,6 +6,8 @@ import { Drawer } from '../../components/Drawer';
 import { useEntitiesByIds } from '../../hooks/useEntities';
 import { relationIds } from '../../lib/entityEditState';
 import { formatRelationFieldValue } from '../../widgets/data-views/relation-table/relationTableLogic';
+import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
+import { RelationHistorySection } from './RelationHistorySection';
 import { useEntityDrawer } from '../entities/entityDrawer/useEntityDrawer';
 import styles from './RelationDrawer.module.css';
 
@@ -27,6 +29,7 @@ export const RelationDrawer = ({
   onClose: () => void;
 }) => {
   const { openEntityDrawer } = useEntityDrawer();
+  const { permissions } = useWorkspaceContext();
   const fields = relationSchema?.fields ?? [];
   const carriedIds = fields.flatMap(field =>
     field.type === 'entityRelation' ? relationIds(relation[field.id]) : []
@@ -106,6 +109,17 @@ export const RelationDrawer = ({
         <span className={styles.attributeLabel}>Owner</span>
         <span>{relation._owner?.name ?? '—'}</span>
       </div>
+
+      {permissions.canViewAudit && (
+        <>
+          <div className={styles.sectionLabel}>History</div>
+          <RelationHistorySection
+            workspaceSlug={workspaceSlug}
+            relation={relation}
+            relationSchema={relationSchema}
+          />
+        </>
+      )}
     </Drawer>
   );
 };
