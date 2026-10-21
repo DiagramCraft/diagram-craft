@@ -391,6 +391,7 @@ export const EntityBrowserScreen = () => {
       <EntityBrowser
         onCountChange={setCount}
         onFirstFilteredSchemaIdChange={setFirstFilteredSchemaId}
+        tableRowOpensEntityPage
       />
 
       <SaveViewDialog
