@@ -88,6 +88,31 @@ export const useAddChangeCaseMember = (workspaceId: string, projectId: string) =
   });
 };
 
+export const useAddRelationChangeCaseMember = (workspaceId: string, projectId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (params: {
+      caseId: string;
+      relationId: string;
+      proposedState: Record<string, unknown>;
+    }) =>
+      orpcClient.changeCases.addRelationMember({
+        params: { workspace: workspaceId, id: projectId, caseId: params.caseId },
+        body: { relationId: params.relationId, proposedState: params.proposedState }
+      }),
+    onSuccess: (_, variables) => {
+      invalidateChangeCaseQueries(
+        queryClient,
+        workspaceId,
+        projectId,
+        variables.caseId,
+        variables.relationId
+      );
+    }
+  });
+};
+
 export const useRemoveChangeCaseMember = (workspaceId: string, projectId: string) => {
   const queryClient = useQueryClient();
 

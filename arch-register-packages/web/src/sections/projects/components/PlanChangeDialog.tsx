@@ -6,13 +6,17 @@ import { DateInput } from '@diagram-craft/app-components/DateInput';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Select } from '@diagram-craft/app-components/Select';
 import { useEntity } from '../../../hooks/useEntities';
+import { useRelations } from '../../../hooks/useRelations';
 import { useProjectEntities } from '../../../hooks/useProjects';
 import { useMilestones } from '../../../hooks/useMilestones';
 import { useAutoFocus } from '../../../hooks/useAutoFocus';
 import {
+  useAddRelationChangeCaseMember,
   useChangeCase,
   useCreateChangeCase,
-  useSaveChangeCaseDraft
+  useRemoveChangeCaseMember,
+  useSaveChangeCaseDraft,
+  useUpdateChangeCaseMember
 } from '../../../hooks/useChangeCases';
 import { AddEntityDialog } from '../../../dialogs/AddEntityDialog';
 import { createEntityEditState, type EntityEditState } from '../../../lib/entityEditState';
@@ -24,6 +28,7 @@ import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigCont
 import type { EntityRecord, EntitySummary } from '@arch-register/api-types/entityContract';
 import { LoadingState } from '../../../components/LoadingState';
 import { EntityProposedStateFields } from './EntityProposedStateFields';
+import { RelationMemberEditor } from './RelationMemberEditor';
 import styles from './PlanChangeDialog.module.css';
 
 type Props = {
@@ -49,6 +54,10 @@ type DraftEntity = {
 const draftKey = (draftId: string) => `draft:${draftId}`;
 const isDraftKey = (key: string) => key.startsWith('draft:');
 const draftIdFromKey = (key: string) => key.slice('draft:'.length);
+
+const relationKey = (relationId: string) => `relation:${relationId}`;
+const isRelationKey = (key: string) => key.startsWith('relation:');
+const relationIdFromKey = (key: string) => key.slice('relation:'.length);
 
 const isReferenceField = (f: EntitySchema['fields'][number]) => isRelationLikeField(f);
 
@@ -197,7 +206,11 @@ export const PlanChangeDialog = ({
     editCaseId ?? '',
     open && isEditing
   );
+  const { data: allRelations = [] } = useRelations(workspaceId, {}, { enabled: open });
   const createChangeCase = useCreateChangeCase(workspaceId, projectId);
+  const addRelationMember = useAddRelationChangeCaseMember(workspaceId, projectId);
+  const updateMember = useUpdateChangeCaseMember(workspaceId, projectId);
+  const removeMember = useRemoveChangeCaseMember(workspaceId, projectId);
   const saveChangeCaseDraft = useSaveChangeCaseDraft(workspaceId, projectId);
 
   const [memberIds, setMemberIds] = useState<string[]>([]);
@@ -207,6 +220,7 @@ export const PlanChangeDialog = ({
   const [draftEntities, setDraftEntities] = useState<Record<string, DraftEntity>>({});
   const [isAddingEntity, setIsAddingEntity] = useState(false);
   const [isCreatingEntity, setIsCreatingEntity] = useState(false);
+  const [isAddingRelation, setIsAddingRelation] = useState(false);
   const [addEntitySearch, setAddEntitySearch] = useState('');
   const [name, setName] = useState('');
   const [targetDate, setTargetDate] = useState('');
@@ -227,6 +241,7 @@ export const PlanChangeDialog = ({
     setMemberIds(initialIds);
     setActiveEntityId(initialIds[0] ?? null);
     setIsAddingEntity(false);
+    setIsAddingRelation(false);
     setIsCreatingEntity(false);
     setAddEntitySearch('');
     setDraftEntities({});
@@ -240,10 +255,13 @@ export const PlanChangeDialog = ({
 
   useEffect(() => {
     if (!open || !isEditing || !existingCase || initialized) return;
-    const ids = existingCase.members.map(m => m.entity_id);
+    const ids = existingCase.members.map(m =>
+      m.kind === 'relation' ? relationKey(m.entity_id) : m.entity_id
+    );
     setMemberIds(ids);
     setActiveEntityId(ids[0] ?? null);
     setIsAddingEntity(false);
+    setIsAddingRelation(false);
     setIsCreatingEntity(false);
     setAddEntitySearch('');
     setDraftEntities({});
@@ -306,6 +324,27 @@ export const PlanChangeDialog = ({
     const lower = addEntitySearch.toLowerCase();
     return `${e.entity_name} ${e.entity_slug}`.toLowerCase().includes(lower);
   });
+
+  const relationById = new Map(allRelations.map(r => [r._uid, r]));
+  const relationLabel = (relationId: string) => {
+    const relation = relationById.get(relationId);
+    return relation ? `${relation._in.name} → ${relation._out.name}` : relationId;
+  };
+  const candidateRelations = allRelations.filter(r => {
+    if (memberIds.includes(relationKey(r._uid))) return false;
+    if (!addEntitySearch.trim()) return true;
+    return `${relationLabel(r._uid)} ${r._schema.name}`
+      .toLowerCase()
+      .includes(addEntitySearch.toLowerCase());
+  });
+
+  const addRelation = (relationId: string) => {
+    const key = relationKey(relationId);
+    setMemberIds(prev => [...prev, key]);
+    setActiveEntityId(key);
+    setIsAddingRelation(false);
+    setAddEntitySearch('');
+  };
 
   const addEntity = (entityId: string) => {
     setMemberIds(prev => [...prev, entityId]);
@@ -388,7 +427,8 @@ export const PlanChangeDialog = ({
   const canSave =
     !isSaving &&
     allStatesReady &&
-    memberIds.length > 0 &&
+    // The create/saveDraft endpoints require at least one entity member; relations ride along.
+    memberIds.some(id => !isRelationKey(id)) &&
     nameIsValid &&
     (!isEditing || !!existingCase);
 
@@ -396,7 +436,9 @@ export const PlanChangeDialog = ({
     if (!canSave) return;
     setIsSaving(true);
     try {
-      const members = memberIds.map(memberKey =>
+      const entityKeys = memberIds.filter(key => !isRelationKey(key));
+      const relationKeys = memberIds.filter(isRelationKey);
+      const members = entityKeys.map(memberKey =>
         isDraftKey(memberKey)
           ? {
               draftId: draftIdFromKey(memberKey),
@@ -408,8 +450,9 @@ export const PlanChangeDialog = ({
         draftId: draft.draftId,
         state: draft.state
       }));
+      let caseId: string;
       if (!isEditing) {
-        await createChangeCase.mutateAsync({
+        const created = await createChangeCase.mutateAsync({
           name,
           targetDate: milestoneId ? null : targetDate || null,
           milestoneId: milestoneId || null,
@@ -417,8 +460,9 @@ export const PlanChangeDialog = ({
           members,
           newEntities
         });
+        caseId = created.id;
       } else {
-        const caseId = editCaseId!;
+        caseId = editCaseId!;
         await saveChangeCaseDraft.mutateAsync({
           caseId,
           draft: {
@@ -430,6 +474,31 @@ export const PlanChangeDialog = ({
             newEntities
           }
         });
+      }
+
+      // Relation members are managed through their own endpoints; saveDraft leaves them alone.
+      const existingRelationMembers = new Map(
+        (existingCase?.members ?? [])
+          .filter(m => m.kind === 'relation')
+          .map(m => [relationKey(m.entity_id), m])
+      );
+      for (const [key, member] of existingRelationMembers) {
+        if (!relationKeys.includes(key)) {
+          await removeMember.mutateAsync({ caseId, memberId: member.id });
+        }
+      }
+      for (const key of relationKeys) {
+        const proposedState = proposedStates[key]!;
+        const existing = existingRelationMembers.get(key);
+        if (existing) {
+          await updateMember.mutateAsync({ caseId, memberId: existing.id, proposedState });
+        } else {
+          await addRelationMember.mutateAsync({
+            caseId,
+            relationId: relationIdFromKey(key),
+            proposedState
+          });
+        }
       }
       onClose();
     } finally {
@@ -496,7 +565,48 @@ export const PlanChangeDialog = ({
 
           <div className={styles.layout}>
             <div className={styles.entityPane}>
-              {isAddingEntity ? (
+              {isAddingRelation ? (
+                <div className={styles.addEntityPanel}>
+                  <div className={styles.addEntitySearch}>
+                    <TextInput
+                      variant="search"
+                      value={addEntitySearch}
+                      placeholder="Search relations…"
+                      onChange={v => setAddEntitySearch(v ?? '')}
+                      onClear={() => setAddEntitySearch('')}
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+                  <div className={styles.addEntityList}>
+                    {candidateRelations.length === 0 ? (
+                      <div className={styles.emptyList}>No matching relations.</div>
+                    ) : (
+                      candidateRelations.map(r => (
+                        <button
+                          key={r._uid}
+                          type="button"
+                          className={styles.addEntityItem}
+                          onClick={() => addRelation(r._uid)}
+                        >
+                          {relationLabel(r._uid)} ({r._schema.name})
+                        </button>
+                      ))
+                    )}
+                  </div>
+                  <div className={styles.entityPaneFooter}>
+                    <button
+                      type="button"
+                      className={styles.addEntityButton}
+                      onClick={() => {
+                        setIsAddingRelation(false);
+                        setAddEntitySearch('');
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : isAddingEntity ? (
                 <div className={styles.addEntityPanel}>
                   <div className={styles.addEntitySearch}>
                     <TextInput
@@ -539,7 +649,7 @@ export const PlanChangeDialog = ({
                 <>
                   <div className={styles.entityPaneList}>
                     {memberIds.length === 0 ? (
-                      <div className={styles.emptyList}>No entities added yet.</div>
+                      <div className={styles.emptyList}>No entities or relations added yet.</div>
                     ) : (
                       memberIds.map(memberKey => {
                         const draft = isDraftKey(memberKey)
@@ -547,6 +657,12 @@ export const PlanChangeDialog = ({
                           : undefined;
                         const entity = draft?.entity ?? entityById.get(memberKey);
                         const labels = changedLabels[memberKey] ?? [];
+                        const displayName = isRelationKey(memberKey)
+                          ? relationLabel(relationIdFromKey(memberKey))
+                          : ((entity as { entity_name?: string; _name?: string } | undefined)
+                              ?.entity_name ??
+                            (entity as { _name?: string } | undefined)?._name ??
+                            memberKey);
                         return (
                           <div
                             key={memberKey}
@@ -558,12 +674,7 @@ export const PlanChangeDialog = ({
                               className={styles.entityPaneRowBody}
                               onClick={() => setActiveEntityId(memberKey)}
                             >
-                              <div className={styles.entityPaneRowName}>
-                                {(entity as { entity_name?: string; _name?: string } | undefined)
-                                  ?.entity_name ??
-                                  (entity as { _name?: string } | undefined)?._name ??
-                                  memberKey}
-                              </div>
+                              <div className={styles.entityPaneRowName}>{displayName}</div>
                               <div className={styles.entityPaneRowChanges}>
                                 {labels.length > 0 ? labels.join(', ') : 'No changes yet'}
                               </div>
@@ -571,12 +682,7 @@ export const PlanChangeDialog = ({
                             <button
                               type="button"
                               className={styles.entityPaneRowRemove}
-                              aria-label={`Remove ${
-                                (entity as { entity_name?: string; _name?: string } | undefined)
-                                  ?.entity_name ??
-                                (entity as { _name?: string } | undefined)?._name ??
-                                memberKey
-                              }`}
+                              aria-label={`Remove ${displayName}`}
                               onClick={e => {
                                 e.stopPropagation();
                                 removeEntity(memberKey);
@@ -606,6 +712,17 @@ export const PlanChangeDialog = ({
                       <TbPlus size={13} />
                       New entity
                     </button>
+                    <button
+                      type="button"
+                      className={styles.addEntityButton}
+                      onClick={() => {
+                        setAddEntitySearch('');
+                        setIsAddingRelation(true);
+                      }}
+                    >
+                      <TbPlus size={13} />
+                      Add relation
+                    </button>
                   </div>
                 </>
               )}
@@ -618,6 +735,29 @@ export const PlanChangeDialog = ({
                 </div>
               ) : (
                 memberIds.map(memberKey => {
+                  if (isRelationKey(memberKey)) {
+                    return (
+                      <RelationMemberEditor
+                        key={memberKey}
+                        workspaceId={workspaceId}
+                        memberKey={memberKey}
+                        relationId={relationIdFromKey(memberKey)}
+                        isActive={activeEntityId === memberKey}
+                        existingProposedState={
+                          existingCase?.members.find(
+                            m =>
+                              m.kind === 'relation' && m.entity_id === relationIdFromKey(memberKey)
+                          )?.proposed_state
+                        }
+                        onProposedStateChange={(id, proposedState) =>
+                          setProposedStates(prev => ({ ...prev, [id]: proposedState }))
+                        }
+                        onChangedLabelsChange={(id, labels) =>
+                          setChangedLabels(prev => ({ ...prev, [id]: labels }))
+                        }
+                      />
+                    );
+                  }
                   const draft = isDraftKey(memberKey)
                     ? draftEntities[draftIdFromKey(memberKey)]
                     : undefined;

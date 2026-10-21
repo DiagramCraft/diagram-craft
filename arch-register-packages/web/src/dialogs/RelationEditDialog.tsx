@@ -28,10 +28,10 @@ type Props = {
   relationId: string | null;
 };
 
-const activeFieldsOf = (schema: RelationSchema | undefined): RelationSchema['fields'] =>
+export const activeFieldsOf = (schema: RelationSchema | undefined): RelationSchema['fields'] =>
   (schema?.fields ?? []).filter(f => !f.archived);
 
-const initialFieldValue = (
+export const initialFieldValue = (
   field: RelationSchema['fields'][number],
   record: Record<string, unknown>
 ): string | string[] =>
@@ -39,7 +39,7 @@ const initialFieldValue = (
     ? relationIds(record[field.id])
     : String(record[field.id] ?? '');
 
-const fieldValueChanged = (
+export const fieldValueChanged = (
   field: RelationSchema['fields'][number],
   next: string | string[],
   record: Record<string, unknown>
@@ -52,7 +52,10 @@ const fieldValueChanged = (
   return next !== String(record[field.id] ?? '');
 };
 
-const toFieldValue = (field: RelationSchema['fields'][number], raw: string | string[]): unknown => {
+export const toFieldValue = (
+  field: RelationSchema['fields'][number],
+  raw: string | string[]
+): unknown => {
   if (field.type === 'entityRelation' || isMultiValuedRelationSelectField(field)) {
     return relationIds(raw);
   }

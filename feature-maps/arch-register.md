@@ -863,8 +863,9 @@
           and changes-requested states, and a project's planned-change case can include relation instances
           alongside entities as members (endpoints are immutable and a proposal that changes one is rejected).
           Approved and applied relation changes are wired into the same governance engine, timeline markers, and
-          workspace landscape-diff as entities; the planned-change case surface for relations is not yet exposed in
-          the web UI. The
+          workspace landscape-diff as entities. In the web UI, relations are added and edited as members in the Plan
+          change dialog (alongside at least one entity), listed with entity members on the project's future-changes
+          view, and shown in a Future plans section of the relation drawer. The
           entity detail screen's Relations tab and Topology view also surface typed relation instances (grouped by
           relation schema in Topology, using the schema's own color), each expandable in place to view field values
           and open the same audit-trail history dialog. Relation instances can additionally be browsed as
