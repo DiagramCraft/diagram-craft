@@ -32,9 +32,9 @@ export class PostgresRelationDatabase extends PostgresDatabaseBase implements Re
     try {
       const rows = (await this.sql`
         INSERT INTO relation_schema
-          (id, workspace, name, category_id, description, in_schema_ids, out_schema_ids, in_label, out_label, fields, groups, shared_field_group_links, validation_rules, color, icon, relation_approval_policy, unique_endpoint_pair, version, created_at, updated_at)
+          (id, workspace, name, category_id, description, in_schema_ids, out_schema_ids, in_label, out_label, fields, groups, shared_field_group_links, validation_rules, color, icon, unique_endpoint_pair, version, created_at, updated_at)
         VALUES
-          (${input.id}, ${input.workspace}, ${input.name}, ${input.category_id ?? null}, ${input.description}, ${this.json(input.in_schema_ids)}, ${this.json(input.out_schema_ids)}, ${input.in_label ?? null}, ${input.out_label ?? null}, ${this.json(input.fields)}, ${this.json(input.groups ?? [])}, ${this.json(input.shared_field_group_links ?? [])}, ${this.json(input.validation_rules ?? [])}, ${input.color}, ${input.icon}, ${input.relation_approval_policy ?? 'disabled'}, ${input.unique_endpoint_pair ?? false}, ${input.version ?? 1}, ${input.created_at}, ${input.updated_at})
+          (${input.id}, ${input.workspace}, ${input.name}, ${input.category_id ?? null}, ${input.description}, ${this.json(input.in_schema_ids)}, ${this.json(input.out_schema_ids)}, ${input.in_label ?? null}, ${input.out_label ?? null}, ${this.json(input.fields)}, ${this.json(input.groups ?? [])}, ${this.json(input.shared_field_group_links ?? [])}, ${this.json(input.validation_rules ?? [])}, ${input.color}, ${input.icon}, ${input.unique_endpoint_pair ?? false}, ${input.version ?? 1}, ${input.created_at}, ${input.updated_at})
         RETURNING *
       `) as DatabaseRow[];
       const [row] = rows;
@@ -64,7 +64,6 @@ export class PostgresRelationDatabase extends PostgresDatabaseBase implements Re
             validation_rules = ${this.json(input.validation_rules ?? [])},
             color = ${input.color},
             icon = ${input.icon},
-            relation_approval_policy = COALESCE(${input.relation_approval_policy ?? null}, relation_approval_policy),
             unique_endpoint_pair = COALESCE(${input.unique_endpoint_pair ?? null}, unique_endpoint_pair),
             version = COALESCE(${input.version ?? null}::integer, version),
             updated_at = ${input.updated_at}

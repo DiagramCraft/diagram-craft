@@ -2224,7 +2224,6 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       shared_field_group_links: [],
       color: null,
       icon: null,
-      relation_approval_policy: 'disabled',
       created_at: new Date(),
       updated_at: new Date()
     });
@@ -2240,7 +2239,6 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       shared_field_group_links: [],
       color: null,
       icon: null,
-      relation_approval_policy: 'disabled',
       created_at: new Date(),
       updated_at: new Date()
     });
@@ -2406,7 +2404,6 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       shared_field_group_links: [],
       color: null,
       icon: null,
-      relation_approval_policy: 'disabled',
       created_at: new Date(),
       updated_at: new Date()
     });
@@ -2565,7 +2562,6 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       shared_field_group_links: [],
       color: null,
       icon: null,
-      relation_approval_policy: 'disabled',
       created_at: new Date(),
       updated_at: new Date()
     });
@@ -2650,7 +2646,6 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       shared_field_group_links: [],
       color: null,
       icon: null,
-      relation_approval_policy: 'disabled',
       created_at: new Date(),
       updated_at: new Date()
     });
@@ -2767,7 +2762,6 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       shared_field_group_links: [],
       color: null,
       icon: null,
-      relation_approval_policy: 'disabled',
       created_at: new Date(),
       updated_at: new Date()
     });
@@ -2881,7 +2875,6 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       shared_field_group_links: [],
       color: null,
       icon: null,
-      relation_approval_policy: 'disabled',
       created_at: new Date(),
       updated_at: new Date()
     });
@@ -2897,7 +2890,6 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       shared_field_group_links: [],
       color: null,
       icon: null,
-      relation_approval_policy: 'disabled',
       created_at: new Date(),
       updated_at: new Date()
     });
@@ -3032,7 +3024,6 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       shared_field_group_links: [],
       color: null,
       icon: null,
-      relation_approval_policy: 'disabled',
       created_at: new Date(),
       updated_at: new Date()
     });
@@ -3195,7 +3186,6 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       shared_field_group_links: [],
       color: null,
       icon: null,
-      relation_approval_policy: 'disabled',
       created_at: new Date(),
       updated_at: new Date()
     });
@@ -3261,7 +3251,6 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       shared_field_group_links: [],
       color: null,
       icon: null,
-      relation_approval_policy: 'disabled',
       created_at: new Date(),
       updated_at: new Date()
     });
@@ -3305,7 +3294,6 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       shared_field_group_links: [],
       color: null,
       icon: null,
-      relation_approval_policy: 'disabled',
       created_at: new Date(),
       updated_at: new Date()
     });
@@ -3465,7 +3453,6 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       shared_field_group_links: [],
       color: null,
       icon: null,
-      relation_approval_policy: 'disabled',
       created_at: new Date(),
       updated_at: new Date()
     });

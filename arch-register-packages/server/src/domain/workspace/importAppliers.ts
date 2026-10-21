@@ -1,3 +1,4 @@
+import { upsertRelationApprovalPolicy } from '../governance/schemaGovernancePolicy';
 import { randomUUID } from 'node:crypto';
 import {
   dashboardKeyFromName,
@@ -646,11 +647,6 @@ export const importRelationSchemas = async (
       existing?.id ??
       (preserveIds ? source.id : randomUUID());
     idMapping.relation_schemas.set(source.id, nextId);
-    if (source.relation_approval_policy === 'required') {
-      throw new Error(
-        `Relation schema '${source.name}' uses unsupported approval policy 'required'; relation approval workflow is provided by #2574`
-      );
-    }
 
     const fields = source.fields.map(field => {
       const withGroup =
@@ -702,7 +698,6 @@ export const importRelationSchemas = async (
       })),
       color: source.color,
       icon: source.icon,
-      relation_approval_policy: 'disabled' as const,
       unique_endpoint_pair: source.unique_endpoint_pair ?? false,
       version: source.version ?? 1,
       created_at: existing?.created_at ?? now,
@@ -741,7 +736,6 @@ export const importRelationSchemas = async (
         shared_field_group_links: input.shared_field_group_links,
         color: input.color,
         icon: input.icon,
-        relation_approval_policy: input.relation_approval_policy,
         unique_endpoint_pair: input.unique_endpoint_pair,
         version: input.version,
         updated_at: input.updated_at
@@ -756,6 +750,14 @@ export const importRelationSchemas = async (
       await db.relation.createRelationSchema(input);
       created++;
     }
+    await upsertRelationApprovalPolicy(
+      db,
+      workspace,
+      nextId,
+      source.relation_approval_policy ?? 'disabled',
+      now,
+      null
+    );
   }
 
   return { created, updated };
@@ -970,14 +972,6 @@ export const importRelations = async (
     httpAssert.present(schema, {
       status: 409,
       message: `Relation schema '${relation.schema_id}' is unavailable while importing relation '${relation.id}'`
-    });
-    httpAssert.true(schema.relation_approval_policy !== 'required', {
-      status: 400,
-      message: `Relation schema '${schema.name}' uses unsupported approval policy 'required'; relation approval workflow is provided by #2574`
-    });
-    httpAssert.true(relation.approval_policy_override !== 'required', {
-      status: 400,
-      message: `Relation '${relation.id}' uses unsupported approval policy override 'required'; relation approval workflow is provided by #2574`
     });
 
     const [inEntity, outEntity] = await Promise.all([

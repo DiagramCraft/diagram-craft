@@ -93,7 +93,6 @@ const relationSchema: RelationSchemaDbResult = {
   groups: [],
   color: null,
   icon: null,
-  relation_approval_policy: 'disabled',
   created_at: now,
   updated_at: now
 };

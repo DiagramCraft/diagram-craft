@@ -46,7 +46,6 @@ export type RelationSchemaDbResult = {
   validation_rules?: ValidationRule[];
   color: string | null;
   icon: string | null;
-  relation_approval_policy?: 'required' | 'disabled';
   /** Whether active relations must have a unique ordered (in, out) endpoint pair. */
   unique_endpoint_pair?: boolean;
   /** Defaults to 1 on create; omit on update to leave the current version unchanged. */
@@ -209,9 +208,6 @@ export const relationMappers = {
     ),
     color: row['color'] == null ? null : String(row['color']),
     icon: row['icon'] == null ? null : String(row['icon']),
-    relation_approval_policy: String(
-      row['relation_approval_policy'] ?? 'disabled'
-    ) as RelationSchemaDbResult['relation_approval_policy'],
     unique_endpoint_pair: Boolean(row['unique_endpoint_pair'] ?? false),
     version: Number(row['version'] ?? 1),
     created_at: databaseDate(row['created_at']),

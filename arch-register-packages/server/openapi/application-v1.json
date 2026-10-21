@@ -13676,7 +13676,7 @@
                           "disabled"
                         ],
                         "type": "string",
-                        "description": "Approval policy for relation instance changes. \"required\" is not yet supported — see #2574."
+                        "description": "Approval policy for relation instance changes. \"required\" means edits to existing relations go through a change proposal. Stored as the schema-scoped \"Relation change proposals\" workflow in Workspace settings > Workflows."
                       },
                       "created_at": {
                         "type": "string",
@@ -14582,7 +14582,7 @@
                       "disabled"
                     ],
                     "type": "string",
-                    "description": "Approval policy for relation instance changes. \"required\" is not yet supported — see #2574."
+                    "description": "Approval policy for relation instance changes. \"required\" means edits to existing relations go through a change proposal. Stored as the schema-scoped \"Relation change proposals\" workflow in Workspace settings > Workflows."
                   }
                 },
                 "required": [
@@ -15562,7 +15562,7 @@
                         "disabled"
                       ],
                       "type": "string",
-                      "description": "Approval policy for relation instance changes. \"required\" is not yet supported — see #2574."
+                      "description": "Approval policy for relation instance changes. \"required\" means edits to existing relations go through a change proposal. Stored as the schema-scoped \"Relation change proposals\" workflow in Workspace settings > Workflows."
                     },
                     "created_at": {
                       "type": "string",
@@ -16594,7 +16594,7 @@
                         "disabled"
                       ],
                       "type": "string",
-                      "description": "Approval policy for relation instance changes. \"required\" is not yet supported — see #2574."
+                      "description": "Approval policy for relation instance changes. \"required\" means edits to existing relations go through a change proposal. Stored as the schema-scoped \"Relation change proposals\" workflow in Workspace settings > Workflows."
                     },
                     "created_at": {
                       "type": "string",
@@ -17508,7 +17508,7 @@
                       "disabled"
                     ],
                     "type": "string",
-                    "description": "Approval policy for relation instance changes. \"required\" is not yet supported — see #2574."
+                    "description": "Approval policy for relation instance changes. \"required\" means edits to existing relations go through a change proposal. Stored as the schema-scoped \"Relation change proposals\" workflow in Workspace settings > Workflows."
                   },
                   "fieldMigrations": {
                     "type": "object",
@@ -18517,7 +18517,7 @@
                         "disabled"
                       ],
                       "type": "string",
-                      "description": "Approval policy for relation instance changes. \"required\" is not yet supported — see #2574."
+                      "description": "Approval policy for relation instance changes. \"required\" means edits to existing relations go through a change proposal. Stored as the schema-scoped \"Relation change proposals\" workflow in Workspace settings > Workflows."
                     },
                     "created_at": {
                       "type": "string",

@@ -626,12 +626,6 @@ const validateRelationSchemas = async (
           `Relation schema '${relationSchema.name}' field '${reference.fieldName}' references missing field group '${reference.groupId}'`
       )
     );
-
-    if (relationSchema.relation_approval_policy === 'required') {
-      errors.push(
-        `Relation schema '${relationSchema.name}' uses unsupported approval policy 'required'; relation approval workflow is provided by #2574`
-      );
-    }
   }
 
   return { conflicts, warnings, errors };
@@ -833,18 +827,6 @@ const validateRelations = async (
         import_item: importItem,
         suggested_resolution: 'skip'
       });
-    }
-
-    const targetSchema = schema ?? existingSchema;
-    if (targetSchema?.relation_approval_policy === 'required') {
-      errors.push(
-        `Relation '${relation.id}' uses unsupported approval policy 'required'; relation approval workflow is provided by #2574`
-      );
-    }
-    if (relation.approval_policy_override === 'required') {
-      errors.push(
-        `Relation '${relation.id}' uses unsupported approval policy override 'required'; relation approval workflow is provided by #2574`
-      );
     }
   }
 

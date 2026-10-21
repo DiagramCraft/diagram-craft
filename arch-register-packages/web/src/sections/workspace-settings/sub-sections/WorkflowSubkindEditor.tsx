@@ -1,4 +1,5 @@
 import { useDocumentTypes } from '../../../hooks/useDocuments';
+import { useRelationSchemas } from '../../../hooks/useRelationSchemas';
 import { useSchemas } from '../../../hooks/useSchemas';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { Select } from '@diagram-craft/app-components/Select';
@@ -80,6 +81,30 @@ export const EntitySchemaSubkindEditor = ({
   );
 };
 
+export const RelationSchemaSubkindEditor = ({
+  workspaceSlug,
+  value,
+  onChange
+}: Omit<WorkflowSubkindEditorProps, 'caseKind'>) => {
+  const { data: relationSchemas = [] } = useRelationSchemas(workspaceSlug);
+
+  return (
+    <FormElement label="Relation schema">
+      <Select.Root
+        value={value ?? undefined}
+        onChange={next => onChange(next ?? null)}
+        placeholder="Select relation schema"
+      >
+        {relationSchemas.map(schema => (
+          <Select.Item key={schema.id} value={schema.id}>
+            {schema.name}
+          </Select.Item>
+        ))}
+      </Select.Root>
+    </FormElement>
+  );
+};
+
 export const FieldDateReminderSubkindEditor = ({
   workspaceSlug,
   value,
@@ -145,6 +170,15 @@ export const WorkflowSubkindEditor = ({
   ) {
     return (
       <EntitySchemaSubkindEditor workspaceSlug={workspaceSlug} value={value} onChange={onChange} />
+    );
+  }
+  if (caseKind.case_kind === 'relation.change-case') {
+    return (
+      <RelationSchemaSubkindEditor
+        workspaceSlug={workspaceSlug}
+        value={value}
+        onChange={onChange}
+      />
     );
   }
   if (caseKind.case_kind === 'field-date-reminder') {

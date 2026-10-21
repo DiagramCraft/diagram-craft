@@ -256,7 +256,7 @@ const createUpdateRelationTool = (context: AiChatToolContext) =>
       oldRow.schema_id
     );
     if (!schema) throw new Error(`Relation schema '${oldRow.schema_id}' not found`);
-    assertRelationMutationsSupported(schema, oldRow);
+    await assertRelationMutationsSupported(context.db, context.workspaceId, schema, oldRow);
     const endpointAccess = await loadRelationEndpointAccess(
       context,
       oldRow.in_entity_id,

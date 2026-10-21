@@ -305,7 +305,7 @@ export const relationSchemaSchema = z.object({
     .enum(['required', 'disabled'])
     .optional()
     .describe(
-      'Approval policy for relation instance changes. "required" is not yet supported — see #2574.'
+      'Approval policy for relation instance changes. "required" means edits to existing relations go through a change proposal. Stored as the schema-scoped "Relation change proposals" workflow in Workspace settings > Workflows.'
     ),
   created_at: z.string().describe('ISO 8601 creation timestamp'),
   updated_at: z.string().describe('ISO 8601 last update timestamp')
@@ -387,7 +387,7 @@ const createRelationSchemaBodySchema = z.object({
     .enum(['required', 'disabled'])
     .optional()
     .describe(
-      'Approval policy for relation instance changes. "required" is not yet supported — see #2574.'
+      'Approval policy for relation instance changes. "required" means edits to existing relations go through a change proposal. Stored as the schema-scoped "Relation change proposals" workflow in Workspace settings > Workflows.'
     )
 });
 

@@ -39,7 +39,6 @@ const restrictedDataFlowGovernanceTest = test.extend<{ restrictedDataFlowGoverna
         shared_field_group_links: schema.shared_field_group_links ?? [],
         color: schema.color,
         icon: schema.icon,
-        relation_approval_policy: schema.relation_approval_policy,
         version: (schema.version ?? 1) + 1,
         updated_at: new Date()
       });
