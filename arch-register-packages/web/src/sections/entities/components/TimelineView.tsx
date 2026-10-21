@@ -122,8 +122,12 @@ export const TimelineView = ({
   const onConfigChangeRef = useRef(onConfigChange);
   onConfigChangeRef.current = onConfigChange;
 
-  // Reset field ids if date field options change and current ids become invalid
+  // Reset field ids if date field options change and current ids become invalid. Skipped until
+  // schemas have loaded: before that only the built-in date fields exist, so every saved
+  // schema field id (e.g. restored from the URL on reload) would be treated as invalid.
+  const schemasLoaded = schemas.length > 0;
   useEffect(() => {
+    if (!schemasLoaded) return;
     const ids = dateFields.map(f => f.id);
     const current = cfgRef.current;
     const startValid = current.startFieldId == null || ids.includes(current.startFieldId);
@@ -135,7 +139,7 @@ export const TimelineView = ({
         endFieldId: endValid ? current.endFieldId : (dateFields[1]?.id ?? dateFields[0]?.id ?? null)
       });
     }
-  }, [dateFields]);
+  }, [dateFields, schemasLoaded]);
 
   const schemaMap = useMemo(() => {
     const m = new Map<string, { schema: EntitySchema; index: number }>();
