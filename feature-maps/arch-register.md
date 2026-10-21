@@ -1210,8 +1210,9 @@
             - @id:ar.projects.planned-changes.timeline Users can inspect planned entity changes in project and
               entity-oriented timeline views alongside historical change information.
 
-            - @id:ar.projects.planned-changes.apply Users can apply a planned entity change case atomically, promoting
-              all approved member states into the live entities.
+            - @id:ar.projects.planned-changes.apply Users can apply a planned change case atomically, promoting
+              all approved member states into the live entities and relations. Members changed since planning are
+              flagged for review, with per-field conflict resolution.
 
             - @id:ar.projects.planned-changes.traversal-diff Users can compare the entities, relations, and routes
               reachable from a selected subject before and after one planned-change case, with traversal limits and

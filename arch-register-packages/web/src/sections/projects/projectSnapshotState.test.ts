@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { findSnapshotConflicts, resolveSnapshotEntityData } from './projectSnapshotState';
+import {
+  findRelationSnapshotConflicts,
+  findSnapshotConflicts,
+  resolveSnapshotEntityData,
+  resolveSnapshotRelationData
+} from './projectSnapshotState';
 
 const schema = { fields: [{ id: 'criticality', name: 'Criticality' }] } as never;
 const entity = {
@@ -92,5 +97,47 @@ describe('project snapshot state', () => {
       conflictChoices: {}
     });
     expect(resolved._targetLifecycleDate).toBeNull();
+  });
+});
+
+describe('relation snapshot state', () => {
+  const relSchema = {
+    fields: [
+      { id: 'criticality', name: 'Criticality' },
+      { id: 'note', name: 'Note' }
+    ]
+  } as never;
+  const relation = { criticality: 'high', note: 'live note' } as never;
+  const relBase = { data: { criticality: 'low', note: 'base note' } };
+  const relProposed = { data: { criticality: 'medium', note: 'planned note' } };
+
+  it('reports only fields changed in both the plan and the live relation', () => {
+    const live = { criticality: 'high', note: 'base note' } as never;
+    expect(
+      findRelationSnapshotConflicts(live, relSchema, relProposed, relBase).map(c => c.key)
+    ).toEqual(['data.criticality']);
+  });
+
+  it('applies the planned value by default and honours an explicit current choice', () => {
+    expect(
+      resolveSnapshotRelationData({
+        relation,
+        schema: relSchema,
+        proposed: relProposed,
+        base: relBase,
+        conflictChoices: { 'data.criticality': 'current' }
+      })
+    ).toEqual({ data: { criticality: 'high', note: 'planned note' } });
+  });
+
+  it('keeps the live value when the plan did not change the field', () => {
+    const resolved = resolveSnapshotRelationData({
+      relation,
+      schema: relSchema,
+      proposed: { data: { criticality: 'low', note: 'base note' } },
+      base: relBase,
+      conflictChoices: {}
+    });
+    expect(resolved).toEqual({ data: { criticality: 'high', note: 'live note' } });
   });
 });

@@ -1,12 +1,20 @@
 import { useEffect, useState } from 'react';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { useEntity } from '../../../hooks/useEntities';
+import { useRelation } from '../../../hooks/useRelations';
+import { useRelationSchemas } from '../../../hooks/useRelationSchemas';
 import {
   useChangeCase,
   useChangeCaseApplyConflicts,
   useApplyChangeCase
 } from '../../../hooks/useChangeCases';
-import { findSnapshotConflicts, resolveSnapshotEntityData } from '../projectSnapshotState';
+import {
+  findRelationSnapshotConflicts,
+  findSnapshotConflicts,
+  resolveSnapshotEntityData,
+  resolveSnapshotRelationData,
+  type SnapshotConflict
+} from '../projectSnapshotState';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { ChangeCaseMember } from '@arch-register/api-types/changeCaseContract';
 import { LoadingState } from '../../../components/LoadingState';
@@ -35,12 +43,84 @@ const formatVal = (v: unknown) => {
   return String(v);
 };
 
-const memberDisplayName = (member: ChangeCaseMember) =>
-  (member.proposed_state['name'] as string | undefined) ??
-  (member.base_state['name'] as string | undefined) ??
-  member.entity_id;
+const relationLabel = (relation: { _in: { name: string }; _out: { name: string } }) =>
+  `${relation._in.name} → ${relation._out.name}`;
 
-const MemberStep = ({ workspaceId, member, schemas, stale, onResolved }: MemberStepProps) => {
+const MemberName = ({ workspaceId, member }: { workspaceId: string; member: ChangeCaseMember }) => {
+  const { data: relation } = useRelation(
+    workspaceId,
+    member.kind === 'relation' ? member.entity_id : ''
+  );
+  if (member.kind === 'relation') {
+    return <span>{relation ? relationLabel(relation) : member.entity_id}</span>;
+  }
+  return (
+    <span>
+      {(member.proposed_state['name'] as string | undefined) ??
+        (member.base_state['name'] as string | undefined) ??
+        member.entity_id}
+    </span>
+  );
+};
+
+type ConflictListProps = {
+  memberId: string;
+  name: string;
+  conflicts: SnapshotConflict[];
+  choices: Record<string, 'proposed' | 'current'>;
+  setChoices: (
+    updater: (
+      prev: Record<string, 'proposed' | 'current'>
+    ) => Record<string, 'proposed' | 'current'>
+  ) => void;
+};
+
+const ConflictList = ({ memberId, name, conflicts, choices, setChoices }: ConflictListProps) => {
+  if (conflicts.length === 0) {
+    return (
+      <p style={{ margin: 0 }}>
+        <strong>{name}</strong> — no conflicts. The planned changes will be applied as-is.
+      </p>
+    );
+  }
+  return (
+    <>
+      <p style={{ margin: '0 0 12px 0' }}>
+        <strong>{name}</strong> changed since this case was planned. Choose which value to keep for
+        each conflicting field.
+      </p>
+      <div className={styles.conflictList}>
+        {conflicts.map(c => (
+          <div key={c.key} className={styles.conflictRow}>
+            <div className={styles.conflictLabel}>{c.label}</div>
+            <label className={styles.conflictOption}>
+              <input
+                type="radio"
+                name={`conflict-${memberId}-${c.key}`}
+                checked={(choices[c.key] ?? 'proposed') === 'proposed'}
+                onChange={() => setChoices(prev => ({ ...prev, [c.key]: 'proposed' }))}
+              />
+              <span className={styles.conflictOptionLabel}>
+                Planned: {formatVal(c.proposedVal)}
+              </span>
+            </label>
+            <label className={styles.conflictOption}>
+              <input
+                type="radio"
+                name={`conflict-${memberId}-${c.key}`}
+                checked={choices[c.key] === 'current'}
+                onChange={() => setChoices(prev => ({ ...prev, [c.key]: 'current' }))}
+              />
+              <span className={styles.conflictOptionLabel}>Current: {formatVal(c.currentVal)}</span>
+            </label>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+};
+
+const EntityMemberStep = ({ workspaceId, member, schemas, stale, onResolved }: MemberStepProps) => {
   const { data: entity } = useEntity(workspaceId, member.entity_id);
   const schema = entity ? (schemas.find(s => s.id === entity._schema.id) ?? null) : null;
   const [conflictChoices, setConflictChoices] = useState<Record<string, 'proposed' | 'current'>>(
@@ -60,50 +140,63 @@ const MemberStep = ({ workspaceId, member, schemas, stale, onResolved }: MemberS
 
   if (!entity) return <LoadingState text="Loading entity..." size="sm" />;
 
-  if (conflicts.length === 0) {
-    return (
-      <p style={{ margin: 0 }}>
-        <strong>{entity._name}</strong> — no conflicts. The planned changes will be applied as-is.
-      </p>
-    );
-  }
-
   return (
-    <>
-      <p style={{ margin: '0 0 12px 0' }}>
-        <strong>{entity._name}</strong> changed since this case was planned. Choose which value to
-        keep for each conflicting field.
-      </p>
-      <div className={styles.conflictList}>
-        {conflicts.map(c => (
-          <div key={c.key} className={styles.conflictRow}>
-            <div className={styles.conflictLabel}>{c.label}</div>
-            <label className={styles.conflictOption}>
-              <input
-                type="radio"
-                name={`conflict-${member.id}-${c.key}`}
-                checked={(conflictChoices[c.key] ?? 'proposed') === 'proposed'}
-                onChange={() => setConflictChoices(prev => ({ ...prev, [c.key]: 'proposed' }))}
-              />
-              <span className={styles.conflictOptionLabel}>
-                Planned: {formatVal(c.proposedVal)}
-              </span>
-            </label>
-            <label className={styles.conflictOption}>
-              <input
-                type="radio"
-                name={`conflict-${member.id}-${c.key}`}
-                checked={conflictChoices[c.key] === 'current'}
-                onChange={() => setConflictChoices(prev => ({ ...prev, [c.key]: 'current' }))}
-              />
-              <span className={styles.conflictOptionLabel}>Current: {formatVal(c.currentVal)}</span>
-            </label>
-          </div>
-        ))}
-      </div>
-    </>
+    <ConflictList
+      memberId={member.id}
+      name={entity._name}
+      conflicts={conflicts}
+      choices={conflictChoices}
+      setChoices={setConflictChoices}
+    />
   );
 };
+
+const RelationMemberStep = ({ workspaceId, member, stale, onResolved }: MemberStepProps) => {
+  const { data: relation, isError } = useRelation(workspaceId, member.entity_id);
+  const { data: relationSchemas } = useRelationSchemas(workspaceId);
+  const schemaId = relation?._schema.id ?? (member.base_state['schema_id'] as string | undefined);
+  const schema = relationSchemas?.find(s => s.id === schemaId) ?? null;
+  const [conflictChoices, setConflictChoices] = useState<Record<string, 'proposed' | 'current'>>(
+    {}
+  );
+
+  const proposed = member.proposed_state;
+  const base = member.base_state;
+  const conflicts = stale ? findRelationSnapshotConflicts(relation, schema, proposed, base) : [];
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: onResolved is a fresh callback each render; including it would create a render loop
+  useEffect(() => {
+    if (!relation || !relationSchemas) return;
+    const resolved = resolveSnapshotRelationData({
+      relation,
+      schema,
+      proposed,
+      base,
+      conflictChoices
+    });
+    onResolved(member.id, resolved);
+  }, [relation, relationSchemas, schema, conflictChoices, member.id]);
+
+  if (isError) return <p style={{ margin: 0 }}>This relation could not be loaded.</p>;
+  if (!relation || !relationSchemas) return <LoadingState text="Loading relation..." size="sm" />;
+
+  return (
+    <ConflictList
+      memberId={member.id}
+      name={relationLabel(relation)}
+      conflicts={conflicts}
+      choices={conflictChoices}
+      setChoices={setConflictChoices}
+    />
+  );
+};
+
+const MemberStep = (props: MemberStepProps) =>
+  props.member.kind === 'relation' ? (
+    <RelationMemberStep {...props} />
+  ) : (
+    <EntityMemberStep {...props} />
+  );
 
 export const ApplyChangeCaseDialog = ({
   open,
@@ -209,7 +302,7 @@ export const ApplyChangeCaseDialog = ({
               className={`${styles.memberSummaryItem} ${i === stepIndex ? styles.memberSummaryItemActive : ''} ${resolutions[m.id] !== undefined ? styles.memberSummaryItemDone : ''}`}
               onClick={() => setStepIndex(i)}
             >
-              <span>{memberDisplayName(m)}</span>
+              <MemberName workspaceId={workspaceId} member={m} />
               {staleByMemberId.has(m.id) && (
                 <span className={styles.memberSummaryStale}>needs review</span>
               )}

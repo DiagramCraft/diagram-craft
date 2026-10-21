@@ -1,5 +1,7 @@
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
+import type { RelationRecord } from '@arch-register/api-types/relationContract';
+import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 
 export type SnapshotState = Record<string, unknown>;
 export type ConflictChoice = 'proposed' | 'current';
@@ -125,4 +127,61 @@ export const resolveSnapshotEntityData = ({
           : currentVal;
   }
   return resolved;
+};
+
+const activeRelationFields = (schema: RelationSchema | null) =>
+  (schema?.fields ?? []).filter(f => !f.archived);
+
+export const findRelationSnapshotConflicts = (
+  relation: RelationRecord | undefined,
+  schema: RelationSchema | null,
+  proposed: SnapshotState | null,
+  base: SnapshotState
+): SnapshotConflict[] => {
+  if (!relation || !proposed) return [];
+  const conflicts: SnapshotConflict[] = [];
+  const proposedData = (proposed.data as SnapshotState | undefined) ?? {};
+  const baseData = (base.data as SnapshotState | undefined) ?? {};
+  for (const field of activeRelationFields(schema)) {
+    const proposedVal = proposedData[field.id];
+    const baseVal = baseData[field.id];
+    const currentVal = relation[field.id];
+    if (differs(proposedVal, baseVal) && differs(currentVal, baseVal)) {
+      conflicts.push({ key: `data.${field.id}`, label: field.name, proposedVal, currentVal });
+    }
+  }
+  return conflicts;
+};
+
+// Relation apply only writes `data`; endpoints, owner and lifecycle are not changed by a case.
+export const resolveSnapshotRelationData = ({
+  relation,
+  schema,
+  proposed,
+  base,
+  conflictChoices
+}: {
+  relation: RelationRecord;
+  schema: RelationSchema | null;
+  proposed: SnapshotState;
+  base: SnapshotState;
+  conflictChoices: Record<string, ConflictChoice>;
+}): { data: Record<string, unknown> } => {
+  const proposedData = (proposed.data as SnapshotState | undefined) ?? {};
+  const baseData = (base.data as SnapshotState | undefined) ?? {};
+  const data: Record<string, unknown> = {};
+  // Keep data for fields the schema no longer lists active, so apply doesn't drop it
+  for (const key of Object.keys(baseData)) {
+    data[key] = relation[key];
+  }
+  for (const field of activeRelationFields(schema)) {
+    const proposedVal = proposedData[field.id];
+    const currentVal = relation[field.id];
+    const hasPlannedChange = differs(proposedVal, baseData[field.id]);
+    data[field.id] =
+      hasPlannedChange && conflictChoices[`data.${field.id}`] !== 'current'
+        ? proposedVal
+        : currentVal;
+  }
+  return { data };
 };
