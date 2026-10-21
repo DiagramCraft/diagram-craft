@@ -21,7 +21,9 @@ export const invalidateRelationChangeQueries = async (
   relationId: string
 ) =>
   Promise.all([
-    queryClient.invalidateQueries({ queryKey: relationChangeKeys.current(workspaceId, relationId) }),
+    queryClient.invalidateQueries({
+      queryKey: relationChangeKeys.current(workspaceId, relationId)
+    }),
     queryClient.invalidateQueries({ queryKey: relationKeys.detail(workspaceId, relationId) }),
     queryClient.invalidateQueries({ queryKey: relationKeys.workspaceLists(workspaceId) })
   ]);

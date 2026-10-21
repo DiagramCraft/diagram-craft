@@ -220,8 +220,8 @@ export const RelationEditDialog = ({ open, onClose, workspaceId, relationId }: P
           )}
           {approvalRequired && (
             <Banner variant="info">
-              This relation type requires approval. Field changes are submitted as a proposal;
-              owner and lifecycle cannot be changed here.
+              This relation type requires approval. Field changes are submitted as a proposal; owner
+              and lifecycle cannot be changed here.
             </Banner>
           )}
           <FormElement label="Owner">

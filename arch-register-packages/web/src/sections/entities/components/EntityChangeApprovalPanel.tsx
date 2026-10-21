@@ -136,10 +136,15 @@ export const EntityChangeApprovalPanel = ({
   };
   return (
     <>
-      <section className={styles.proposalPanel} aria-labelledby={`${recordKind}-change-proposal-title`}>
+      <section
+        className={styles.proposalPanel}
+        aria-labelledby={`${recordKind}-change-proposal-title`}
+      >
         <div className={styles.proposalHeader}>
           <div>
-            <div className={styles.proposalEyebrow}>{recordKind === 'relation' ? 'Relation' : 'Entity'} change proposal</div>
+            <div className={styles.proposalEyebrow}>
+              {recordKind === 'relation' ? 'Relation' : 'Entity'} change proposal
+            </div>
             <h2 id={`${recordKind}-change-proposal-title`} className={styles.proposalTitle}>
               Revision {revision.revisionNumber}
             </h2>
@@ -163,11 +168,12 @@ export const EntityChangeApprovalPanel = ({
                 </Button>
               </>
             )}
-            {onResubmit && (revision.status === 'stale' || revision.status === 'changes_requested') && (
-              <Button variant="primary" onClick={onResubmit}>
-                Resubmit
-              </Button>
-            )}
+            {onResubmit &&
+              (revision.status === 'stale' || revision.status === 'changes_requested') && (
+                <Button variant="primary" onClick={onResubmit}>
+                  Resubmit
+                </Button>
+              )}
             {onWithdraw && (
               <Button onClick={() => setWithdrawDialogOpen(true)} disabled={withdrawPending}>
                 Withdraw

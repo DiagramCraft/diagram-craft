@@ -91,7 +91,9 @@ export const RelationDrawer = ({
           recordKind="relation"
           caseKind="relation.change-case"
           canOverrideApproval={canOverrideEntityApproval}
-          invalidate={() => invalidateRelationChangeQueries(queryClient, workspaceSlug, relation._uid)}
+          invalidate={() =>
+            invalidateRelationChangeQueries(queryClient, workspaceSlug, relation._uid)
+          }
           bypass={bypassApproval}
           onResubmit={isProposer ? () => setEditOpen(true) : undefined}
           onWithdraw={
