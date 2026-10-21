@@ -49,6 +49,8 @@ type EntityBrowserProps = {
   onCountChange?: (count: number) => void;
   timelineMarkers?: AsOfMarker[];
   onFirstFilteredSchemaIdChange?: (schemaId: string | null) => void;
+  /** In table view, clicking a row opens the entity page rather than the drawer. */
+  tableRowOpensEntityPage?: boolean;
 };
 
 export const SaveViewDialog = ({
@@ -219,7 +221,8 @@ export const EntityBrowser = ({
   projectContext,
   onCountChange,
   timelineMarkers,
-  onFirstFilteredSchemaIdChange
+  onFirstFilteredSchemaIdChange,
+  tableRowOpensEntityPage
 }: EntityBrowserProps) => {
   const { openEntityDrawer } = useEntityDrawer();
   const {
@@ -654,6 +657,7 @@ export const EntityBrowser = ({
                     }
                   : {
                       kind: 'interactive',
+                      tableRowOpensEntityPage,
                       onConfigChange: setActiveViewConfig,
                       onEntityClick: navigateToEntity,
                       onDelete: handleDeleteEntity,

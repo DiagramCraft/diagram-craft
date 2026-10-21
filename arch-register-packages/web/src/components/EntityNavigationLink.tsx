@@ -6,6 +6,8 @@ import { asEntityPublicId, entityDetailRoute } from '../routes/publicObjectRoute
 
 type Props = Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'href'> & {
   publicId: string;
+  /** `page` lets the link navigate to the entity page on plain click instead of opening the drawer. */
+  behavior?: 'drawer' | 'page';
 };
 
 /**
@@ -17,7 +19,7 @@ type Props = Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'href'> & {
  * `event.preventDefault()` in it to opt out of the drawer-open default for that click.
  */
 export const EntityNavigationLink = forwardRef<HTMLAnchorElement, Props>(
-  ({ publicId, onClick, ...props }, ref) => {
+  ({ publicId, onClick, behavior = 'drawer', ...props }, ref) => {
     const { workspaceSlug } = useWorkspaceContext();
     const { openEntityDrawer } = useEntityDrawer();
 
@@ -25,6 +27,7 @@ export const EntityNavigationLink = forwardRef<HTMLAnchorElement, Props>(
       onClick?.(event);
       if (event.defaultPrevented) return;
       event.stopPropagation();
+      if (behavior === 'page') return;
 
       const opensElsewhere =
         event.metaKey ||

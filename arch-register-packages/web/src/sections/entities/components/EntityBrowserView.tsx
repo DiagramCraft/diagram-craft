@@ -84,6 +84,7 @@ type EntityBrowserViewData = {
 type EntityBrowserViewMode =
   | {
       kind: 'interactive';
+      tableRowOpensEntityPage?: boolean;
       onConfigChange: (config: unknown) => void;
       onEntityClick: (entityId: string) => void;
       onDelete: (entity: EntityRecord) => void;
@@ -421,6 +422,7 @@ export const EntityBrowserView = ({
           config={activeViewConfig}
           displayFields={displayFields}
           hideTypeColumn={typeFilter != null}
+          rowOpensEntityPage={mode.kind === 'interactive' && mode.tableRowOpensEntityPage}
         />
       );
     default:

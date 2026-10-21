@@ -2,6 +2,9 @@ import { FieldDescriptionIcon } from '../../../components/FieldDescriptionIcon';
 import { Fragment, type CSSProperties, type ReactNode } from 'react';
 import { Chip } from '../../../components/Chip';
 import { DropdownMenu } from '../../../components/DropdownMenu';
+import { useNavigate } from '@tanstack/react-router';
+import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
+import { asEntityPublicId, entityDetailRoute } from '../../../routes/publicObjectRoutes';
 import { EntityNavigationLink } from '../../../components/EntityNavigationLink';
 import { Table } from '../../../components/table/Table';
 import { TypeBadge } from '../../../components/TypeBadge';
@@ -41,6 +44,8 @@ export type TableViewProps = EntityBrowserBaseViewProps & {
   displayFields: EntityDisplayField[];
   /** Omit the Type column, e.g. when the browser is scoped to a single schema. */
   hideTypeColumn?: boolean;
+  /** Clicking a row navigates to the entity page instead of calling `onEntityClick`. */
+  rowOpensEntityPage?: boolean;
   /** Current `sort` string and its setter; when both are given, column headers are sortable. */
   sort?: string;
   onSortChange?: (sort: string) => void;
@@ -51,6 +56,7 @@ export const TableView = ({
   schemaMap,
   activeDateField,
   onEntityClick,
+  rowOpensEntityPage,
   onDelete,
   onClone,
   onManageCollections,
@@ -66,6 +72,8 @@ export const TableView = ({
   sort,
   onSortChange
 }: TableViewProps) => {
+  const navigate = useNavigate();
+  const { workspaceSlug } = useWorkspaceContext();
   const dateTimeFormatPreference = useDateTimeFormatPreference();
   const allSelected = !readOnly && rows.length > 0 && selectedIds?.size === rows.length;
   const someSelected =
@@ -147,7 +155,13 @@ export const TableView = ({
               key={entity._uid}
               aria-label={`Entity row: ${entityName(entity)}`}
               selected={selectedIds?.has(entity._uid)}
-              onClick={() => onEntityClick(entity._publicId)}
+              onClick={() =>
+                rowOpensEntityPage
+                  ? void navigate(
+                      entityDetailRoute(workspaceSlug, asEntityPublicId(entity._publicId))
+                    )
+                  : onEntityClick(entity._publicId)
+              }
             >
               {!readOnly && (
                 <Table.CheckboxCell
@@ -168,7 +182,11 @@ export const TableView = ({
                   )
                 }
                 title={
-                  <EntityNavigationLink publicId={entity._publicId} className={styles.nameLink}>
+                  <EntityNavigationLink
+                    publicId={entity._publicId}
+                    behavior={rowOpensEntityPage ? 'page' : 'drawer'}
+                    className={styles.nameLink}
+                  >
                     {entityName(entity)}
                   </EntityNavigationLink>
                 }
