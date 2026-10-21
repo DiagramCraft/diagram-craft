@@ -14,6 +14,15 @@
 @import "@radix-ui/colors/orange-dark.css";
 @import "@radix-ui/colors/black-alpha.css";
 
+/*
+ * The --theme-* custom properties referenced throughout this file (e.g. --theme-dark-base-bg,
+ * --theme-cmp-radius) are not set anywhere in this codebase. They are an extension mechanism for
+ * embedders of Diagram Craft: a consumer can override an individual token by defining the matching
+ * --theme-* variable in their own CSS, without needing to touch the semantic tokens (--base-bg,
+ * --cmp-radius, etc.) that components actually consume.
+ */
+
+/*noinspection CssUnresolvedCustomProperty*/
 :root {
   --r: 4px;
   --r-md: 6px;
@@ -21,6 +30,7 @@
   --font-sans: var(--theme-font-sans, Inter, system-ui, Avenir, Helvetica, Arial, sans-serif);
 }
 
+/*noinspection CssUnresolvedCustomProperty*/
 [data-theme="dark"],
 .dark-theme {
   color-scheme: dark;
@@ -87,6 +97,7 @@
   --warning-fg: var(--theme-dark-warning-fg, var(--orange-9));
 }
 
+/*noinspection CssUnresolvedCustomProperty*/
 [data-theme="light"],
 .light-theme {
   color-scheme: light;
