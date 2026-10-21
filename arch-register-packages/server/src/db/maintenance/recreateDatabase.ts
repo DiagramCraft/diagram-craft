@@ -5,6 +5,8 @@ import { runPostgresMigrations } from '../migrate';
 
 const postgresSchemaSql = new URL('../schema.postgres.sql', import.meta.url);
 
+const SCHEMA_SETUP_LOCK_KEY = 727_001;
+
 /**
  * Recreates an application-owned PostgreSQL schema for bootstrap and tests.
  *
@@ -19,11 +21,19 @@ export const recreatePostgresSchema = async (
 
   const sql = postgres(connectionString, { max: 1, onnotice: () => undefined });
   try {
-    await sql`DROP SCHEMA IF EXISTS ${sql(schema)} CASCADE`;
-    await sql`CREATE SCHEMA ${sql(schema)}`;
-    await sql`SET search_path TO ${sql(schema)}`;
-    await sql.unsafe(await readFile(postgresSchemaSql, 'utf8'));
-    await runPostgresMigrations(sql);
+    // CREATE EXTENSION IF NOT EXISTS is not concurrency-safe, so concurrent callers (parallel
+    // test files) must not run the schema script at the same time. max: 1 keeps the
+    // session-level lock and the work on the same connection.
+    await sql`SELECT pg_advisory_lock(${SCHEMA_SETUP_LOCK_KEY})`;
+    try {
+      await sql`DROP SCHEMA IF EXISTS ${sql(schema)} CASCADE`;
+      await sql`CREATE SCHEMA ${sql(schema)}`;
+      await sql`SET search_path TO ${sql(schema)}`;
+      await sql.unsafe(await readFile(postgresSchemaSql, 'utf8'));
+      await runPostgresMigrations(sql);
+    } finally {
+      await sql`SELECT pg_advisory_unlock(${SCHEMA_SETUP_LOCK_KEY})`;
+    }
   } finally {
     await sql.end();
   }
