@@ -1,24 +1,28 @@
 import { useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { useAuth } from '../../../auth/AuthContext';
-import { useBypassEntityApproval } from '../../../hooks/useEntityChanges';
 import {
   useDecideGovernanceAssignment,
   useGovernanceCaseEvents,
   useGovernanceTasks
 } from '../../../hooks/useGovernance';
-import { invalidateEntityChangeQueries } from '../../../queries/entityChanges';
-import { changeApprovalDiffRows, formatChangeApprovalValue } from './entityChangeApprovalHelpers';
+import {
+  changeApprovalDiffRows,
+  formatChangeApprovalValue,
+  type ChangeApprovalRecordKind
+} from './entityChangeApprovalHelpers';
 import { formatDateTime } from '../../../utils/dateFormat';
 import { useDateTimeFormatPreference } from '../../../hooks/useDateTimeFormatPreference';
 import styles from '../EntityDetailScreen.module.css';
 import type { EntityChangeApprovalRevision } from '@arch-register/api-types/entityChangeContract';
+import type { RelationChangeApprovalRevision } from '@arch-register/api-types/relationChangeContract';
 
-const changeApprovalStatusLabels: Record<EntityChangeApprovalRevision['status'], string> = {
+type ChangeApprovalRevision = EntityChangeApprovalRevision | RelationChangeApprovalRevision;
+
+const changeApprovalStatusLabels: Record<ChangeApprovalRevision['status'], string> = {
   submitted: 'Awaiting approval',
   changes_requested: 'Changes requested',
   stale: 'Stale · resubmit required',
@@ -28,28 +32,49 @@ const changeApprovalStatusLabels: Record<EntityChangeApprovalRevision['status'],
 };
 
 type Props = {
-  revision: EntityChangeApprovalRevision;
+  revision: ChangeApprovalRevision;
   workspaceId: string;
-  entityId: string;
+  recordKind: ChangeApprovalRecordKind;
+  /** Governance case kind used to find the approver's open task for this revision. */
+  caseKind: string;
   canOverrideApproval: boolean;
+  /** Refetches proposal state after an approve / request-changes decision. */
+  invalidate: () => Promise<unknown>;
+  bypass: {
+    isPending: boolean;
+    mutate: (
+      body: { baseVersion: number; proposedState: Record<string, unknown>; reason: string },
+      options: { onSuccess: () => void }
+    ) => void;
+  };
+  /** Present for the proposer when the revision can be revised (stale / changes requested). */
+  onResubmit?: () => void;
+  onWithdraw?: (reason: string) => void;
+  withdrawPending?: boolean;
 };
 
 export const EntityChangeApprovalPanel = ({
   revision,
   workspaceId,
-  entityId,
-  canOverrideApproval
+  recordKind,
+  caseKind,
+  canOverrideApproval,
+  invalidate,
+  bypass,
+  onResubmit,
+  onWithdraw,
+  withdrawPending
 }: Props) => {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
   const dateTimeFormatPreference = useDateTimeFormatPreference();
-  const bypass = useBypassEntityApproval(workspaceId, entityId);
   const [bypassDialogOpen, setBypassDialogOpen] = useState(false);
   const [bypassReason, setBypassReason] = useState('');
+  const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false);
+  const [withdrawReason, setWithdrawReason] = useState('');
   const [requestChangesDialogOpen, setRequestChangesDialogOpen] = useState(false);
   const [requestChangesReason, setRequestChangesReason] = useState('');
   const { data: governanceTasks = [] } = useGovernanceTasks(workspaceId, {
-    caseKind: 'entity.change',
+    caseKind,
     state: 'open'
   });
   const { data: caseEvents = [] } = useGovernanceCaseEvents(
@@ -65,12 +90,11 @@ export const EntityChangeApprovalPanel = ({
       (task.case.initiatorUserId !== user?.id || task.case.selfApprovalAllowed)
   );
   const status = changeApprovalStatusLabels[revision.status];
-  const rows = changeApprovalDiffRows(revision);
+  const rows = changeApprovalDiffRows(revision, recordKind);
   const requestedChangesReason = [...caseEvents]
     .reverse()
     .find(caseEvent => caseEvent.eventType === 'changes_requested')?.reason;
-  const invalidateProposalQueries = () =>
-    invalidateEntityChangeQueries(queryClient, workspaceId, entityId);
+  const invalidateProposalQueries = invalidate;
   const approve = () => {
     if (!approvalTask) return;
     decide.mutate(
@@ -112,11 +136,11 @@ export const EntityChangeApprovalPanel = ({
   };
   return (
     <>
-      <section className={styles.proposalPanel} aria-labelledby="entity-change-proposal-title">
+      <section className={styles.proposalPanel} aria-labelledby={`${recordKind}-change-proposal-title`}>
         <div className={styles.proposalHeader}>
           <div>
-            <div className={styles.proposalEyebrow}>Entity change proposal</div>
-            <h2 id="entity-change-proposal-title" className={styles.proposalTitle}>
+            <div className={styles.proposalEyebrow}>{recordKind === 'relation' ? 'Relation' : 'Entity'} change proposal</div>
+            <h2 id={`${recordKind}-change-proposal-title`} className={styles.proposalTitle}>
               Revision {revision.revisionNumber}
             </h2>
             <div className={styles.proposalMeta}>
@@ -138,6 +162,16 @@ export const EntityChangeApprovalPanel = ({
                   Request changes
                 </Button>
               </>
+            )}
+            {onResubmit && (revision.status === 'stale' || revision.status === 'changes_requested') && (
+              <Button variant="primary" onClick={onResubmit}>
+                Resubmit
+              </Button>
+            )}
+            {onWithdraw && (
+              <Button onClick={() => setWithdrawDialogOpen(true)} disabled={withdrawPending}>
+                Withdraw
+              </Button>
             )}
             {canOverrideApproval && (
               <Button
@@ -194,6 +228,33 @@ export const EntityChangeApprovalPanel = ({
             value={bypassReason}
             onChange={value => setBypassReason(value ?? '')}
             placeholder="Explain why approval is being bypassed"
+            style={{ width: '100%' }}
+          />
+        </FormElement>
+      </Dialog>
+      <Dialog
+        open={withdrawDialogOpen}
+        onClose={() => setWithdrawDialogOpen(false)}
+        title="Withdraw proposal?"
+        buttons={[
+          { label: 'Cancel', type: 'cancel', onClick: () => setWithdrawDialogOpen(false) },
+          {
+            label: withdrawPending ? 'Withdrawing…' : 'Withdraw',
+            type: 'danger',
+            disabled: withdrawPending,
+            onClick: () => {
+              onWithdraw?.(withdrawReason.trim());
+              setWithdrawDialogOpen(false);
+              setWithdrawReason('');
+            }
+          }
+        ]}
+      >
+        <p>The proposal is closed without applying any changes.</p>
+        <FormElement label="Reason">
+          <TextInput
+            value={withdrawReason}
+            onChange={value => setWithdrawReason(value ?? '')}
             style={{ width: '100%' }}
           />
         </FormElement>

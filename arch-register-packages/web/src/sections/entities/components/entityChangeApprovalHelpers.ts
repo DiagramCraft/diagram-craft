@@ -1,4 +1,11 @@
-import type { EntityChangeApprovalRevision } from '@arch-register/api-types/entityChangeContract';
+export type ChangeApprovalDiffSource = { diff: Record<string, unknown> };
+
+export type ChangeApprovalRecordKind = 'entity' | 'relation';
+
+const dataFieldPrefix: Record<ChangeApprovalRecordKind, string> = {
+  entity: 'Entity field',
+  relation: 'Relation field'
+};
 
 const changeApprovalFieldLabels: Record<string, string> = {
   slug: 'Slug',
@@ -12,7 +19,7 @@ const changeApprovalFieldLabels: Record<string, string> = {
   tags: 'Tags',
   links: 'Links',
   schema_id: 'Schema',
-  data: 'Entity fields',
+  data: 'Fields',
   project_id: 'Project'
 };
 
@@ -55,7 +62,10 @@ const changeApprovalValuesEqual = (left: unknown, right: unknown): boolean => {
   return false;
 };
 
-export const changeApprovalDiffRows = (revision: EntityChangeApprovalRevision) =>
+export const changeApprovalDiffRows = (
+  revision: ChangeApprovalDiffSource,
+  kind: ChangeApprovalRecordKind = 'entity'
+) =>
   Object.entries(revision.diff).flatMap(([key, change]) => {
     const values = change as { before?: unknown; after?: unknown };
     if (
@@ -72,7 +82,7 @@ export const changeApprovalDiffRows = (revision: EntityChangeApprovalRevision) =
       return [...new Set([...Object.keys(before), ...Object.keys(after)])]
         .filter(field => !changeApprovalValuesEqual(before[field], after[field]))
         .map(field => ({
-          field: `Entity field · ${humanizeChangeApprovalKey(field)}`,
+          field: `${dataFieldPrefix[kind]} · ${humanizeChangeApprovalKey(field)}`,
           before: before[field],
           after: after[field]
         }));

@@ -41,6 +41,7 @@ const PRIORITY_TONE: Record<NeedsAttentionPriority, string> = {
 const REQUEST_CHANGES_CASE_KINDS = new Set([
   'entity.change-case',
   'entity.change-case.bulk',
+  'relation.change-case',
   'document.status'
 ]);
 

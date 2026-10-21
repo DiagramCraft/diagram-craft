@@ -33,3 +33,14 @@ describe('changeApprovalDiffRows', () => {
     ]);
   });
 });
+
+describe('changeApprovalDiffRows for relations', () => {
+  it('labels expanded data fields as relation fields', () => {
+    const revision = {
+      diff: { data: { before: { weight: 1 }, after: { weight: 2 } } }
+    };
+    expect(changeApprovalDiffRows(revision, 'relation')).toEqual([
+      { field: 'Relation field · Weight', before: 1, after: 2 }
+    ]);
+  });
+});
