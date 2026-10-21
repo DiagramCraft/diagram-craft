@@ -3,6 +3,7 @@ import { encodeCaseSubkind } from './governanceCaseSubkind';
 
 export const ENTITY_CHANGE_POLICY_CASE_KIND = 'entity.change-case';
 export const ENTITY_DEPRECATION_POLICY_CASE_KIND = 'entity.deprecation';
+export const RELATION_CHANGE_POLICY_CASE_KIND = 'relation.change-case';
 export const ENTITY_OWNER_ADMIN_STRATEGY = 'entity-owner-admin';
 
 export type SchemaGovernancePolicies = {
@@ -173,4 +174,69 @@ export const getSchemaPolicy = async (
     encodeCaseSubkind(schemaId)
   );
   return row?.enabled === true;
+};
+
+export const relationSchemaWorkflowConfig = {
+  supportsSubkind: true,
+  validateSubkind: async (db: DatabaseAdapter, workspace: string, subkind: string | null) => {
+    if (!subkind) return 'Relation-schema-scoped workflows require a relation schema id';
+    return (await db.relation.getRelationSchema(workspace, subkind))
+      ? null
+      : `Relation schema '${subkind}' not found`;
+  },
+  labelSubkind: async (db: DatabaseAdapter, workspace: string, subkind: string | null) => {
+    if (!subkind) return null;
+    return (await db.relation.getRelationSchema(workspace, subkind))?.name ?? subkind;
+  }
+};
+
+export type RelationApprovalPolicy = 'required' | 'disabled';
+
+export const getRelationApprovalPolicy = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  schemaId: string
+): Promise<RelationApprovalPolicy> =>
+  (await getSchemaPolicy(db, workspace, schemaId, RELATION_CHANGE_POLICY_CASE_KIND))
+    ? 'required'
+    : 'disabled';
+
+export const getRelationApprovalPoliciesBySchema = async (
+  db: DatabaseAdapter,
+  workspace: string
+): Promise<Map<string, RelationApprovalPolicy>> => {
+  if (!db.governanceCaseConfig) return new Map();
+  const rows = await db.governanceCaseConfig.listCaseConfig(workspace);
+  return new Map(
+    rows
+      .filter(row => row.case_kind === RELATION_CHANGE_POLICY_CASE_KIND && row.case_subkind != null)
+      .map(row => [row.case_subkind!, policyFromRow(row)] as const)
+  );
+};
+
+export const upsertRelationApprovalPolicy = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  schemaId: string,
+  policy: RelationApprovalPolicy,
+  updatedAt: Date,
+  updatedBy: string | null
+) => {
+  if (!db.governanceCaseConfig) return;
+  const existing = await db.governanceCaseConfig.getCaseConfig(
+    workspace,
+    RELATION_CHANGE_POLICY_CASE_KIND,
+    encodeCaseSubkind(schemaId)
+  );
+  await db.governanceCaseConfig.upsertCaseConfig({
+    workspace,
+    case_kind: RELATION_CHANGE_POLICY_CASE_KIND,
+    case_subkind: encodeCaseSubkind(schemaId),
+    name: existing?.name ?? 'Relation change policy',
+    description: existing?.description,
+    enabled: policy === 'required',
+    config: existing?.config ?? {},
+    updated_at: updatedAt,
+    updated_by: updatedBy
+  });
 };

@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { FieldDescriptionIcon } from '../../components/FieldDescriptionIcon';
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
@@ -9,6 +11,16 @@ import { formatRelationFieldValue } from '../../widgets/data-views/relation-tabl
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { RelationHistorySection } from './RelationHistorySection';
 import { useEntityDrawer } from '../entities/entityDrawer/useEntityDrawer';
+import { RelationEditDialog } from '../../dialogs/RelationEditDialog';
+import { EntityChangeApprovalPanel } from '../entities/components/EntityChangeApprovalPanel';
+import { useWorkspaceAuthorization } from '../../auth/WorkspaceAuthorizationContext';
+import { useAuth } from '../../auth/AuthContext';
+import {
+  useBypassRelationApproval,
+  useRelationChangeApproval,
+  useWithdrawRelationChangeApproval
+} from '../../hooks/useRelationChanges';
+import { invalidateRelationChangeQueries } from '../../queries/relationChanges';
 import styles from './RelationDrawer.module.css';
 
 /**
@@ -30,6 +42,15 @@ export const RelationDrawer = ({
 }) => {
   const { openEntityDrawer } = useEntityDrawer();
   const { permissions } = useWorkspaceContext();
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const { canOverrideEntityApproval } = useWorkspaceAuthorization(workspaceSlug);
+  const { data: changeApproval } = useRelationChangeApproval(workspaceSlug, relation._uid);
+  const bypassApproval = useBypassRelationApproval(workspaceSlug, relation._uid);
+  const withdrawApproval = useWithdrawRelationChangeApproval(workspaceSlug, relation._uid);
+  const [editOpen, setEditOpen] = useState(false);
+  const latestRevision = changeApproval?.status === 'open' ? changeApproval.revisions.at(-1) : null;
+  const isProposer = !!latestRevision && latestRevision.createdBy === user?.id;
   const fields = relationSchema?.fields ?? [];
   const carriedIds = fields.flatMap(field =>
     field.type === 'entityRelation' ? relationIds(relation[field.id]) : []
@@ -63,6 +84,37 @@ export const RelationDrawer = ({
         relation._lifecycle ? <Chip tone="ghost">{relation._lifecycle.name}</Chip> : undefined
       }
     >
+      {latestRevision && changeApproval && (
+        <EntityChangeApprovalPanel
+          revision={latestRevision}
+          workspaceId={workspaceSlug}
+          recordKind="relation"
+          caseKind="relation.change-case"
+          canOverrideApproval={canOverrideEntityApproval}
+          invalidate={() =>
+            invalidateRelationChangeQueries(queryClient, workspaceSlug, relation._uid)
+          }
+          bypass={bypassApproval}
+          onResubmit={isProposer ? () => setEditOpen(true) : undefined}
+          onWithdraw={
+            isProposer
+              ? reason =>
+                  withdrawApproval.mutate({
+                    approvalId: changeApproval.id,
+                    reason: reason === '' ? undefined : reason
+                  })
+              : undefined
+          }
+          withdrawPending={withdrawApproval.isPending}
+        />
+      )}
+      <RelationEditDialog
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        workspaceId={workspaceSlug}
+        relationId={relation._uid}
+      />
+
       <div className={styles.sectionLabel}>Endpoints</div>
       {endpoint('Source', relation._in)}
       {endpoint('Destination', relation._out)}

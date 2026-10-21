@@ -15,7 +15,9 @@ import {
 import { useEntityTypedRelations } from '../../hooks/useRelations';
 import { useEntityVersions } from '../../hooks/useEntityVersions';
 import { useChangeCasesByEntity } from '../../hooks/useChangeCases';
-import { useEntityChangeApproval } from '../../hooks/useEntityChanges';
+import { useQueryClient } from '@tanstack/react-query';
+import { useBypassEntityApproval, useEntityChangeApproval } from '../../hooks/useEntityChanges';
+import { invalidateEntityChangeQueries } from '../../queries/entityChanges';
 import { useEntityDeprecation } from '../../hooks/useEntityDeprecation';
 import { useConformanceViolations } from '../../hooks/useConformance';
 import { EntityDeprecationPanel } from './components/EntityDeprecationPanel';
@@ -80,6 +82,8 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   } = useWorkspaceContext();
   const workspaceId = workspaceSlug;
   const { canOverrideEntityApproval } = useWorkspaceAuthorization(workspaceId);
+  const queryClient = useQueryClient();
+  const bypassEntityApproval = useBypassEntityApproval(workspaceId, entityId);
   const { data: workspaceCapabilityConfigurations = [] } =
     useWorkspaceCapabilityConfigurations(workspaceId);
   const canViewAudit = permissions.canViewAudit;
@@ -413,8 +417,11 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
         <EntityChangeApprovalPanel
           revision={latestApprovalRevision}
           workspaceId={workspaceId}
-          entityId={entityId}
+          recordKind="entity"
+          caseKind="entity.change-case"
           canOverrideApproval={canOverrideEntityApproval}
+          invalidate={() => invalidateEntityChangeQueries(queryClient, workspaceId, entityId)}
+          bypass={bypassEntityApproval}
         />
       )}
 

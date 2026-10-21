@@ -1,3 +1,4 @@
+import { getRelationApprovalPoliciesBySchema } from '../governance/schemaGovernancePolicy';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { buildApiAuthCtx, requireWorkspaceAdmin } from '../auth/authorization';
@@ -346,7 +347,8 @@ export const sourceFromWorkspace = async (
     relationSchemas,
     capabilityConfigurations,
     categories,
-    entityDrawerConfiguration
+    entityDrawerConfiguration,
+    relationPoliciesBySchema
   ] = await Promise.all([
     db.catalog.listSchemas(workspace),
     db.catalog.listEnums(workspace),
@@ -357,7 +359,8 @@ export const sourceFromWorkspace = async (
     db.relation.listRelationSchemas(workspace),
     db.workspace.listWorkspaceCapabilityConfigurations(workspace),
     db.catalog.listCategories(workspace),
-    db.workspace.getWorkspaceEntityDrawerConfiguration(workspace)
+    db.workspace.getWorkspaceEntityDrawerConfiguration(workspace),
+    getRelationApprovalPoliciesBySchema(db, workspace)
   ]);
   const teamNames = new Map(teams.map(team => [team.id, team.name]));
   const categoryNamesById = new Map(categories.map(category => [category.id, category.name]));
@@ -426,7 +429,7 @@ export const sourceFromWorkspace = async (
       }),
       color: schema.color,
       icon: schema.icon,
-      relation_approval_policy: schema.relation_approval_policy ?? 'disabled'
+      relation_approval_policy: relationPoliciesBySchema.get(schema.id) ?? 'disabled'
     })),
     fieldGroups: sharedFieldGroups.map(group => ({
       id: group.id,

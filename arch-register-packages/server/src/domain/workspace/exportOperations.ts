@@ -32,6 +32,7 @@ import { parseGovernanceWorkflowConfig } from '../governance/governanceWorkflowC
 import {
   ENTITY_CHANGE_POLICY_CASE_KIND,
   ENTITY_DEPRECATION_POLICY_CASE_KIND,
+  getRelationApprovalPoliciesBySchema,
   getSchemaGovernancePoliciesBySchema
 } from '../governance/schemaGovernancePolicy';
 import { entityDrawerConfigurationSchema } from '@arch-register/api-types/entityDrawerConfiguration';
@@ -354,10 +355,11 @@ const exportRelationSchemas = async (
   db: DatabaseAdapter,
   workspace: string
 ): Promise<ExportRelationSchema[]> => {
-  const [schemas, sharedGroups, categories] = await Promise.all([
+  const [schemas, sharedGroups, categories, policiesBySchema] = await Promise.all([
     db.relation.listRelationSchemas(workspace),
     db.catalog.listSharedFieldGroups(workspace),
-    db.catalog.listCategories(workspace)
+    db.catalog.listCategories(workspace),
+    getRelationApprovalPoliciesBySchema(db, workspace)
   ]);
   const sharedGroupsById = new Map(sharedGroups.map(group => [group.id, group]));
   const categoryNamesById = new Map(categories.map(category => [category.id, category.name]));
@@ -380,7 +382,7 @@ const exportRelationSchemas = async (
     ),
     color: schema.color,
     icon: schema.icon,
-    relation_approval_policy: schema.relation_approval_policy ?? 'disabled',
+    relation_approval_policy: policiesBySchema.get(schema.id) ?? 'disabled',
     unique_endpoint_pair: schema.unique_endpoint_pair ?? false,
     version: schema.version ?? 1
   }));

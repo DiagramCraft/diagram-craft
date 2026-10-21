@@ -14,8 +14,6 @@ CREATE TABLE relation_schema (
   shared_field_group_links TEXT NOT NULL DEFAULT '[]',
   color                    TEXT,
   icon                     TEXT,
-  relation_approval_policy TEXT NOT NULL DEFAULT 'disabled'
-    CHECK (relation_approval_policy IN ('required', 'disabled')),
   version                  INTEGER NOT NULL DEFAULT 1,
   created_at               TEXT NOT NULL,
   updated_at               TEXT NOT NULL,

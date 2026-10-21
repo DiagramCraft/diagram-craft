@@ -3,8 +3,12 @@ import type { DatabaseAdapter } from '../../db/database';
 import {
   ENTITY_CHANGE_POLICY_CASE_KIND,
   ENTITY_DEPRECATION_POLICY_CASE_KIND,
+  getRelationApprovalPolicy,
+  getRelationApprovalPoliciesBySchema,
   getSchemaGovernancePolicies,
   getSchemaGovernancePoliciesBySchema,
+  RELATION_CHANGE_POLICY_CASE_KIND,
+  upsertRelationApprovalPolicy,
   upsertSchemaGovernancePolicies
 } from './schemaGovernancePolicy';
 
@@ -73,5 +77,27 @@ describe('schema governance policy storage', () => {
       entity_approval_policy: 'disabled',
       deprecation_policy: 'required'
     });
+  });
+});
+
+describe('relation approval policy storage', () => {
+  it('round-trips through the relation.change-case config row, independent of entity policies', async () => {
+    const db = database([row(ENTITY_CHANGE_POLICY_CASE_KIND, 'schema-1', true)]);
+
+    await expect(getRelationApprovalPolicy(db, 'workspace-1', 'schema-1')).resolves.toBe(
+      'disabled'
+    );
+
+    await upsertRelationApprovalPolicy(db, 'workspace-1', 'schema-1', 'required', new Date(), 'u1');
+
+    await expect(getRelationApprovalPolicy(db, 'workspace-1', 'schema-1')).resolves.toBe(
+      'required'
+    );
+    await expect(getRelationApprovalPoliciesBySchema(db, 'workspace-1')).resolves.toEqual(
+      new Map([['schema-1', 'required']])
+    );
+    expect(
+      (await db.governanceCaseConfig.listCaseConfig('workspace-1')).map(item => item.case_kind)
+    ).toContain(RELATION_CHANGE_POLICY_CASE_KIND);
   });
 });

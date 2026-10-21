@@ -356,7 +356,7 @@ export const updateWorkspaceRelation = async (
         oldRow.schema_id,
         oldRow.owner
       );
-      assertRelationMutationsSupported(schema, oldRow);
+      await assertRelationMutationsSupported(db, ws, schema, oldRow);
 
       const data = extractRelationFieldData(body);
       assertNoDerivedFieldWrites(schema.fields, data);
@@ -502,7 +502,7 @@ export const restoreWorkspaceRelationVersion = async (
         row.schema_id,
         row.owner
       );
-      assertRelationMutationsSupported(schema, row);
+      await assertRelationMutationsSupported(db, ws, schema, row);
 
       const version = await db.catalog.getEntityVersionById(ws, versionId);
       orpcAssert.present(version, { code: 'NOT_FOUND', message: 'Version not found' });

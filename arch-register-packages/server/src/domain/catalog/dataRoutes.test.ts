@@ -440,7 +440,6 @@ describe('data route helpers', () => {
     shared_field_group_links: [],
     color: '#00ff00',
     icon: 'flow',
-    relation_approval_policy: 'disabled',
     version: 1,
     created_at: now,
     updated_at: now

@@ -1,3 +1,4 @@
+import type { RelationApprovalPolicy } from '../governance/schemaGovernancePolicy';
 import { randomUUID } from 'node:crypto';
 import type {
   RelationSchemaDbResult as InternalRelationSchema,
@@ -115,11 +116,6 @@ export const buildCreateRelationSchemaInput = (
     unique_endpoint_pair
   } = body;
   httpAssert.string(name, { message: 'name is required and must be a string' });
-  httpAssert.true(relation_approval_policy !== 'required', {
-    status: 400,
-    message:
-      'relation_approval_policy "required" is not yet supported (see #2574); use "disabled" for now'
-  });
 
   const normalizedGroups = normalizeSchemaGroups(groups) as RelationSchemaGroupDbShape[];
   const normalizedFields = clearOrphanedGroupIds(normalizeRelationFields(fields), normalizedGroups);
@@ -144,7 +140,8 @@ export const buildCreateRelationSchemaInput = (
     validation_rules: validationRules,
     color: typeof color === 'string' ? color : null,
     icon: typeof icon === 'string' ? icon : null,
-    relation_approval_policy: 'disabled' as const,
+    relation_approval_policy:
+      relation_approval_policy === 'required' ? ('required' as const) : ('disabled' as const),
     unique_endpoint_pair: unique_endpoint_pair === true,
     created_at: timestamp,
     updated_at: timestamp
@@ -173,11 +170,6 @@ export const buildUpdateRelationSchemaInput = (
     unique_endpoint_pair
   } = body;
   httpAssert.string(name, { message: 'name is required and must be a string' });
-  httpAssert.true(relation_approval_policy !== 'required', {
-    status: 400,
-    message:
-      'relation_approval_policy "required" is not yet supported (see #2574); use "disabled" for now'
-  });
 
   const normalizedGroups =
     groups !== undefined
@@ -226,9 +218,13 @@ export const buildUpdateRelationSchemaInput = (
     validation_rules: validationRules,
     color: color !== undefined ? (typeof color === 'string' ? color : null) : current.color,
     icon: icon !== undefined ? (typeof icon === 'string' ? icon : null) : current.icon,
-    relation_approval_policy: (current.relation_approval_policy ?? 'disabled') as
-      | 'required'
-      | 'disabled',
+    // undefined = leave the workflow config row untouched
+    relation_approval_policy:
+      relation_approval_policy === undefined
+        ? undefined
+        : relation_approval_policy === 'required'
+          ? ('required' as const)
+          : ('disabled' as const),
     unique_endpoint_pair:
       unique_endpoint_pair !== undefined
         ? unique_endpoint_pair === true
@@ -317,7 +313,8 @@ export const toApiRelationSchema = (
   schema: InternalRelationSchema,
   relationCount: number,
   enums: InternalWorkspaceEnum[],
-  categories: CategoryLookup
+  categories: CategoryLookup,
+  relationApprovalPolicy: RelationApprovalPolicy = 'disabled'
 ): RelationSchema => {
   const fields = resolveSelectFieldOptions(schema.fields, enums) as RelationSchema['fields'];
   return {
@@ -343,7 +340,7 @@ export const toApiRelationSchema = (
     relation_count: relationCount,
     unique_endpoint_pair: schema.unique_endpoint_pair ?? false,
     version: schema.version ?? 1,
-    relation_approval_policy: schema.relation_approval_policy ?? 'disabled',
+    relation_approval_policy: relationApprovalPolicy,
     created_at: schema.created_at.toISOString(),
     updated_at: schema.updated_at.toISOString()
   };

@@ -6,6 +6,11 @@ import { requireSchemaRead, requireWorkspaceCapability } from '../auth/authoriza
 import { runAuthorizedOperation } from '../operation';
 import { httpAssert } from '../../utils/httpAssert';
 import {
+  getRelationApprovalPolicy,
+  getRelationApprovalPoliciesBySchema,
+  upsertRelationApprovalPolicy
+} from '../governance/schemaGovernancePolicy';
+import {
   buildCreateRelationSchemaInput,
   buildUpdateRelationSchemaInput,
   compileRelationSchemaWithSharedGroups,
@@ -72,15 +77,18 @@ export const listWorkspaceRelationSchemas = async (
     dbErrorMessages,
     operation: async ({ ws, authCtx }) => {
       requireSchemaRead(authCtx);
-      const [schemas, enums, categories] = await Promise.all([
+      const [schemas, enums, categories, policiesBySchema] = await Promise.all([
         db.relation.listRelationSchemas(ws),
         db.catalog.listEnums(ws),
-        buildCategoryLookup(db, ws)
+        buildCategoryLookup(db, ws),
+        getRelationApprovalPoliciesBySchema(db, ws)
       ]);
       const counts = await Promise.all(
         schemas.map(schema => db.relation.countRelationsForSchema(ws, schema.id))
       );
-      return schemas.map((schema, i) => toApiRelationSchema(schema, counts[i]!, enums, categories));
+      return schemas.map((schema, i) =>
+        toApiRelationSchema(schema, counts[i]!, enums, categories, policiesBySchema.get(schema.id))
+      );
     }
   });
 };
@@ -106,7 +114,13 @@ export const getWorkspaceRelationSchema = async (
       ]);
       httpAssert.present(row, { status: 404, message: `Relation schema '${id}' not found` });
       const relationCount = await db.relation.countRelationsForSchema(ws, id);
-      return toApiRelationSchema(row, relationCount, enums, categories);
+      return toApiRelationSchema(
+        row,
+        relationCount,
+        enums,
+        categories,
+        await getRelationApprovalPolicy(db, ws, id)
+      );
     }
   });
 };
@@ -132,10 +146,19 @@ export const createWorkspaceRelationSchema = async (
       ]);
       const knownEntitySchemaIds = new Set(entitySchemas.map(schema => schema.id));
       const requested = buildCreateRelationSchemaInput(ws, body, knownEntitySchemaIds, timestamp);
-      const categoryName = await assertCategoryExists(db, ws, requested.category_id);
-      const compiled = compileRelationSchemaWithSharedGroups(requested, sharedGroups);
+      const { relation_approval_policy, ...schemaInput } = requested;
+      const categoryName = await assertCategoryExists(db, ws, schemaInput.category_id);
+      const compiled = compileRelationSchemaWithSharedGroups(schemaInput, sharedGroups);
       validateDerivedFieldGroupAccess(compiled.fields, compiled.groups ?? [], 'relation');
       const row = await db.relation.createRelationSchema(compiled);
+      await upsertRelationApprovalPolicy(
+        db,
+        ws,
+        row.id,
+        relation_approval_policy,
+        timestamp,
+        authCtx.userId
+      );
 
       await db.relation.createRelationSchemaVersion({
         id: randomUUID(),
@@ -180,7 +203,7 @@ export const createWorkspaceRelationSchema = async (
       const enums = await db.catalog.listEnums(ws);
       const categories: CategoryLookup =
         row.category_id && categoryName ? new Map([[row.category_id, categoryName]]) : new Map();
-      return toApiRelationSchema(row, 0, enums, categories);
+      return toApiRelationSchema(row, 0, enums, categories, relation_approval_policy);
     }
   });
 };
@@ -296,12 +319,21 @@ export const updateWorkspaceRelationSchema = async (
           shared_field_group_links: compiledNext.shared_field_group_links ?? [],
           color: next.color,
           icon: next.icon,
-          relation_approval_policy: next.relation_approval_policy,
           unique_endpoint_pair: next.unique_endpoint_pair,
           version: (oldRow.version ?? 1) + 1,
           updated_at: next.updated_at
         });
         httpAssert.present(updated, { status: 404, message: `Relation schema '${id}' not found` });
+        if (next.relation_approval_policy !== undefined) {
+          await upsertRelationApprovalPolicy(
+            tx,
+            ws,
+            id,
+            next.relation_approval_policy,
+            next.updated_at,
+            authCtx.userId
+          );
+        }
 
         if (updated.unique_endpoint_pair) {
           const duplicates = await listDuplicateRelationEndpointPairs(tx, ws, id);
@@ -382,7 +414,13 @@ export const updateWorkspaceRelationSchema = async (
       const enums = await db.catalog.listEnums(ws);
       const categories: CategoryLookup =
         row.category_id && categoryName ? new Map([[row.category_id, categoryName]]) : new Map();
-      return toApiRelationSchema(row, relationCount, enums, categories);
+      return toApiRelationSchema(
+        row,
+        relationCount,
+        enums,
+        categories,
+        await getRelationApprovalPolicy(db, ws, id)
+      );
     }
   });
 };

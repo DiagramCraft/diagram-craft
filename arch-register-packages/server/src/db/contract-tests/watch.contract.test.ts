@@ -80,7 +80,6 @@ runContractSuiteAgainstBothDrivers('WatchDatabase', getDb => {
         shared_field_group_links: [],
         color: null,
         icon: null,
-        relation_approval_policy: 'disabled',
         version: 1,
         created_at: now,
         updated_at: now

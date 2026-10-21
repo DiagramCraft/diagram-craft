@@ -259,7 +259,7 @@ export const applyRelationFieldDelta = async (
       status: 400,
       message: `Relation '${update.id}' is not connected to this entity`
     });
-    assertRelationMutationsSupported(schema, oldRow);
+    await assertRelationMutationsSupported(db, workspace, schema, oldRow);
 
     // `_owner`/`_lifecycle` are reserved metadata keys, not schema field data — same convention
     // as extractRelationFieldData for the standalone /relations endpoints.

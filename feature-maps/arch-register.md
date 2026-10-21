@@ -857,13 +857,14 @@
           history on create/update/delete and can be restored to an earlier version, mirroring entity version
           history's redaction and restore semantics (@id:ar.entities.history). The relation drawer lists these
           versions and lets users with edit access restore one after reviewing a field-level diff. Relation instances can also go through
-          change-approval: a relation can require approval before edits apply (same policy-override precedence as
-          entities), a single-relation proposal can be submitted/resubmitted/withdrawn/bypassed via the API mirroring
-          the entity change-approval workflow, and a project's planned-change case can include relation instances
+          change-approval: a relation can require approval before edits apply (enabled per relation schema in Workspace settings > Workflows, like entity change approval; same policy-override precedence as
+          entities), a single-relation proposal can be submitted, resubmitted, withdrawn, or bypassed (audited, with a reason)
+          from the relation edit dialog and relation drawer, which shows the current proposal including its stale
+          and changes-requested states, and a project's planned-change case can include relation instances
           alongside entities as members (endpoints are immutable and a proposal that changes one is rejected).
           Approved and applied relation changes are wired into the same governance engine, timeline markers, and
-          workspace landscape-diff as entities; this relation change-approval/planned-change surface is not yet
-          exposed in the web UI (API-only so far). The
+          workspace landscape-diff as entities; the planned-change case surface for relations is not yet exposed in
+          the web UI. The
           entity detail screen's Relations tab and Topology view also surface typed relation instances (grouped by
           relation schema in Topology, using the schema's own color), each expandable in place to view field values
           and open the same audit-trail history dialog. Relation instances can additionally be browsed as

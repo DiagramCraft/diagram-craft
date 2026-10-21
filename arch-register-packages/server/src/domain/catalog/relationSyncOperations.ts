@@ -139,7 +139,7 @@ const runRelationSync = async (
               'A relation\'s "in"/"out" endpoints are immutable after creation; delete and recreate it instead'
           }
         );
-        assertRelationMutationsSupported(schema, oldRow);
+        await assertRelationMutationsSupported(tx, ws, schema, oldRow);
 
         const { inSchema, outSchema } = await getOwnerSchemas(tx, ws, oldRow);
         if (syncAuthCtx) {

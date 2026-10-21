@@ -105,7 +105,6 @@ const relationSchema: RelationSchemaDbResult = {
   groups: [],
   color: null,
   icon: null,
-  relation_approval_policy: 'disabled',
   created_at: now,
   updated_at: now
 };
@@ -147,6 +146,10 @@ const makeDb = (
   const deleteRelation = vi.fn(async () => existingRow ?? makeRelationRow());
 
   const db = {
+    governanceCaseConfig: {
+      getCaseConfig: vi.fn(async () => ({ enabled: schemaOverride !== relationSchema })),
+      listCaseConfig: vi.fn(async () => [])
+    },
     relation: {
       getRelationSchema: vi.fn(async () => schemaOverride),
       listRelationSchemas: vi.fn(async () => [schemaOverride]),
@@ -553,10 +556,8 @@ describe('restoreWorkspaceRelationVersion', () => {
 });
 
 describe('relation approval policy resolution', () => {
-  const requiredSchema: RelationSchemaDbResult = {
-    ...relationSchema,
-    relation_approval_policy: 'required'
-  };
+  // a distinct schema object makes the mocked workflow config row report approval as required
+  const requiredSchema: RelationSchemaDbResult = { ...relationSchema };
 
   it('never gates create, even under a required-approval schema (mirrors entity create)', async () => {
     const { db } = makeDb(undefined, [], null, requiredSchema);

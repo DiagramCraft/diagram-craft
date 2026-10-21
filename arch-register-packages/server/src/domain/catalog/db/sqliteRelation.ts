@@ -31,7 +31,7 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
 
   async createRelationSchema(input: RelationSchemaDbCreate) {
     this.run(
-      'INSERT INTO relation_schema (id, workspace, name, category_id, description, in_schema_ids, out_schema_ids, in_label, out_label, fields, groups, shared_field_group_links, validation_rules, color, icon, relation_approval_policy, unique_endpoint_pair, version, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO relation_schema (id, workspace, name, category_id, description, in_schema_ids, out_schema_ids, in_label, out_label, fields, groups, shared_field_group_links, validation_rules, color, icon, unique_endpoint_pair, version, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.workspace,
@@ -48,7 +48,6 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
         JSON.stringify(input.validation_rules ?? []),
         input.color,
         input.icon,
-        input.relation_approval_policy ?? 'disabled',
         input.unique_endpoint_pair === true ? 1 : 0,
         input.version ?? 1,
         input.created_at.toISOString(),
@@ -60,7 +59,7 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
 
   async updateRelationSchema(workspace: string, id: string, input: RelationSchemaDbUpdate) {
     this.run(
-      'UPDATE relation_schema SET name = ?, category_id = CASE WHEN ? THEN category_id ELSE ? END, description = ?, in_schema_ids = ?, out_schema_ids = ?, in_label = ?, out_label = ?, fields = ?, groups = ?, shared_field_group_links = ?, validation_rules = ?, color = ?, icon = ?, relation_approval_policy = COALESCE(?, relation_approval_policy), unique_endpoint_pair = COALESCE(?, unique_endpoint_pair), version = COALESCE(?, version), updated_at = ? WHERE workspace = ? AND id = ?',
+      'UPDATE relation_schema SET name = ?, category_id = CASE WHEN ? THEN category_id ELSE ? END, description = ?, in_schema_ids = ?, out_schema_ids = ?, in_label = ?, out_label = ?, fields = ?, groups = ?, shared_field_group_links = ?, validation_rules = ?, color = ?, icon = ?, unique_endpoint_pair = COALESCE(?, unique_endpoint_pair), version = COALESCE(?, version), updated_at = ? WHERE workspace = ? AND id = ?',
       [
         input.name,
         input.category_id === undefined ? 1 : 0,
@@ -76,7 +75,6 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
         JSON.stringify(input.validation_rules ?? []),
         input.color,
         input.icon,
-        input.relation_approval_policy ?? null,
         input.unique_endpoint_pair === undefined ? null : input.unique_endpoint_pair ? 1 : 0,
         input.version ?? null,
         input.updated_at.toISOString(),
