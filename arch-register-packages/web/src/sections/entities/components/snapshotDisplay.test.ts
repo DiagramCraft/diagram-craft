@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import type { ChangeCase } from '@arch-register/api-types/changeCaseContract';
 import type { Milestone } from '@arch-register/api-types/milestoneContract';
 import {
+  flattenChangeCaseMembers,
+  flattenRelationChangeCaseMembers,
   getProjectScenarioDate,
   getSnapshotDateLabel,
   getSnapshotEffectiveDate
@@ -64,5 +66,26 @@ describe('snapshotDisplay', () => {
 
     expect(getProjectScenarioDate('2026-10-01', changeCases, new Map())).toBe('2026-10-01');
     expect(getProjectScenarioDate(null, changeCases, new Map())).toBeNull();
+  });
+
+  it('splits live change case members by record kind', () => {
+    const cases = [
+      changeCase({
+        id: 'c1',
+        status: 'planned',
+        members: [
+          { id: 'm1', kind: 'entity', entity_id: 'e1' },
+          { id: 'm2', kind: 'relation', entity_id: 'r1', relation_id: 'r1' }
+        ]
+      } as Partial<ChangeCase>),
+      changeCase({
+        id: 'c2',
+        status: 'withdrawn',
+        members: [{ id: 'm3', kind: 'relation', entity_id: 'r2', relation_id: 'r2' }]
+      } as Partial<ChangeCase>)
+    ];
+
+    expect(flattenChangeCaseMembers(cases).map(e => e.member.id)).toEqual(['m1']);
+    expect(flattenRelationChangeCaseMembers(cases).map(e => e.member.id)).toEqual(['m2']);
   });
 });

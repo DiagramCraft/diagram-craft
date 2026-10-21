@@ -23,6 +23,17 @@ export const flattenChangeCaseMembers = (changeCases: ChangeCase[]): ChangeCaseM
         .map(member => ({ changeCase, member }))
     );
 
+export const flattenRelationChangeCaseMembers = (
+  changeCases: ChangeCase[]
+): ChangeCaseMemberEntry[] =>
+  changeCases
+    .filter(isLiveChangeCase)
+    .flatMap(changeCase =>
+      changeCase.members
+        .filter(member => member.kind === 'relation')
+        .map(member => ({ changeCase, member }))
+    );
+
 // A change case targets either a raw target_date or a milestone (never both) — the milestone's
 // target_date is its effective date. These helpers centralize that resolution so every display
 // site (timeline dots, detail panels, dialogs) treats the two the same way.

@@ -45,15 +45,22 @@ import { asProjectPublicId, projectDetailRoute } from '../../routes/publicObject
 import type { AsOfMarker } from '../../components/timeline/TimelineStrip';
 import { formatDate } from '../../utils/dateFormat';
 import { useMilestones } from '../../hooks/useMilestones';
+import { useRelations } from '../../hooks/useRelations';
+import { useRelationSchemas } from '../../hooks/useRelationSchemas';
+import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import { BaselineDetailView } from '../baselines/BaselineDetailView';
 import {
   getSnapshotEffectiveDate,
   getProjectScenarioDate,
   toMilestonesById,
   flattenChangeCaseMembers,
+  flattenRelationChangeCaseMembers,
   type ChangeCaseMemberEntry
 } from '../entities/components/snapshotDisplay';
-import { diffSnapshotState } from '../entities/components/entityTimelineHelpers';
+import {
+  diffRelationSnapshotState,
+  diffSnapshotState
+} from '../entities/components/entityTimelineHelpers';
 import type { Milestone } from '@arch-register/api-types/milestoneContract';
 import type { ChangeCase } from '@arch-register/api-types/changeCaseContract';
 
@@ -105,7 +112,14 @@ export const ProjectEntities = ({
   const [deleteTarget, setDeleteTarget] = useState<ChangeCaseMemberEntry | null>(null);
   const [includeOverdueChanges, setIncludeOverdueChanges] = useState(false);
 
-  const projectEntries = useMemo(() => flattenChangeCaseMembers(changeCases), [changeCases]);
+  // Entity and relation members are listed together; relations resolve names/schemas separately.
+  const projectEntries = useMemo(
+    () => [
+      ...flattenChangeCaseMembers(changeCases),
+      ...flattenRelationChangeCaseMembers(changeCases)
+    ],
+    [changeCases]
+  );
   const futureEntries = useMemo(
     () => projectEntries.filter(entry => entry.changeCase.status === 'planned'),
     [projectEntries]
@@ -142,9 +156,28 @@ export const ProjectEntities = ({
     activeTab === 'whats-changed'
   );
 
+  const hasRelationMembers = projectEntries.some(entry => entry.member.kind === 'relation');
+  const { data: relations = [] } = useRelations(workspaceSlug, {}, { enabled: hasRelationMembers });
+  const { data: relationSchemas = [] } = useRelationSchemas(workspaceSlug, hasRelationMembers);
+  const relationNameById = useMemo(
+    () => new Map(relations.map(r => [r._uid, `${r._in.name} → ${r._out.name}`])),
+    [relations]
+  );
+  const relationSchemaById = useMemo(
+    () => new Map(relationSchemas.map(schema => [schema.id, schema])),
+    [relationSchemas]
+  );
+  const relationSchemaIdByRelationId = useMemo(
+    () => new Map(relations.map(r => [r._uid, r._schema.id])),
+    [relations]
+  );
   const entityNameById = useMemo(
-    () => new Map(projectEntities.map(e => [e.entity_id, e.entity_name])),
-    [projectEntities]
+    () =>
+      new Map([
+        ...projectEntities.map(e => [e.entity_id, e.entity_name] as const),
+        ...relationNameById
+      ]),
+    [projectEntities, relationNameById]
   );
   const deleteTargetCaseEntityNames = useMemo(() => {
     if (!deleteTarget) return [];
@@ -474,6 +507,9 @@ export const ProjectEntities = ({
         <FutureChangesTab
           project={project}
           futureEntries={futureEntries}
+          relationNameById={relationNameById}
+          relationSchemaById={relationSchemaById}
+          relationSchemaIdByRelationId={relationSchemaIdByRelationId}
           projectEntities={projectEntities}
           schemaMap={schemaMap}
           schemas={schemas}
@@ -558,6 +594,9 @@ export const ProjectEntities = ({
 const FutureChangesTab = ({
   project,
   futureEntries,
+  relationNameById,
+  relationSchemaById,
+  relationSchemaIdByRelationId,
   projectEntities,
   schemaMap,
   schemas,
@@ -571,6 +610,9 @@ const FutureChangesTab = ({
 }: {
   project: ProjectDetailData;
   futureEntries: ChangeCaseMemberEntry[];
+  relationNameById: Map<string, string>;
+  relationSchemaById: Map<string, RelationSchema>;
+  relationSchemaIdByRelationId: Map<string, string>;
   projectEntities: ProjectEntity[];
   schemaMap: Map<string, { color: string; icon: string | null }>;
   schemas: EntitySchema[];
@@ -596,6 +638,12 @@ const FutureChangesTab = ({
   }
 
   const entityMap = new Map(projectEntities.map(e => [e.entity_id, e]));
+  const nameOf = (id: string) => entityMap.get(id)?.entity_name ?? relationNameById.get(id) ?? id;
+  const getRelationSchema = (entry: ChangeCaseMemberEntry) => {
+    if (entry.member.kind !== 'relation') return null;
+    const schemaId = relationSchemaIdByRelationId.get(entry.member.entity_id);
+    return schemaId ? (relationSchemaById.get(schemaId) ?? null) : null;
+  };
   const getEntitySchema = (entity: ProjectEntity | undefined) =>
     entity?.entity_schema
       ? (schemas.find(schema => schema.id === entity.entity_schema!.id) ?? null)
@@ -627,17 +675,19 @@ const FutureChangesTab = ({
           {[...groups.entries()].map(([entityId, snaps]) => {
             const pe = entityMap.get(entityId);
             const schema = pe?.entity_schema ? schemaMap.get(pe.entity_schema.id) : undefined;
+            const relationSchema = getRelationSchema(snaps[0]!);
             return (
               <div key={entityId} className={styles.futureGroup}>
                 <div className={styles.futureGroupHead}>
                   {schema && <TypeBadge color={schema.color} icon={schema.icon} size={16} />}
-                  <span className={styles.futureGroupName}>{pe?.entity_name ?? entityId}</span>
+                  <span className={styles.futureGroupName}>{nameOf(entityId)}</span>
                   {pe?.entity_schema && <Chip tone="ghost">{pe.entity_schema.name}</Chip>}
+                  {relationSchema && <Chip tone="ghost">{relationSchema.name}</Chip>}
                 </div>
                 {snaps.map(entry => {
                   const otherEntityNames = (caseMembersMap.get(entry.changeCase.id) ?? [])
                     .filter(e => e.member.entity_id !== entityId)
-                    .map(e => entityMap.get(e.member.entity_id)?.entity_name ?? e.member.entity_id);
+                    .map(e => nameOf(e.member.entity_id));
                   return (
                     <FutureSnapshotRow
                       key={entry.member.id}
@@ -646,6 +696,7 @@ const FutureChangesTab = ({
                       showMilestone
                       entitySchema={getEntitySchema(pe)}
                       entitySchemaInfo={getEntitySchemaInfo(pe)}
+                      relationSchema={getRelationSchema(entry)}
                       milestonesById={milestonesById}
                       lifecycleStates={lifecycleStates}
                       teams={teams}
@@ -737,8 +788,7 @@ const FutureChangesTab = ({
                 const changeCase = caseEntries[0]!.changeCase;
                 const fallbackTitle =
                   caseEntries.length === 1
-                    ? (entityMap.get(caseEntries[0]!.member.entity_id)?.entity_name ??
-                      caseEntries[0]!.member.entity_id)
+                    ? nameOf(caseEntries[0]!.member.entity_id)
                     : 'Untitled change';
                 const representativeEntry = caseEntries[0]!;
                 return (
@@ -801,9 +851,10 @@ const FutureChangesTab = ({
                             showMilestone={false}
                             showActions={false}
                             showNote={false}
-                            entityName={pe?.entity_name}
+                            entityName={nameOf(entry.member.entity_id)}
                             entitySchema={getEntitySchema(pe)}
                             entitySchemaInfo={getEntitySchemaInfo(pe)}
+                            relationSchema={getRelationSchema(entry)}
                             milestonesById={milestonesById}
                             lifecycleStates={lifecycleStates}
                             teams={teams}
@@ -833,6 +884,7 @@ const FutureSnapshotRow = ({
   entityName,
   entitySchema,
   entitySchemaInfo,
+  relationSchema,
   milestonesById,
   lifecycleStates,
   teams,
@@ -850,6 +902,7 @@ const FutureSnapshotRow = ({
   entityName?: string;
   entitySchema: EntitySchema | null;
   entitySchemaInfo?: { color: string; icon: string | null };
+  relationSchema?: RelationSchema | null;
   milestonesById: Map<string, Milestone>;
   lifecycleStates: WorkspaceLifecycleState[];
   teams: WorkspaceTeam[];
@@ -867,13 +920,16 @@ const FutureSnapshotRow = ({
     : undefined;
   const date = changeCase.target_date ?? milestone?.target_date ?? null;
   const dateLabel = date ? formatDate(date) : null;
-  const changes = diffSnapshotState(
-    member.base_state,
-    member.proposed_state,
-    entitySchema,
-    lifecycleStates,
-    teams
-  );
+  const changes =
+    member.kind === 'relation'
+      ? diffRelationSnapshotState(member.base_state, member.proposed_state, relationSchema ?? null)
+      : diffSnapshotState(
+          member.base_state,
+          member.proposed_state,
+          entitySchema,
+          lifecycleStates,
+          teams
+        );
 
   return (
     <div className={styles.futureRow}>
@@ -883,6 +939,7 @@ const FutureSnapshotRow = ({
             <TypeBadge color={entitySchemaInfo.color} icon={entitySchemaInfo.icon} size={14} />
           )}
           <span>{entityName ?? member.entity_id}</span>
+          {relationSchema && <Chip tone="ghost">{relationSchema.name}</Chip>}
         </div>
       )}
       {otherEntityNames.length > 0 && (
