@@ -6,6 +6,7 @@ import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useApplications } from '../../hooks/useApplications';
 import { CapabilityBindingEditor } from './sub-sections/CapabilityBindingEditor';
 import { ApplicationAccessCard } from './sub-sections/ApplicationAccessCard';
+import { ApplicationAuxMenu } from './sub-sections/ApplicationAuxMenu';
 import { ApplicationGeneralCard } from './sub-sections/ApplicationGeneralCard';
 import {
   findApplicationsCapabilitiesItem,
@@ -85,6 +86,21 @@ export const ApplicationsCapabilitiesScreen = () => {
           title={item.label}
           description={description}
           toggleButtons={enabledControl}
+          menu={
+            item.kind === 'application' && item.applicationId ? (
+              <ApplicationAuxMenu
+                workspaceSlug={workspaceSlug}
+                applicationKey={item.applicationId}
+                onDeleted={() =>
+                  navigate({
+                    to: '/$workspaceSlug/settings/applications-capabilities',
+                    params: { workspaceSlug },
+                    search: {}
+                  })
+                }
+              />
+            ) : undefined
+          }
           buttons={
             item.kind === 'application'
               ? activeTab === 'general'
@@ -126,13 +142,6 @@ export const ApplicationsCapabilitiesScreen = () => {
             workspaceSlug={workspaceSlug}
             applicationKey={item.applicationId}
             onActionsChange={setGeneralActions}
-            onDeleted={() =>
-              navigate({
-                to: '/$workspaceSlug/settings/applications-capabilities',
-                params: { workspaceSlug },
-                search: {}
-              })
-            }
           />
         )}
 
