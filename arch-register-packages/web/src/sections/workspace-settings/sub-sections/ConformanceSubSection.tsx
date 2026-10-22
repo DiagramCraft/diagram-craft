@@ -1,5 +1,6 @@
+import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { useCallback, useState } from 'react';
-import { WorkspaceSettingsSectionHeader } from '../WorkspaceSettingsSectionHeader';
+import { SectionActions } from '../SectionActions';
 import {
   TbCheck,
   TbPencil,
@@ -35,9 +36,9 @@ import {
 } from '../../../components/ConformanceBadges';
 import { DropdownMenu, type MenuItem } from '../../../components/DropdownMenu';
 import { Drawer } from '../../../components/Drawer';
-import { EmptyState } from '../../../components/EmptyState';
 import { ToolbarFilterBar, ToolbarFilterSelect } from '../../../components/ToolbarFilter';
 import { LoadingState } from '../../../components/LoadingState';
+import { QueryState } from '../QueryState';
 import { Pagination } from '../../../components/Pagination';
 import { formatDateTime } from '../../../utils/dateFormat';
 import { useAiStatus } from '../../../hooks/useAiConfig';
@@ -382,6 +383,7 @@ export const ConformanceSubSection = ({
   const [initialType, setInitialType] = useState<CheckType>('scheduled_validation');
   const [openViolationId, setOpenViolationId] = useState<string | null>(null);
   const [exemptViolationId, setExemptViolationId] = useState<string | null>(null);
+  const [deleteCheckTarget, setDeleteCheckTarget] = useState<ConformanceCheck | null>(null);
   const createCheck = useCreateConformanceCheck(workspaceSlug);
   const updateCheck = useUpdateConformanceCheck(workspaceSlug);
   const deleteCheck = useDeleteConformanceCheck(workspaceSlug);
@@ -444,23 +446,20 @@ export const ConformanceSubSection = ({
 
   return (
     <>
-      <WorkspaceSettingsSectionHeader
-        section="conformance"
-        buttons={
-          canManageWorkspaces ? (
-            <>
-              <Button
-                icon={<TbRefresh size={12} />}
-                disabled={runConformance.isPending}
-                onClick={() => runConformance.mutate(undefined)}
-              >
-                Run workspace scan
-              </Button>
-              <AddCheckMenu aiConfigured={aiConfigured} onSelect={handleAddCheck} />
-            </>
-          ) : undefined
-        }
-      />
+      <SectionActions>
+        canManageWorkspaces ? (
+        <>
+          <Button
+            icon={<TbRefresh size={12} />}
+            disabled={runConformance.isPending}
+            onClick={() => runConformance.mutate(undefined)}
+          >
+            Run workspace scan
+          </Button>
+          <AddCheckMenu aiConfigured={aiConfigured} onSelect={handleAddCheck} />
+        </>
+        ) : undefined
+      </SectionActions>
       <div className={styles.stack}>
         {summary && (
           <div className={styles.summary}>
@@ -502,23 +501,22 @@ export const ConformanceSubSection = ({
 
         {tab === 'checks' && (
           <section className={styles.section}>
-            {checksLoading ? (
-              <LoadingState text="Loading conformance checks…" size="sm" />
-            ) : checksError ? (
-              <div className={styles.error}>Conformance checks could not be loaded.</div>
-            ) : checks.length === 0 ? (
-              <EmptyState
-                framed
-                icon={<TbShieldCheck size={24} />}
-                title="No checks configured"
-                subtitle="Conformance checks are centrally managed rules that evaluate entities against architectural and governance expectations. Add a scheduled validation, a query policy, or an AI prompt check to start finding violations across the workspace."
-                action={
-                  canManageWorkspaces ? (
-                    <AddCheckMenu aiConfigured={aiConfigured} onSelect={handleAddCheck} />
-                  ) : undefined
-                }
-              />
-            ) : (
+            <QueryState
+              isLoading={checksLoading}
+              error={checksError}
+              isEmpty={checks.length === 0}
+              subject="conformance checks"
+              empty={{
+                framed: true,
+                icon: <TbShieldCheck size={24} />,
+                title: 'No checks configured',
+                subtitle:
+                  'Conformance checks are centrally managed rules that evaluate entities against architectural and governance expectations. Add a scheduled validation, a query policy, or an AI prompt check to start finding violations across the workspace.',
+                action: canManageWorkspaces ? (
+                  <AddCheckMenu aiConfigured={aiConfigured} onSelect={handleAddCheck} />
+                ) : undefined
+              }}
+            >
               <div className={styles.tableWrap}>
                 <Table.Root layout="fixed">
                   <Table.Head>
@@ -599,10 +597,7 @@ export const ConformanceSubSection = ({
                                       label: 'Delete',
                                       icon: <TbTrash size={14} />,
                                       danger: true,
-                                      onClick: () => {
-                                        if (window.confirm(`Delete '${check.name}'?`))
-                                          deleteCheck.mutate(check.id);
-                                      }
+                                      onClick: () => setDeleteCheckTarget(check)
                                     }
                                   ] satisfies MenuItem[]
                                 }
@@ -615,7 +610,7 @@ export const ConformanceSubSection = ({
                   </Table.Body>
                 </Table.Root>
               </div>
-            )}
+            </QueryState>
           </section>
         )}
 
@@ -795,6 +790,18 @@ export const ConformanceSubSection = ({
           </section>
         )}
 
+        <DeleteConfirmationDialog
+          open={deleteCheckTarget != null}
+          title="Delete conformance check?"
+          message={`'${deleteCheckTarget?.name ?? ''}' will be permanently deleted.`}
+          onCancel={() => setDeleteCheckTarget(null)}
+          onConfirm={() => {
+            if (!deleteCheckTarget) return;
+            deleteCheck.mutate(deleteCheckTarget.id, {
+              onSettled: () => setDeleteCheckTarget(null)
+            });
+          }}
+        />
         <ConformanceCheckEditor
           open={dialogOpen}
           onClose={() => {

@@ -1,7 +1,8 @@
+import { SettingsPage } from '../SettingsBlock';
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbPlus } from 'react-icons/tb';
-import { WorkspaceSettingsSectionHeader } from '../WorkspaceSettingsSectionHeader';
+import { SectionActions } from '../SectionActions';
 import { Select } from '@diagram-craft/app-components/Select';
 import { Banner } from '../../../components/Banner';
 import { Chip } from '../../../components/Chip';
@@ -102,27 +103,20 @@ export const MembersSubSection = ({ workspaceSlug }: { workspaceSlug: string }) 
   );
 
   const header = (
-    <WorkspaceSettingsSectionHeader
-      section="members"
-      buttons={
-        <Button
-          variant="primary"
-          icon={<TbPlus size={12} />}
-          onClick={() => setAddDialogOpen(true)}
-        >
-          Add user
-        </Button>
-      }
-    />
+    <SectionActions>
+      <Button variant="primary" icon={<TbPlus size={12} />} onClick={() => setAddDialogOpen(true)}>
+        Add user
+      </Button>
+    </SectionActions>
   );
 
   if (error) {
     return (
       <>
         {header}
-        <div className={styles.container}>
+        <SettingsPage stacked={false}>
           <Banner variant="error">Failed to load workspace members.</Banner>
-        </div>
+        </SettingsPage>
       </>
     );
   }
@@ -130,7 +124,7 @@ export const MembersSubSection = ({ workspaceSlug }: { workspaceSlug: string }) 
   return (
     <>
       {header}
-      <div className={styles.container}>
+      <SettingsPage stacked={false}>
         {!isLoading && members.length > 0 && (
           <ToolbarFilterBar>
             <SearchInput
@@ -262,7 +256,7 @@ export const MembersSubSection = ({ workspaceSlug }: { workspaceSlug: string }) 
           roles={roles}
           canCreateUsers={canCreateUsers}
         />
-      </div>
+      </SettingsPage>
     </>
   );
 };

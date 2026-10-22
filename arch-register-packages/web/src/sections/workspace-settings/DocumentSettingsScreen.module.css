@@ -92,10 +92,6 @@
   gap: 8px;
 }
 
-.fieldOptions {
-  font-size: 11px;
-}
-
 .fieldEmpty {
   padding: 16px;
   color: var(--cmp-fg-disabled);
@@ -181,13 +177,6 @@
 .iconBtn:hover {
   color: var(--base-fg-dim);
   background: var(--cmp-bg);
-}
-
-.formActions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 18px;
 }
 
 .defaultsGrid {

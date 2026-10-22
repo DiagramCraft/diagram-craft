@@ -1,4 +1,7 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import styles from './PublicCatalogSubSection.module.css';
+import { Banner } from '../../../components/Banner';
+import { LoadingState } from '../../../components/LoadingState';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbArrowDown, TbArrowUp, TbDots, TbTrash } from 'react-icons/tb';
 import { DropdownMenu, type MenuItem } from '../../../components/DropdownMenu';
@@ -25,7 +28,7 @@ import {
   validatePublicCatalogDraft
 } from './PublicCatalogSubSection.helpers';
 import { SettingsBlock, SettingsBlockField, SettingsBlockList } from '../SettingsBlock';
-import { WorkspaceSettingsSectionHeader } from '../WorkspaceSettingsSectionHeader';
+import { SectionActions } from '../SectionActions';
 
 const emptyConfig: PublicCatalogConfig = {
   enabled: false,
@@ -38,25 +41,8 @@ const emptyConfig: PublicCatalogConfig = {
   apiArtifacts: []
 };
 
-const cardStyle: CSSProperties = {
-  position: 'relative',
-  padding: 12,
-  border: '1px solid var(--panel-border)',
-  borderRadius: 6,
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 10
-};
-
-const rowStyle: CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: 8,
-  flexWrap: 'wrap'
-};
-
 const EntryMenu = ({ label, items }: { label: string; items: MenuItem[] }) => (
-  <div style={{ position: 'absolute', top: 6, right: 6 }}>
+  <div className={styles.entryMenu}>
     <DropdownMenu
       trigger={
         <Button variant="icon-only" aria-label={label}>
@@ -67,9 +53,6 @@ const EntryMenu = ({ label, items }: { label: string; items: MenuItem[] }) => (
     />
   </div>
 );
-
-const mutedStyle: CSSProperties = { color: 'var(--cmp-fg-disabled)', fontSize: 12 };
-const errorStyle: CSSProperties = { color: 'var(--error-fg, #d55)', fontSize: 12 };
 
 const errorMessage = (error: unknown) =>
   error instanceof Error ? error.message : 'Invalid public catalog configuration';
@@ -99,7 +82,7 @@ const normalizeConfigForSubmit = (value: PublicCatalogConfig): PublicCatalogConf
 
 const InlineErrors = ({ errors }: { errors: string[] | undefined }) =>
   errors && errors.length > 0 ? (
-    <div role="alert" style={errorStyle}>
+    <div role="alert" className={styles.error}>
       {errors.map(error => (
         <div key={error}>{error}</div>
       ))}
@@ -342,55 +325,54 @@ export const PublicCatalogSubSection = ({
   if (configLoading || optionsLoading)
     return (
       <>
-        <WorkspaceSettingsSectionHeader section="public-catalog" />
-        <SettingsBlockList>Loading public catalog settings…</SettingsBlockList>
+        <SettingsBlockList>
+          <LoadingState text="Loading public catalog settings…" size="sm" />
+        </SettingsBlockList>
       </>
     );
   if (configError || optionsError)
     return (
       <>
-        <WorkspaceSettingsSectionHeader section="public-catalog" />
-        <SettingsBlockList>Unable to load public catalog settings.</SettingsBlockList>
+        <SettingsBlockList>
+          <Banner variant="error">Failed to load public catalog settings.</Banner>
+        </SettingsBlockList>
       </>
     );
 
   return (
     <>
-      <WorkspaceSettingsSectionHeader
-        section="public-catalog"
-        buttons={
-          <>
-            <Button
-              disabled={!dirty || update.isPending || previewMutation.isPending}
-              onClick={cancel}
-            >
-              Cancel
-            </Button>
-            <Button
-              disabled={validation.errors.length > 0 || previewMutation.isPending}
-              onClick={() => void previewDraft()}
-            >
-              {previewMutation.isPending ? 'Building preview…' : 'Preview catalog'}
-            </Button>
-            <Button
-              variant="primary"
-              disabled={!canSubmit || update.isPending || previewMutation.isPending}
-              onClick={() => void save()}
-            >
-              {update.isPending ? 'Saving…' : 'Save changes'}
-            </Button>
-          </>
-        }
-      />
+      <SectionActions>
+        <>
+          <Button
+            disabled={!dirty || update.isPending || previewMutation.isPending}
+            onClick={cancel}
+          >
+            Cancel
+          </Button>
+          <Button
+            disabled={validation.errors.length > 0 || previewMutation.isPending}
+            onClick={() => void previewDraft()}
+          >
+            {previewMutation.isPending ? 'Building preview…' : 'Preview catalog'}
+          </Button>
+          <Button
+            variant="primary"
+            disabled={!canSubmit || update.isPending || previewMutation.isPending}
+            onClick={() => void save()}
+          >
+            {update.isPending ? 'Saving…' : 'Save changes'}
+          </Button>
+        </>
+      </SectionActions>
       <SettingsBlockList>
         {validation.errors.length > 0 && (
-          <div role="alert" style={errorStyle}>
+          <div role="alert" className={styles.error}>
             Fix or remove the highlighted selections before saving. {validation.errors.length}{' '}
             validation {validation.errors.length === 1 ? 'error' : 'errors'} found.
           </div>
         )}
         {serverError && (
-          <div role="alert" style={errorStyle}>
+          <div role="alert" className={styles.error}>
             {serverError}
           </div>
         )}
@@ -456,7 +438,7 @@ export const PublicCatalogSubSection = ({
                 key={schema.id}
                 align="top"
                 label={
-                  <label style={rowStyle}>
+                  <label className={styles.row}>
                     <input
                       type="checkbox"
                       checked={fields != null}
@@ -513,7 +495,7 @@ export const PublicCatalogSubSection = ({
                             }))
                           }
                         />
-                        {field.name} <span style={mutedStyle}>({field.type})</span>
+                        {field.name} <span className={styles.muted}>({field.type})</span>
                       </label>
                     ))}
                   </div>
@@ -546,7 +528,7 @@ export const PublicCatalogSubSection = ({
             );
           })}
           {options.schemas.length === 0 && configuredUnknownSchemas.length === 0 && (
-            <div style={mutedStyle}>No schemas are available in this workspace.</div>
+            <div className={styles.muted}>No schemas are available in this workspace.</div>
           )}
         </SettingsBlock>
 
@@ -568,7 +550,7 @@ export const PublicCatalogSubSection = ({
               entity && options.schemas.find(candidate => candidate.id === entity.schemaId);
             const availableFields = schema?.fields ?? [];
             return (
-              <div key={`${override.entityId}-${index}`} style={{ ...cardStyle, marginBottom: 8 }}>
+              <div key={`${override.entityId}-${index}`} className={styles.card}>
                 <EntryMenu
                   label={`Entity override ${index + 1} actions`}
                   items={[
@@ -586,7 +568,7 @@ export const PublicCatalogSubSection = ({
                     }
                   ]}
                 />
-                <div style={{ ...rowStyle, paddingRight: 32 }}>
+                <div className={`${styles.row} ${styles.rowWithMenu}`}>
                   <div style={{ flex: '1 1 300px' }}>
                     <Select.Root
                       aria-label={`Entity override ${index + 1}`}
@@ -636,8 +618,8 @@ export const PublicCatalogSubSection = ({
                 </div>
                 {override.mode === 'publish' && entity && schema && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingLeft: 8 }}>
-                    <div style={mutedStyle}>Fields for this entity</div>
-                    <label style={{ ...rowStyle, fontSize: '12px' }}>
+                    <div className={styles.muted}>Fields for this entity</div>
+                    <label className={`${styles.row} ${styles.rowSmall}`}>
                       <input
                         type="radio"
                         name={`entity-fields-${index}`}
@@ -653,7 +635,7 @@ export const PublicCatalogSubSection = ({
                       />
                       Use the selected schema fields
                     </label>
-                    <label style={{ ...rowStyle, fontSize: '12px' }}>
+                    <label className={`${styles.row} ${styles.rowSmall}`}>
                       <input
                         type="radio"
                         name={`entity-fields-${index}`}
@@ -725,7 +707,7 @@ export const PublicCatalogSubSection = ({
             );
           })}
           {config.entityOverrides.length === 0 && (
-            <div style={mutedStyle}>No individual entity overrides are configured.</div>
+            <div className={styles.muted}>No individual entity overrides are configured.</div>
           )}
         </SettingsBlock>
 
@@ -755,7 +737,7 @@ export const PublicCatalogSubSection = ({
                     candidate.entityPublicId === page.entityId))) &&
               pageIsSelectable(candidate);
             return (
-              <div key={`${page.nodeId}-${index}`} style={{ ...cardStyle, marginBottom: 8 }}>
+              <div key={`${page.nodeId}-${index}`} className={styles.card}>
                 <EntryMenu
                   label={`Wiki page ${index + 1} actions`}
                   items={[
@@ -783,7 +765,7 @@ export const PublicCatalogSubSection = ({
                     }
                   ]}
                 />
-                <div style={{ ...rowStyle, paddingRight: 32 }}>
+                <div className={`${styles.row} ${styles.rowWithMenu}`}>
                   <div style={{ flex: '0 1 160px' }}>
                     <Select.Root
                       aria-label={`Wiki page scope ${index + 1}`}
@@ -912,8 +894,8 @@ export const PublicCatalogSubSection = ({
                     </Select.Root>
                   </div>
                 </div>
-                <div style={rowStyle}>
-                  <label style={{ ...mutedStyle, minWidth: 80 }}>Public path</label>
+                <div className={styles.row}>
+                  <label className={`${styles.muted} ${styles.labelMuted}`}>Public path</label>
                   <TextInput
                     value={page.publicPath}
                     onChange={value =>
@@ -926,7 +908,7 @@ export const PublicCatalogSubSection = ({
                     }
                     style={{ flex: '1 1 260px', maxWidth: 520 }}
                   />
-                  <label style={{ ...mutedStyle, minWidth: 45 }}>Label</label>
+                  <label className={`${styles.muted} ${styles.labelMutedSm}`}>Label</label>
                   <TextInput
                     value={page.label ?? ''}
                     onChange={value =>
@@ -941,16 +923,18 @@ export const PublicCatalogSubSection = ({
                   />
                 </div>
                 {currentCandidate && !currentCandidate.selectable && (
-                  <div style={mutedStyle}>{currentCandidate.reason}</div>
+                  <div className={styles.muted}>{currentCandidate.reason}</div>
                 )}
                 {currentEntity && page.scope === 'entity' && !currentEntity.selectable && (
-                  <div style={mutedStyle}>{currentEntity.reason}</div>
+                  <div className={styles.muted}>{currentEntity.reason}</div>
                 )}
                 <InlineErrors errors={validation.pageErrors[index]} />
               </div>
             );
           })}
-          {config.pages.length === 0 && <div style={mutedStyle}>No wiki pages are configured.</div>}
+          {config.pages.length === 0 && (
+            <div className={styles.muted}>No wiki pages are configured.</div>
+          )}
         </SettingsBlock>
 
         <SettingsBlock
@@ -969,10 +953,7 @@ export const PublicCatalogSubSection = ({
             const artifact = selectorArtifactById(options, publication.artifactId);
             const artifactChoices = apiArtifactOptions(publication.artifactId);
             return (
-              <div
-                key={`${publication.artifactId}-${index}`}
-                style={{ ...cardStyle, marginBottom: 8 }}
-              >
+              <div key={`${publication.artifactId}-${index}`} className={styles.card}>
                 <EntryMenu
                   label={`API specification ${index + 1} actions`}
                   items={[
@@ -990,7 +971,7 @@ export const PublicCatalogSubSection = ({
                     }
                   ]}
                 />
-                <div style={{ ...rowStyle, paddingRight: 32 }}>
+                <div className={`${styles.row} ${styles.rowWithMenu}`}>
                   <div style={{ flex: '1 1 320px' }}>
                     <Select.Root
                       aria-label={`API artifact ${index + 1}`}
@@ -1055,7 +1036,7 @@ export const PublicCatalogSubSection = ({
                     </Select.Root>
                   </div>
                   <label
-                    style={rowStyle}
+                    className={styles.row}
                     title="Allow unauthenticated readers to download the source document"
                   >
                     <input
@@ -1076,14 +1057,14 @@ export const PublicCatalogSubSection = ({
                   </label>
                 </div>
                 {artifact && (
-                  <div style={mutedStyle}>Status: {artifact.status.replaceAll('_', ' ')}</div>
+                  <div className={styles.muted}>Status: {artifact.status.replaceAll('_', ' ')}</div>
                 )}
                 <InlineErrors errors={validation.apiArtifactErrors[index]} />
               </div>
             );
           })}
           {config.apiArtifacts.length === 0 && (
-            <div style={mutedStyle}>No API specifications are configured.</div>
+            <div className={styles.muted}>No API specifications are configured.</div>
           )}
         </SettingsBlock>
 
@@ -1092,12 +1073,14 @@ export const PublicCatalogSubSection = ({
             title="Catalog preview"
             description="This is the server-validated manifest produced by the current draft. It is not saved."
           >
-            <div style={rowStyle}>
+            <div className={styles.row}>
               <strong>{preview.manifest.title}</strong>
-              <span style={mutedStyle}>{preview.enabled ? 'Enabled' : 'Disabled'}</span>
-              <span style={mutedStyle}>{preview.manifest.entityCount} published entities</span>
-              <span style={mutedStyle}>{preview.manifest.pages.length} wiki pages</span>
-              <span style={mutedStyle}>
+              <span className={styles.muted}>{preview.enabled ? 'Enabled' : 'Disabled'}</span>
+              <span className={styles.muted}>
+                {preview.manifest.entityCount} published entities
+              </span>
+              <span className={styles.muted}>{preview.manifest.pages.length} wiki pages</span>
+              <span className={styles.muted}>
                 {preview.manifest.apiArtifacts.length} API specifications
               </span>
             </div>

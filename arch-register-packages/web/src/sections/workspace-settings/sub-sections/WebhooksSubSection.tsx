@@ -1,3 +1,4 @@
+import { SettingsPage } from '../SettingsBlock';
 import { useEffect, useState } from 'react';
 import { TbCopy, TbEdit, TbKey, TbPlus, TbTrash, TbWebhook } from 'react-icons/tb';
 import type { Webhook, WebhookOperation } from '@arch-register/api-types/webhookContract';
@@ -11,11 +12,11 @@ import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteCo
 import { Table } from '../../../components/table/Table';
 import { DropdownMenu, type MenuItem } from '../../../components/DropdownMenu';
 import { Chip } from '../../../components/Chip';
-import { EmptyState } from '../../../components/EmptyState';
-import { LoadingState } from '../../../components/LoadingState';
+import { QueryState } from '../QueryState';
+import { MutationError } from '../MutationError';
 import { useWebhookOperations, useWebhooks, type WebhookInput } from '../../../hooks/useWebhooks';
 import { useRelationSchemas } from '../../../hooks/useRelationSchemas';
-import { WorkspaceSettingsSectionHeader } from '../WorkspaceSettingsSectionHeader';
+import { SectionActions } from '../SectionActions';
 import styles from './WebhooksSubSection.module.css';
 
 const OPERATIONS: Array<{ value: WebhookOperation; label: string }> = [
@@ -172,7 +173,7 @@ const EditorDialog = ({
         <label className={styles.check}>
           <Checkbox value={enabled} onChange={value => setEnabled(value ?? false)} /> Enabled
         </label>
-        {error && <div className={styles.error}>{error.message}</div>}
+        <MutationError error={error} />
       </div>
     </Dialog>
   );
@@ -217,37 +218,38 @@ export const WebhooksSubSection = ({
   const [rotateId, setRotateId] = useState<string | null>(null);
 
   const save = async (input: WebhookInput) => {
-    if (editor === 'new') {
-      const created = await operations.create.mutateAsync(input);
-      setSecret(created.secret);
-    } else if (editor) {
-      await operations.update.mutateAsync({ id: editor.id, ...input });
+    try {
+      if (editor === 'new') {
+        const created = await operations.create.mutateAsync(input);
+        setSecret(created.secret);
+      } else if (editor) {
+        await operations.update.mutateAsync({ id: editor.id, ...input });
+      }
+      setEditor(null);
+    } catch {
+      // The error is surfaced in the dialog through the mutation state
     }
-    setEditor(null);
   };
 
   return (
     <>
-      <WorkspaceSettingsSectionHeader
-        section="webhooks"
-        buttons={
-          <Button variant="primary" icon={<TbPlus size={13} />} onClick={() => setEditor('new')}>
-            New webhook
-          </Button>
-        }
-      />
-      <div className={styles.container}>
-        {error ? (
-          <div className={styles.error}>Webhooks could not be loaded.</div>
-        ) : isLoading ? (
-          <LoadingState text="Loading webhooks…" size="sm" />
-        ) : webhooks.length === 0 ? (
-          <EmptyState
-            icon={<TbWebhook size={20} />}
-            title="No webhooks"
-            subtitle="Create an endpoint to receive entity change events."
-          />
-        ) : (
+      <SectionActions>
+        <Button variant="primary" icon={<TbPlus size={13} />} onClick={() => setEditor('new')}>
+          New webhook
+        </Button>
+      </SectionActions>
+      <SettingsPage>
+        <QueryState
+          isLoading={isLoading}
+          error={error}
+          isEmpty={webhooks.length === 0}
+          subject="webhooks"
+          empty={{
+            icon: <TbWebhook size={20} />,
+            title: 'No webhooks',
+            subtitle: 'Create an endpoint to receive entity change events.'
+          }}
+        >
           <Table.Root>
             <Table.Head>
               <Table.Row>
@@ -319,7 +321,7 @@ export const WebhooksSubSection = ({
               ))}
             </Table.Body>
           </Table.Root>
-        )}
+        </QueryState>
         <EditorDialog
           webhook={editor}
           schemas={schemas}
@@ -363,7 +365,7 @@ export const WebhooksSubSection = ({
             void operations.remove.mutateAsync(deleteId).then(() => setDeleteId(null));
           }}
         />
-      </div>
+      </SettingsPage>
     </>
   );
 };

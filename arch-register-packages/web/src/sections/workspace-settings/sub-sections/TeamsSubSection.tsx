@@ -1,5 +1,6 @@
+import { SettingsPage } from '../SettingsBlock';
 import { type TeamRole } from '@arch-register/permissions';
-import { WorkspaceSettingsSectionHeader } from '../WorkspaceSettingsSectionHeader';
+import { SectionActions } from '../SectionActions';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { TbChevronRight, TbEdit, TbPlus, TbTrash } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
@@ -212,27 +213,20 @@ export const TeamsSubSection = ({ workspaceSlug }: { workspaceSlug: string }) =>
   };
 
   const header = (
-    <WorkspaceSettingsSectionHeader
-      section="teams"
-      buttons={
-        <Button
-          variant="primary"
-          icon={<TbPlus size={12} />}
-          onClick={() => setAddDialogOpen(true)}
-        >
-          Add team
-        </Button>
-      }
-    />
+    <SectionActions>
+      <Button variant="primary" icon={<TbPlus size={12} />} onClick={() => setAddDialogOpen(true)}>
+        Add team
+      </Button>
+    </SectionActions>
   );
 
   if (teamsError || assignmentsError) {
     return (
       <>
         {header}
-        <div className={styles.container}>
+        <SettingsPage stacked={false}>
           <Banner variant="error">Failed to load teams.</Banner>
-        </div>
+        </SettingsPage>
       </>
     );
   }
@@ -240,7 +234,7 @@ export const TeamsSubSection = ({ workspaceSlug }: { workspaceSlug: string }) =>
   return (
     <>
       {header}
-      <div className={styles.container}>
+      <SettingsPage stacked={false}>
         {isLoadingTeams || isLoadingAssignments ? (
           <LoadingState text="Loading teams…" size="sm" />
         ) : teamDrafts.length === 0 ? (
@@ -455,7 +449,7 @@ export const TeamsSubSection = ({ workspaceSlug }: { workspaceSlug: string }) =>
           isSaving={isSaving}
           canCreateUsers={canCreateUsers}
         />
-      </div>
+      </SettingsPage>
     </>
   );
 };

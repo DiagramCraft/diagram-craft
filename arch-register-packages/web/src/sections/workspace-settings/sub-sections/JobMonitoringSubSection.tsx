@@ -3,7 +3,7 @@ import { TbEdit, TbHistory, TbPlayerPause, TbPlayerPlay, TbRefresh } from 'react
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbPlus } from 'react-icons/tb';
 import { CreateJobDialog } from '../../../components/jobs/CreateJobDialog';
-import { WorkspaceSettingsSectionHeader } from '../WorkspaceSettingsSectionHeader';
+import { SectionActions } from '../SectionActions';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
@@ -30,8 +30,9 @@ import {
 } from '../../../components/ToolbarFilter';
 import { Table } from '../../../components/table/Table';
 import { Chip } from '../../../components/Chip';
-import { EmptyState } from '../../../components/EmptyState';
-import { LoadingState } from '../../../components/LoadingState';
+import { Banner } from '../../../components/Banner';
+import { QueryState } from '../QueryState';
+import { MutationError } from '../MutationError';
 import { formatDateTime } from '../../../utils/dateFormat';
 import styles from './JobMonitoringSubSection.module.css';
 
@@ -247,7 +248,7 @@ const ScheduleEditorDialog = ({
           <Checkbox value={enabled} onChange={value => setEnabled(value ?? false)} /> Enabled
         </label>
 
-        {error && <div className={styles.error}>{error.message}</div>}
+        <MutationError error={error} />
       </div>
     </Dialog>
   );
@@ -378,28 +379,23 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
 
   return (
     <>
-      <WorkspaceSettingsSectionHeader
-        section="jobs"
-        buttons={
-          <>
-            <Button
-              icon={<TbRefresh size={12} />}
-              onClick={() =>
-                void Promise.all([refetchServers(), refetchSchedules(), refetchRuns()])
-              }
-            >
-              Refresh
-            </Button>
-            <Button
-              variant="primary"
-              icon={<TbPlus size={12} />}
-              onClick={() => setCreateDialogOpen(true)}
-            >
-              Add job
-            </Button>
-          </>
-        }
-      />
+      <SectionActions>
+        <>
+          <Button
+            icon={<TbRefresh size={12} />}
+            onClick={() => void Promise.all([refetchServers(), refetchSchedules(), refetchRuns()])}
+          >
+            Refresh
+          </Button>
+          <Button
+            variant="primary"
+            icon={<TbPlus size={12} />}
+            onClick={() => setCreateDialogOpen(true)}
+          >
+            Add job
+          </Button>
+        </>
+      </SectionActions>
       <CreateJobDialog
         open={createDialogOpen}
         workspaceSlug={workspaceSlug}
@@ -416,13 +412,13 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
 
         {tab === 'servers' && (
           <section className={styles.section}>
-            {serversLoading ? (
-              <LoadingState text="Loading job servers…" size="sm" />
-            ) : serversError ? (
-              <div className={styles.error}>Job servers could not be loaded.</div>
-            ) : servers.length === 0 ? (
-              <EmptyState compact title="No job servers have registered yet." />
-            ) : (
+            <QueryState
+              isLoading={serversLoading}
+              error={serversError}
+              isEmpty={servers.length === 0}
+              subject="job servers"
+              empty={{ compact: true, title: 'No job servers have registered yet.' }}
+            >
               <div className={styles.tableWrap}>
                 <Table.Root layout="fixed" bordered={false}>
                   <Table.Head>
@@ -453,20 +449,20 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
                   </Table.Body>
                 </Table.Root>
               </div>
-            )}
+            </QueryState>
           </section>
         )}
 
         {tab === 'schedules' && (
           <section className={styles.section}>
-            {runNowError && <div className={styles.error}>{runNowError}</div>}
-            {schedulesLoading ? (
-              <LoadingState text="Loading schedules…" size="sm" />
-            ) : schedulesError ? (
-              <div className={styles.error}>Schedules could not be loaded.</div>
-            ) : schedules.length === 0 ? (
-              <EmptyState compact title="No recurring schedules exist for this workspace." />
-            ) : (
+            {runNowError && <Banner variant="error">{runNowError}</Banner>}
+            <QueryState
+              isLoading={schedulesLoading}
+              error={schedulesError}
+              isEmpty={schedules.length === 0}
+              subject="schedules"
+              empty={{ compact: true, title: 'No recurring schedules exist for this workspace.' }}
+            >
               <div className={styles.tableWrap}>
                 <Table.Root layout="fixed" bordered={false}>
                   <Table.Head>
@@ -546,7 +542,7 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
                   </Table.Body>
                 </Table.Root>
               </div>
-            )}
+            </QueryState>
           </section>
         )}
 
@@ -580,101 +576,99 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
               />
             </ToolbarFilterBar>
             <section className={styles.section}>
-              {runsLoading ? (
-                <LoadingState text="Loading job history…" size="sm" />
-              ) : runsError ? (
-                <div className={styles.error}>Job history could not be loaded.</div>
-              ) : runs == null || runs.items.length === 0 ? (
-                <EmptyState compact title="No job runs match the current filters." />
-              ) : (
-                <>
-                  <div className={styles.tableWrap}>
-                    <Table.Root layout="fixed" bordered={false}>
-                      <Table.Head>
-                        <Table.Row>
-                          <Table.HeaderCell width={150}>Job</Table.HeaderCell>
-                          <Table.HeaderCell width={155}>Planned</Table.HeaderCell>
-                          <Table.HeaderCell width={155}>Started</Table.HeaderCell>
-                          <Table.HeaderCell width={155}>Completed</Table.HeaderCell>
-                          <Table.HeaderCell width={90}>Queue</Table.HeaderCell>
-                          <Table.HeaderCell width={90}>Duration</Table.HeaderCell>
-                          <Table.HeaderCell width={100}>Status</Table.HeaderCell>
-                          <Table.HeaderCell>Worker / result</Table.HeaderCell>
-                          <Table.HeaderCell width={90}>Action</Table.HeaderCell>
-                        </Table.Row>
-                      </Table.Head>
-                      <Table.Body>
-                        {runs.items.map(run => (
-                          <Table.Row key={run.id}>
-                            <Table.Cell>
-                              <div className={styles.name}>{run.job_type}</div>
-                              <div className={styles.muted}>
-                                Priority {run.priority} · attempt {run.attempt_count}/
-                                {run.max_attempts}
-                              </div>
-                            </Table.Cell>
-                            <Table.Cell>{formatDateTime(run.planned_at)}</Table.Cell>
-                            <Table.Cell>{formatDateTime(run.started_at)}</Table.Cell>
-                            <Table.Cell>{formatDateTime(run.completed_at)}</Table.Cell>
-                            <Table.Cell>{formatDuration(run.queue_delay_ms)}</Table.Cell>
-                            <Table.Cell>{formatDuration(run.duration_ms)}</Table.Cell>
-                            <Table.Cell>
-                              <Chip dot={statusColor[run.status]} tone="ghost">
-                                {run.status}
-                              </Chip>
-                            </Table.Cell>
-                            <Table.Cell>
-                              <div>{run.worker_id ?? 'Not started'}</div>
-                              <div
-                                className={styles.summary}
-                                title={formatSummary(run.result, run.error)}
+              <QueryState
+                isLoading={runsLoading}
+                error={runsError}
+                isEmpty={runs == null || runs.items.length === 0}
+                subject="job history"
+                empty={{ compact: true, title: 'No job runs match the current filters.' }}
+              >
+                <div className={styles.tableWrap}>
+                  <Table.Root layout="fixed" bordered={false}>
+                    <Table.Head>
+                      <Table.Row>
+                        <Table.HeaderCell width={150}>Job</Table.HeaderCell>
+                        <Table.HeaderCell width={155}>Planned</Table.HeaderCell>
+                        <Table.HeaderCell width={155}>Started</Table.HeaderCell>
+                        <Table.HeaderCell width={155}>Completed</Table.HeaderCell>
+                        <Table.HeaderCell width={90}>Queue</Table.HeaderCell>
+                        <Table.HeaderCell width={90}>Duration</Table.HeaderCell>
+                        <Table.HeaderCell width={100}>Status</Table.HeaderCell>
+                        <Table.HeaderCell>Worker / result</Table.HeaderCell>
+                        <Table.HeaderCell width={90}>Action</Table.HeaderCell>
+                      </Table.Row>
+                    </Table.Head>
+                    <Table.Body>
+                      {(runs?.items ?? []).map(run => (
+                        <Table.Row key={run.id}>
+                          <Table.Cell>
+                            <div className={styles.name}>{run.job_type}</div>
+                            <div className={styles.muted}>
+                              Priority {run.priority} · attempt {run.attempt_count}/
+                              {run.max_attempts}
+                            </div>
+                          </Table.Cell>
+                          <Table.Cell>{formatDateTime(run.planned_at)}</Table.Cell>
+                          <Table.Cell>{formatDateTime(run.started_at)}</Table.Cell>
+                          <Table.Cell>{formatDateTime(run.completed_at)}</Table.Cell>
+                          <Table.Cell>{formatDuration(run.queue_delay_ms)}</Table.Cell>
+                          <Table.Cell>{formatDuration(run.duration_ms)}</Table.Cell>
+                          <Table.Cell>
+                            <Chip dot={statusColor[run.status]} tone="ghost">
+                              {run.status}
+                            </Chip>
+                          </Table.Cell>
+                          <Table.Cell>
+                            <div>{run.worker_id ?? 'Not started'}</div>
+                            <div
+                              className={styles.summary}
+                              title={formatSummary(run.result, run.error)}
+                            >
+                              {formatSummary(run.result, run.error)}
+                            </div>
+                          </Table.Cell>
+                          <Table.Cell>
+                            {run.status === 'queued' ? (
+                              <Button
+                                variant="danger"
+                                size="xs"
+                                icon={<TbPlayerPause size={12} />}
+                                onClick={() => setCancelTarget(run.id)}
                               >
-                                {formatSummary(run.result, run.error)}
-                              </div>
-                            </Table.Cell>
-                            <Table.Cell>
-                              {run.status === 'queued' ? (
-                                <Button
-                                  variant="danger"
-                                  size="xs"
-                                  icon={<TbPlayerPause size={12} />}
-                                  onClick={() => setCancelTarget(run.id)}
-                                >
-                                  Cancel
-                                </Button>
-                              ) : (
-                                <span className={styles.muted}>—</span>
-                              )}
-                            </Table.Cell>
-                          </Table.Row>
-                        ))}
-                      </Table.Body>
-                    </Table.Root>
+                                Cancel
+                              </Button>
+                            ) : (
+                              <span className={styles.muted}>—</span>
+                            )}
+                          </Table.Cell>
+                        </Table.Row>
+                      ))}
+                    </Table.Body>
+                  </Table.Root>
+                </div>
+                <div className={styles.pagination}>
+                  <div className={styles.pageLabel}>
+                    {runs?.total ?? 0} run{runs?.total === 1 ? '' : 's'} · page {currentPage} of{' '}
+                    {pageCount}
                   </div>
-                  <div className={styles.pagination}>
-                    <div className={styles.pageLabel}>
-                      {runs.total} run{runs.total === 1 ? '' : 's'} · page {currentPage} of{' '}
-                      {pageCount}
-                    </div>
-                    <Button
-                      variant="secondary"
-                      size="xs"
-                      disabled={offset === 0}
-                      onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}
-                    >
-                      Previous
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      size="xs"
-                      disabled={currentPage >= pageCount}
-                      onClick={() => setOffset(offset + PAGE_SIZE)}
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </>
-              )}
+                  <Button
+                    variant="secondary"
+                    size="xs"
+                    disabled={offset === 0}
+                    onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="xs"
+                    disabled={currentPage >= pageCount}
+                    onClick={() => setOffset(offset + PAGE_SIZE)}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </QueryState>
             </section>
           </>
         )}

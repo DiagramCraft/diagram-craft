@@ -1,7 +1,8 @@
+import { SaveBarButtons } from '../SaveBarButtons';
+import { MutationError } from '../MutationError';
 import { useState, useCallback } from 'react';
-import { Button } from '@diagram-craft/app-components/Button';
 import { SettingsBlock, SettingsBlockField, SettingsBlockList } from '../SettingsBlock';
-import { WorkspaceSettingsSectionHeader } from '../WorkspaceSettingsSectionHeader';
+import { SectionActions } from '../SectionActions';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
@@ -67,7 +68,7 @@ export const GeneralSubSection = ({ workspace }: { workspace: Workspace }) => {
         }
       });
     } catch {
-      // Error handling could be improved
+      // The error is surfaced below through the mutation state
     }
   }, [
     workspace.id,
@@ -93,24 +94,16 @@ export const GeneralSubSection = ({ workspace }: { workspace: Workspace }) => {
 
   return (
     <>
-      <WorkspaceSettingsSectionHeader
-        section="general"
-        buttons={
-          <>
-            <Button onClick={handleCancel} disabled={!isDirty}>
-              Cancel
-            </Button>
-            <Button
-              variant="primary"
-              onClick={handleSave}
-              disabled={!isDirty || updateWorkspaceMutation.isPending}
-            >
-              {updateWorkspaceMutation.isPending ? 'Saving...' : 'Save changes'}
-            </Button>
-          </>
-        }
-      />
+      <SectionActions>
+        <SaveBarButtons
+          dirty={isDirty}
+          pending={updateWorkspaceMutation.isPending}
+          onCancel={handleCancel}
+          onSave={handleSave}
+        />
+      </SectionActions>
       <SettingsBlockList>
+        <MutationError error={updateWorkspaceMutation.error} />
         <SettingsBlock title="Identity" description="How this workspace appears to members.">
           <SettingsBlockField
             label="Workspace name"

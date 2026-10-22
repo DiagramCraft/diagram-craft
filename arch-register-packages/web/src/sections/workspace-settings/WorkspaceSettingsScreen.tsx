@@ -1,8 +1,9 @@
-import { lazy, Suspense, useEffect } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import styles from './WorkspaceSettingsScreen.module.css';
 import { getRouteApi } from '@tanstack/react-router';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { Title } from '../../components/Title';
+import { SectionActionsSlotContext } from './SectionActions';
 import { WorkspaceSettingsSectionHeader } from './WorkspaceSettingsSectionHeader';
 import { GeneralSubSection } from './sub-sections/GeneralSubSection';
 import { LifecycleSubSection } from './sub-sections/LifecycleSubSection';
@@ -31,25 +32,6 @@ const WorkspaceAnalyticsScreen = lazy(() =>
   }))
 );
 
-// Sections that render their own header because it carries section-specific actions
-const SELF_HEADED_SECTIONS = [
-  'general',
-  'currencies',
-  'automation',
-  'ai',
-  'assessment-types',
-  'members',
-  'teams',
-  'roles',
-  'jobs',
-  'api-tokens',
-  'workflows',
-  'conformance',
-  'lifecycle-owners',
-  'webhooks',
-  'public-catalog'
-];
-
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/$section');
 
 export const WorkspaceSettingsScreen = () => {
@@ -61,6 +43,7 @@ export const WorkspaceSettingsScreen = () => {
   const workspaceSlug = ctx.workspaceSlug;
   const lifecycleStates = ctx.lifecycleStates;
   const availableSections = ctx.availableSettingsSections;
+  const [actionsSlot, setActionsSlot] = useState<HTMLElement | null>(null);
   const section = params.section ?? 'general';
   const sectionIsValid = availableSections.includes(section);
 
@@ -99,73 +82,73 @@ export const WorkspaceSettingsScreen = () => {
     );
   }
 
-  const selfHeaded = SELF_HEADED_SECTIONS.includes(section);
-
   return (
-    <div className={styles.screen}>
-      {!selfHeaded && <WorkspaceSettingsSectionHeader section={section} />}
+    <SectionActionsSlotContext.Provider value={actionsSlot}>
+      <div className={styles.screen}>
+        <WorkspaceSettingsSectionHeader section={section} actionsRef={setActionsSlot} />
 
-      {section === 'general' && <GeneralSubSection workspace={workspace} />}
-      {section === 'lifecycle-owners' && (
-        <LifecycleSubSection workspace={workspace} lifecycleStates={lifecycleStates} />
-      )}
-      {section === 'currencies' && (
-        <SupportedCurrenciesSubSection
-          workspaceId={workspace.id}
-          currencies={ctx.currencies.currencies}
-          defaultCurrency={ctx.currencies.default_currency}
-        />
-      )}
-      {section === 'assessment-types' && (
-        <AssessmentTypesSubSection
-          workspaceId={workspace.id}
-          assessmentTypes={ctx.assessmentTypes}
-        />
-      )}
-      {section === 'roles' && <RolesPermissionsSubSection workspaceSlug={workspaceSlug} />}
-      {section === 'teams' && <TeamsSubSection workspaceSlug={workspaceSlug} />}
-      {section === 'members' && <MembersSubSection workspaceSlug={workspaceSlug} />}
-      {section === 'api-tokens' && <WorkspaceApiTokensSubSection workspaceSlug={workspaceSlug} />}
-      {section === 'ai' && <AiSettingsSubSection workspaceSlug={workspaceSlug} />}
-      {section === 'workflows' && <WorkflowsSubSection workspaceSlug={workspaceSlug} />}
-      {section === 'export-import' && <ExportImportSubSection />}
-      {section === 'query-console' && <QueryConsoleSubSection workspaceId={workspaceSlug} />}
-      {section === 'analytics' && (
-        <Suspense fallback={<RoutePendingComponent />}>
-          <WorkspaceAnalyticsScreen analyticsView={search.analyticsView} />
-        </Suspense>
-      )}
-      {section === 'audit' && (
-        <AuditLogSubSection
-          key={`${search.auditEntityType ?? ''}:${search.auditOperation ?? ''}:${search.auditStartDate ?? ''}:${search.auditEndDate ?? ''}`}
-          workspace={workspace}
-          workspaceSlug={workspaceSlug}
-          initialFilters={{
-            entityType: search.auditEntityType,
-            operation: search.auditOperation,
-            startDate: search.auditStartDate,
-            endDate: search.auditEndDate
-          }}
-        />
-      )}
-      {section === 'jobs' && <JobMonitoringSubSection workspaceSlug={workspaceSlug} />}
-      {section === 'conformance' && (
-        <ConformanceSubSection workspaceSlug={workspaceSlug} schemas={ctx.schemas} />
-      )}
-      {section === 'webhooks' && (
-        <WebhooksSubSection workspaceSlug={workspaceSlug} schemas={ctx.schemas} />
-      )}
-      {section === 'automation' && (
-        <AutomationRulesSubSection
-          workspaceSlug={workspaceSlug}
-          schemas={ctx.schemas}
-          lifecycleStates={lifecycleStates}
-        />
-      )}
-      {section === 'danger' && <DangerZoneSubSection workspace={workspace} />}
-      {section === 'public-catalog' && (
-        <PublicCatalogSubSection workspaceSlug={workspaceSlug} schemas={ctx.schemas} />
-      )}
-    </div>
+        {section === 'general' && <GeneralSubSection workspace={workspace} />}
+        {section === 'lifecycle-owners' && (
+          <LifecycleSubSection workspace={workspace} lifecycleStates={lifecycleStates} />
+        )}
+        {section === 'currencies' && (
+          <SupportedCurrenciesSubSection
+            workspaceId={workspace.id}
+            currencies={ctx.currencies.currencies}
+            defaultCurrency={ctx.currencies.default_currency}
+          />
+        )}
+        {section === 'assessment-types' && (
+          <AssessmentTypesSubSection
+            workspaceId={workspace.id}
+            assessmentTypes={ctx.assessmentTypes}
+          />
+        )}
+        {section === 'roles' && <RolesPermissionsSubSection workspaceSlug={workspaceSlug} />}
+        {section === 'teams' && <TeamsSubSection workspaceSlug={workspaceSlug} />}
+        {section === 'members' && <MembersSubSection workspaceSlug={workspaceSlug} />}
+        {section === 'api-tokens' && <WorkspaceApiTokensSubSection workspaceSlug={workspaceSlug} />}
+        {section === 'ai' && <AiSettingsSubSection workspaceSlug={workspaceSlug} />}
+        {section === 'workflows' && <WorkflowsSubSection workspaceSlug={workspaceSlug} />}
+        {section === 'export-import' && <ExportImportSubSection />}
+        {section === 'query-console' && <QueryConsoleSubSection workspaceId={workspaceSlug} />}
+        {section === 'analytics' && (
+          <Suspense fallback={<RoutePendingComponent />}>
+            <WorkspaceAnalyticsScreen analyticsView={search.analyticsView} />
+          </Suspense>
+        )}
+        {section === 'audit' && (
+          <AuditLogSubSection
+            key={`${search.auditEntityType ?? ''}:${search.auditOperation ?? ''}:${search.auditStartDate ?? ''}:${search.auditEndDate ?? ''}`}
+            workspace={workspace}
+            workspaceSlug={workspaceSlug}
+            initialFilters={{
+              entityType: search.auditEntityType,
+              operation: search.auditOperation,
+              startDate: search.auditStartDate,
+              endDate: search.auditEndDate
+            }}
+          />
+        )}
+        {section === 'jobs' && <JobMonitoringSubSection workspaceSlug={workspaceSlug} />}
+        {section === 'conformance' && (
+          <ConformanceSubSection workspaceSlug={workspaceSlug} schemas={ctx.schemas} />
+        )}
+        {section === 'webhooks' && (
+          <WebhooksSubSection workspaceSlug={workspaceSlug} schemas={ctx.schemas} />
+        )}
+        {section === 'automation' && (
+          <AutomationRulesSubSection
+            workspaceSlug={workspaceSlug}
+            schemas={ctx.schemas}
+            lifecycleStates={lifecycleStates}
+          />
+        )}
+        {section === 'danger' && <DangerZoneSubSection workspace={workspace} />}
+        {section === 'public-catalog' && (
+          <PublicCatalogSubSection workspaceSlug={workspaceSlug} schemas={ctx.schemas} />
+        )}
+      </div>
+    </SectionActionsSlotContext.Provider>
   );
 };

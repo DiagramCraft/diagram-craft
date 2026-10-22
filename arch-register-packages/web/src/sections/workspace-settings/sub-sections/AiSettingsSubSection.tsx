@@ -1,10 +1,10 @@
+import { SaveBarButtons } from '../SaveBarButtons';
 import { useState, useCallback, useEffect } from 'react';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { SettingsBlock, SettingsBlockField, SettingsBlockList } from '../SettingsBlock';
-import { WorkspaceSettingsSectionHeader } from '../WorkspaceSettingsSectionHeader';
-import { Button } from '@diagram-craft/app-components/Button';
+import { SectionActions } from '../SectionActions';
 import { useAiConfig, useUpdateAiConfig } from '../../../hooks/useAiConfig';
 import { AiProvider, UpsertAiConfigRequest } from '@arch-register/api-types/aiContract';
 
@@ -72,23 +72,14 @@ export const AiSettingsSubSection = ({ workspaceSlug }: { workspaceSlug: string 
 
   return (
     <>
-      <WorkspaceSettingsSectionHeader
-        section="ai"
-        buttons={
-          <>
-            <Button onClick={handleCancel} disabled={!isDirty}>
-              Cancel
-            </Button>
-            <Button
-              variant="primary"
-              onClick={handleSave}
-              disabled={!isDirty || updateConfig.isPending}
-            >
-              {updateConfig.isPending ? 'Saving...' : 'Save changes'}
-            </Button>
-          </>
-        }
-      />
+      <SectionActions>
+        <SaveBarButtons
+          dirty={isDirty}
+          pending={updateConfig.isPending}
+          onCancel={handleCancel}
+          onSave={handleSave}
+        />
+      </SectionActions>
       <SettingsBlockList>
         <SettingsBlock
           title="AI Assistant"

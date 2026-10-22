@@ -1,11 +1,14 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useDraft } from '../useDraft';
+import { MutationError } from '../MutationError';
+import { SaveBarButtons } from '../SaveBarButtons';
+import { useCallback } from 'react';
 import styles from './LifecycleSubSection.module.css';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Select } from '@diagram-craft/app-components/Select';
 import { LIFECYCLE_COLOR_PRESETS } from '@arch-register/api-types/colors';
 import { SettingsBlock, SettingsBlockField, SettingsBlockList } from '../SettingsBlock';
-import { WorkspaceSettingsSectionHeader } from '../WorkspaceSettingsSectionHeader';
+import { SectionActions } from '../SectionActions';
 import { TbPlus, TbTrash } from 'react-icons/tb';
 import { useUpdateLifecycleStates } from '../../../hooks/useWorkspaceConfig';
 import { Workspace, WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
@@ -34,27 +37,18 @@ export const LifecycleSubSection = ({
   workspace: Workspace;
   lifecycleStates: WorkspaceLifecycleState[];
 }) => {
-  const [states, setStates] = useState<EditLifecycleState[]>(() =>
-    buildLifecycleStateDraft(lifecycleStates)
-  );
+  const {
+    draft: states,
+    setDraft: setStates,
+    dirty: isDirty,
+    reset: handleCancel
+  } = useDraft(lifecycleStates, buildLifecycleStateDraft);
 
   const updateLifecycleStatesMutation = useUpdateLifecycleStates(workspace.url_slug);
 
-  useEffect(() => {
-    setStates(buildLifecycleStateDraft(lifecycleStates));
-  }, [lifecycleStates]);
-
-  const initialStates = buildLifecycleStateDraft(lifecycleStates);
-  const statesDirty = JSON.stringify(states) !== JSON.stringify(initialStates);
-  const isDirty = statesDirty;
-
-  const handleCancel = () => {
-    setStates(initialStates);
-  };
-
   const handleSave = useCallback(async () => {
     try {
-      if (statesDirty) {
+      if (isDirty) {
         await updateLifecycleStatesMutation.mutateAsync(
           states.map((s, i) => ({
             id: s.id.trim() === '' ? crypto.randomUUID() : s.id.trim(),
@@ -66,9 +60,9 @@ export const LifecycleSubSection = ({
         );
       }
     } catch {
-      // Error handling could be improved
+      // The error is surfaced below through the mutation state
     }
-  }, [states, statesDirty, updateLifecycleStatesMutation]);
+  }, [states, isDirty, updateLifecycleStatesMutation]);
 
   const updateState = (index: number, patch: Partial<EditLifecycleState>) =>
     setStates(prev => prev.map((s, i) => (i === index ? { ...s, ...patch } : s)));
@@ -93,24 +87,16 @@ export const LifecycleSubSection = ({
 
   return (
     <>
-      <WorkspaceSettingsSectionHeader
-        section="lifecycle-owners"
-        buttons={
-          <>
-            <Button onClick={handleCancel} disabled={!isDirty}>
-              Cancel
-            </Button>
-            <Button
-              variant="primary"
-              onClick={handleSave}
-              disabled={!isDirty || updateLifecycleStatesMutation.isPending}
-            >
-              {updateLifecycleStatesMutation.isPending ? 'Saving...' : 'Save changes'}
-            </Button>
-          </>
-        }
-      />
+      <SectionActions>
+        <SaveBarButtons
+          dirty={isDirty}
+          pending={updateLifecycleStatesMutation.isPending}
+          onCancel={handleCancel}
+          onSave={handleSave}
+        />
+      </SectionActions>
       <SettingsBlockList>
+        <MutationError error={updateLifecycleStatesMutation.error} />
         <SettingsBlock
           title="Lifecycle states"
           description="Define the lifecycle stages an entity can be in. Each state has a display label and a color."

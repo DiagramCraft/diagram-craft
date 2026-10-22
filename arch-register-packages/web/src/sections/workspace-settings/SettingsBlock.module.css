@@ -95,3 +95,14 @@
   min-width: 0;
   font-size: 11px;
 }
+
+/* Page (list-style settings content) */
+.page {
+  padding: 0 24px 24px;
+}
+
+.pageStacked {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}

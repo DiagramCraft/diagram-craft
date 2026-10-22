@@ -6,6 +6,18 @@ export const SettingsBlockList = ({ children }: { children: ReactNode }) => (
   <div className={styles.list}>{children}</div>
 );
 
+/** Standard padded content area for list-style settings pages (tables, cards). */
+export const SettingsPage = ({
+  children,
+  stacked = true
+}: {
+  children: ReactNode;
+  /** Lay children out as a column with a standard gap. */
+  stacked?: boolean;
+}) => (
+  <div className={stacked ? `${styles.page} ${styles.pageStacked}` : styles.page}>{children}</div>
+);
+
 /** Bordered settings panel with a title, optional description and a body. */
 export const SettingsBlock = ({
   title,

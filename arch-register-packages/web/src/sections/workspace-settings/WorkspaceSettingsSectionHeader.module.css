@@ -2,3 +2,8 @@
 .head {
   padding: 20px 24px 12px;
 }
+
+/* Portal target for sub-section actions; stays out of the parent flex layout */
+.actions {
+  display: contents;
+}

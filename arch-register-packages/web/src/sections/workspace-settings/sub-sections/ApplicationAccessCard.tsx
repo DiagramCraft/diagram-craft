@@ -1,5 +1,5 @@
+import { SaveBarButtons } from '../SaveBarButtons';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Button } from '@diagram-craft/app-components/Button';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { Banner } from '../../../components/Banner';
@@ -92,16 +92,9 @@ export const ApplicationAccessCard = ({
 
   useEffect(() => {
     onActionsChange(
-      <>
-        <Button disabled={!dirty || busy} onClick={resetDraft}>
-          Cancel
-        </Button>
-        <Button variant="primary" disabled={!dirty || busy} onClick={() => void save()}>
-          {updatePolicy.isPending ? 'Saving...' : 'Save changes'}
-        </Button>
-      </>
+      <SaveBarButtons dirty={dirty} pending={busy} onCancel={resetDraft} onSave={save} />
     );
-  }, [dirty, busy, resetDraft, save, updatePolicy.isPending, onActionsChange]);
+  }, [dirty, busy, resetDraft, save, onActionsChange]);
 
   useEffect(() => () => onActionsChange(undefined), [onActionsChange]);
 

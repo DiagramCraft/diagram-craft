@@ -1,9 +1,5 @@
 /* Roles & Permissions Section */
 
-.container {
-  padding: 0 24px 24px;
-}
-
 /* Role card grid */
 .roleGrid {
   display: grid;
@@ -348,11 +344,6 @@
 .dialogError {
   color: var(--error-fg);
   font-size: 12px;
-}
-
-.deleteCopy {
-  font-size: 12px;
-  color: var(--base-fg-more-dim);
 }
 
 @media (max-width: 720px) {

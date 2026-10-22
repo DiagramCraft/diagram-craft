@@ -1,11 +1,14 @@
-import { Fragment, useEffect, useState } from 'react';
+import { useDraft } from '../useDraft';
+import { MutationError } from '../MutationError';
+import { SaveBarButtons } from '../SaveBarButtons';
+import { Fragment } from 'react';
 import { TbPlus, TbTrash } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import type { AssessmentType } from '@arch-register/api-types/workspaceConfigContract';
 import { useUpdateAssessmentTypes } from '../../../hooks/useWorkspaceConfig';
 import { SettingsBlock, SettingsBlockList } from '../SettingsBlock';
-import { WorkspaceSettingsSectionHeader } from '../WorkspaceSettingsSectionHeader';
+import { SectionActions } from '../SectionActions';
 import styles from './AssessmentTypesSubSection.module.css';
 
 type DraftAssessmentType = Pick<AssessmentType, 'id' | 'name'>;
@@ -20,38 +23,24 @@ export const AssessmentTypesSubSection = ({
   workspaceId: string;
   assessmentTypes: AssessmentType[];
 }) => {
-  const [types, setTypes] = useState<DraftAssessmentType[]>(() => toDraft(assessmentTypes));
+  const { draft: types, setDraft: setTypes, dirty, reset } = useDraft(assessmentTypes, toDraft);
   const mutation = useUpdateAssessmentTypes(workspaceId);
 
-  useEffect(() => setTypes(toDraft(assessmentTypes)), [assessmentTypes]);
-
-  const initial = toDraft(assessmentTypes);
-  const dirty = JSON.stringify(types) !== JSON.stringify(initial);
-
   const save = async () => {
-    await mutation.mutateAsync(types.map((type, index) => ({ ...type, sort_order: index })));
+    try {
+      await mutation.mutateAsync(types.map((type, index) => ({ ...type, sort_order: index })));
+    } catch {
+      // The error is surfaced below through the mutation state
+    }
   };
 
   return (
     <>
-      <WorkspaceSettingsSectionHeader
-        section="assessment-types"
-        buttons={
-          <>
-            <Button disabled={!dirty || mutation.isPending} onClick={() => setTypes(initial)}>
-              Cancel
-            </Button>
-            <Button
-              variant="primary"
-              disabled={!dirty || mutation.isPending}
-              onClick={() => void save()}
-            >
-              {mutation.isPending ? 'Saving...' : 'Save changes'}
-            </Button>
-          </>
-        }
-      />
+      <SectionActions>
+        <SaveBarButtons dirty={dirty} pending={mutation.isPending} onCancel={reset} onSave={save} />
+      </SectionActions>
       <SettingsBlockList>
+        <MutationError error={mutation.error} />
         <SettingsBlock
           title="Assessment types"
           description="Categorize assessments for dashboards and future assessment views. Removing a type uncategorizes existing assessments that used it."

@@ -1,3 +1,4 @@
+import { SaveBarButtons } from '../SaveBarButtons';
 import { Fragment, useEffect, useState } from 'react';
 import { TbPlus, TbTrash } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
@@ -5,7 +6,7 @@ import { TextInput } from '@diagram-craft/app-components/TextInput';
 import type { SupportedCurrency } from '@arch-register/api-types/workspaceConfigContract';
 import { useUpdateSupportedCurrencies } from '../../../hooks/useWorkspaceConfig';
 import { SettingsBlock, SettingsBlockList } from '../SettingsBlock';
-import { WorkspaceSettingsSectionHeader } from '../WorkspaceSettingsSectionHeader';
+import { SectionActions } from '../SectionActions';
 import styles from './SupportedCurrenciesSubSection.module.css';
 
 export const SupportedCurrenciesSubSection = ({
@@ -53,29 +54,17 @@ export const SupportedCurrenciesSubSection = ({
 
   return (
     <>
-      <WorkspaceSettingsSectionHeader
-        section="currencies"
-        buttons={
-          <>
-            <Button
-              disabled={!dirty || mutation.isPending}
-              onClick={() => {
-                setItems(currencies);
-                setDefaultCode(defaultCurrency);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="primary"
-              disabled={!dirty || mutation.isPending}
-              onClick={() => void save()}
-            >
-              {mutation.isPending ? 'Saving...' : 'Save changes'}
-            </Button>
-          </>
-        }
-      />
+      <SectionActions>
+        <SaveBarButtons
+          dirty={dirty}
+          pending={mutation.isPending}
+          onCancel={() => {
+            setItems(currencies);
+            setDefaultCode(defaultCurrency);
+          }}
+          onSave={save}
+        />
+      </SectionActions>
       <SettingsBlockList>
         <SettingsBlock
           title="Supported currencies"

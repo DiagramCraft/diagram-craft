@@ -1,5 +1,6 @@
+import { SettingsPage } from '../SettingsBlock';
 import { useEffect, useState } from 'react';
-import { WorkspaceSettingsSectionHeader } from '../WorkspaceSettingsSectionHeader';
+import { SectionActions } from '../SectionActions';
 import { TbPlus } from 'react-icons/tb';
 import { TbCopy, TbKey, TbTrash } from 'react-icons/tb';
 import { WORKSPACE_ROLE_CAPABILITIES } from '@arch-register/permissions';
@@ -14,8 +15,8 @@ import { Dialog, KbdHints } from '@diagram-craft/app-components/Dialog';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { Table } from '../../../components/table/Table';
-import { EmptyState } from '../../../components/EmptyState';
-import { LoadingState } from '../../../components/LoadingState';
+import { QueryState } from '../QueryState';
+import { MutationError } from '../MutationError';
 import {
   useWorkspaceApiTokens,
   useCreateWorkspaceApiToken,
@@ -127,7 +128,7 @@ const TokenCreateDialog = ({
             ))}
           </div>
         </div>
-        {error && <div className={styles.error}>{error.message}</div>}
+        <MutationError error={error} />
       </div>
     </Dialog>
   );
@@ -178,42 +179,39 @@ export const WorkspaceApiTokensSubSection = ({ workspaceSlug }: { workspaceSlug:
   };
 
   const header = (
-    <WorkspaceSettingsSectionHeader
-      section="api-tokens"
-      buttons={
-        <Button
-          variant="primary"
-          icon={<TbPlus size={12} />}
-          onClick={() => setCreateDialogOpen(true)}
-        >
-          Create token
-        </Button>
-      }
-    />
+    <SectionActions>
+      <Button
+        variant="primary"
+        icon={<TbPlus size={12} />}
+        onClick={() => setCreateDialogOpen(true)}
+      >
+        Create token
+      </Button>
+    </SectionActions>
   );
 
   return (
     <>
       {header}
-      <div className={styles.container}>
+      <SettingsPage stacked={false}>
         <div className={styles.intro}>
           Tokens created here are owned by the workspace itself, not any individual member, so they
           keep working even if the admin who created them leaves. For a personal token tied to your
           own account, use Account Settings instead.
         </div>
 
-        {error ? (
-          <div className={styles.error}>Failed to load API tokens: {error.message}</div>
-        ) : isLoading ? (
-          <LoadingState text="Loading API tokens…" size="sm" />
-        ) : tokens.length === 0 ? (
-          <EmptyState
-            icon={<TbKey size={20} />}
-            title="No API tokens"
-            subtitle="Create a token for a CI pipeline or service integration."
-            compact
-          />
-        ) : (
+        <QueryState
+          isLoading={isLoading}
+          error={error}
+          isEmpty={tokens.length === 0}
+          subject="API tokens"
+          empty={{
+            icon: <TbKey size={20} />,
+            title: 'No API tokens',
+            subtitle: 'Create a token for a CI pipeline or service integration.',
+            compact: true
+          }}
+        >
           <Table.Root>
             <Table.Head>
               <Table.Row>
@@ -256,7 +254,7 @@ export const WorkspaceApiTokensSubSection = ({ workspaceSlug }: { workspaceSlug:
               ))}
             </Table.Body>
           </Table.Root>
-        )}
+        </QueryState>
 
         <TokenCreateDialog
           open={createDialogOpen}
@@ -277,7 +275,7 @@ export const WorkspaceApiTokensSubSection = ({ workspaceSlug }: { workspaceSlug:
             void revokeToken.mutateAsync(revokeId).then(() => setRevokeId(null));
           }}
         />
-      </div>
+      </SettingsPage>
     </>
   );
 };

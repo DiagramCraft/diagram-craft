@@ -1,18 +1,3 @@
-.container {
-  padding: 0 24px 24px;
-}
-
-.avatar {
-  color: var(--base-fg);
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  font-weight: 500;
-  letter-spacing: 0.3px;
-}
-
 .dim {
   color: var(--cmp-fg-disabled);
 }
@@ -86,17 +71,6 @@
 
 .fieldRight {
   min-width: 0;
-}
-
-.select {
-  width: 100%;
-  height: 32px;
-  padding: 0 8px;
-  border: 1px solid var(--cmp-border);
-  border-radius: var(--r);
-  background: var(--cmp-bg);
-  color: var(--base-fg);
-  font-size: 12px;
 }
 
 .dialogActions {

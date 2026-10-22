@@ -1,96 +1,12 @@
 /* Block list */
-.blockList {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 16px 24px 32px;
-}
 
 /* Section actions (save/cancel row) */
-.sectionActions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 6px;
-}
 
 /* Section (Block) */
-.section {
-  background: var(--panel-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r-md);
-  overflow: hidden;
-}
-
-.sectionHead {
-  padding: 14px 16px 10px;
-  border-bottom: 1px solid var(--panel-border);
-}
-
-.capabilityHeader {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.capabilityToggle {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--base-fg-dim);
-  font-size: 11px;
-  white-space: nowrap;
-}
-
-.sectionTitle {
-  color: var(--base-fg);
-  font-size: 13.5px;
-  font-weight: 500;
-}
-
-.sectionSub {
-  font-size: 11.5px;
-  margin-top: 2px;
-  color: var(--cmp-fg-disabled);
-}
-
-.sectionBody {
-  padding: 8px 16px 14px;
-}
 
 /* Field row */
-.field {
-  display: grid;
-  grid-template-columns: 220px 1fr;
-  gap: 24px;
-  padding: 12px 0;
-  border-bottom: 1px dashed var(--panel-border);
-  align-items: flex-start;
-}
-
-.field:last-child {
-  border-bottom: 0;
-}
-
-.fieldRight {
-  min-width: 0;
-}
-
-.capabilityUnknownFields {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--warning-fg);
-  font-size: 11px;
-}
 
 /* Lifecycle states editor */
-.stateControls {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 12px;
-}
 
 .swatches {
   display: flex;

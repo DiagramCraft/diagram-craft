@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import { getRouteApi } from '@tanstack/react-router';
 import { Title } from '../../components/Title';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
@@ -96,10 +95,11 @@ const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/$section');
 
 export const WorkspaceSettingsSectionHeader = ({
   section,
-  buttons
+  actionsRef
 }: {
   section: string;
-  buttons?: ReactNode;
+  /** Receives the element that `SectionActions` portals sub-section buttons into. */
+  actionsRef?: (element: HTMLElement | null) => void;
 }) => {
   const navigate = routeApi.useNavigate();
   const { workspaceSlug } = useWorkspaceContext();
@@ -117,7 +117,7 @@ export const WorkspaceSettingsSectionHeader = ({
         ]}
         title={meta.title}
         description={meta.sub}
-        buttons={buttons}
+        buttons={<div ref={actionsRef} className={styles.actions} />}
       />
     </div>
   );

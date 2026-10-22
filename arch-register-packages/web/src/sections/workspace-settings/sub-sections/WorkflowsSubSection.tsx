@@ -1,8 +1,10 @@
+import { Banner } from '../../../components/Banner';
+import { LoadingState } from '../../../components/LoadingState';
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbEdit, TbPlus, TbTrash } from 'react-icons/tb';
 import { DropdownMenu, type MenuItem } from '../../../components/DropdownMenu';
-import { WorkspaceSettingsSectionHeader } from '../WorkspaceSettingsSectionHeader';
+import { SectionActions } from '../SectionActions';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { Select } from '@diagram-craft/app-components/Select';
@@ -94,21 +96,18 @@ export const WorkflowsSubSection = ({ workspaceSlug }: { workspaceSlug: string }
 
   return (
     <>
-      <WorkspaceSettingsSectionHeader
-        section="workflows"
-        buttons={
-          <Button
-            variant="primary"
-            icon={<TbPlus size={12} />}
-            onClick={() => setAddDialogOpen(true)}
-          >
-            Add configuration
-          </Button>
-        }
-      />
+      <SectionActions>
+        <Button
+          variant="primary"
+          icon={<TbPlus size={12} />}
+          onClick={() => setAddDialogOpen(true)}
+        >
+          Add configuration
+        </Button>
+      </SectionActions>
       <div className={styles.blockList}>
-        {isLoading && <div className={styles.emptyNote}>Loading workflow configuration…</div>}
-        {isError && <div className={styles.emptyNote}>Unable to load workflow configuration.</div>}
+        {isLoading && <LoadingState text="Loading workflow configuration…" size="sm" />}
+        {isError && <Banner variant="error">Failed to load workflow configuration.</Banner>}
         {!isLoading && !isError && configs.length === 0 && (
           <div className={styles.emptyNote}>No workspace workflow overrides are configured.</div>
         )}

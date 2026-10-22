@@ -1,5 +1,7 @@
+import { SettingsPage } from '../SettingsBlock';
+import { Banner } from '../../../components/Banner';
 import { useMemo, useState, Fragment, useEffect } from 'react';
-import { WorkspaceSettingsSectionHeader } from '../WorkspaceSettingsSectionHeader';
+import { SectionActions } from '../SectionActions';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbPlus } from 'react-icons/tb';
 import { WORKSPACE_CAPABILITY_GROUPS } from '@arch-register/permissions';
@@ -91,25 +93,24 @@ export const RolesPermissionsSubSection = ({ workspaceSlug }: { workspaceSlug: s
   }, [members]);
 
   const header = (
-    <WorkspaceSettingsSectionHeader
-      section="roles"
-      buttons={
-        <Button
-          variant="primary"
-          icon={<TbPlus size={12} />}
-          onClick={() => setCreateDialogOpen(true)}
-        >
-          New custom role
-        </Button>
-      }
-    />
+    <SectionActions>
+      <Button
+        variant="primary"
+        icon={<TbPlus size={12} />}
+        onClick={() => setCreateDialogOpen(true)}
+      >
+        New custom role
+      </Button>
+    </SectionActions>
   );
 
   if (error) {
     return (
       <>
         {header}
-        <div className={styles.container}>Failed to load workspace roles.</div>
+        <SettingsPage stacked={false}>
+          <Banner variant="error">Failed to load workspace roles.</Banner>
+        </SettingsPage>
       </>
     );
   }
@@ -117,7 +118,7 @@ export const RolesPermissionsSubSection = ({ workspaceSlug }: { workspaceSlug: s
   return (
     <>
       {header}
-      <div className={styles.container}>
+      <SettingsPage stacked={false}>
         <div className={styles.roleGrid}>
           {roles.map(role => {
             const isSelected = selectedRole === role.id;
@@ -270,7 +271,7 @@ export const RolesPermissionsSubSection = ({ workspaceSlug }: { workspaceSlug: s
             setDeleteRoleId(null);
           }}
         />
-      </div>
+      </SettingsPage>
     </>
   );
 };
@@ -362,7 +363,7 @@ const RoleEditorDialog = ({
           label: pending ? 'Saving…' : 'Save role',
           type: 'default',
           disabled: pending || !canSave,
-          onClick: () => void onSave(draft)
+          onClick: () => void onSave(draft).catch(() => undefined)
         }
       ]}
     >
@@ -520,7 +521,7 @@ const RoleDeleteConfirmDialog = ({
       onCancel={onClose}
       onConfirm={() => {
         if (!pending) {
-          void onDelete();
+          void onDelete().catch(() => undefined);
         }
       }}
     />

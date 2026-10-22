@@ -1,3 +1,4 @@
+import { SettingsPage } from '../SettingsBlock';
 import { useEffect, useMemo, useState } from 'react';
 import { TbBolt, TbEdit, TbPlus, TbTrash } from 'react-icons/tb';
 import type {
@@ -11,7 +12,7 @@ import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { Button } from '@diagram-craft/app-components/Button';
-import { WorkspaceSettingsSectionHeader } from '../WorkspaceSettingsSectionHeader';
+import { SectionActions } from '../SectionActions';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
@@ -22,8 +23,8 @@ import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteCo
 import { Table } from '../../../components/table/Table';
 import { DropdownMenu, type MenuItem } from '../../../components/DropdownMenu';
 import { Chip } from '../../../components/Chip';
-import { EmptyState } from '../../../components/EmptyState';
-import { LoadingState } from '../../../components/LoadingState';
+import { QueryState } from '../QueryState';
+import { MutationError } from '../MutationError';
 import { formatDateTime } from '../../../utils/dateFormat';
 import {
   useAutomationRuleOperations,
@@ -667,7 +668,7 @@ const EditorDialog = ({
           <Checkbox value={enabled} onChange={value => setEnabled(value ?? false)} /> Enabled
         </label>
 
-        {error && <div className={styles.error}>{error.message}</div>}
+        <MutationError error={error} />
       </div>
     </Dialog>
   );
@@ -714,17 +715,14 @@ export const AutomationRulesSubSection = ({
 
   return (
     <>
-      <WorkspaceSettingsSectionHeader
-        section="automation"
-        buttons={
-          tab === 'rules' ? (
-            <Button variant="primary" icon={<TbPlus size={12} />} onClick={() => setEditor('new')}>
-              New rule
-            </Button>
-          ) : undefined
-        }
-      />
-      <div className={styles.container}>
+      <SectionActions>
+        tab === 'rules' ? (
+        <Button variant="primary" icon={<TbPlus size={12} />} onClick={() => setEditor('new')}>
+          New rule
+        </Button>
+        ) : undefined
+      </SectionActions>
+      <SettingsPage>
         <Tabs.Root value={tab} onValueChange={v => setTab(v as AutomationTab)}>
           <Tabs.List>
             <Tabs.Trigger value="rules">Rules ({rules.length})</Tabs.Trigger>
@@ -732,18 +730,18 @@ export const AutomationRulesSubSection = ({
           </Tabs.List>
         </Tabs.Root>
 
-        {tab === 'rules' &&
-          (error ? (
-            <div className={styles.error}>Automation rules could not be loaded.</div>
-          ) : isLoading ? (
-            <LoadingState text="Loading automation rules…" size="sm" />
-          ) : rules.length === 0 ? (
-            <EmptyState
-              icon={<TbBolt size={20} />}
-              title="No automation rules"
-              subtitle="Create a rule to act automatically when entities change."
-            />
-          ) : (
+        {tab === 'rules' && (
+          <QueryState
+            isLoading={isLoading}
+            error={error}
+            isEmpty={rules.length === 0}
+            subject="automation rules"
+            empty={{
+              icon: <TbBolt size={20} />,
+              title: 'No automation rules',
+              subtitle: 'Create a rule to act automatically when entities change.'
+            }}
+          >
             <div className={styles.tableWrap}>
               <Table.Root>
                 <Table.Head>
@@ -803,16 +801,17 @@ export const AutomationRulesSubSection = ({
                 </Table.Body>
               </Table.Root>
             </div>
-          ))}
+          </QueryState>
+        )}
 
-        {tab === 'runs' &&
-          (runsLoading ? (
-            <LoadingState text="Loading rule runs…" size="sm" />
-          ) : runsError ? (
-            <div className={styles.error}>Rule runs could not be loaded.</div>
-          ) : runs == null || runs.items.length === 0 ? (
-            <EmptyState compact title="No automation rule runs yet." />
-          ) : (
+        {tab === 'runs' && (
+          <QueryState
+            isLoading={runsLoading}
+            error={runsError}
+            isEmpty={runs == null || runs.items.length === 0}
+            subject="rule runs"
+            empty={{ compact: true, title: 'No automation rule runs yet.' }}
+          >
             <div className={styles.tableWrap}>
               <Table.Root layout="fixed">
                 <Table.Head>
@@ -827,7 +826,7 @@ export const AutomationRulesSubSection = ({
                   </Table.Row>
                 </Table.Head>
                 <Table.Body>
-                  {runs.items.map(run => (
+                  {(runs?.items ?? []).map(run => (
                     <Table.Row key={run.id}>
                       <Table.Cell>{formatDateTime(run.planned_at)}</Table.Cell>
                       <Table.Cell>{formatDateTime(run.completed_at)}</Table.Cell>
@@ -856,7 +855,8 @@ export const AutomationRulesSubSection = ({
                 </Table.Body>
               </Table.Root>
             </div>
-          ))}
+          </QueryState>
+        )}
 
         <EditorDialog
           rule={editor}
@@ -878,7 +878,7 @@ export const AutomationRulesSubSection = ({
             void operations.remove.mutateAsync(deleteId).then(() => setDeleteId(null));
           }}
         />
-      </div>
+      </SettingsPage>
     </>
   );
 };
