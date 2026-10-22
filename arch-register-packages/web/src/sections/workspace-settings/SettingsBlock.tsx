@@ -10,10 +10,13 @@ export const SettingsBlockList = ({ children }: { children: ReactNode }) => (
 export const SettingsBlock = ({
   title,
   description,
+  footer,
   children
 }: {
   title: ReactNode;
   description?: ReactNode;
+  /** Actions shown below the body, separated by a divider (e.g. the button that runs the block). */
+  footer?: ReactNode;
   children: ReactNode;
 }) => (
   <div className={styles.block}>
@@ -22,6 +25,7 @@ export const SettingsBlock = ({
       {description && <div className={styles.description}>{description}</div>}
     </div>
     <div className={styles.body}>{children}</div>
+    {footer && <div className={styles.footer}>{footer}</div>}
   </div>
 );
 

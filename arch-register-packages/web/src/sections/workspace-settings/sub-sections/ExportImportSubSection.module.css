@@ -213,13 +213,10 @@
 }
 
 /* Action row (bottom of section body) */
-.actionRow {
+.footerActions {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding-top: 12px;
-  border-top: 1px dashed var(--panel-border);
-  margin-top: 4px;
 }
 
 .actionButtons {

@@ -23,6 +23,7 @@ import { useEnums } from '../../../hooks/useEnums';
 import { useRelationSchemas } from '../../../hooks/useRelationSchemas';
 import { useFieldGroups } from '../../../hooks/useFieldGroups';
 import { useDocumentTypes } from '../../../hooks/useDocuments';
+import { SettingsBlock, SettingsBlockField } from '../SettingsBlock';
 import styles from './ExportImportSubSection.module.css';
 
 const sourceKey = (source: DefinitionImportSource) => `${source.kind}:${source.id}`;
@@ -251,273 +252,11 @@ export const DefinitionImportSubSection = () => {
     !!preview && preview.errors.length === 0 && preview.conflicts.length === 0 && confirmed;
 
   return (
-    <div className={styles.section}>
-      <div className={styles.sectionBody}>
-        <div className={styles.field}>
-          <div className={styles.fieldLeft}>
-            <div className={styles.fieldLabel}>Source</div>
-            <div className={styles.fieldHint}>
-              Choose one built-in template or an administered workspace.
-            </div>
-          </div>
-          <div className={styles.fieldRight}>
-            <Select.Root
-              value={sourceKeyValue || undefined}
-              placeholder="Select a source"
-              onChange={value => {
-                setSourceKeyValue(value ?? '');
-                setSelection(emptySelection);
-                setRenames([]);
-                setDependencyMappings({});
-                setPreview(null);
-                setConfirmed(false);
-              }}
-            >
-              {sourcesQuery.data?.map(item => (
-                <Select.Item
-                  key={sourceKey({ kind: item.kind, id: item.id })}
-                  value={sourceKey({ kind: item.kind, id: item.id })}
-                >
-                  {item.kind === 'builtin'
-                    ? `${item.category === 'cross-cutting' ? 'Cross-cutting concern' : 'Full template'}: `
-                    : 'Workspace: '}
-                  {item.name}
-                </Select.Item>
-              ))}
-            </Select.Root>
-          </div>
-        </div>
-
-        {source &&
-          selectionKinds.map(kind => {
-            const label = kindLabels[kind];
-            const items = source[kind];
-            return (
-              <div className={styles.field} key={kind}>
-                <div className={styles.fieldLeft}>
-                  <div className={styles.fieldLabel}>{label}</div>
-                  <div className={styles.fieldHint}>
-                    Dependencies are added automatically during preview.
-                  </div>
-                </div>
-                <div className={styles.fieldRight}>
-                  <div className={styles.checkboxGroup}>
-                    {items.map(item => (
-                      <label className={styles.checkboxRow} key={item.id}>
-                        <Checkbox
-                          value={selection[kind].includes(item.id)}
-                          onChange={value => toggle(kind, item.id, value ?? false)}
-                        />
-                        <span>{item.name}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-
-        {source && activeDependencies.length > 0 && (
-          <div className={styles.field}>
-            <div className={styles.fieldLeft}>
-              <div className={styles.fieldLabel}>Resolve dependencies</div>
-              <div className={styles.fieldHint}>
-                Choose existing destination definitions for the selected cross-cutting extension.
-                The import and its schema updates are atomic.
-              </div>
-            </div>
-            <div className={styles.fieldRight}>
-              {activeDependencies.map(dependency => {
-                const targets = dependencyTargetDefinitions[dependency.target_kind];
-                const selectedTargets = dependencyMappings[dependency.id] ?? [];
-                return (
-                  <div className={styles.dependencyMapping} key={dependency.id}>
-                    <div className={styles.dependencyMappingTitle}>{dependency.name}</div>
-                    <div className={styles.dependencyMappingDescription}>
-                      {dependency.description}
-                    </div>
-                    <div className={styles.checkboxGroup}>
-                      {targets.map(target => (
-                        <label className={styles.checkboxRow} key={target.id}>
-                          <Checkbox
-                            value={selectedTargets.includes(target.id)}
-                            onChange={value =>
-                              toggleDependencyTarget(dependency.id, target.id, value ?? false)
-                            }
-                          />
-                          <span>{target.name}</span>
-                        </label>
-                      ))}
-                      {targets.length === 0 && (
-                        <div className={styles.note}>
-                          No destination {dependency.target_kind} definitions are available.
-                        </div>
-                      )}
-                    </div>
-                    <div className={styles.dependencyMappingRequirement}>
-                      Select at least {dependency.min_targets} target
-                      {dependency.min_targets === 1 ? '' : 's'}
-                      {dependency.max_targets === undefined
-                        ? ''
-                        : ` and at most ${dependency.max_targets}`}
-                      .
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {source && source.dashboardWidgets.length > 0 && (
-          <div className={styles.field}>
-            <div className={styles.fieldLeft}>
-              <div className={styles.fieldLabel}>Dashboard layout</div>
-              <div className={styles.fieldHint}>
-                {source.category === 'cross-cutting'
-                  ? `Add ${source.dashboardWidgets.length} widgets to a new ${source.name} dashboard.`
-                  : `Optionally replace the default dashboard with ${source.dashboardWidgets.length} template widgets.`}
-              </div>
-            </div>
-            <div className={styles.fieldRight}>
-              <label className={styles.checkboxRow}>
-                <Checkbox
-                  value={selection.dashboard}
-                  onChange={value => toggleDashboard(value ?? false)}
-                />
-                <span>Import dashboard layout</span>
-              </label>
-            </div>
-          </div>
-        )}
-
-        {preview && (
-          <div className={styles.field}>
-            <div className={styles.fieldLeft}>
-              <div className={styles.fieldLabel}>Preview</div>
-              <div className={styles.fieldHint}>Review every object before creating anything.</div>
-            </div>
-            <div className={styles.fieldRight}>
-              <div className={styles.summaryGrid}>
-                {selectionKinds.map(kind => (
-                  <div className={styles.summaryItem} key={kind}>
-                    <span className={styles.summaryCount}>{preview[kind].length}</span>
-                    <span className={styles.summaryLabel}>{summaryLabels[kind]}</span>
-                  </div>
-                ))}
-                <div className={styles.summaryItem}>
-                  <span className={styles.summaryCount}>{preview.dashboardWidgets.length}</span>
-                  <span className={styles.summaryLabel}>dashboard widgets</span>
-                </div>
-                <div className={styles.summaryItem}>
-                  <span className={styles.summaryCount}>{preview.schemaPatches.length}</span>
-                  <span className={styles.summaryLabel}>schema updates</span>
-                </div>
-              </div>
-              {preview.errors.length > 0 && (
-                <div className={styles.previewMessages}>
-                  <div className={styles.inlineError}>
-                    <TbAlertCircle size={13} />
-                    {preview.errors.join('; ')}
-                  </div>
-                </div>
-              )}
-              <div className={styles.previewTable}>
-                <div className={styles.previewTableHeader}>
-                  <span>Name</span>
-                  <span>Status</span>
-                  <span>Rename</span>
-                </div>
-                {selectionKinds.flatMap(kind =>
-                  preview[kind].map(item => {
-                    const conflictKind = conflictKindByKind[kind];
-                    const conflict = preview.conflicts.find(
-                      candidate => candidate.kind === conflictKind && candidate.id === item.id
-                    );
-                    const rename = renames.find(
-                      candidate => candidate.kind === conflictKind && candidate.id === item.id
-                    );
-                    const prefixRemap =
-                      kind === 'schemas'
-                        ? preview.keyPrefixRemaps.find(candidate => candidate.sourceId === item.id)
-                        : undefined;
-                    const typeLabel = typeLabels[kind];
-
-                    return (
-                      <div className={styles.previewTableRow} key={`${kind}:${item.id}`}>
-                        <div className={styles.previewName}>
-                          <span>{item.name}</span>
-                          <span className={styles.previewType}>{typeLabel}</span>
-                        </div>
-                        <div className={styles.previewStatus}>
-                          <span
-                            className={
-                              conflict
-                                ? styles.previewStatusConflict
-                                : item.dependency
-                                  ? styles.previewStatusDependency
-                                  : styles.previewStatusReady
-                            }
-                          >
-                            {conflict && <TbAlertCircle size={13} />}
-                            {conflict
-                              ? `Conflict with ${conflict.existingName}`
-                              : item.dependency
-                                ? 'Dependency'
-                                : 'Selected'}
-                          </span>
-                          {prefixRemap && (
-                            <span className={styles.previewStatusDetail}>
-                              Prefix {prefixRemap.from} → {prefixRemap.to}
-                            </span>
-                          )}
-                        </div>
-                        <div className={styles.previewRename}>
-                          {conflict ? (
-                            <TextInput
-                              value={rename?.name ?? ''}
-                              placeholder="New name"
-                              onChange={value => {
-                                const name = value ?? '';
-                                setRenames(previous => [
-                                  ...previous.filter(
-                                    candidate =>
-                                      !(
-                                        candidate.kind === conflict.kind &&
-                                        candidate.id === conflict.id
-                                      )
-                                  ),
-                                  ...(name.trim()
-                                    ? [{ kind: conflict.kind, id: conflict.id, name }]
-                                    : [])
-                                ]);
-                              }}
-                            />
-                          ) : (
-                            <span className={styles.previewRenameEmpty}>—</span>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-              {preview.conflicts.length > 0 && (
-                <div className={styles.warningNote}>
-                  Enter a unique new name for each conflict, then preview again.
-                </div>
-              )}
-              {preview.errors.length === 0 && preview.conflicts.length === 0 && (
-                <label className={styles.checkboxRow} style={{ marginTop: 12 }}>
-                  <Checkbox value={confirmed} onChange={value => setConfirmed(value ?? false)} />
-                  <span>I confirm that these definitions will be created in this workspace.</span>
-                </label>
-              )}
-            </div>
-          </div>
-        )}
-
-        <div className={styles.actionRow}>
+    <SettingsBlock
+      title="Definition import"
+      description="Import built-in templates or definitions from another workspace you administer."
+      footer={
+        <div className={styles.footerActions}>
           {error && (
             <div className={styles.inlineError}>
               <TbAlertCircle size={13} />
@@ -541,7 +280,256 @@ export const DefinitionImportSubSection = () => {
             </Button>
           </div>
         </div>
-      </div>
-    </div>
+      }
+    >
+      <SettingsBlockField
+        label="Source"
+        hint={<> Choose one built-in template or an administered workspace. </>}
+      >
+        <Select.Root
+          value={sourceKeyValue || undefined}
+          placeholder="Select a source"
+          onChange={value => {
+            setSourceKeyValue(value ?? '');
+            setSelection(emptySelection);
+            setRenames([]);
+            setDependencyMappings({});
+            setPreview(null);
+            setConfirmed(false);
+          }}
+        >
+          {sourcesQuery.data?.map(item => (
+            <Select.Item
+              key={sourceKey({ kind: item.kind, id: item.id })}
+              value={sourceKey({ kind: item.kind, id: item.id })}
+            >
+              {item.kind === 'builtin'
+                ? `${item.category === 'cross-cutting' ? 'Cross-cutting concern' : 'Full template'}: `
+                : 'Workspace: '}
+              {item.name}
+            </Select.Item>
+          ))}
+        </Select.Root>
+      </SettingsBlockField>
+
+      {source &&
+        selectionKinds.map(kind => {
+          const label = kindLabels[kind];
+          const items = source[kind];
+          return (
+            <SettingsBlockField
+              key={kind}
+              label={<>{label}</>}
+              hint={<> Dependencies are added automatically during preview. </>}
+            >
+              <div className={styles.checkboxGroup}>
+                {items.map(item => (
+                  <label className={styles.checkboxRow} key={item.id}>
+                    <Checkbox
+                      value={selection[kind].includes(item.id)}
+                      onChange={value => toggle(kind, item.id, value ?? false)}
+                    />
+                    <span>{item.name}</span>
+                  </label>
+                ))}
+              </div>
+            </SettingsBlockField>
+          );
+        })}
+
+      {source && activeDependencies.length > 0 && (
+        <SettingsBlockField
+          label="Resolve dependencies"
+          hint={
+            <>
+              {' '}
+              Choose existing destination definitions for the selected cross-cutting extension. The
+              import and its schema updates are atomic.{' '}
+            </>
+          }
+        >
+          {activeDependencies.map(dependency => {
+            const targets = dependencyTargetDefinitions[dependency.target_kind];
+            const selectedTargets = dependencyMappings[dependency.id] ?? [];
+            return (
+              <div className={styles.dependencyMapping} key={dependency.id}>
+                <div className={styles.dependencyMappingTitle}>{dependency.name}</div>
+                <div className={styles.dependencyMappingDescription}>{dependency.description}</div>
+                <div className={styles.checkboxGroup}>
+                  {targets.map(target => (
+                    <label className={styles.checkboxRow} key={target.id}>
+                      <Checkbox
+                        value={selectedTargets.includes(target.id)}
+                        onChange={value =>
+                          toggleDependencyTarget(dependency.id, target.id, value ?? false)
+                        }
+                      />
+                      <span>{target.name}</span>
+                    </label>
+                  ))}
+                  {targets.length === 0 && (
+                    <div className={styles.note}>
+                      No destination {dependency.target_kind} definitions are available.
+                    </div>
+                  )}
+                </div>
+                <div className={styles.dependencyMappingRequirement}>
+                  Select at least {dependency.min_targets} target
+                  {dependency.min_targets === 1 ? '' : 's'}
+                  {dependency.max_targets === undefined
+                    ? ''
+                    : ` and at most ${dependency.max_targets}`}
+                  .
+                </div>
+              </div>
+            );
+          })}
+        </SettingsBlockField>
+      )}
+
+      {source && source.dashboardWidgets.length > 0 && (
+        <SettingsBlockField
+          label="Dashboard layout"
+          hint={
+            <>
+              {' '}
+              {source.category === 'cross-cutting'
+                ? `Add ${source.dashboardWidgets.length} widgets to a new ${source.name} dashboard.`
+                : `Optionally replace the default dashboard with ${source.dashboardWidgets.length} template widgets.`}{' '}
+            </>
+          }
+        >
+          <label className={styles.checkboxRow}>
+            <Checkbox
+              value={selection.dashboard}
+              onChange={value => toggleDashboard(value ?? false)}
+            />
+            <span>Import dashboard layout</span>
+          </label>
+        </SettingsBlockField>
+      )}
+
+      {preview && (
+        <SettingsBlockField
+          label="Preview"
+          hint={<>Review every object before creating anything.</>}
+        >
+          <div className={styles.summaryGrid}>
+            {selectionKinds.map(kind => (
+              <div className={styles.summaryItem} key={kind}>
+                <span className={styles.summaryCount}>{preview[kind].length}</span>
+                <span className={styles.summaryLabel}>{summaryLabels[kind]}</span>
+              </div>
+            ))}
+            <div className={styles.summaryItem}>
+              <span className={styles.summaryCount}>{preview.dashboardWidgets.length}</span>
+              <span className={styles.summaryLabel}>dashboard widgets</span>
+            </div>
+            <div className={styles.summaryItem}>
+              <span className={styles.summaryCount}>{preview.schemaPatches.length}</span>
+              <span className={styles.summaryLabel}>schema updates</span>
+            </div>
+          </div>
+          {preview.errors.length > 0 && (
+            <div className={styles.previewMessages}>
+              <div className={styles.inlineError}>
+                <TbAlertCircle size={13} />
+                {preview.errors.join('; ')}
+              </div>
+            </div>
+          )}
+          <div className={styles.previewTable}>
+            <div className={styles.previewTableHeader}>
+              <span>Name</span>
+              <span>Status</span>
+              <span>Rename</span>
+            </div>
+            {selectionKinds.flatMap(kind =>
+              preview[kind].map(item => {
+                const conflictKind = conflictKindByKind[kind];
+                const conflict = preview.conflicts.find(
+                  candidate => candidate.kind === conflictKind && candidate.id === item.id
+                );
+                const rename = renames.find(
+                  candidate => candidate.kind === conflictKind && candidate.id === item.id
+                );
+                const prefixRemap =
+                  kind === 'schemas'
+                    ? preview.keyPrefixRemaps.find(candidate => candidate.sourceId === item.id)
+                    : undefined;
+                const typeLabel = typeLabels[kind];
+
+                return (
+                  <div className={styles.previewTableRow} key={`${kind}:${item.id}`}>
+                    <div className={styles.previewName}>
+                      <span>{item.name}</span>
+                      <span className={styles.previewType}>{typeLabel}</span>
+                    </div>
+                    <div className={styles.previewStatus}>
+                      <span
+                        className={
+                          conflict
+                            ? styles.previewStatusConflict
+                            : item.dependency
+                              ? styles.previewStatusDependency
+                              : styles.previewStatusReady
+                        }
+                      >
+                        {conflict && <TbAlertCircle size={13} />}
+                        {conflict
+                          ? `Conflict with ${conflict.existingName}`
+                          : item.dependency
+                            ? 'Dependency'
+                            : 'Selected'}
+                      </span>
+                      {prefixRemap && (
+                        <span className={styles.previewStatusDetail}>
+                          Prefix {prefixRemap.from} → {prefixRemap.to}
+                        </span>
+                      )}
+                    </div>
+                    <div className={styles.previewRename}>
+                      {conflict ? (
+                        <TextInput
+                          value={rename?.name ?? ''}
+                          placeholder="New name"
+                          onChange={value => {
+                            const name = value ?? '';
+                            setRenames(previous => [
+                              ...previous.filter(
+                                candidate =>
+                                  !(
+                                    candidate.kind === conflict.kind && candidate.id === conflict.id
+                                  )
+                              ),
+                              ...(name.trim()
+                                ? [{ kind: conflict.kind, id: conflict.id, name }]
+                                : [])
+                            ]);
+                          }}
+                        />
+                      ) : (
+                        <span className={styles.previewRenameEmpty}>—</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+          {preview.conflicts.length > 0 && (
+            <div className={styles.warningNote}>
+              Enter a unique new name for each conflict, then preview again.
+            </div>
+          )}
+          {preview.errors.length === 0 && preview.conflicts.length === 0 && (
+            <label className={styles.checkboxRow} style={{ marginTop: 12 }}>
+              <Checkbox value={confirmed} onChange={value => setConfirmed(value ?? false)} />
+              <span>I confirm that these definitions will be created in this workspace.</span>
+            </label>
+          )}
+        </SettingsBlockField>
+      )}
+    </SettingsBlock>
   );
 };

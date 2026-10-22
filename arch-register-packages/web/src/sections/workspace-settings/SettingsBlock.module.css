@@ -35,6 +35,11 @@
   padding: 8px 16px 14px;
 }
 
+.footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--panel-border);
+}
+
 /* Field row */
 .field {
   display: grid;
