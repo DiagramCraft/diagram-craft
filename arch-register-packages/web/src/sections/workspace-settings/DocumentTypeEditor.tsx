@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { getRouteApi } from '@tanstack/react-router';
 import { TbArchive, TbEye, TbInfoCircle, TbPlus } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
@@ -39,6 +40,7 @@ export const DocumentTypeEditor = ({
   onSelect: (id: string) => void;
 }) => {
   const navigate = routeApi.useNavigate();
+  const [panelTab, setPanelTab] = useState('fields');
   const selected = types.find(type => type.id === selectedId) ?? null;
   const isNew = selectedId === NEW_DOCUMENT_TYPE_ID;
 
@@ -194,50 +196,59 @@ export const DocumentTypeEditor = ({
                 </div>
               </div>
 
-              <div className={styles.fieldsHead}>
-                <div className={styles.sectionLabel}>Fields</div>
-                <Button variant="ghost" icon={<TbPlus size={11} />} onClick={draft.addField}>
-                  Add field
-                </Button>
-              </div>
-
-              {draft.fields.length > 0 ? (
-                <div className={styles.fieldsTable}>
-                  <FieldConfigList
-                    items={draft.fields}
-                    getId={field => draft.fieldKeys.get(field.id) ?? field.id}
-                    listId={FIELDS_LIST_ID}
-                    onReorder={draft.reorderFields}
-                    renderItem={(field, _index, drag) => (
-                      <DocumentFieldRow
-                        field={field}
-                        onUpdate={patch => draft.updateField(field.id, patch)}
-                        onRemove={() => draft.removeField(field)}
-                        dragHandleRef={drag.ref}
-                      />
-                    )}
-                  />
-                </div>
-              ) : (
-                <div className={styles.fieldsTable}>
-                  <div className={styles.fieldEmpty}>
-                    No fields defined yet. Click &quot;Add field&quot; to get started.
+              <Tabs.Root value={panelTab} onValueChange={setPanelTab}>
+                <Tabs.List aria-label="Document type sections">
+                  <Tabs.Trigger value="fields">Fields</Tabs.Trigger>
+                  <Tabs.Trigger value="ai">AI actions</Tabs.Trigger>
+                </Tabs.List>
+                <Tabs.Content value="fields" style={{ height: 'auto' }}>
+                  <div className={styles.fieldsHead}>
+                    <div className={styles.sectionLabel}>Fields</div>
+                    <Button variant="ghost" icon={<TbPlus size={11} />} onClick={draft.addField}>
+                      Add field
+                    </Button>
                   </div>
-                </div>
-              )}
-              <div className={styles.fieldsHint}>
-                <TbInfoCircle size={11} />
-                Fields already used by documents keep their value type. Renaming or removing a used
-                field will ask you to choose how to migrate its data before saving.
-              </div>
 
-              <DocumentAiActionsSection
-                workspaceSlug={workspaceSlug}
-                documentTypeId={selected?.id ?? null}
-                fields={draft.fields}
-                aiActions={draft.aiActions}
-                onChange={draft.setAiActions}
-              />
+                  {draft.fields.length > 0 ? (
+                    <div className={styles.fieldsTable}>
+                      <FieldConfigList
+                        items={draft.fields}
+                        getId={field => draft.fieldKeys.get(field.id) ?? field.id}
+                        listId={FIELDS_LIST_ID}
+                        onReorder={draft.reorderFields}
+                        renderItem={(field, _index, drag) => (
+                          <DocumentFieldRow
+                            field={field}
+                            onUpdate={patch => draft.updateField(field.id, patch)}
+                            onRemove={() => draft.removeField(field)}
+                            dragHandleRef={drag.ref}
+                          />
+                        )}
+                      />
+                    </div>
+                  ) : (
+                    <div className={styles.fieldsTable}>
+                      <div className={styles.fieldEmpty}>
+                        No fields defined yet. Click &quot;Add field&quot; to get started.
+                      </div>
+                    </div>
+                  )}
+                  <div className={styles.fieldsHint}>
+                    <TbInfoCircle size={11} />
+                    Fields already used by documents keep their value type. Renaming or removing a
+                    used field will ask you to choose how to migrate its data before saving.
+                  </div>
+                </Tabs.Content>
+                <Tabs.Content value="ai" style={{ height: 'auto' }}>
+                  <DocumentAiActionsSection
+                    workspaceSlug={workspaceSlug}
+                    documentTypeId={selected?.id ?? null}
+                    fields={draft.fields}
+                    aiActions={draft.aiActions}
+                    onChange={draft.setAiActions}
+                  />
+                </Tabs.Content>
+              </Tabs.Root>
             </div>
           )}
         </div>
