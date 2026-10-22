@@ -45,7 +45,9 @@ const SELF_HEADED_SECTIONS = [
   'api-tokens',
   'workflows',
   'conformance',
-  'lifecycle-owners'
+  'lifecycle-owners',
+  'webhooks',
+  'public-catalog'
 ];
 
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/$section');

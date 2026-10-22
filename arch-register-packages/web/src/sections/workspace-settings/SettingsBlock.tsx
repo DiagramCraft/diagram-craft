@@ -11,18 +11,24 @@ export const SettingsBlock = ({
   title,
   description,
   footer,
+  actions,
   children
 }: {
   title: ReactNode;
   description?: ReactNode;
   /** Actions shown below the body, separated by a divider (e.g. the button that runs the block). */
   footer?: ReactNode;
+  /** Buttons shown right-aligned in the title row, e.g. an "Add …" button. */
+  actions?: ReactNode;
   children: ReactNode;
 }) => (
   <div className={styles.block}>
     <div className={styles.head}>
-      <div className={styles.title}>{title}</div>
-      {description && <div className={styles.description}>{description}</div>}
+      <div className={styles.headText}>
+        <div className={styles.title}>{title}</div>
+        {description && <div className={styles.description}>{description}</div>}
+      </div>
+      {actions && <div className={styles.headActions}>{actions}</div>}
     </div>
     <div className={styles.body}>{children}</div>
     {footer && <div className={styles.footer}>{footer}</div>}

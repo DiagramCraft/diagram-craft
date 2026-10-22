@@ -15,8 +15,23 @@
 }
 
 .head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
   padding: 14px 16px 10px;
   border-bottom: 1px solid var(--panel-border);
+}
+
+.headText {
+  min-width: 0;
+}
+
+.headActions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
 }
 
 .title {

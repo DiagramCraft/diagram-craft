@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { Button } from '@diagram-craft/app-components/Button';
+import { TbArrowDown, TbArrowUp, TbDots, TbTrash } from 'react-icons/tb';
+import { DropdownMenu, type MenuItem } from '../../../components/DropdownMenu';
+import { Select } from '@diagram-craft/app-components/Select';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import type {
@@ -21,7 +24,8 @@ import {
   isDraftEntityPublished,
   validatePublicCatalogDraft
 } from './PublicCatalogSubSection.helpers';
-import styles from './LifecycleSubSection.module.css';
+import { SettingsBlock, SettingsBlockField, SettingsBlockList } from '../SettingsBlock';
+import { WorkspaceSettingsSectionHeader } from '../WorkspaceSettingsSectionHeader';
 
 const emptyConfig: PublicCatalogConfig = {
   enabled: false,
@@ -34,17 +38,8 @@ const emptyConfig: PublicCatalogConfig = {
   apiArtifacts: []
 };
 
-const selectStyle: CSSProperties = {
-  maxWidth: 520,
-  minHeight: 30,
-  padding: '4px 8px',
-  border: '1px solid var(--panel-border)',
-  borderRadius: 4,
-  background: 'var(--panel-bg)',
-  color: 'var(--base-fg)'
-};
-
 const cardStyle: CSSProperties = {
+  position: 'relative',
   padding: 12,
   border: '1px solid var(--panel-border)',
   borderRadius: 6,
@@ -59,6 +54,19 @@ const rowStyle: CSSProperties = {
   gap: 8,
   flexWrap: 'wrap'
 };
+
+const EntryMenu = ({ label, items }: { label: string; items: MenuItem[] }) => (
+  <div style={{ position: 'absolute', top: 6, right: 6 }}>
+    <DropdownMenu
+      trigger={
+        <Button variant="icon-only" aria-label={label}>
+          <TbDots size={14} />
+        </Button>
+      }
+      items={items}
+    />
+  </div>
+);
 
 const mutedStyle: CSSProperties = { color: 'var(--cmp-fg-disabled)', fontSize: 12 };
 const errorStyle: CSSProperties = { color: 'var(--error-fg, #d55)', fontSize: 12 };
@@ -332,153 +340,145 @@ export const PublicCatalogSubSection = ({
   };
 
   if (configLoading || optionsLoading)
-    return <div className={styles.blockList}>Loading public catalog settings…</div>;
+    return (
+      <>
+        <WorkspaceSettingsSectionHeader section="public-catalog" />
+        <SettingsBlockList>Loading public catalog settings…</SettingsBlockList>
+      </>
+    );
   if (configError || optionsError)
-    return <div className={styles.blockList}>Unable to load public catalog settings.</div>;
+    return (
+      <>
+        <WorkspaceSettingsSectionHeader section="public-catalog" />
+        <SettingsBlockList>Unable to load public catalog settings.</SettingsBlockList>
+      </>
+    );
 
   return (
-    <div className={styles.blockList}>
-      <div className={styles.sectionActions}>
-        <Button disabled={!dirty || update.isPending || previewMutation.isPending} onClick={cancel}>
-          Cancel
-        </Button>
-        <Button
-          disabled={validation.errors.length > 0 || previewMutation.isPending}
-          onClick={() => void previewDraft()}
+    <>
+      <WorkspaceSettingsSectionHeader
+        section="public-catalog"
+        buttons={
+          <>
+            <Button
+              disabled={!dirty || update.isPending || previewMutation.isPending}
+              onClick={cancel}
+            >
+              Cancel
+            </Button>
+            <Button
+              disabled={validation.errors.length > 0 || previewMutation.isPending}
+              onClick={() => void previewDraft()}
+            >
+              {previewMutation.isPending ? 'Building preview…' : 'Preview catalog'}
+            </Button>
+            <Button
+              variant="primary"
+              disabled={!canSubmit || update.isPending || previewMutation.isPending}
+              onClick={() => void save()}
+            >
+              {update.isPending ? 'Saving…' : 'Save changes'}
+            </Button>
+          </>
+        }
+      />
+      <SettingsBlockList>
+        {validation.errors.length > 0 && (
+          <div role="alert" style={errorStyle}>
+            Fix or remove the highlighted selections before saving. {validation.errors.length}{' '}
+            validation {validation.errors.length === 1 ? 'error' : 'errors'} found.
+          </div>
+        )}
+        {serverError && (
+          <div role="alert" style={errorStyle}>
+            {serverError}
+          </div>
+        )}
+
+        <SettingsBlock
+          title="Public catalog"
+          description="Publish a separate, read-only catalog for external consumers. Nothing is public until you enable it and select the content below."
         >
-          {previewMutation.isPending ? 'Building preview…' : 'Preview catalog'}
-        </Button>
-        <Button
-          variant="primary"
-          disabled={!canSubmit || update.isPending || previewMutation.isPending}
-          onClick={() => void save()}
+          <SettingsBlockField
+            label="Enable public catalog"
+            hint="Unauthenticated readers use the /public URL."
+          >
+            <input
+              type="checkbox"
+              checked={config.enabled}
+              onChange={event =>
+                setConfigValue(current => ({ ...current, enabled: event.target.checked }))
+              }
+            />
+          </SettingsBlockField>
+          <SettingsBlockField label="Title">
+            <TextInput
+              value={config.title ?? ''}
+              onChange={value =>
+                setConfigValue(current => ({ ...current, title: value ?? undefined }))
+              }
+              style={{ maxWidth: 540 }}
+            />
+          </SettingsBlockField>
+          <SettingsBlockField label="Description" align="top">
+            <TextArea
+              value={config.description ?? ''}
+              onChange={value =>
+                setConfigValue(current => ({ ...current, description: value ?? undefined }))
+              }
+              rows={4}
+              style={{ maxWidth: 540 }}
+            />
+          </SettingsBlockField>
+          <SettingsBlockField
+            label="Allow indexing"
+            hint="The default is noindex for private deployments."
+          >
+            <input
+              type="checkbox"
+              checked={config.indexable}
+              onChange={event =>
+                setConfigValue(current => ({ ...current, indexable: event.target.checked }))
+              }
+            />
+          </SettingsBlockField>
+        </SettingsBlock>
+
+        <SettingsBlock
+          title="Entity schemas and fields"
+          description="Choose the fields that may be returned publicly. Restricted fields are marked and cannot be selected."
         >
-          {update.isPending ? 'Saving…' : 'Save changes'}
-        </Button>
-      </div>
-
-      {validation.errors.length > 0 && (
-        <div role="alert" style={errorStyle}>
-          Fix or remove the highlighted selections before saving. {validation.errors.length}{' '}
-          validation {validation.errors.length === 1 ? 'error' : 'errors'} found.
-        </div>
-      )}
-      {serverError && (
-        <div role="alert" style={errorStyle}>
-          {serverError}
-        </div>
-      )}
-
-      <div className={styles.section}>
-        <div className={styles.sectionHead}>
-          <div className={styles.sectionTitle}>Public catalog</div>
-          <div className={styles.sectionSub}>
-            Publish a separate, read-only catalog for external consumers. Nothing is public until
-            you enable it and select the content below.
-          </div>
-        </div>
-        <div className={styles.sectionBody}>
-          <div className={styles.field}>
-            <div className={styles.fieldLeft}>
-              <div className={styles.fieldLabel}>Enable public catalog</div>
-              <div className={styles.fieldHint}>Unauthenticated readers use the /public URL.</div>
-            </div>
-            <div className={styles.fieldRight}>
-              <input
-                type="checkbox"
-                checked={config.enabled}
-                onChange={event =>
-                  setConfigValue(current => ({ ...current, enabled: event.target.checked }))
-                }
-              />
-            </div>
-          </div>
-          <div className={styles.field}>
-            <div className={styles.fieldLeft}>
-              <div className={styles.fieldLabel}>Title</div>
-            </div>
-            <div className={styles.fieldRight}>
-              <TextInput
-                value={config.title ?? ''}
-                onChange={value =>
-                  setConfigValue(current => ({ ...current, title: value ?? undefined }))
-                }
-                style={{ maxWidth: 540 }}
-              />
-            </div>
-          </div>
-          <div className={styles.field}>
-            <div className={styles.fieldLeft}>
-              <div className={styles.fieldLabel}>Description</div>
-            </div>
-            <div className={styles.fieldRight}>
-              <TextArea
-                value={config.description ?? ''}
-                onChange={value =>
-                  setConfigValue(current => ({ ...current, description: value ?? undefined }))
-                }
-                rows={4}
-                style={{ maxWidth: 540 }}
-              />
-            </div>
-          </div>
-          <div className={styles.field}>
-            <div className={styles.fieldLeft}>
-              <div className={styles.fieldLabel}>Allow indexing</div>
-              <div className={styles.fieldHint}>
-                The default is noindex for private deployments.
-              </div>
-            </div>
-            <div className={styles.fieldRight}>
-              <input
-                type="checkbox"
-                checked={config.indexable}
-                onChange={event =>
-                  setConfigValue(current => ({ ...current, indexable: event.target.checked }))
-                }
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className={styles.section}>
-        <div className={styles.sectionHead}>
-          <div className={styles.sectionTitle}>Entity schemas and fields</div>
-          <div className={styles.sectionSub}>
-            Choose the fields that may be returned publicly. Restricted fields are marked and cannot
-            be selected.
-          </div>
-        </div>
-        <div className={styles.sectionBody}>
           {options.schemas.map(schema => {
             const fields = selectedBySchema.get(schema.id);
             const schemaIndex = config.schemas.findIndex(item => item.schemaId === schema.id);
             return (
-              <div key={schema.id} style={{ ...cardStyle, marginBottom: 8 }}>
-                <label style={rowStyle}>
-                  <input
-                    type="checkbox"
-                    checked={fields != null}
-                    onChange={event =>
-                      setConfigValue(current => ({
-                        ...current,
-                        schemas: event.target.checked
-                          ? [...current.schemas, { schemaId: schema.id, fieldIds: [] }]
-                          : current.schemas.filter(item => item.schemaId !== schema.id)
-                      }))
-                    }
-                  />
-                  <strong>{schema.name}</strong>
-                  <span style={mutedStyle}>{schema.description}</span>
-                </label>
+              <SettingsBlockField
+                key={schema.id}
+                align="top"
+                label={
+                  <label style={rowStyle}>
+                    <input
+                      type="checkbox"
+                      checked={fields != null}
+                      onChange={event =>
+                        setConfigValue(current => ({
+                          ...current,
+                          schemas: event.target.checked
+                            ? [...current.schemas, { schemaId: schema.id, fieldIds: [] }]
+                            : current.schemas.filter(item => item.schemaId !== schema.id)
+                        }))
+                      }
+                    />
+                    {schema.name}
+                  </label>
+                }
+              >
                 {fields && (
                   <div
                     style={{
                       display: 'grid',
                       gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
-                      gap: 6,
-                      paddingLeft: 24
+                      gap: 6
                     }}
                   >
                     {schema.fields.map(field => (
@@ -519,57 +519,49 @@ export const PublicCatalogSubSection = ({
                   </div>
                 )}
                 {schemaIndex >= 0 && <InlineErrors errors={validation.schemaErrors[schemaIndex]} />}
-              </div>
+              </SettingsBlockField>
             );
           })}
           {configuredUnknownSchemas.map(publication => {
             const schemaIndex = config.schemas.indexOf(publication);
             return (
-              <div
+              <SettingsBlockField
                 key={`unknown-${publication.schemaId}`}
-                style={{ ...cardStyle, marginBottom: 8 }}
+                align="top"
+                label="Unavailable schema"
+                hint={publication.schemaId}
               >
-                <div style={rowStyle}>
-                  <strong>Unavailable schema</strong>
-                  <span style={mutedStyle}>{publication.schemaId}</span>
-                  <Button
-                    onClick={() =>
-                      setConfigValue(current => ({
-                        ...current,
-                        schemas: current.schemas.filter(item => item !== publication)
-                      }))
-                    }
-                  >
-                    Remove
-                  </Button>
-                </div>
+                <Button
+                  onClick={() =>
+                    setConfigValue(current => ({
+                      ...current,
+                      schemas: current.schemas.filter(item => item !== publication)
+                    }))
+                  }
+                >
+                  Remove
+                </Button>
                 <InlineErrors errors={validation.schemaErrors[schemaIndex]} />
-              </div>
+              </SettingsBlockField>
             );
           })}
           {options.schemas.length === 0 && configuredUnknownSchemas.length === 0 && (
             <div style={mutedStyle}>No schemas are available in this workspace.</div>
           )}
-        </div>
-      </div>
+        </SettingsBlock>
 
-      <div className={styles.section}>
-        <div className={styles.sectionHead}>
-          <div className={styles.sectionTitle}>Entity overrides</div>
-          <div className={styles.sectionSub}>
-            Publish or exclude individual entities and optionally choose a field set for each one.
-            Entity names are shown here; stable entity IDs are submitted to the server.
-          </div>
-        </div>
-        <div className={styles.sectionBody}>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
+        <SettingsBlock
+          title="Entity overrides"
+          description="Publish or exclude individual entities and optionally choose a field set for each one. Entity names are shown here; stable entity IDs are submitted to the server."
+          actions={
             <Button
               disabled={!options.entities.some(entity => entity.selectable)}
               onClick={addEntityOverride}
             >
               Add entity override
             </Button>
-          </div>
+          }
+        >
           {config.entityOverrides.map((override, index) => {
             const entity = selectorEntityByIdentifier(options, override.entityId);
             const schema =
@@ -577,68 +569,75 @@ export const PublicCatalogSubSection = ({
             const availableFields = schema?.fields ?? [];
             return (
               <div key={`${override.entityId}-${index}`} style={{ ...cardStyle, marginBottom: 8 }}>
-                <div style={rowStyle}>
-                  <select
-                    aria-label={`Entity override ${index + 1}`}
-                    style={{ ...selectStyle, flex: '1 1 300px' }}
-                    value={override.entityId}
-                    onChange={event =>
-                      setConfigValue(current => ({
-                        ...current,
-                        entityOverrides: current.entityOverrides.map((item, itemIndex) =>
-                          itemIndex === index
-                            ? { ...item, entityId: event.target.value, fieldIds: undefined }
-                            : item
-                        )
-                      }))
+                <EntryMenu
+                  label={`Entity override ${index + 1} actions`}
+                  items={[
+                    {
+                      label: 'Remove',
+                      icon: <TbTrash size={14} />,
+                      danger: true,
+                      onClick: () =>
+                        setConfigValue(current => ({
+                          ...current,
+                          entityOverrides: current.entityOverrides.filter(
+                            (_, itemIndex) => itemIndex !== index
+                          )
+                        }))
                     }
-                  >
-                    {entityOptions(override.entityId).map(candidate => (
-                      <option
-                        key={candidate.id}
-                        value={candidate.id}
-                        disabled={!candidate.selectable}
-                      >
-                        {entityLabel(candidate)}
-                        {candidate.projectOnly ? ' · project-only' : ''}
-                      </option>
-                    ))}
-                  </select>
-                  <select
-                    aria-label={`Entity override mode ${index + 1}`}
-                    style={selectStyle}
-                    value={override.mode}
-                    onChange={event =>
-                      setConfigValue(current => ({
-                        ...current,
-                        entityOverrides: current.entityOverrides.map((item, itemIndex) =>
-                          itemIndex === index
-                            ? { ...item, mode: event.target.value as 'publish' | 'exclude' }
-                            : item
-                        )
-                      }))
-                    }
-                  >
-                    <option value="publish">Publish</option>
-                    <option value="exclude">Exclude</option>
-                  </select>
-                  <Button
-                    onClick={() =>
-                      setConfigValue(current => ({
-                        ...current,
-                        entityOverrides: current.entityOverrides.filter(
-                          (_, itemIndex) => itemIndex !== index
-                        )
-                      }))
-                    }
-                  >
-                    Remove
-                  </Button>
+                  ]}
+                />
+                <div style={{ ...rowStyle, paddingRight: 32 }}>
+                  <div style={{ flex: '1 1 300px' }}>
+                    <Select.Root
+                      aria-label={`Entity override ${index + 1}`}
+                      value={override.entityId}
+                      onChange={selected =>
+                        setConfigValue(current => ({
+                          ...current,
+                          entityOverrides: current.entityOverrides.map((item, itemIndex) =>
+                            itemIndex === index
+                              ? { ...item, entityId: selected ?? '', fieldIds: undefined }
+                              : item
+                          )
+                        }))
+                      }
+                    >
+                      {entityOptions(override.entityId).map(candidate => (
+                        <Select.Item
+                          key={candidate.id}
+                          value={candidate.id}
+                          disabled={!candidate.selectable}
+                        >
+                          {entityLabel(candidate)}
+                          {candidate.projectOnly ? ' · project-only' : ''}
+                        </Select.Item>
+                      ))}
+                    </Select.Root>
+                  </div>
+                  <div style={{ flex: '0 1 160px' }}>
+                    <Select.Root
+                      aria-label={`Entity override mode ${index + 1}`}
+                      value={override.mode}
+                      onChange={selected =>
+                        setConfigValue(current => ({
+                          ...current,
+                          entityOverrides: current.entityOverrides.map((item, itemIndex) =>
+                            itemIndex === index
+                              ? { ...item, mode: (selected ?? '') as 'publish' | 'exclude' }
+                              : item
+                          )
+                        }))
+                      }
+                    >
+                      <Select.Item value="publish">Publish</Select.Item>
+                      <Select.Item value="exclude">Exclude</Select.Item>
+                    </Select.Root>
+                  </div>
                 </div>
                 {override.mode === 'publish' && entity && schema && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingLeft: 8 }}>
                     <div style={mutedStyle}>Fields for this entity</div>
-                    <label style={rowStyle}>
+                    <label style={{ ...rowStyle, fontSize: '12px' }}>
                       <input
                         type="radio"
                         name={`entity-fields-${index}`}
@@ -654,7 +653,7 @@ export const PublicCatalogSubSection = ({
                       />
                       Use the selected schema fields
                     </label>
-                    <label style={rowStyle}>
+                    <label style={{ ...rowStyle, fontSize: '12px' }}>
                       <input
                         type="radio"
                         name={`entity-fields-${index}`}
@@ -728,23 +727,17 @@ export const PublicCatalogSubSection = ({
           {config.entityOverrides.length === 0 && (
             <div style={mutedStyle}>No individual entity overrides are configured.</div>
           )}
-        </div>
-      </div>
+        </SettingsBlock>
 
-      <div className={styles.section}>
-        <div className={styles.sectionHead}>
-          <div className={styles.sectionTitle}>Wiki pages</div>
-          <div className={styles.sectionSub}>
-            Select non-project Markdown pages, choose a public path, and order them for the catalog
-            manifest. Project-only and unpublished entity pages are unavailable.
-          </div>
-        </div>
-        <div className={styles.sectionBody}>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
+        <SettingsBlock
+          title="Wiki pages"
+          description="Select non-project Markdown pages, choose a public path, and order them for the catalog manifest. Project-only and unpublished entity pages are unavailable."
+          actions={
             <Button disabled={!options.pages.some(pageIsSelectable)} onClick={addPage}>
               Add wiki page
             </Button>
-          </div>
+          }
+        >
           {config.pages.map((page, index) => {
             const candidates = pageCandidates(page);
             const currentCandidate = options.pages.find(
@@ -763,57 +756,42 @@ export const PublicCatalogSubSection = ({
               pageIsSelectable(candidate);
             return (
               <div key={`${page.nodeId}-${index}`} style={{ ...cardStyle, marginBottom: 8 }}>
-                <div style={rowStyle}>
-                  <select
-                    aria-label={`Wiki page scope ${index + 1}`}
-                    style={selectStyle}
-                    value={page.scope}
-                    onChange={event => {
-                      const scope = event.target.value as 'workspace' | 'entity';
-                      const candidate = options.pages.find(
-                        option => option.scope === scope && pageIsSelectable(option)
-                      );
-                      setConfigValue(current => ({
-                        ...current,
-                        pages: current.pages.map((item, itemIndex) =>
-                          itemIndex !== index
-                            ? item
-                            : {
-                                ...item,
-                                scope,
-                                entityId:
-                                  scope === 'entity'
-                                    ? (candidate?.entityId ??
-                                      item.entityId ??
-                                      options.entities.find(entity =>
-                                        isDraftEntityPublished(config, options, entity.id)
-                                      )?.id)
-                                    : undefined,
-                                nodeId: candidate?.nodeId ?? item.nodeId,
-                                publicPath: candidate
-                                  ? publicPathFromNodePath(candidate.path)
-                                  : item.publicPath
-                              }
-                        )
-                      }));
-                    }}
-                  >
-                    <option value="workspace">Workspace page</option>
-                    <option value="entity">Entity page</option>
-                  </select>
-                  {page.scope === 'entity' && (
-                    <select
-                      aria-label={`Wiki page entity ${index + 1}`}
-                      style={{ ...selectStyle, flex: '1 1 250px' }}
-                      value={page.entityId ?? ''}
-                      onChange={event => {
-                        const entityId = event.target.value || undefined;
+                <EntryMenu
+                  label={`Wiki page ${index + 1} actions`}
+                  items={[
+                    {
+                      label: 'Move up',
+                      icon: <TbArrowUp size={14} />,
+                      disabled: index === 0,
+                      onClick: () => movePage(index, -1)
+                    },
+                    {
+                      label: 'Move down',
+                      icon: <TbArrowDown size={14} />,
+                      disabled: index === config.pages.length - 1,
+                      onClick: () => movePage(index, 1)
+                    },
+                    {
+                      label: 'Remove',
+                      icon: <TbTrash size={14} />,
+                      danger: true,
+                      onClick: () =>
+                        setConfigValue(current => ({
+                          ...current,
+                          pages: current.pages.filter((_, itemIndex) => itemIndex !== index)
+                        }))
+                    }
+                  ]}
+                />
+                <div style={{ ...rowStyle, paddingRight: 32 }}>
+                  <div style={{ flex: '0 1 160px' }}>
+                    <Select.Root
+                      aria-label={`Wiki page scope ${index + 1}`}
+                      value={page.scope}
+                      onChange={selected => {
+                        const scope = (selected ?? '') as 'workspace' | 'entity';
                         const candidate = options.pages.find(
-                          option =>
-                            pageIsSelectable(option) &&
-                            option.scope === 'entity' &&
-                            entityId != null &&
-                            (option.entityId === entityId || option.entityPublicId === entityId)
+                          option => option.scope === scope && pageIsSelectable(option)
                         );
                         setConfigValue(current => ({
                           ...current,
@@ -822,7 +800,15 @@ export const PublicCatalogSubSection = ({
                               ? item
                               : {
                                   ...item,
-                                  entityId,
+                                  scope,
+                                  entityId:
+                                    scope === 'entity'
+                                      ? (candidate?.entityId ??
+                                        item.entityId ??
+                                        options.entities.find(entity =>
+                                          isDraftEntityPublished(config, options, entity.id)
+                                        )?.id)
+                                      : undefined,
                                   nodeId: candidate?.nodeId ?? item.nodeId,
                                   publicPath: candidate
                                     ? publicPathFromNodePath(candidate.path)
@@ -832,86 +818,99 @@ export const PublicCatalogSubSection = ({
                         }));
                       }}
                     >
-                      <option value="">Choose an entity…</option>
-                      {entityChoices.map(candidate => (
-                        <option
-                          key={candidate.id}
-                          value={candidate.id}
-                          disabled={
-                            !candidate.selectable ||
-                            !isDraftEntityPublished(config, options, candidate.id)
-                          }
-                        >
-                          {entityLabel(candidate)}
-                          {candidate.projectOnly ? ' · project-only' : ''}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                  <select
-                    aria-label={`Wiki page ${index + 1}`}
-                    style={{ ...selectStyle, flex: '1 1 300px' }}
-                    value={page.nodeId}
-                    onChange={event => {
-                      const candidate = options.pages.find(
-                        option => option.nodeId === event.target.value
-                      );
-                      setConfigValue(current => ({
-                        ...current,
-                        pages: current.pages.map((item, itemIndex) =>
-                          itemIndex !== index
-                            ? item
-                            : {
-                                ...item,
-                                nodeId: event.target.value,
-                                publicPath: candidate
-                                  ? publicPathFromNodePath(candidate.path)
-                                  : item.publicPath
-                              }
-                        )
-                      }));
-                    }}
-                  >
-                    {page.nodeId &&
-                      !candidates.some(candidate => candidate.nodeId === page.nodeId) && (
-                        <option value={page.nodeId} disabled>
-                          Unavailable page ({page.nodeId})
-                        </option>
-                      )}
-                    {candidates.map(candidate => (
-                      <option
-                        key={candidate.nodeId}
-                        value={candidate.nodeId}
-                        disabled={!pageCandidateIsSelectable(candidate)}
+                      <Select.Item value="workspace">Workspace page</Select.Item>
+                      <Select.Item value="entity">Entity page</Select.Item>
+                    </Select.Root>
+                  </div>
+                  {page.scope === 'entity' && (
+                    <div style={{ flex: '1 1 250px' }}>
+                      <Select.Root
+                        aria-label={`Wiki page entity ${index + 1}`}
+                        value={page.entityId ?? ''}
+                        onChange={selected => {
+                          const entityId = selected || undefined;
+                          const candidate = options.pages.find(
+                            option =>
+                              pageIsSelectable(option) &&
+                              option.scope === 'entity' &&
+                              entityId != null &&
+                              (option.entityId === entityId || option.entityPublicId === entityId)
+                          );
+                          setConfigValue(current => ({
+                            ...current,
+                            pages: current.pages.map((item, itemIndex) =>
+                              itemIndex !== index
+                                ? item
+                                : {
+                                    ...item,
+                                    entityId,
+                                    nodeId: candidate?.nodeId ?? item.nodeId,
+                                    publicPath: candidate
+                                      ? publicPathFromNodePath(candidate.path)
+                                      : item.publicPath
+                                  }
+                            )
+                          }));
+                        }}
                       >
-                        {candidate.name} · {candidate.path}
-                      </option>
-                    ))}
-                  </select>
-                  <Button
-                    disabled={index === 0}
-                    onClick={() => movePage(index, -1)}
-                    aria-label={`Move wiki page ${index + 1} up`}
-                  >
-                    ↑
-                  </Button>
-                  <Button
-                    disabled={index === config.pages.length - 1}
-                    onClick={() => movePage(index, 1)}
-                    aria-label={`Move wiki page ${index + 1} down`}
-                  >
-                    ↓
-                  </Button>
-                  <Button
-                    onClick={() =>
-                      setConfigValue(current => ({
-                        ...current,
-                        pages: current.pages.filter((_, itemIndex) => itemIndex !== index)
-                      }))
-                    }
-                  >
-                    Remove
-                  </Button>
+                        <Select.Item value="">Choose an entity…</Select.Item>
+                        {entityChoices.map(candidate => (
+                          <Select.Item
+                            key={candidate.id}
+                            value={candidate.id}
+                            disabled={
+                              !candidate.selectable ||
+                              !isDraftEntityPublished(config, options, candidate.id)
+                            }
+                          >
+                            {entityLabel(candidate)}
+                            {candidate.projectOnly ? ' · project-only' : ''}
+                          </Select.Item>
+                        ))}
+                      </Select.Root>
+                    </div>
+                  )}
+                  <div style={{ flex: '1 1 300px' }}>
+                    <Select.Root
+                      aria-label={`Wiki page ${index + 1}`}
+                      value={page.nodeId}
+                      onChange={selected => {
+                        const candidate = options.pages.find(
+                          option => option.nodeId === (selected ?? '')
+                        );
+                        setConfigValue(current => ({
+                          ...current,
+                          pages: current.pages.map((item, itemIndex) =>
+                            itemIndex !== index
+                              ? item
+                              : {
+                                  ...item,
+                                  nodeId: selected ?? '',
+                                  publicPath: candidate
+                                    ? publicPathFromNodePath(candidate.path)
+                                    : item.publicPath
+                                }
+                          )
+                        }));
+                      }}
+                    >
+                      {page.nodeId &&
+                        !candidates.some(candidate => candidate.nodeId === page.nodeId) && (
+                          <Select.Item value={page.nodeId} disabled>
+                            Unavailable page ({page.nodeId})
+                          </Select.Item>
+                        )}
+                      {candidates.map(candidate => (
+                        <Select.Item
+                          key={candidate.nodeId}
+                          value={candidate.nodeId}
+                          disabled={!pageCandidateIsSelectable(candidate)}
+                        >
+                          {candidate.name} · {candidate.path}
+                        </Select.Item>
+                      ))}
+                    </Select.Root>
+                  </div>
                 </div>
                 <div style={rowStyle}>
                   <label style={{ ...mutedStyle, minWidth: 80 }}>Public path</label>
@@ -952,26 +951,20 @@ export const PublicCatalogSubSection = ({
             );
           })}
           {config.pages.length === 0 && <div style={mutedStyle}>No wiki pages are configured.</div>}
-        </div>
-      </div>
+        </SettingsBlock>
 
-      <div className={styles.section}>
-        <div className={styles.sectionHead}>
-          <div className={styles.sectionTitle}>API specifications</div>
-          <div className={styles.sectionSub}>
-            Publish normalized API artifacts for published entities. Invalid revisions, project-only
-            artifacts, and artifacts owned by unpublished entities cannot be selected.
-          </div>
-        </div>
-        <div className={styles.sectionBody}>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
+        <SettingsBlock
+          title="API specifications"
+          description="Publish normalized API artifacts for published entities. Invalid revisions, project-only artifacts, and artifacts owned by unpublished entities cannot be selected."
+          actions={
             <Button
               disabled={!options.apiArtifacts.some(artifactIsSelectable)}
               onClick={addApiArtifact}
             >
               Add API specification
             </Button>
-          </div>
+          }
+        >
           {config.apiArtifacts.map((publication, index) => {
             const artifact = selectorArtifactById(options, publication.artifactId);
             const artifactChoices = apiArtifactOptions(publication.artifactId);
@@ -980,68 +973,87 @@ export const PublicCatalogSubSection = ({
                 key={`${publication.artifactId}-${index}`}
                 style={{ ...cardStyle, marginBottom: 8 }}
               >
-                <div style={rowStyle}>
-                  <select
-                    aria-label={`API artifact ${index + 1}`}
-                    style={{ ...selectStyle, flex: '1 1 320px' }}
-                    value={publication.artifactId}
-                    onChange={event =>
-                      setConfigValue(current => ({
-                        ...current,
-                        apiArtifacts: current.apiArtifacts.map((item, itemIndex) =>
-                          itemIndex === index
-                            ? { ...item, artifactId: event.target.value, revisionId: undefined }
-                            : item
-                        )
-                      }))
+                <EntryMenu
+                  label={`API specification ${index + 1} actions`}
+                  items={[
+                    {
+                      label: 'Remove',
+                      icon: <TbTrash size={14} />,
+                      danger: true,
+                      onClick: () =>
+                        setConfigValue(current => ({
+                          ...current,
+                          apiArtifacts: current.apiArtifacts.filter(
+                            (_, itemIndex) => itemIndex !== index
+                          )
+                        }))
                     }
-                  >
-                    {artifactChoices.map(candidate => (
-                      <option
-                        key={candidate.artifactId}
-                        value={candidate.artifactId}
-                        disabled={!artifactIsSelectable(candidate)}
-                      >
-                        {candidate.label} · {candidate.entityName || 'Unavailable entity'}
-                      </option>
-                    ))}
-                  </select>
-                  <select
-                    aria-label={`API revision ${index + 1}`}
-                    style={{ ...selectStyle, flex: '1 1 300px' }}
-                    value={publication.revisionId ?? ''}
-                    onChange={event =>
-                      setConfigValue(current => ({
-                        ...current,
-                        apiArtifacts: current.apiArtifacts.map((item, itemIndex) =>
-                          itemIndex === index
-                            ? { ...item, revisionId: event.target.value || undefined }
-                            : item
-                        )
-                      }))
-                    }
-                  >
-                    <option value="">
-                      Use current revision{artifact?.currentRevisionId ? '' : ' (none available)'}
-                    </option>
-                    {publication.revisionId &&
-                      !artifact?.revisions.some(
-                        revision => revision.revision.id === publication.revisionId
-                      ) && (
-                        <option value={publication.revisionId} disabled>
-                          Unavailable revision ({publication.revisionId})
-                        </option>
-                      )}
-                    {artifact?.revisions.map(revision => (
-                      <option
-                        key={revision.revision.id}
-                        value={revision.revision.id}
-                        disabled={!revision.selectable}
-                      >
-                        {revisionLabel(revision)} · {revision.revision.id}
-                      </option>
-                    ))}
-                  </select>
+                  ]}
+                />
+                <div style={{ ...rowStyle, paddingRight: 32 }}>
+                  <div style={{ flex: '1 1 320px' }}>
+                    <Select.Root
+                      aria-label={`API artifact ${index + 1}`}
+                      value={publication.artifactId}
+                      onChange={selected =>
+                        setConfigValue(current => ({
+                          ...current,
+                          apiArtifacts: current.apiArtifacts.map((item, itemIndex) =>
+                            itemIndex === index
+                              ? { ...item, artifactId: selected ?? '', revisionId: undefined }
+                              : item
+                          )
+                        }))
+                      }
+                    >
+                      {artifactChoices.map(candidate => (
+                        <Select.Item
+                          key={candidate.artifactId}
+                          value={candidate.artifactId}
+                          disabled={!artifactIsSelectable(candidate)}
+                        >
+                          {candidate.label} · {candidate.entityName || 'Unavailable entity'}
+                        </Select.Item>
+                      ))}
+                    </Select.Root>
+                  </div>
+                  <div style={{ flex: '1 1 300px' }}>
+                    <Select.Root
+                      aria-label={`API revision ${index + 1}`}
+                      value={publication.revisionId ?? ''}
+                      onChange={selected =>
+                        setConfigValue(current => ({
+                          ...current,
+                          apiArtifacts: current.apiArtifacts.map((item, itemIndex) =>
+                            itemIndex === index
+                              ? { ...item, revisionId: selected || undefined }
+                              : item
+                          )
+                        }))
+                      }
+                    >
+                      <Select.Item value="">
+                        Use current revision{artifact?.currentRevisionId ? '' : ' (none available)'}
+                      </Select.Item>
+                      {publication.revisionId &&
+                        !artifact?.revisions.some(
+                          revision => revision.revision.id === publication.revisionId
+                        ) && (
+                          <Select.Item value={publication.revisionId} disabled>
+                            Unavailable revision ({publication.revisionId})
+                          </Select.Item>
+                        )}
+                      {artifact?.revisions.map(revision => (
+                        <Select.Item
+                          key={revision.revision.id}
+                          value={revision.revision.id}
+                          disabled={!revision.selectable}
+                        >
+                          {revisionLabel(revision)} · {revision.revision.id}
+                        </Select.Item>
+                      ))}
+                    </Select.Root>
+                  </div>
                   <label
                     style={rowStyle}
                     title="Allow unauthenticated readers to download the source document"
@@ -1062,18 +1074,6 @@ export const PublicCatalogSubSection = ({
                     />
                     Expose raw source
                   </label>
-                  <Button
-                    onClick={() =>
-                      setConfigValue(current => ({
-                        ...current,
-                        apiArtifacts: current.apiArtifacts.filter(
-                          (_, itemIndex) => itemIndex !== index
-                        )
-                      }))
-                    }
-                  >
-                    Remove
-                  </Button>
                 </div>
                 {artifact && (
                   <div style={mutedStyle}>Status: {artifact.status.replaceAll('_', ' ')}</div>
@@ -1085,18 +1085,13 @@ export const PublicCatalogSubSection = ({
           {config.apiArtifacts.length === 0 && (
             <div style={mutedStyle}>No API specifications are configured.</div>
           )}
-        </div>
-      </div>
+        </SettingsBlock>
 
-      {preview && (
-        <div className={styles.section}>
-          <div className={styles.sectionHead}>
-            <div className={styles.sectionTitle}>Catalog preview</div>
-            <div className={styles.sectionSub}>
-              This is the server-validated manifest produced by the current draft. It is not saved.
-            </div>
-          </div>
-          <div className={styles.sectionBody}>
+        {preview && (
+          <SettingsBlock
+            title="Catalog preview"
+            description="This is the server-validated manifest produced by the current draft. It is not saved."
+          >
             <div style={rowStyle}>
               <strong>{preview.manifest.title}</strong>
               <span style={mutedStyle}>{preview.enabled ? 'Enabled' : 'Disabled'}</span>
@@ -1122,9 +1117,9 @@ export const PublicCatalogSubSection = ({
                 {JSON.stringify(preview.manifest, null, 2)}
               </pre>
             </details>
-          </div>
-        </div>
-      )}
-    </div>
+          </SettingsBlock>
+        )}
+      </SettingsBlockList>
+    </>
   );
 };
