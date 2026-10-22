@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react';
-import { TbEdit } from 'react-icons/tb';
-import { Button } from '@diagram-craft/app-components/Button';
+import { TbEdit, TbUserOff } from 'react-icons/tb';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { useAuth } from '../../../auth/AuthContext';
 import { useAuthConfig } from '../../../hooks/useAuthConfig';
 import { useAuthUsers } from '../../../hooks/useGlobalRoles';
 import { useDeactivateManagedUser } from '../../../hooks/useUsers';
+import { DropdownMenu, type MenuItem } from '../../../components/DropdownMenu';
 import { UserDialog } from '../../../components/UserDialog';
 import { Banner } from '../../../components/Banner';
 import { Chip } from '../../../components/Chip';
@@ -98,7 +98,7 @@ export const UsersSubSection = ({
               <Table.HeaderCell style={{ minWidth: 260 }}>User</Table.HeaderCell>
               <Table.HeaderCell>Provider</Table.HeaderCell>
               <Table.HeaderCell>Status</Table.HeaderCell>
-              <Table.HeaderCell align="right">Actions</Table.HeaderCell>
+              <Table.HeaderCell align="right" />
             </Table.Row>
           </Table.Head>
           <Table.Body>
@@ -107,7 +107,10 @@ export const UsersSubSection = ({
               const canDeactivate =
                 candidate.is_active && !candidate.is_system_actor && !isCurrentUser;
               return (
-                <Table.Row key={candidate.id}>
+                <Table.Row
+                  key={candidate.id}
+                  onClick={candidate.is_system_actor ? undefined : () => setEditingUser(candidate)}
+                >
                   <Table.NameCell
                     icon={
                       <MemberAvatar
@@ -137,28 +140,33 @@ export const UsersSubSection = ({
                       </Chip>
                     )}
                   </Table.Cell>
-                  <Table.Cell align="right">
-                    <div className={styles.actions}>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        icon={<TbEdit size={12} />}
-                        disabled={candidate.is_system_actor}
-                        onClick={() => setEditingUser(candidate)}
-                      >
-                        Edit
-                      </Button>
-                      {canDeactivate && (
-                        <Button
-                          variant="danger"
-                          size="sm"
-                          onClick={() => setDeactivatingUser(candidate)}
-                        >
-                          Deactivate
-                        </Button>
-                      )}
-                    </div>
-                  </Table.Cell>
+                  <Table.ActionsCell>
+                    <DropdownMenu
+                      trigger={
+                        <Table.DotsButton aria-label={`Actions for ${getUserLabel(candidate)}`} />
+                      }
+                      items={
+                        [
+                          {
+                            label: 'Edit',
+                            icon: <TbEdit size={14} />,
+                            disabled: candidate.is_system_actor,
+                            onClick: () => setEditingUser(candidate)
+                          },
+                          ...(canDeactivate
+                            ? [
+                                {
+                                  label: 'Deactivate',
+                                  icon: <TbUserOff size={14} />,
+                                  danger: true,
+                                  onClick: () => setDeactivatingUser(candidate)
+                                }
+                              ]
+                            : [])
+                        ] satisfies MenuItem[]
+                      }
+                    />
+                  </Table.ActionsCell>
                 </Table.Row>
               );
             })}

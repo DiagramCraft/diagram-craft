@@ -12,9 +12,3 @@
   padding: 8px 0;
 }
 
-.actions {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 4px;
-}
