@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { Tabs } from '@diagram-craft/app-components/Tabs';
 import type {
   EntitySchema,
   SharedFieldGroupLink,
@@ -25,10 +27,7 @@ export const RelationEditorForm = ({
   uniqueEndpointPair,
   color,
   icon,
-  dirty,
   canEdit,
-  updatePending,
-  saveBlocked,
   fields,
   groups,
   sharedFieldGroupLinks,
@@ -58,9 +57,7 @@ export const RelationEditorForm = ({
   onAddValidationRule,
   onUpdateValidationRule,
   onToggleValidationRule,
-  onDeleteValidationRule,
-  onDelete,
-  onSave
+  onDeleteValidationRule
 }: {
   name: string;
   categoryId: string | null;
@@ -70,10 +67,7 @@ export const RelationEditorForm = ({
   uniqueEndpointPair: boolean;
   color: string | null;
   icon: string | null;
-  dirty: boolean;
   canEdit: boolean;
-  updatePending: boolean;
-  saveBlocked?: boolean;
   fields: RelationField[];
   groups: RelationSchemaGroup[];
   sharedFieldGroupLinks: SharedFieldGroupLink[];
@@ -104,86 +98,94 @@ export const RelationEditorForm = ({
   onUpdateValidationRule: (index: number, patch: Partial<ValidationRule>) => void;
   onToggleValidationRule: (index: number) => void;
   onDeleteValidationRule: (index: number) => void;
-  onDelete?: () => void;
-  onSave: () => void;
-}) => (
-  <SchemaEditorFormShell
-    name={name}
-    categoryId={categoryId}
-    description={description}
-    color={color}
-    icon={icon}
-    dirty={dirty}
-    canEdit={canEdit}
-    updatePending={updatePending}
-    saveBlocked={saveBlocked}
-    descriptionPlaceholder="What does this relation type represent?"
-    afterDescription={
-      <>
-        <div className={styles.formRow}>
-          <RelationEndpointEditor
-            label="In endpoint"
-            hint="Entity types allowed at the 'in' end of this relation."
-            endpoint={inEndpoint}
-            schemas={schemas}
-            canEdit={canEdit}
-            onChange={onInEndpointChange}
-          />
-          <RelationEndpointEditor
-            label="Out endpoint"
-            hint="Entity types allowed at the 'out' end of this relation."
-            endpoint={outEndpoint}
-            schemas={schemas}
-            canEdit={canEdit}
-            onChange={onOutEndpointChange}
-          />
-        </div>
-        <div className={styles.formRow}>
-          <Checkbox
-            label="Allow only one relation per ordered endpoint pair"
-            value={uniqueEndpointPair}
-            disabled={!canEdit}
-            onChange={value => onUniqueEndpointPairChange(value ?? false)}
-          />
-        </div>
-      </>
-    }
-    onNameChange={onNameChange}
-    onCategoryChange={onCategoryChange}
-    onDescriptionChange={onDescriptionChange}
-    onColorChange={onColorChange}
-    onIconChange={onIconChange}
-    onDelete={onDelete}
-    onSave={onSave}
-  >
-    <RelationFieldsEditor
-      fields={fields}
-      groups={groups}
-      sharedFieldGroupLinks={sharedFieldGroupLinks}
-      fieldKeys={fieldKeys}
-      schemas={schemas}
-      enums={enums}
-      teams={teams}
+}) => {
+  const [panelTab, setPanelTab] = useState('fields');
+
+  return (
+    <SchemaEditorFormShell
+      name={name}
+      categoryId={categoryId}
+      description={description}
+      color={color}
+      icon={icon}
       canEdit={canEdit}
-      onAddField={onAddField}
-      onAddGroup={onAddGroup}
-      onUpdateField={onUpdateField}
-      onChangeFieldType={onChangeFieldType}
-      onRemoveField={onRemoveField}
-      onReorderField={onReorderField}
-      onEditGroup={onEditGroup}
-      onAccessGroup={onAccessGroup}
-      onRemoveGroup={onRemoveGroup}
-      onRemoveSharedGroup={onRemoveSharedGroup}
-    />
-    <ValidationRulesEditor
-      variant="relation"
-      rules={validationRules}
-      canEdit={canEdit}
-      onAdd={onAddValidationRule}
-      onUpdate={onUpdateValidationRule}
-      onToggle={onToggleValidationRule}
-      onDelete={onDeleteValidationRule}
-    />
-  </SchemaEditorFormShell>
-);
+      descriptionPlaceholder="What does this relation type represent?"
+      afterDescription={
+        <>
+          <div className={styles.formRow}>
+            <RelationEndpointEditor
+              label="In endpoint"
+              endpoint={inEndpoint}
+              schemas={schemas}
+              canEdit={canEdit}
+              onChange={onInEndpointChange}
+            />
+            <RelationEndpointEditor
+              label="Out endpoint"
+              endpoint={outEndpoint}
+              schemas={schemas}
+              canEdit={canEdit}
+              onChange={onOutEndpointChange}
+            />
+          </div>
+          <div className={styles.formLabel} style={{ marginTop: '8px' }}>
+            Uniqueness
+          </div>
+          <div style={{ fontSize: '12px', display: 'flex', alignItems: 'center' }}>
+            <Checkbox
+              label="Allow only one relation per ordered endpoint pair"
+              value={uniqueEndpointPair}
+              disabled={!canEdit}
+              onChange={value => onUniqueEndpointPairChange(value ?? false)}
+            />
+          </div>
+        </>
+      }
+      onNameChange={onNameChange}
+      onCategoryChange={onCategoryChange}
+      onDescriptionChange={onDescriptionChange}
+      onColorChange={onColorChange}
+      onIconChange={onIconChange}
+    >
+      <Tabs.Root value={panelTab} onValueChange={setPanelTab}>
+        <Tabs.List aria-label="Relation editor sections">
+          <Tabs.Trigger value="fields">Fields</Tabs.Trigger>
+          <Tabs.Trigger value="validation">Validation</Tabs.Trigger>
+        </Tabs.List>
+        <Tabs.Content value="fields" style={{ height: 'auto' }}>
+          <RelationFieldsEditor
+            fields={fields}
+            groups={groups}
+            sharedFieldGroupLinks={sharedFieldGroupLinks}
+            fieldKeys={fieldKeys}
+            schemas={schemas}
+            enums={enums}
+            teams={teams}
+            canEdit={canEdit}
+            onAddField={onAddField}
+            onAddGroup={onAddGroup}
+            onUpdateField={onUpdateField}
+            onChangeFieldType={onChangeFieldType}
+            onRemoveField={onRemoveField}
+            onReorderField={onReorderField}
+            onEditGroup={onEditGroup}
+            onAccessGroup={onAccessGroup}
+            onRemoveGroup={onRemoveGroup}
+            onRemoveSharedGroup={onRemoveSharedGroup}
+          />
+        </Tabs.Content>
+        <Tabs.Content value="validation" style={{ height: 'auto' }}>
+          <ValidationRulesEditor
+            variant="relation"
+            rules={validationRules}
+            canEdit={canEdit}
+            onAdd={onAddValidationRule}
+            onUpdate={onUpdateValidationRule}
+            onToggle={onToggleValidationRule}
+            onDelete={onDeleteValidationRule}
+          />
+        </Tabs.Content>
+      </Tabs.Root>
+    </SchemaEditorFormShell>
+  );
+};

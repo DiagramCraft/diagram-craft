@@ -143,6 +143,8 @@ export type SchemaEditorController<
   save: (fieldMigrations?: FieldMigrations) => Promise<void>;
   confirmFieldMigrations: (choices: FieldMigrationChoices) => void;
   deleteSelected: () => Promise<void>;
+  /** Discards unsaved edits and restores the draft from the saved schema (or a blank new one). */
+  revert: () => void;
 };
 
 export const buildFieldMigrations = (
@@ -518,6 +520,17 @@ export const useSchemaEditorController = <
     [pendingFieldChanges, save]
   );
 
+  const revert = useCallback(() => {
+    if (selected) {
+      setDraft(adapterRef.current.createDraft(selected));
+      resetTransientState();
+    } else if (isNew) {
+      setDraft(adapterRef.current.createDraft(null));
+      resetTransientState();
+      setDirty(true);
+    }
+  }, [selected, isNew, resetTransientState]);
+
   const deleteSelected = useCallback(async () => {
     if (!selected) return;
     setConfirmDelete(false);
@@ -570,6 +583,7 @@ export const useSchemaEditorController = <
     removeGroup,
     save,
     confirmFieldMigrations,
-    deleteSelected
+    deleteSelected,
+    revert
   };
 };

@@ -5,7 +5,7 @@ import { groupSchemasByCategory } from '../../lib/schemaPresentation';
 import type { EntityCategoryState, EntityCategoryStates } from './schemaGraphState';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import styles from './SchemaGraphView.module.css';
-import { TbCategory, TbSchema } from 'react-icons/tb';
+import { TbCategory } from 'react-icons/tb';
 
 type Props = {
   schemas: EntitySchema[];

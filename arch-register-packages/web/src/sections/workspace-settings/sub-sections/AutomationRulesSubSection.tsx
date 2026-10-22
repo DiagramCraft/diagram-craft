@@ -732,83 +732,78 @@ export const AutomationRulesSubSection = ({
           </Tabs.List>
         </Tabs.Root>
 
-        {tab === 'rules' && (
-          <>
-            {error ? (
-              <div className={styles.error}>Automation rules could not be loaded.</div>
-            ) : isLoading ? (
-              <LoadingState text="Loading automation rules…" size="sm" />
-            ) : rules.length === 0 ? (
-              <EmptyState
-                icon={<TbBolt size={20} />}
-                title="No automation rules"
-                subtitle="Create a rule to act automatically when entities change."
-              />
-            ) : (
-              <div className={styles.tableWrap}>
-                <Table.Root>
-                  <Table.Head>
-                    <Table.Row>
-                      <Table.HeaderCell>Name</Table.HeaderCell>
-                      <Table.HeaderCell>Entity type</Table.HeaderCell>
-                      <Table.HeaderCell>Trigger</Table.HeaderCell>
-                      <Table.HeaderCell>Actions</Table.HeaderCell>
-                      <Table.HeaderCell width={90}>State</Table.HeaderCell>
-                      <Table.HeaderCell />
+        {tab === 'rules' &&
+          (error ? (
+            <div className={styles.error}>Automation rules could not be loaded.</div>
+          ) : isLoading ? (
+            <LoadingState text="Loading automation rules…" size="sm" />
+          ) : rules.length === 0 ? (
+            <EmptyState
+              icon={<TbBolt size={20} />}
+              title="No automation rules"
+              subtitle="Create a rule to act automatically when entities change."
+            />
+          ) : (
+            <div className={styles.tableWrap}>
+              <Table.Root>
+                <Table.Head>
+                  <Table.Row>
+                    <Table.HeaderCell>Name</Table.HeaderCell>
+                    <Table.HeaderCell>Entity type</Table.HeaderCell>
+                    <Table.HeaderCell>Trigger</Table.HeaderCell>
+                    <Table.HeaderCell>Actions</Table.HeaderCell>
+                    <Table.HeaderCell width={90}>State</Table.HeaderCell>
+                    <Table.HeaderCell />
+                  </Table.Row>
+                </Table.Head>
+                <Table.Body>
+                  {rules.map(rule => (
+                    <Table.Row key={rule.id}>
+                      <Table.Cell>
+                        <div>{rule.name}</div>
+                        {rule.description && <div className={styles.muted}>{rule.description}</div>}
+                      </Table.Cell>
+                      <Table.Cell>
+                        {(rule.resource_type === 'relation' ? relationSchemas : schemas).find(
+                          schema => schema.id === rule.schema_id
+                        )?.name ?? 'All'}
+                      </Table.Cell>
+                      <Table.Cell>{describeTrigger(rule.trigger)}</Table.Cell>
+                      <Table.Cell>{rule.actions.map(describeAction).join(', ')}</Table.Cell>
+                      <Table.Cell>
+                        <Chip
+                          dot={rule.enabled ? 'var(--green)' : 'var(--cmp-fg-disabled)'}
+                          tone="ghost"
+                        >
+                          {rule.enabled ? 'Enabled' : 'Disabled'}
+                        </Chip>
+                      </Table.Cell>
+                      <Table.ActionsCell>
+                        <DropdownMenu
+                          trigger={<Table.DotsButton aria-label={`Actions for ${rule.name}`} />}
+                          items={
+                            [
+                              {
+                                label: 'Edit',
+                                icon: <TbEdit size={14} />,
+                                onClick: () => setEditor(rule)
+                              },
+                              {
+                                label: 'Delete',
+                                icon: <TbTrash size={14} />,
+                                danger: true,
+                                onClick: () => setDeleteId(rule.id)
+                              }
+                            ] satisfies MenuItem[]
+                          }
+                        />
+                      </Table.ActionsCell>
                     </Table.Row>
-                  </Table.Head>
-                  <Table.Body>
-                    {rules.map(rule => (
-                      <Table.Row key={rule.id}>
-                        <Table.Cell>
-                          <div>{rule.name}</div>
-                          {rule.description && (
-                            <div className={styles.muted}>{rule.description}</div>
-                          )}
-                        </Table.Cell>
-                        <Table.Cell>
-                          {(rule.resource_type === 'relation' ? relationSchemas : schemas).find(
-                            schema => schema.id === rule.schema_id
-                          )?.name ?? 'All'}
-                        </Table.Cell>
-                        <Table.Cell>{describeTrigger(rule.trigger)}</Table.Cell>
-                        <Table.Cell>{rule.actions.map(describeAction).join(', ')}</Table.Cell>
-                        <Table.Cell>
-                          <Chip
-                            dot={rule.enabled ? 'var(--green)' : 'var(--cmp-fg-disabled)'}
-                            tone="ghost"
-                          >
-                            {rule.enabled ? 'Enabled' : 'Disabled'}
-                          </Chip>
-                        </Table.Cell>
-                        <Table.ActionsCell>
-                          <DropdownMenu
-                            trigger={<Table.DotsButton aria-label={`Actions for ${rule.name}`} />}
-                            items={
-                              [
-                                {
-                                  label: 'Edit',
-                                  icon: <TbEdit size={14} />,
-                                  onClick: () => setEditor(rule)
-                                },
-                                {
-                                  label: 'Delete',
-                                  icon: <TbTrash size={14} />,
-                                  danger: true,
-                                  onClick: () => setDeleteId(rule.id)
-                                }
-                              ] satisfies MenuItem[]
-                            }
-                          />
-                        </Table.ActionsCell>
-                      </Table.Row>
-                    ))}
-                  </Table.Body>
-                </Table.Root>
-              </div>
-            )}
-          </>
-        )}
+                  ))}
+                </Table.Body>
+              </Table.Root>
+            </div>
+          ))}
 
         {tab === 'runs' &&
           (runsLoading ? (
@@ -816,7 +811,7 @@ export const AutomationRulesSubSection = ({
           ) : runsError ? (
             <div className={styles.error}>Rule runs could not be loaded.</div>
           ) : runs == null || runs.items.length === 0 ? (
-            <EmptyState icon={<TbBolt size={20} />} title="No automation rule runs yet." />
+            <EmptyState compact title="No automation rule runs yet." />
           ) : (
             <div className={styles.tableWrap}>
               <Table.Root layout="fixed">

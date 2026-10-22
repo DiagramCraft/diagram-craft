@@ -22,10 +22,7 @@ export const SchemaEditorForm = ({
   description,
   color,
   icon,
-  dirty,
   canEdit,
-  updatePending,
-  saveBlocked,
   panelTab,
   fields,
   groups,
@@ -69,9 +66,7 @@ export const SchemaEditorForm = ({
   detailLayout,
   onDetailLayoutChange,
   schemaId,
-  canEditDrawer,
-  onDelete,
-  onSave
+  canEditDrawer
 }: {
   name: string;
   keyPrefix: string;
@@ -79,10 +74,7 @@ export const SchemaEditorForm = ({
   description: string;
   color: string | null;
   icon: string | null;
-  dirty: boolean;
   canEdit: boolean;
-  updatePending: boolean;
-  saveBlocked?: boolean;
   panelTab: SchemaPanelTab;
   fields: SchemaField[];
   groups: SchemaGroup[];
@@ -127,8 +119,6 @@ export const SchemaEditorForm = ({
   onDetailLayoutChange: (layout: DetailLayoutConfig) => void;
   schemaId?: string;
   canEditDrawer?: boolean;
-  onDelete?: () => void;
-  onSave: () => void;
 }) => (
   <SchemaEditorFormShell
     name={name}
@@ -136,10 +126,7 @@ export const SchemaEditorForm = ({
     description={description}
     color={color}
     icon={icon}
-    dirty={dirty}
     canEdit={canEdit}
-    updatePending={updatePending}
-    saveBlocked={saveBlocked}
     descriptionPlaceholder="What does this entity type represent?"
     beforeDescription={
       <div className={styles.formRow}>
@@ -159,8 +146,6 @@ export const SchemaEditorForm = ({
     onDescriptionChange={onDescriptionChange}
     onColorChange={onColorChange}
     onIconChange={onIconChange}
-    onDelete={onDelete}
-    onSave={onSave}
   >
     <SchemaEditorTabs
       activeTab={panelTab}

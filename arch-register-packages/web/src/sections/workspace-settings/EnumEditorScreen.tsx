@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getRouteApi } from '@tanstack/react-router';
 import styles from './SchemaSettingsScreen.module.css';
-import { TbPlus, TbTrash, TbDots } from 'react-icons/tb';
+import { EditorActionsMenu, EditorSaveButtons } from './EditorActionsMenu';
+import { TbPlus, TbDots } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
@@ -79,13 +80,20 @@ export const EnumEditorScreen = () => {
     }
   }, [selected, isNew]);
 
-  const handleNewEnum = useCallback(() => {
-    navigate({
-      to: '/$workspaceSlug/settings/schemas',
-      params: { workspaceSlug },
-      search: { tab: 'enums', enumId: NEW_ENUM_ID }
-    });
-  }, [navigate, workspaceSlug]);
+  const revert = () => {
+    if (selected) {
+      setName(selected.name);
+      setCategoryId(selected.category?.id ?? null);
+      setOptions(selected.options.map(toEditableOption));
+      setDirty(false);
+    } else if (isNew) {
+      setName('');
+      setCategoryId(null);
+      setOptions([]);
+      setDirty(true);
+    }
+    setErrorMessage(null);
+  };
 
   const handleSave = useCallback(async () => {
     if (!dirty) return;
@@ -179,15 +187,32 @@ export const EnumEditorScreen = () => {
             },
             { label: 'Settings' }
           ]}
-          eyebrow="Data model"
-          title="Enums"
-          description="Define reusable option sets that select fields can reference."
+          eyebrow="Enum"
           buttons={
-            canEdit && (
-              <Button variant="primary" icon={<TbPlus size={12} />} onClick={handleNewEnum}>
-                New enum
-              </Button>
-            )
+            canEdit && (selected || isNew) ? (
+              <EditorSaveButtons
+                canSave={dirty && name.trim() !== ''}
+                dirty={dirty}
+                onCancel={revert}
+                pending={updateEnumMutation.isPending || createEnumMutation.isPending}
+                onSave={() => void handleSave()}
+              />
+            ) : undefined
+          }
+          menu={
+            canEdit && selected ? (
+              <EditorActionsMenu
+                deleteLabel="Delete enum"
+                onDelete={() => setConfirmDelete(true)}
+              />
+            ) : undefined
+          }
+          titleTestId={selected || isNew ? 'enum-editor-title' : undefined}
+          title={selected || isNew ? name || 'New enum' : 'Enums'}
+          description={
+            selected || isNew
+              ? `${options.length} options`
+              : 'Define reusable option sets that select fields can reference.'
           }
         />
       </div>
@@ -195,14 +220,6 @@ export const EnumEditorScreen = () => {
       {selected || isNew ? (
         <div>
           <div className={styles.editor}>
-            <div className={styles.editorHead}>
-              <Title
-                titleTestId="enum-editor-title"
-                title={name}
-                description={`${options.length} options`}
-              />
-            </div>
-
             <div className={styles.formRow}>
               <div>
                 <div className={styles.formLabel}>Name</div>
@@ -334,45 +351,12 @@ export const EnumEditorScreen = () => {
                 No options defined yet. Click "Add option" to get started.
               </div>
             )}
-
-            <div className={styles.formActions}>
-              {canEdit && selected && (
-                <Button
-                  variant="danger"
-                  icon={<TbTrash size={12} />}
-                  onClick={() => setConfirmDelete(true)}
-                >
-                  Delete enum
-                </Button>
-              )}
-              <div style={{ flex: 1 }} />
-              {canEdit && dirty && (
-                <Button
-                  variant="primary"
-                  onClick={() => void handleSave()}
-                  disabled={
-                    updateEnumMutation.isPending || createEnumMutation.isPending || !name.trim()
-                  }
-                >
-                  {updateEnumMutation.isPending || createEnumMutation.isPending
-                    ? 'Saving...'
-                    : 'Save'}
-                </Button>
-              )}
-            </div>
           </div>
         </div>
       ) : (
         <EmptyState
           title="No enum selected"
           subtitle="Select an enum from the sidebar or create a new one."
-          action={
-            canEdit ? (
-              <Button variant="primary" icon={<TbPlus size={12} />} onClick={handleNewEnum}>
-                New enum
-              </Button>
-            ) : undefined
-          }
         />
       )}
 

@@ -1,8 +1,6 @@
 import type { ReactNode } from 'react';
-import { Button } from '@diagram-craft/app-components/Button';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
-import { TbTrash } from 'react-icons/tb';
 import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
 import { ICON_MAP } from '../../components/TypeBadge';
 import { SCHEMA_ICONS } from '../../lib/schemaPresentation';
@@ -16,10 +14,7 @@ export const SchemaEditorFormShell = ({
   description,
   color,
   icon,
-  dirty,
   canEdit,
-  updatePending,
-  saveBlocked = false,
   descriptionPlaceholder,
   beforeDescription,
   afterDescription,
@@ -28,19 +23,14 @@ export const SchemaEditorFormShell = ({
   onCategoryChange,
   onDescriptionChange,
   onColorChange,
-  onIconChange,
-  onDelete,
-  onSave
+  onIconChange
 }: {
   name: string;
   categoryId: string | null;
   description: string;
   color: string | null;
   icon: string | null;
-  dirty: boolean;
   canEdit: boolean;
-  updatePending: boolean;
-  saveBlocked?: boolean;
   descriptionPlaceholder: string;
   beforeDescription?: ReactNode;
   afterDescription?: ReactNode;
@@ -50,8 +40,6 @@ export const SchemaEditorFormShell = ({
   onDescriptionChange: (value: string) => void;
   onColorChange: (value: string) => void;
   onIconChange: (value: string) => void;
-  onDelete?: () => void;
-  onSave: () => void;
 }) => {
   const { categories } = useWorkspaceContext();
   return (
@@ -131,19 +119,6 @@ export const SchemaEditorFormShell = ({
         </div>
       </div>
       {children}
-      <div className={styles.formActions}>
-        {canEdit && onDelete && (
-          <Button variant="danger" icon={<TbTrash size={12} />} onClick={onDelete}>
-            Delete type
-          </Button>
-        )}
-        <div style={{ flex: 1 }} />
-        {canEdit && dirty && (
-          <Button variant="primary" onClick={onSave} disabled={updatePending || saveBlocked}>
-            {updatePending ? 'Saving...' : 'Save'}
-          </Button>
-        )}
-      </div>
     </div>
   );
 };

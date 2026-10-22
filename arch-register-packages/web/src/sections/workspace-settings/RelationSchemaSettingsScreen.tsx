@@ -22,6 +22,7 @@ import {
 import { RelationEditorForm } from './RelationEditorForm';
 import { RelationConstraintDialog } from './RelationConstraintDialog';
 import { SchemaEditorDialogs } from './SchemaEditorDialogs';
+import { EditorActionsMenu, EditorSaveButtons } from './EditorActionsMenu';
 import { SchemaEditorScreenShell } from './SchemaEditorScreenShell';
 import { SchemaVersionHistorySubSection } from './sub-sections/SchemaVersionHistorySubSection';
 import { createRelationFieldForType } from './relationSchemaSettingsHelpers';
@@ -226,6 +227,28 @@ export const RelationSchemaSettingsScreen = () => {
         },
         { label: 'Settings' }
       ]}
+      eyebrow="Relation"
+      buttons={
+        canEdit && draft ? (
+          <EditorSaveButtons
+            canSave={editor.dirty && Boolean(adapter.isValid?.(draft))}
+            dirty={editor.dirty}
+            onCancel={editor.revert}
+            pending={
+              updateRelationSchemaMutation.isPending || createRelationSchemaMutation.isPending
+            }
+            onSave={() => void editor.save()}
+          />
+        ) : undefined
+      }
+      menu={
+        canEdit && selected ? (
+          <EditorActionsMenu
+            deleteLabel="Delete type"
+            onDelete={() => editor.setConfirmDelete(true)}
+          />
+        ) : undefined
+      }
       titleTestId="relation-schema-editor-title"
       icon={
         (selected || isNew) && draft ? (
@@ -244,13 +267,8 @@ export const RelationSchemaSettingsScreen = () => {
       description={
         selected ? `${selected.relation_count} relations · version ${selected.version}` : undefined
       }
-      headerAction={
-        selected ? (
-          <Button variant="ghost" onClick={() => editor.setShowHistory(current => !current)}>
-            {editor.showHistory ? 'Back to fields' : 'View history'}
-          </Button>
-        ) : undefined
-      }
+      showHistory={editor.showHistory}
+      onShowHistoryChange={selected ? editor.setShowHistory : undefined}
       history={
         editor.showHistory ? (
           <SchemaVersionHistorySubSection versions={versions} isLoading={versionsLoading} />
@@ -259,6 +277,7 @@ export const RelationSchemaSettingsScreen = () => {
       editor={
         (selected || isNew) && draft ? (
           <RelationEditorForm
+            key={selectedRelationSchemaId}
             name={draft.name}
             categoryId={draft.categoryId}
             description={draft.description}
@@ -267,12 +286,7 @@ export const RelationSchemaSettingsScreen = () => {
             uniqueEndpointPair={draft.uniqueEndpointPair}
             color={draft.color}
             icon={draft.icon}
-            dirty={editor.dirty}
             canEdit={canEdit}
-            updatePending={
-              updateRelationSchemaMutation.isPending || createRelationSchemaMutation.isPending
-            }
-            saveBlocked={!editor.dirty || !adapter.isValid?.(draft)}
             fields={draft.fields}
             groups={draft.groups}
             sharedFieldGroupLinks={draft.sharedFieldGroupLinks}
@@ -319,8 +333,6 @@ export const RelationSchemaSettingsScreen = () => {
             onUpdateValidationRule={editor.updateValidationRule}
             onToggleValidationRule={editor.toggleValidationRule}
             onDeleteValidationRule={editor.deleteValidationRule}
-            onDelete={selected ? () => editor.setConfirmDelete(true) : undefined}
-            onSave={() => void editor.save()}
           />
         ) : null
       }

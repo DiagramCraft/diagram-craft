@@ -34,6 +34,7 @@ import {
 } from './schemaSettingsHelpers';
 import { SchemaEditorForm } from './SchemaEditorForm';
 import { SchemaEditorDialogs } from './SchemaEditorDialogs';
+import { EditorActionsMenu, EditorSaveButtons } from './EditorActionsMenu';
 import { SchemaEditorScreenShell } from './SchemaEditorScreenShell';
 import {
   firstRemainingId,
@@ -283,6 +284,26 @@ export const SchemaSettingsScreen = () => {
         },
         { label: 'Settings' }
       ]}
+      eyebrow="Entity"
+      buttons={
+        canEdit && draft ? (
+          <EditorSaveButtons
+            canSave={editor.dirty && Boolean(adapter.isValid?.(draft))}
+            dirty={editor.dirty}
+            onCancel={editor.revert}
+            pending={updateSchemaMutation.isPending || createSchemaMutation.isPending}
+            onSave={() => void editor.save()}
+          />
+        ) : undefined
+      }
+      menu={
+        canEdit && selected ? (
+          <EditorActionsMenu
+            deleteLabel="Delete type"
+            onDelete={() => editor.setConfirmDelete(true)}
+          />
+        ) : undefined
+      }
       titleTestId="schema-editor-title"
       icon={
         (selected || isNew) && draft ? (
@@ -301,13 +322,8 @@ export const SchemaSettingsScreen = () => {
       description={
         selected ? `${selected.entity_count} entities · version ${selected.version}` : undefined
       }
-      headerAction={
-        selected ? (
-          <Button variant="ghost" onClick={() => editor.setShowHistory(current => !current)}>
-            {editor.showHistory ? 'Back to fields' : 'View history'}
-          </Button>
-        ) : undefined
-      }
+      showHistory={editor.showHistory}
+      onShowHistoryChange={selected ? editor.setShowHistory : undefined}
       history={
         editor.showHistory ? (
           <SchemaVersionHistorySubSection
@@ -325,10 +341,7 @@ export const SchemaSettingsScreen = () => {
             description={draft.description}
             color={draft.color}
             icon={draft.icon}
-            dirty={editor.dirty}
             canEdit={canEdit}
-            updatePending={updateSchemaMutation.isPending || createSchemaMutation.isPending}
-            saveBlocked={!editor.dirty || !adapter.isValid?.(draft)}
             panelTab={schemaPanelTab}
             fields={draft.fields}
             groups={draft.groups}
@@ -429,8 +442,6 @@ export const SchemaSettingsScreen = () => {
             onDetailLayoutChange={layout =>
               editor.updateDraft(current => ({ ...current, detailLayout: layout }))
             }
-            onDelete={selected ? () => editor.setConfirmDelete(true) : undefined}
-            onSave={() => void editor.save()}
           />
         ) : null
       }
