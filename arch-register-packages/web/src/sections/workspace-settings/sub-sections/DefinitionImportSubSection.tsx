@@ -319,8 +319,8 @@ export const DefinitionImportSubSection = () => {
           return (
             <SettingsBlockField
               key={kind}
-              label={<>{label}</>}
-              hint={<> Dependencies are added automatically during preview. </>}
+              label={label}
+              hint="Dependencies are added automatically during preview."
             >
               <div className={styles.checkboxGroup}>
                 {items.map(item => (
