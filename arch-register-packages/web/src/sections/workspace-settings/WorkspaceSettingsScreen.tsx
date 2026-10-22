@@ -35,6 +35,7 @@ const WorkspaceAnalyticsScreen = lazy(() =>
 const SELF_HEADED_SECTIONS = [
   'general',
   'currencies',
+  'automation',
   'ai',
   'assessment-types',
   'members',

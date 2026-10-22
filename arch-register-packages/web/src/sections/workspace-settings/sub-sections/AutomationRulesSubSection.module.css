@@ -38,7 +38,7 @@
 }
 .hint,
 .muted {
-  color: var(--cmp-fg-secondary);
+  color: var(--cmp-fg-disabled);
   font-size: 11px;
 }
 .error {
