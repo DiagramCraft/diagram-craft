@@ -294,18 +294,18 @@ export const ApiTokensSubSection = ({
                     </Table.Cell>
                     <Table.ActionsCell>
                       <DropdownMenu
-                      trigger={<Table.DotsButton aria-label={`Actions for ${token.name}`} />}
-                      items={
-                        [
-                          {
-                            label: 'Revoke token',
-                            icon: <TbTrash size={14} />,
-                            danger: true,
-                            onClick: () => setRevokeId(token.id)
-                          }
-                        ] satisfies MenuItem[]
-                      }
-                    />
+                        trigger={<Table.DotsButton aria-label={`Actions for ${token.name}`} />}
+                        items={
+                          [
+                            {
+                              label: 'Revoke token',
+                              icon: <TbTrash size={14} />,
+                              danger: true,
+                              onClick: () => setRevokeId(token.id)
+                            }
+                          ] satisfies MenuItem[]
+                        }
+                      />
                     </Table.ActionsCell>
                   </Table.Row>
                 ))}
