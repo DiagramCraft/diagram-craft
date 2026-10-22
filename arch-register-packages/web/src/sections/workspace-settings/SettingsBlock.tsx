@@ -24,3 +24,28 @@ export const SettingsBlock = ({
     <div className={styles.body}>{children}</div>
   </div>
 );
+
+/**
+ * Label + hint on the left, control on the right. Place directly inside a {@link SettingsBlock}
+ * so the last row drops its divider.
+ */
+export const SettingsBlockField = ({
+  label,
+  hint,
+  align = 'center',
+  children
+}: {
+  label: ReactNode;
+  hint?: ReactNode;
+  /** Vertical alignment of label and control; use `top` for tall controls such as text areas. */
+  align?: 'center' | 'top';
+  children: ReactNode;
+}) => (
+  <div className={`${styles.field} ${align === 'top' ? styles.fieldTop : ''}`}>
+    <div className={styles.fieldLeft}>
+      <div className={styles.fieldLabel}>{label}</div>
+      {hint && <div className={styles.fieldHint}>{hint}</div>}
+    </div>
+    <div className={styles.fieldRight}>{children}</div>
+  </div>
+);
