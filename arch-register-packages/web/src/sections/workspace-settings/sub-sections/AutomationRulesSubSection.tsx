@@ -734,12 +734,6 @@ export const AutomationRulesSubSection = ({
 
         {tab === 'rules' && (
           <>
-            <div className={styles.intro}>
-              <span>
-                Rules are matched synchronously when entities change; their actions run
-                asynchronously on the job server.
-              </span>
-            </div>
             {error ? (
               <div className={styles.error}>Automation rules could not be loaded.</div>
             ) : isLoading ? (
@@ -822,10 +816,10 @@ export const AutomationRulesSubSection = ({
           ) : runsError ? (
             <div className={styles.error}>Rule runs could not be loaded.</div>
           ) : runs == null || runs.items.length === 0 ? (
-            <EmptyState compact title="No automation rule runs yet." />
+            <EmptyState icon={<TbBolt size={20} />} title="No automation rule runs yet." />
           ) : (
             <div className={styles.tableWrap}>
-              <Table.Root layout="fixed" bordered={false}>
+              <Table.Root layout="fixed">
                 <Table.Head>
                   <Table.Row>
                     <Table.HeaderCell width={155}>Planned</Table.HeaderCell>
