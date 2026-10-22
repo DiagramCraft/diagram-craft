@@ -24,12 +24,6 @@
   gap: 6px;
 }
 
-.actions {
-  display: flex;
-  gap: 4px;
-  justify-content: flex-start;
-}
-
 .formGrid,
 .subkindFields {
   display: grid;
@@ -37,6 +31,11 @@
   column-gap: 12px;
   row-gap: 16px;
   padding: 16px 0;
+}
+
+/* Stack fields on separate rows */
+.formGridSingle {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .workflowBlocks {
@@ -149,12 +148,12 @@
 
 .cardTitle {
   color: var(--base-fg);
-  font-size: 13.5px;
+  font-size: 12px;
   font-weight: 500;
 }
 
 .cardSub {
-  font-size: 11.5px;
+  font-size: 11px;
   margin-top: 2px;
   color: var(--cmp-fg-disabled);
 }

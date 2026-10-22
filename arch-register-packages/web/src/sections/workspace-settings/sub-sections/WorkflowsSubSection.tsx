@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@diagram-craft/app-components/Button';
-import { TbPlus } from 'react-icons/tb';
+import { TbEdit, TbPlus, TbTrash } from 'react-icons/tb';
+import { DropdownMenu, type MenuItem } from '../../../components/DropdownMenu';
 import { WorkspaceSettingsSectionHeader } from '../WorkspaceSettingsSectionHeader';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
@@ -119,12 +120,12 @@ export const WorkflowsSubSection = ({ workspaceSlug }: { workspaceSlug: string }
                 <Table.HeaderCell width={180}>Type</Table.HeaderCell>
                 <Table.HeaderCell width={220}>Scope</Table.HeaderCell>
                 <Table.HeaderCell>Configuration</Table.HeaderCell>
-                <Table.HeaderCell width={150}>Actions</Table.HeaderCell>
+                <Table.HeaderCell width={48} />
               </Table.Row>
             </Table.Head>
             <Table.Body>
               {configs.map(row => (
-                <Table.Row key={row.id}>
+                <Table.Row key={row.id} onClick={() => setEditing(row)}>
                   <Table.Cell>
                     <div className={styles.cardTitle}>{row.name}</div>
                     <div
@@ -172,16 +173,26 @@ export const WorkflowsSubSection = ({ workspaceSlug }: { workspaceSlug: string }
                         !row.config.external && <span className={styles.summary}>None</span>}
                     </div>
                   </Table.Cell>
-                  <Table.Cell>
-                    <div className={styles.actions}>
-                      <Button variant="ghost" onClick={() => setEditing(row)}>
-                        Edit
-                      </Button>
-                      <Button variant="ghost" onClick={() => reset.mutate({ id: row.id })}>
-                        Remove
-                      </Button>
-                    </div>
-                  </Table.Cell>
+                  <Table.ActionsCell>
+                    <DropdownMenu
+                      trigger={<Table.DotsButton aria-label={`Actions for ${row.name}`} />}
+                      items={
+                        [
+                          {
+                            label: 'Edit',
+                            icon: <TbEdit size={14} />,
+                            onClick: () => setEditing(row)
+                          },
+                          {
+                            label: 'Remove',
+                            icon: <TbTrash size={14} />,
+                            danger: true,
+                            onClick: () => reset.mutate({ id: row.id })
+                          }
+                        ] satisfies MenuItem[]
+                      }
+                    />
+                  </Table.ActionsCell>
                 </Table.Row>
               ))}
             </Table.Body>
