@@ -1,15 +1,21 @@
+import styles from './NotificationPreferencesSubSection.module.css';
 import { useEffect, useMemo, useState } from 'react';
-import { Button } from '@diagram-craft/app-components/Button';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
-import { TbCheck } from 'react-icons/tb';
 import type { NotificationChannel } from '@arch-register/api-types/notificationPreferencesContract';
 import {
   useNotificationPreferences,
   useUpdateNotificationPreferences
 } from '../../hooks/useNotificationPreferences';
-import { LoadingState } from '../../components/LoadingState';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import styles from '../workspace-settings/sub-sections/GeneralSubSection.module.css';
+import {
+  SettingsBlock,
+  SettingsBlockField,
+  SettingsBlockList
+} from '../workspace-settings/SettingsBlock';
+import { QueryState } from '../workspace-settings/QueryState';
+import { MutationError } from '../workspace-settings/MutationError';
+import { SectionActions } from '../workspace-settings/SectionActions';
+import { SaveBarButtons } from '../workspace-settings/SaveBarButtons';
 
 const IN_APP_CHANNEL: NotificationChannel = 'in_app';
 const EMAIL_CHANNEL: NotificationChannel = 'email';
@@ -22,8 +28,6 @@ export const NotificationPreferencesSubSection = () => {
 
   const [inAppByType, setInAppByType] = useState<Record<string, boolean>>({});
   const [emailByType, setEmailByType] = useState<Record<string, boolean>>({});
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false);
 
   const savedPreferences = useMemo(() => {
     const entries: Record<string, boolean> = {};
@@ -55,15 +59,9 @@ export const NotificationPreferencesSubSection = () => {
   const emailImplemented = data?.channels.some(
     channel => channel.channel === EMAIL_CHANNEL && channel.implemented
   );
-  const notImplementedChannels = (data?.channels ?? []).filter(
-    channel => !channel.implemented && channel.channel !== IN_APP_CHANNEL
-  );
 
   const handleSave = async () => {
     if (!data) return;
-    setIsSaving(true);
-    setSaveSuccess(false);
-
     try {
       await updatePreferences.mutateAsync(
         data.notificationTypes.flatMap(type => [
@@ -83,114 +81,80 @@ export const NotificationPreferencesSubSection = () => {
             : [])
         ])
       );
-
-      setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 2000);
-    } finally {
-      setIsSaving(false);
+    } catch {
+      // The error is surfaced through the mutation state
     }
   };
 
-  if (error) return <div>Failed to load notification preferences: {error.message}</div>;
-  if (isLoading || !data)
-    return <LoadingState text="Loading notification preferences…" size="sm" />;
+  if (error || isLoading || !data)
+    return (
+      <QueryState isLoading={isLoading} error={error} subject="notification preferences">
+        {null}
+      </QueryState>
+    );
 
   return (
-    <div className={styles.blockList}>
-      <div className={styles.sectionActions}>
-        <Button
-          onClick={() => {
+    <>
+      <SectionActions>
+        <SaveBarButtons
+          dirty={hasChanges ?? false}
+          pending={updatePreferences.isPending}
+          onCancel={() => {
             setInAppByType(savedPreferences.inApp);
             setEmailByType(savedPreferences.email);
           }}
-          disabled={!hasChanges || isSaving}
+          onSave={handleSave}
+        />
+      </SectionActions>
+      <SettingsBlockList>
+        <MutationError error={updatePreferences.error} />
+        <SettingsBlock
+          title="Notification delivery"
+          description="Choose which notification types deliver in-app or by email. Email delivery is asynchronous and may take a few minutes."
         >
-          Reset
-        </Button>
-        <Button variant="primary" onClick={handleSave} disabled={!hasChanges || isSaving}>
-          {isSaving ? (
-            'Saving...'
-          ) : saveSuccess ? (
-            <>
-              <TbCheck size={14} /> Saved
-            </>
-          ) : (
-            'Save Changes'
-          )}
-        </Button>
-      </div>
-
-      <div className={styles.section}>
-        <div className={styles.sectionHead}>
-          <div className={styles.sectionTitle}>Notification delivery</div>
-          <div className={styles.sectionSub}>
-            Choose which notification types deliver in-app or by email. Email delivery is
-            asynchronous and may take a few minutes.
-          </div>
-        </div>
-        <div className={styles.tableWrap}>
-          <table className={styles.preferenceTable}>
-            <thead>
-              <tr>
-                <th scope="col">Notification</th>
-                <th scope="col">In-app</th>
-                {emailImplemented && <th scope="col">Email</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {data.notificationTypes.map(type => (
-                <tr key={type.notificationType}>
-                  <th scope="row">
-                    <div className={styles.fieldLabel}>
-                      {type.label}
-                      {type.category === 'reminder' && ' (reminder)'}
-                    </div>
-                    <div className={styles.fieldHint}>{type.description}</div>
-                  </th>
-                  <td>
+          {data.notificationTypes.map(type => (
+            <SettingsBlockField
+              key={type.notificationType}
+              label={
+                <>
+                  {type.label}
+                  {type.category === 'reminder' && ' (reminder)'}
+                </>
+              }
+              hint={type.description}
+            >
+              <div className={styles.channels}>
+                <div className={styles.channel}>
+                  <Checkbox
+                    label="In-app"
+                    value={inAppByType[type.notificationType] ?? false}
+                    onChange={value =>
+                      setInAppByType(current => ({
+                        ...current,
+                        [type.notificationType]: value ?? false
+                      }))
+                    }
+                  />
+                </div>
+                {emailImplemented && (
+                  <div className={styles.channel}>
                     <Checkbox
-                      label="In-app"
-                      value={inAppByType[type.notificationType] ?? false}
+                      label="Email"
+                      value={emailByType[type.notificationType] ?? false}
                       onChange={value =>
-                        setInAppByType(current => ({
+                        setEmailByType(current => ({
                           ...current,
                           [type.notificationType]: value ?? false
                         }))
                       }
                     />
-                  </td>
-                  {emailImplemented && (
-                    <td>
-                      <Checkbox
-                        label="Email"
-                        value={emailByType[type.notificationType] ?? false}
-                        onChange={value =>
-                          setEmailByType(current => ({
-                            ...current,
-                            [type.notificationType]: value ?? false
-                          }))
-                        }
-                      />
-                    </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {notImplementedChannels.length > 0 && (
-        <div className={styles.section}>
-          <div className={styles.sectionHead}>
-            <div className={styles.sectionTitle}>Other channels</div>
-            <div className={styles.sectionSub}>
-              {notImplementedChannels.map(channel => channel.label).join(', ')} are planned but not
-              yet available for any notification type.
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+                  </div>
+                )}
+              </div>
+            </SettingsBlockField>
+          ))}
+        </SettingsBlock>
+      </SettingsBlockList>
+    </>
   );
 };
