@@ -143,10 +143,7 @@ export const GlobalPermissionsSubSection = ({
             {assignedUsers.map(assignedUser => {
               const assignedRoles = roleMap[assignedUser.id] ?? [];
               return (
-                <Table.Row
-                  key={assignedUser.id}
-                  onClick={() => setSelectedUserId(assignedUser.id)}
-                >
+                <Table.Row key={assignedUser.id} onClick={() => setSelectedUserId(assignedUser.id)}>
                   <Table.NameCell
                     icon={
                       <MemberAvatar
@@ -284,7 +281,11 @@ const RoleAssignmentDialog = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} title={`Edit global permission for ${getUserLabel(user)}`}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title={`Edit global permission for ${getUserLabel(user)}`}
+    >
       <div className={styles.dialogBody}>
         <div className={styles.dialogMeta}>{user.email ?? user.id}</div>
         <RoleCheckboxList roles={draftRoles} onToggle={toggleRole} disabled={isSaving} />
