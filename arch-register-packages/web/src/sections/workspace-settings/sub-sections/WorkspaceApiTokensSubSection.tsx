@@ -1,164 +1,22 @@
 import { SettingsPage } from '../SettingsBlock';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { SectionActions } from '../SectionActions';
-import { TbPlus } from 'react-icons/tb';
-import { TbCopy, TbKey, TbTrash } from 'react-icons/tb';
-import { WORKSPACE_ROLE_CAPABILITIES } from '@arch-register/permissions';
-import type {
-  WorkspaceApiToken,
-  WorkspaceApiTokenCreate
-} from '@arch-register/api-types/apiTokenContract';
+import { TbKey, TbPlus } from 'react-icons/tb';
+import type { WorkspaceApiTokenCreate } from '@arch-register/api-types/apiTokenContract';
 import { Button } from '@diagram-craft/app-components/Button';
-import { Checkbox } from '@diagram-craft/app-components/Checkbox';
-import { DateInput } from '@diagram-craft/app-components/DateInput';
-import { Dialog, KbdHints } from '@diagram-craft/app-components/Dialog';
-import { TextInput } from '@diagram-craft/app-components/TextInput';
-import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
-import { Table } from '../../../components/table/Table';
 import { QueryState } from '../QueryState';
-import { MutationError } from '../MutationError';
+import {
+  ApiTokenIntro,
+  RevokeTokenDialog,
+  SecretDialog,
+  TokenCreateDialog,
+  TokenTable
+} from '../../../components/apiTokens/ApiTokenParts';
 import {
   useWorkspaceApiTokens,
   useCreateWorkspaceApiToken,
   useRevokeWorkspaceApiToken
 } from '../../../hooks/useWorkspaceApiTokens';
-import { formatDate } from '../../../utils/dateFormat';
-import { getWorkspaceCapabilityLabel } from '../../../lib/workspaceCapabilityLabels';
-import { DropdownMenu, type MenuItem } from '../../../components/DropdownMenu';
-import styles from './WorkspaceApiTokensSubSection.module.css';
-
-const EDITOR_CAPABILITIES = [
-  ...WORKSPACE_ROLE_CAPABILITIES.editor,
-  'ent.external_update' as const,
-  'governance.external' as const
-];
-
-const toExpiryIso = (value: string) =>
-  value === '' ? null : new Date(`${value}T23:59:59.999Z`).toISOString();
-
-const TokenCreateDialog = ({
-  open,
-  pending,
-  error,
-  onClose,
-  onCreate
-}: {
-  open: boolean;
-  pending: boolean;
-  error: Error | null;
-  onClose: () => void;
-  onCreate: (input: WorkspaceApiTokenCreate) => Promise<void>;
-}) => {
-  const [name, setName] = useState('');
-  const [expiresAt, setExpiresAt] = useState('');
-  const [capabilities, setCapabilities] = useState(EDITOR_CAPABILITIES);
-
-  useEffect(() => {
-    if (!open) return;
-    setName('');
-    setExpiresAt('');
-    setCapabilities(EDITOR_CAPABILITIES);
-  }, [open]);
-
-  if (!open) return null;
-
-  const toggleCapability = (capability: (typeof EDITOR_CAPABILITIES)[number]) => {
-    setCapabilities(current =>
-      current.includes(capability)
-        ? current.filter(value => value !== capability)
-        : [...current, capability]
-    );
-  };
-
-  const canCreate = name.trim().length > 0 && capabilities.length > 0;
-
-  return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      title="Create API token"
-      sup="Workspace API tokens"
-      className={styles.dialog}
-      footerLeft={
-        <KbdHints
-          hints={[
-            ['Esc', 'cancel'],
-            ['⌘↵', 'create']
-          ]}
-        />
-      }
-      buttons={[
-        { label: 'Cancel', type: 'cancel', onClick: onClose },
-        {
-          label: pending ? 'Creating…' : 'Create token',
-          type: 'default',
-          disabled: pending || !canCreate,
-          onClick: () =>
-            void onCreate({
-              name,
-              capabilities,
-              expires_at: toExpiryIso(expiresAt)
-            })
-        }
-      ]}
-    >
-      <div className={styles.form}>
-        <label className={styles.field}>
-          <span className={styles.label}>Name</span>
-          <TextInput value={name} onChange={value => setName(value ?? '')} autoFocus />
-        </label>
-
-        <label className={styles.field}>
-          <span className={styles.label}>Expires</span>
-          <DateInput value={expiresAt} onChange={value => setExpiresAt(value ?? '')} />
-          <span className={styles.hint}>Leave empty to use the one-year maximum lifetime.</span>
-        </label>
-
-        <div className={styles.capabilityField}>
-          <div className={styles.label}>Editor capabilities</div>
-          <div className={styles.capabilityGrid}>
-            {EDITOR_CAPABILITIES.map(capability => (
-              <label className={styles.capability} key={capability}>
-                <Checkbox
-                  value={capabilities.includes(capability)}
-                  onChange={() => toggleCapability(capability)}
-                />
-                <span>{getWorkspaceCapabilityLabel(capability)}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-        <MutationError error={error} />
-      </div>
-    </Dialog>
-  );
-};
-
-const SecretDialog = ({ token, onClose }: { token: string | null; onClose: () => void }) => {
-  if (!token) return null;
-
-  return (
-    <Dialog
-      open
-      onClose={onClose}
-      title="API token created"
-      sup="Copy this secret now"
-      sub="For security, the complete token will not be shown again."
-      buttons={[{ label: 'Done', type: 'default', onClick: onClose }]}
-    >
-      <div className={styles.secretBox}>
-        <code>{token}</code>
-        <Button
-          variant="secondary"
-          icon={<TbCopy size={13} />}
-          onClick={() => void navigator.clipboard?.writeText(token)}
-        >
-          Copy
-        </Button>
-      </div>
-    </Dialog>
-  );
-};
 
 export const WorkspaceApiTokensSubSection = ({ workspaceSlug }: { workspaceSlug: string }) => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -169,8 +27,7 @@ export const WorkspaceApiTokensSubSection = ({ workspaceSlug }: { workspaceSlug:
   const [secret, setSecret] = useState<string | null>(null);
   const [revokeId, setRevokeId] = useState<string | null>(null);
 
-  const tokenToRevoke: WorkspaceApiToken | null =
-    tokens.find(token => token.id === revokeId) ?? null;
+  const tokenToRevoke = tokens.find(token => token.id === revokeId) ?? null;
 
   const handleCreate = async (input: WorkspaceApiTokenCreate) => {
     const created = await createToken.mutateAsync(input);
@@ -178,27 +35,23 @@ export const WorkspaceApiTokensSubSection = ({ workspaceSlug }: { workspaceSlug:
     setSecret(created.token);
   };
 
-  const header = (
-    <SectionActions>
-      <Button
-        variant="primary"
-        icon={<TbPlus size={12} />}
-        onClick={() => setCreateDialogOpen(true)}
-      >
-        Create token
-      </Button>
-    </SectionActions>
-  );
-
   return (
     <>
-      {header}
+      <SectionActions>
+        <Button
+          variant="primary"
+          icon={<TbPlus size={12} />}
+          onClick={() => setCreateDialogOpen(true)}
+        >
+          Create token
+        </Button>
+      </SectionActions>
       <SettingsPage stacked={false}>
-        <div className={styles.intro}>
+        <ApiTokenIntro>
           Tokens created here are owned by the workspace itself, not any individual member, so they
           keep working even if the admin who created them leaves. For a personal token tied to your
           own account, use Account Settings instead.
-        </div>
+        </ApiTokenIntro>
 
         <QueryState
           isLoading={isLoading}
@@ -212,63 +65,21 @@ export const WorkspaceApiTokensSubSection = ({ workspaceSlug }: { workspaceSlug:
             compact: true
           }}
         >
-          <Table.Root>
-            <Table.Head>
-              <Table.Row>
-                <Table.HeaderCell>Token</Table.HeaderCell>
-                <Table.HeaderCell>Capabilities</Table.HeaderCell>
-                <Table.HeaderCell>Last used</Table.HeaderCell>
-                <Table.HeaderCell>Expires</Table.HeaderCell>
-                <Table.HeaderCell />
-              </Table.Row>
-            </Table.Head>
-            <Table.Body>
-              {tokens.map(token => (
-                <Table.Row key={token.id}>
-                  <Table.NameCell
-                    title={token.name}
-                    subtitle={`Created ${formatDate(token.created_at, 'Never')}`}
-                    icon={<TbKey size={14} />}
-                  />
-                  <Table.Cell>{token.capabilities.length} editor capabilities</Table.Cell>
-                  <Table.Cell>{formatDate(token.last_used_at, 'Never')}</Table.Cell>
-                  <Table.Cell>
-                    {token.expires_at ? formatDate(token.expires_at) : 'Never'}
-                  </Table.Cell>
-                  <Table.ActionsCell>
-                    <DropdownMenu
-                      trigger={<Table.DotsButton aria-label={`Actions for ${token.name}`} />}
-                      items={
-                        [
-                          {
-                            label: 'Revoke token',
-                            icon: <TbTrash size={14} />,
-                            danger: true,
-                            onClick: () => setRevokeId(token.id)
-                          }
-                        ] satisfies MenuItem[]
-                      }
-                    />
-                  </Table.ActionsCell>
-                </Table.Row>
-              ))}
-            </Table.Body>
-          </Table.Root>
+          <TokenTable tokens={tokens} onRevoke={setRevokeId} />
         </QueryState>
 
         <TokenCreateDialog
           open={createDialogOpen}
+          sup="Workspace API tokens"
           pending={createToken.isPending}
           error={createToken.error instanceof Error ? createToken.error : null}
           onClose={onCloseCreateDialog}
           onCreate={handleCreate}
         />
         <SecretDialog token={secret} onClose={() => setSecret(null)} />
-        <DeleteConfirmationDialog
-          open={tokenToRevoke != null}
-          title={`Revoke ${tokenToRevoke?.name ?? 'API token'}?`}
-          message="This token will stop working immediately."
-          confirmLabel={revokeToken.isPending ? 'Revoking…' : 'Revoke token'}
+        <RevokeTokenDialog
+          token={tokenToRevoke}
+          pending={revokeToken.isPending}
           onCancel={() => setRevokeId(null)}
           onConfirm={() => {
             if (!revokeId || revokeToken.isPending) return;

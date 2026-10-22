@@ -10,7 +10,7 @@ export class AccountSettingsPage extends WorkspacePage {
   displayNameInput = (): Locator => this.page.getByLabel('Display name');
 
   saveChangesButton = (): Locator =>
-    this.page.getByRole('button', { name: /Save Changes|Saving\.\.\.|Saved/ });
+    this.page.getByRole('button', { name: /Save changes|Saving…/ });
 
   colorSwatch = (color: string): Locator =>
     this.page.getByRole('button', { name: `Select color ${color}` });
@@ -38,7 +38,8 @@ export class AccountSettingsPage extends WorkspacePage {
   };
 
   saveChanges = async () => {
-    await this.page.getByRole('button', { name: 'Save Changes' }).click();
-    await expect(this.page.getByRole('button', { name: 'Saved' })).toBeVisible();
+    await this.saveChangesButton().click();
+    // The button is disabled again once the saved values are reloaded
+    await expect(this.saveChangesButton()).toBeDisabled();
   };
 }
