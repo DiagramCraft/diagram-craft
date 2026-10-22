@@ -9,6 +9,7 @@ import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { DropdownMenu } from '../../../components/DropdownMenu';
 import { MemberAvatar, stableHue } from '../../../components/MemberAvatar';
 import { SearchInput } from '../../../components/SearchInput';
+import { ToolbarFilterBar, ToolbarFilterSelect } from '../../../components/ToolbarFilter';
 import { useAuth } from '../../../auth/AuthContext';
 import { useAuthConfig } from '../../../hooks/useAuthConfig';
 import { useWorkspaceAuthorization } from '../../../auth/WorkspaceAuthorizationContext';
@@ -151,7 +152,7 @@ export const MembersSubSection = ({ workspaceSlug }: { workspaceSlug: string }) 
       {header}
       <div className={styles.container}>
         {!isLoading && members.length > 0 && (
-          <div className={styles.toolbar}>
+          <ToolbarFilterBar>
             <SearchInput
               size="sm"
               placeholder="Search by name or email…"
@@ -159,37 +160,25 @@ export const MembersSubSection = ({ workspaceSlug }: { workspaceSlug: string }) 
               onChange={setQuery}
               onClear={() => setQuery('')}
             />
-            <label className={styles.filter}>
-              <span className={styles.filterLabel}>Role</span>
-              <select
-                className={styles.filterSelect}
-                value={roleFilter}
-                onChange={e => setRoleFilter(e.target.value)}
-              >
-                <option value="">Any role</option>
-                {roles.map(r => (
-                  <option key={r.id} value={r.id}>
-                    {r.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className={styles.filter}>
-              <span className={styles.filterLabel}>Team</span>
-              <select
-                className={styles.filterSelect}
-                value={teamFilter}
-                onChange={e => setTeamFilter(e.target.value)}
-              >
-                <option value="">Any team</option>
-                {teams.map(t => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
+            <ToolbarFilterSelect
+              label="Role"
+              value={roleFilter}
+              onChange={setRoleFilter}
+              options={[
+                { value: '', label: 'Any role' },
+                ...roles.map(r => ({ value: r.id, label: r.name }))
+              ]}
+            />
+            <ToolbarFilterSelect
+              label="Team"
+              value={teamFilter}
+              onChange={setTeamFilter}
+              options={[
+                { value: '', label: 'Any team' },
+                ...teams.map(t => ({ value: t.id, label: t.name }))
+              ]}
+            />
+          </ToolbarFilterBar>
         )}
         {isLoading ? (
           <LoadingState text="Loading members…" size="sm" />
