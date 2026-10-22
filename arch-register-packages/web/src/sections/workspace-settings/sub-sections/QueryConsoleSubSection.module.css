@@ -1,56 +1,11 @@
-.root {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 16px 24px 32px;
-}
-
-.panel {
-  overflow: hidden;
-  background: var(--panel-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r-md);
-}
-
-.panelHead {
-  padding: 14px 16px 10px;
-  border-bottom: 1px solid var(--panel-border);
-}
-
-.panelTitle {
-  color: var(--base-fg);
-  font-size: 12.5px;
-  font-weight: 600;
-}
-
-.panelSub,
 .hint {
   color: var(--cmp-fg-disabled);
   font-size: 11px;
   line-height: 1.5;
 }
 
-.panelSub {
-  margin-top: 3px;
-}
-
-.panelBody {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 14px 16px 16px;
-}
-
-.inputLabel {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  color: var(--base-fg);
-  font-size: 12px;
-  font-weight: 500;
-}
-
 .input {
+  width: 100%;
   min-height: 150px;
   font-family: var(--font-mono);
   font-size: 12px;
@@ -62,6 +17,13 @@
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
+}
+
+.errors {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 4px;
 }
 
 .error {
@@ -80,7 +42,8 @@
 .output {
   max-height: 640px;
   margin: 0;
-  padding: 16px;
+  padding: 12px;
+  border-radius: var(--r);
   overflow: auto;
   color: var(--base-fg);
   background: var(--cmp-bg);
