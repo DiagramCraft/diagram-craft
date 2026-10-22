@@ -111,9 +111,10 @@ const loadDocumentStatusConfigs = async (
   const prefix = `${documentTypeId}:`;
   return new Map(
     rows.flatMap(row => {
-      if (!row.case_subkind?.startsWith(prefix)) return [];
+      const subkind = row.case_subkinds.find(candidate => candidate.startsWith(prefix));
+      if (!subkind) return [];
       const config = parseGovernanceWorkflowConfig(row.config, row.enabled);
-      return [[row.case_subkind.slice(prefix.length), { ...row, config }] as const];
+      return [[subkind.slice(prefix.length), { ...row, config }] as const];
     })
   );
 };

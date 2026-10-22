@@ -245,7 +245,7 @@ const makeDb = (
   governance: ReturnType<typeof makeGovernanceDouble>,
   inAppOverrideUserIds: string[] = [],
   configRows: Array<{
-    case_subkind: string | null;
+    case_subkinds: string[];
     enabled: boolean;
     config: Record<string, unknown>;
   }> = [],
@@ -356,7 +356,7 @@ describe('governance event dependencies', () => {
     const db = makeDb(
       governance,
       [],
-      [{ case_subkind: null, enabled: true, config: { external: true } }],
+      [{ case_subkinds: [], enabled: true, config: { external: true } }],
       [
         {
           id: 'webhook-1',

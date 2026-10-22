@@ -73,6 +73,12 @@
   margin-top: 16px;
 }
 
+/* formGrid already pads its bottom by 16px, so only add the matching space below the scope */
+.formGrid + .scopeEditor {
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
 .errorNote {
   margin-top: 12px;
   color: var(--error-fg);

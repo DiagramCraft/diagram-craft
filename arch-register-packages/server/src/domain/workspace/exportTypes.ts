@@ -125,13 +125,21 @@ export type ExportSchema = {
   key_prefix: string | null;
   entity_approval_policy?: 'required' | 'disabled';
   deprecation_policy?: 'required' | 'disabled';
-  governance_configs?: Array<{
-    case_kind: string;
-    name: string;
-    description?: string | null;
-    enabled: boolean;
-    config: GovernanceWorkflowConfig;
-  }>;
+  governance_configs?: ExportGovernanceConfig[];
+};
+
+/**
+ * A workflow configuration attached to a schema or relation schema. A workflow shared by several
+ * schemas is written once per schema, each listing the other (source) schema ids in `shared_with`
+ * so import can recreate a single workflow with the whole scope.
+ */
+export type ExportGovernanceConfig = {
+  case_kind: string;
+  name: string;
+  description?: string | null;
+  enabled: boolean;
+  config: GovernanceWorkflowConfig;
+  shared_with?: string[];
 };
 
 export type ExportRelationSchema = {
@@ -150,6 +158,7 @@ export type ExportRelationSchema = {
   color: string | null;
   icon: string | null;
   relation_approval_policy?: 'required' | 'disabled';
+  governance_configs?: ExportGovernanceConfig[];
   unique_endpoint_pair?: boolean;
   version?: number;
 };

@@ -21,6 +21,7 @@ import { WorkflowEscalationEditor } from './WorkflowEscalationEditor';
 import { WorkflowInitiationFieldsEditor } from './WorkflowInitiationFieldsEditor';
 import { WorkflowReminderEditor } from './WorkflowReminderEditor';
 import { WorkflowStatusValuesEditor } from './WorkflowStatusValuesEditor';
+import { WorkflowSubkindEditor } from './WorkflowSubkindEditor';
 import styles from './WorkflowsSubSection.module.css';
 
 export type WorkflowConfigDialogProps = {
@@ -44,6 +45,7 @@ export const WorkflowConfigDialog = ({
   const [name, setName] = useState(row?.name ?? caseKind.label);
   const [description, setDescription] = useState(row?.description ?? '');
   const [enabled, setEnabled] = useState(row?.enabled ?? true);
+  const [subkinds, setSubkinds] = useState<string[]>(row?.case_subkinds ?? []);
   const [tab, setTab] = useState(
     caseKind.supportsApprovals !== false
       ? 'approvals'
@@ -59,7 +61,7 @@ export const WorkflowConfigDialog = ({
     workspaceSlug,
     caseKind.case_kind === 'document.status'
   );
-  const [documentTypeId, fieldId] = row?.case_subkind?.split(':') ?? [];
+  const [documentTypeId, fieldId] = row?.case_subkinds[0]?.split(':') ?? [];
   const enumField = documentTypes
     .find(type => type.id === documentTypeId)
     ?.fields.find(field => field.id === fieldId && field.type === 'enum');
@@ -122,11 +124,16 @@ export const WorkflowConfigDialog = ({
         {
           label: 'Save workflow',
           type: 'default',
-          disabled: name.trim() === '',
+          disabled:
+            name.trim() === '' ||
+            (caseKind.supportsMultiScope &&
+              row?.case_subkinds.length !== 0 &&
+              subkinds.length === 0),
           onClick: () =>
             onSave({
+              id: row?.id ? row.id : undefined,
               case_kind: caseKind.case_kind,
-              case_subkind: row?.case_subkind ?? null,
+              case_subkinds: subkinds,
               name: name.trim(),
               description: normalizedMetadata(description),
               enabled,
@@ -172,6 +179,16 @@ export const WorkflowConfigDialog = ({
           />
         </FormElement>
       </div>
+      {caseKind.supportsMultiScope && (
+        <div className={styles.scopeEditor}>
+          <WorkflowSubkindEditor
+            workspaceSlug={workspaceSlug}
+            caseKind={caseKind}
+            value={subkinds}
+            onChange={setSubkinds}
+          />
+        </div>
+      )}
       <Tabs.Root value={tab} onValueChange={setTab}>
         <Tabs.List aria-label="Workflow configuration sections">
           {caseKind.supportsApprovals !== false && (

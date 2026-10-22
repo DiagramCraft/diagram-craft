@@ -23,7 +23,7 @@ export const seedGovernanceCaseConfigs: GovernanceCaseConfigDbUpsert[] = [
   {
     workspace: WORKSPACE_ID,
     case_kind: ENTITY_CHANGE_CASE_KIND,
-    case_subkind: encodeCaseSubkind(SEED_SCHEMA_IDS.contract),
+    case_subkinds: [encodeCaseSubkind(SEED_SCHEMA_IDS.contract)],
     name: 'Contract change review',
     description: 'Review changes proposed to Contract entities.',
     enabled: true,
@@ -52,7 +52,7 @@ export const seedGovernanceCaseConfigs: GovernanceCaseConfigDbUpsert[] = [
   {
     workspace: WORKSPACE_ID,
     case_kind: ENTITY_CHANGE_CASE_KIND,
-    case_subkind: encodeCaseSubkind(SEED_SCHEMA_IDS.dataEntity),
+    case_subkinds: [encodeCaseSubkind(SEED_SCHEMA_IDS.dataEntity)],
     name: 'Data Entity change review',
     description: 'Review changes proposed to Data Entities.',
     enabled: true,
@@ -81,7 +81,7 @@ export const seedGovernanceCaseConfigs: GovernanceCaseConfigDbUpsert[] = [
   {
     workspace: WORKSPACE_ID,
     case_kind: ENTITY_CHANGE_CASE_BULK_KIND,
-    case_subkind: null,
+    case_subkinds: [],
     name: 'Bulk entity change review',
     description: 'Review bulk changes proposed across entities.',
     enabled: true,
@@ -110,7 +110,7 @@ export const seedGovernanceCaseConfigs: GovernanceCaseConfigDbUpsert[] = [
   {
     workspace: WORKSPACE_ID,
     case_kind: ENTITY_DEPRECATION_CASE_KIND,
-    case_subkind: encodeCaseSubkind(SEED_SCHEMA_IDS.technology),
+    case_subkinds: [encodeCaseSubkind(SEED_SCHEMA_IDS.technology)],
     name: 'Technology deprecation review',
     description: 'Review technology entities proposed for deprecation.',
     enabled: true,
@@ -139,7 +139,7 @@ export const seedGovernanceCaseConfigs: GovernanceCaseConfigDbUpsert[] = [
   {
     workspace: WORKSPACE_ID,
     case_kind: RELATION_CHANGE_CASE_KIND,
-    case_subkind: null,
+    case_subkinds: [],
     name: 'Relation change review',
     description: 'Review proposed relation changes.',
     enabled: true,
@@ -153,7 +153,7 @@ export const seedGovernanceCaseConfigs: GovernanceCaseConfigDbUpsert[] = [
   {
     workspace: WORKSPACE_ID,
     case_kind: ASSESSMENT_RESPONSE_CASE_KIND,
-    case_subkind: null,
+    case_subkinds: [],
     name: 'Assessment response review',
     description: 'Review submitted assessment responses.',
     enabled: true,
@@ -167,7 +167,7 @@ export const seedGovernanceCaseConfigs: GovernanceCaseConfigDbUpsert[] = [
   {
     workspace: WORKSPACE_ID,
     case_kind: CONFORMANCE_VIOLATION_CASE_KIND,
-    case_subkind: null,
+    case_subkinds: [],
     name: 'Conformance violation review',
     description: 'Review violations raised by conformance checks.',
     enabled: true,
@@ -188,7 +188,7 @@ export const seedGovernanceCaseConfigs: GovernanceCaseConfigDbUpsert[] = [
   {
     workspace: WORKSPACE_ID,
     case_kind: FIELD_DATE_REMINDER_CASE_KIND,
-    case_subkind: encodeCaseSubkind(SEED_SCHEMA_IDS.dataEntity, 'review_date'),
+    case_subkinds: [encodeCaseSubkind(SEED_SCHEMA_IDS.dataEntity, 'review_date')],
     name: 'Data Entity review date',
     description: 'Recurring review reminder for the Data Entity review date.',
     enabled: true,

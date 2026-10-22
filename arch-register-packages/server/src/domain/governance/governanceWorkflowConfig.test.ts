@@ -18,14 +18,14 @@ describe('resolveGovernanceWorkflowConfig', () => {
     const result = resolveGovernanceWorkflowConfig(
       [
         {
-          case_subkind: null,
+          case_subkinds: [],
           enabled: true,
           config: {
             reminders: { enabled: true, approachingDays: [3], overdueDays: [2] }
           }
         },
         {
-          case_subkind: 'schema-1',
+          case_subkinds: ['schema-1'],
           enabled: false,
           config: {
             approvals: { requiredApprovals: 2, fallbackUserIds: [], fallbackTeamIds: [] }
@@ -44,7 +44,7 @@ describe('resolveGovernanceWorkflowConfig', () => {
 
   it('does not erase code defaults for an unrelated component', () => {
     const result = resolveGovernanceWorkflowConfig(
-      [{ case_subkind: null, enabled: true, config: { approvals: { requiredApprovals: 2 } } }],
+      [{ case_subkinds: [], enabled: true, config: { approvals: { requiredApprovals: 2 } } }],
       null,
       defaults
     );
@@ -58,7 +58,7 @@ describe('resolveGovernanceWorkflowConfig', () => {
     const result = resolveGovernanceWorkflowConfig(
       [
         {
-          case_subkind: null,
+          case_subkinds: [],
           enabled: false,
           config: { reminders: { enabled: false, approachingDays: [], overdueDays: [] } }
         }
@@ -76,8 +76,8 @@ describe('resolveGovernanceWorkflowConfig', () => {
   it('inherits external mode and allows a subkind to turn it off explicitly', () => {
     const inherited = resolveGovernanceWorkflowConfig(
       [
-        { case_subkind: null, enabled: true, config: { external: true } },
-        { case_subkind: 'schema-1', enabled: true, config: {} }
+        { case_subkinds: [], enabled: true, config: { external: true } },
+        { case_subkinds: ['schema-1'], enabled: true, config: {} }
       ],
       'schema-1',
       { ...defaults, external: false }
@@ -86,8 +86,8 @@ describe('resolveGovernanceWorkflowConfig', () => {
 
     const overridden = resolveGovernanceWorkflowConfig(
       [
-        { case_subkind: null, enabled: true, config: { external: true } },
-        { case_subkind: 'schema-1', enabled: true, config: { external: false } }
+        { case_subkinds: [], enabled: true, config: { external: true } },
+        { case_subkinds: ['schema-1'], enabled: true, config: { external: false } }
       ],
       'schema-1',
       { ...defaults, external: false }

@@ -309,7 +309,7 @@ export const updateDocumentType = async (
               await tx.governanceCaseConfig.upsertCaseConfig({
                 workspace: ws,
                 case_kind: config.case_kind,
-                case_subkind: encodeCaseSubkind(id, migration.newFieldId),
+                case_subkinds: [encodeCaseSubkind(id, migration.newFieldId)],
                 name: config.name,
                 description: config.description,
                 enabled: config.enabled,

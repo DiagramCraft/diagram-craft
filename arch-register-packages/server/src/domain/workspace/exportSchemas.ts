@@ -137,6 +137,15 @@ const sharedFieldGroupSchema = z
   })
   .passthrough();
 
+const exportGovernanceConfigSchema = z.object({
+  case_kind: z.string(),
+  name: z.string().trim().min(1).max(200),
+  description: z.string().nullable().optional(),
+  enabled: z.boolean(),
+  config: z.unknown(),
+  shared_with: z.array(z.string()).optional()
+});
+
 const exportSchemaSchema = z
   .object({
     id: z.string(),
@@ -153,17 +162,7 @@ const exportSchemaSchema = z
     key_prefix: z.string().nullable(),
     entity_approval_policy: z.enum(['required', 'disabled']).optional(),
     deprecation_policy: z.enum(['required', 'disabled']).optional(),
-    governance_configs: z
-      .array(
-        z.object({
-          case_kind: z.string(),
-          name: z.string().trim().min(1).max(200),
-          description: z.string().nullable().optional(),
-          enabled: z.boolean(),
-          config: z.unknown()
-        })
-      )
-      .optional()
+    governance_configs: z.array(exportGovernanceConfigSchema).optional()
   })
   .passthrough();
 
@@ -184,6 +183,7 @@ const exportRelationSchemaSchema = z
     color: z.string().nullable(),
     icon: z.string().nullable(),
     relation_approval_policy: z.enum(['required', 'disabled']).optional(),
+    governance_configs: z.array(exportGovernanceConfigSchema).optional(),
     unique_endpoint_pair: z.boolean().optional(),
     version: z.number().int().optional()
   })

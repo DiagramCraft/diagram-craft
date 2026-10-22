@@ -8,7 +8,7 @@ import {
 import { defaultWorkflowConfigForCaseKind, type GovernanceRegistry } from './governanceRegistry';
 
 export type GovernanceWorkflowConfigRowLike = {
-  case_subkind: string | null;
+  case_subkinds: string[];
   enabled: boolean;
   config: Record<string, unknown>;
 };
@@ -208,10 +208,10 @@ export const resolveGovernanceWorkflowConfig = (
   supportsWorkspaceScope = true
 ): ResolvedGovernanceWorkflowConfig => {
   const workspaceRow = supportsWorkspaceScope
-    ? rows.find(row => row.case_subkind == null)
+    ? rows.find(row => row.case_subkinds.length === 0)
     : undefined;
   const subkindRow =
-    caseSubkind == null ? undefined : rows.find(row => row.case_subkind === caseSubkind);
+    caseSubkind == null ? undefined : rows.find(row => row.case_subkinds.includes(caseSubkind));
   const sources = [workspaceRow, subkindRow].filter(
     (row): row is GovernanceWorkflowConfigRowLike => row != null
   );

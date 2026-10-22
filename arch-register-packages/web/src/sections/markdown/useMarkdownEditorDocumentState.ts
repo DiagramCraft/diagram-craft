@@ -206,7 +206,7 @@ export const useMarkdownEditorDocumentState = ({
       .filter(
         row =>
           row.case_kind === 'document.status' &&
-          row.case_subkind?.startsWith(`${state.documentTypeId}:`)
+          row.case_subkinds.some(subkind => subkind.startsWith(`${state.documentTypeId}:`))
       )
       .flatMap(row => row.config.initiationFields ?? [])
       .map(field =>

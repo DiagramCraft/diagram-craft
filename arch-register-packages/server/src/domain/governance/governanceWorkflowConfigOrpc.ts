@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { implement } from '@orpc/server';
 import { governanceWorkflowConfigContract } from '@arch-register/api-types/governanceWorkflowConfigContract';
 import type { GovernanceWorkflowConfigRow } from '@arch-register/api-types/governanceWorkflowConfigContract';
@@ -32,6 +33,7 @@ const toCaseKind = (caseKind: string, config: ReturnType<GovernanceRegistry['get
   label: CASE_KIND_LABELS[caseKind] ?? caseKind,
   description: CASE_KIND_DESCRIPTIONS[caseKind] ?? '',
   supportsSubkind: config?.workflowConfig?.supportsSubkind ?? false,
+  supportsMultiScope: config?.workflowConfig?.supportsMultiScope ?? false,
   supportsWorkspaceScope: config?.workflowConfig?.supportsWorkspaceScope ?? true,
   supportsApprovals: config?.workflowConfig?.supportsApprovals ?? false,
   supportsReminders: config?.workflowConfig?.supportsReminders ?? false,
@@ -103,16 +105,19 @@ const toApiRow = async (
       kindConfig?.workflowConfig?.escalationStrategies
     )
   };
-  const subkindLabel = kindConfig?.workflowConfig?.labelSubkind
-    ? await kindConfig.workflowConfig.labelSubkind(db, workspace, row.case_subkind)
-    : row.case_subkind;
+  const labelSubkind = kindConfig?.workflowConfig?.labelSubkind;
+  const subkindLabels = await Promise.all(
+    row.case_subkinds.map(async subkind =>
+      labelSubkind ? ((await labelSubkind(db, workspace, subkind)) ?? subkind) : subkind
+    )
+  );
   return {
     id: row.id,
     case_kind: row.case_kind,
     case_kind_label: CASE_KIND_LABELS[row.case_kind] ?? row.case_kind,
     case_kind_description: CASE_KIND_DESCRIPTIONS[row.case_kind] ?? '',
-    case_subkind: row.case_subkind,
-    case_subkind_label: subkindLabel,
+    case_subkinds: row.case_subkinds,
+    case_subkind_labels: subkindLabels,
     name: row.name,
     description: row.description,
     enabled: row.enabled,
@@ -147,8 +152,9 @@ export const createGovernanceWorkflowConfigORPCRouter = (registry: GovernanceReg
             status: 404,
             message: `Unknown governance case kind '${input.body.case_kind}'`
           });
+          const subkinds = [...new Set(input.body.case_subkinds)];
           httpAssert.true(
-            input.body.case_subkind != null
+            subkinds.length > 0
               ? kindConfig.workflowConfig?.supportsSubkind === true
               : kindConfig.workflowConfig?.supportsWorkspaceScope !== false,
             {
@@ -156,15 +162,72 @@ export const createGovernanceWorkflowConfigORPCRouter = (registry: GovernanceReg
               message: `Case kind '${input.body.case_kind}' does not support subkind-scoped configuration`
             }
           );
-          if (input.body.case_subkind != null && kindConfig.workflowConfig?.validateSubkind) {
-            const error = await kindConfig.workflowConfig.validateSubkind(
-              context.db,
-              workspace,
-              input.body.case_subkind
-            );
-            httpAssert.true(error == null, {
+          httpAssert.true(
+            subkinds.length <= 1 || kindConfig.workflowConfig?.supportsMultiScope === true,
+            {
               status: 400,
-              message: error ?? 'Invalid case subkind'
+              message: `Case kind '${input.body.case_kind}' does not support attaching a workflow to several scopes`
+            }
+          );
+          if (input.body.id != null) {
+            const existing = await context.db.governanceCaseConfig.getCaseConfigById(
+              workspace,
+              input.body.id
+            );
+            httpAssert.present(existing, {
+              status: 404,
+              message: 'Workflow configuration not found'
+            });
+            httpAssert.true(existing.case_kind === input.body.case_kind, {
+              status: 400,
+              message: 'The case kind of an existing workflow configuration cannot be changed'
+            });
+          }
+          if (kindConfig.workflowConfig?.validateSubkind) {
+            for (const subkind of subkinds) {
+              const error = await kindConfig.workflowConfig.validateSubkind(
+                context.db,
+                workspace,
+                subkind
+              );
+              httpAssert.true(error == null, {
+                status: 400,
+                message: error ?? 'Invalid case subkind'
+              });
+            }
+          }
+          // Reject overlap up front (also enforced by the database) so the error names the schemas
+          const sameKind = await context.db.governanceCaseConfig.listCaseConfigForKind(
+            workspace,
+            input.body.case_kind
+          );
+          const overlapping = sameKind.filter(
+            other =>
+              other.id !== input.body.id &&
+              (subkinds.length === 0
+                ? other.case_subkinds.length === 0
+                : other.case_subkinds.some(subkind => subkinds.includes(subkind)))
+          );
+          if (overlapping.length > 0) {
+            const labels = await Promise.all(
+              subkinds
+                .filter(subkind => overlapping.some(other => other.case_subkinds.includes(subkind)))
+                .map(async subkind =>
+                  kindConfig.workflowConfig?.labelSubkind
+                    ? ((await kindConfig.workflowConfig.labelSubkind(
+                        context.db,
+                        workspace,
+                        subkind
+                      )) ?? subkind)
+                    : subkind
+                )
+            );
+            httpAssert.true(false, {
+              status: 409,
+              message:
+                subkinds.length === 0
+                  ? 'A workspace-wide workflow configuration already exists for this workflow'
+                  : `Another workflow configuration already covers: ${labels.join(', ')}`
             });
           }
           const parsedConfig = governanceWorkflowConfigSchema.parse(input.body.config);
@@ -215,7 +278,7 @@ export const createGovernanceWorkflowConfigORPCRouter = (registry: GovernanceReg
               ? await kindConfig.workflowConfig.validateApprovalStrategy(
                   context.db,
                   workspace,
-                  input.body.case_subkind,
+                  subkinds[0] ?? null,
                   approvalStrategy,
                   config.approvals?.strategyConfig ?? {}
                 )
@@ -238,7 +301,7 @@ export const createGovernanceWorkflowConfigORPCRouter = (registry: GovernanceReg
               ? await kindConfig.workflowConfig.validateEscalationStrategy(
                   context.db,
                   workspace,
-                  input.body.case_subkind,
+                  subkinds[0] ?? null,
                   escalationStrategy,
                   config.escalation?.strategyConfig ?? {}
                 )
@@ -255,9 +318,10 @@ export const createGovernanceWorkflowConfigORPCRouter = (registry: GovernanceReg
           await validateFallbackTargets(context.db, workspace, config.approvals);
           await validateFallbackTargets(context.db, workspace, config.escalation);
           const row = await context.db.governanceCaseConfig.upsertCaseConfig({
+            id: input.body.id ?? randomUUID(),
             workspace,
             case_kind: input.body.case_kind,
-            case_subkind: input.body.case_subkind,
+            case_subkinds: subkinds,
             name: input.body.name,
             description: input.body.description,
             enabled: input.body.enabled ?? true,
@@ -272,24 +336,9 @@ export const createGovernanceWorkflowConfigORPCRouter = (registry: GovernanceReg
         async ({ input, context }) => {
           const { workspace, authCtx } = context;
           requireWorkspaceCapability(authCtx, 'ws.settings');
-          const kindConfig = registry.get(input.body.case_kind);
-          httpAssert.present(kindConfig, {
-            status: 404,
-            message: `Unknown governance case kind '${input.body.case_kind}'`
-          });
-          httpAssert.true(
-            input.body.case_subkind != null
-              ? kindConfig.workflowConfig?.supportsSubkind === true
-              : kindConfig.workflowConfig?.supportsWorkspaceScope !== false,
-            {
-              status: 400,
-              message: `Case kind '${input.body.case_kind}' does not support subkind-scoped configuration`
-            }
-          );
           const deleted = await context.db.governanceCaseConfig.deleteCaseConfig(
             workspace,
-            input.body.case_kind,
-            input.body.case_subkind
+            input.body.id
           );
           return { reset: deleted };
         }

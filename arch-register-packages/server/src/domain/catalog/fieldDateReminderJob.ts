@@ -428,9 +428,11 @@ export const syncFieldDateReminderCases = async (
   ]);
   const schemasById = new Map(schemas.map(schema => [schema.id, schema]));
   const configsBySubkind = new Map(
-    configRows
-      .filter(row => row.case_subkind != null)
-      .map(row => [row.case_subkind!, { enabled: row.enabled, config: row.config }])
+    configRows.flatMap(row =>
+      row.case_subkinds.map(
+        subkind => [subkind, { enabled: row.enabled, config: row.config }] as const
+      )
+    )
   );
   const teamIds = new Set(teams.map(team => team.id));
   const governanceRegistry = createFieldDateReminderGovernanceRegistry();
@@ -566,7 +568,11 @@ const advanceTriggeringDateField = async (tx: DatabaseAdapter, caseRow: Governan
     encodeCaseSubkind(schemaId, fieldId)
   );
   const advance = configRow
-    ? completionAdvanceFor(new Map([[configRow.case_subkind ?? '', configRow]]), schemaId, fieldId)
+    ? completionAdvanceFor(
+        new Map([[encodeCaseSubkind(schemaId, fieldId), configRow]]),
+        schemaId,
+        fieldId
+      )
     : null;
   if (!advance) return;
 
@@ -743,7 +749,7 @@ export const createFieldDateReminderGovernanceRegistry = (): GovernanceRegistry 
             encodeCaseSubkind(schemaId, fieldId)
           );
           return reminderFor(
-            row ? new Map([[row.case_subkind ?? '', row]]) : new Map(),
+            row ? new Map([[encodeCaseSubkind(schemaId, fieldId), row]]) : new Map(),
             schemaId,
             fieldId
           );

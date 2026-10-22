@@ -101,7 +101,7 @@ const makeDb = () => {
           id: 'config-1',
           workspace: 'ws-1',
           case_kind: FIELD_DATE_REMINDER_CASE_KIND,
-          case_subkind: encodeCaseSubkind(schema.id, 'eol_date'),
+          case_subkinds: [encodeCaseSubkind(schema.id, 'eol_date')],
           enabled: true,
           config: { approaching_days: [3], overdue_days: [1] },
           updated_at: now,
@@ -112,7 +112,7 @@ const makeDb = () => {
         id: 'config-1',
         workspace: 'ws-1',
         case_kind: FIELD_DATE_REMINDER_CASE_KIND,
-        case_subkind: encodeCaseSubkind(schema.id, 'eol_date'),
+        case_subkinds: [encodeCaseSubkind(schema.id, 'eol_date')],
         enabled: true,
         config: { approaching_days: [3], overdue_days: [1] },
         updated_at: now,
@@ -266,7 +266,7 @@ const makeStewardshipDb = (config: Record<string, unknown>, stewardValue: unknow
     id: 'config-1',
     workspace: 'ws-1',
     case_kind: FIELD_DATE_REMINDER_CASE_KIND,
-    case_subkind: encodeCaseSubkind(stewardshipSchema.id, 'review_date'),
+    case_subkinds: [encodeCaseSubkind(stewardshipSchema.id, 'review_date')],
     enabled: true,
     config,
     updated_at: now,
@@ -383,7 +383,7 @@ describe('field-date-reminder completion advance', () => {
     const tx = {
       governanceCaseConfig: {
         getCaseConfig: vi.fn(async () => ({
-          case_subkind: encodeCaseSubkind(stewardshipSchema.id, 'review_date'),
+          case_subkinds: [encodeCaseSubkind(stewardshipSchema.id, 'review_date')],
           enabled: true,
           config: {
             reminders: { enabled: true, approachingDays: [3], overdueDays: [1] },
@@ -423,7 +423,7 @@ describe('field-date-reminder completion advance', () => {
     const tx = {
       governanceCaseConfig: {
         getCaseConfig: vi.fn(async () => ({
-          case_subkind: encodeCaseSubkind(stewardshipSchema.id, 'review_date'),
+          case_subkinds: [encodeCaseSubkind(stewardshipSchema.id, 'review_date')],
           enabled: true,
           config: { reminders: { enabled: true, approachingDays: [3], overdueDays: [1] } }
         }))
