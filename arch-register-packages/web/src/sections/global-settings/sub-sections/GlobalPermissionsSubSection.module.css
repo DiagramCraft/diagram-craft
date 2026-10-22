@@ -18,22 +18,6 @@
   flex-shrink: 0;
 }
 
-.roleBtn {
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  font: inherit;
-}
-
-.roleMenuCheck {
-  width: 14px;
-  font-size: 12px;
-  text-align: center;
-  color: var(--accent-fg);
-  flex-shrink: 0;
-}
-
 .avatar {
   color: var(--base-fg);
   border-radius: 50%;

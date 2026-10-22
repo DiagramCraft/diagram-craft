@@ -7,7 +7,6 @@ import { useAuth } from '../../../auth/AuthContext';
 import { Banner } from '../../../components/Banner';
 import { Chip } from '../../../components/Chip';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
-import { DropdownMenu } from '../../../components/DropdownMenu';
 import { MemberAvatar } from '../../../components/MemberAvatar';
 import { getUserLabel } from '../../../utils/userLabel';
 import { useAuthUsers, useUpdateUserGlobalRoles } from '../../../hooks/useGlobalRoles';
@@ -40,43 +39,19 @@ const sameRoles = (left: GlobalRole[], right: GlobalRole[]) => {
   return sortedLeft.every((role, index) => role === sortedRight[index]);
 };
 
-const RolesMenu = ({
-  currentRoles,
-  onToggle
-}: {
-  currentRoles: GlobalRole[];
-  onToggle: (role: GlobalRole) => void;
-}) => {
-  return (
-    <DropdownMenu
-      trigger={
-        <button type="button" className={styles.roleBtn}>
-          <div className={styles.assignedRoles}>
-            {currentRoles.length === 0 && <span className={styles.noRoles}>No roles</span>}
-            {currentRoles.map(roleId => {
-              const role = GLOBAL_ROLES.find(r => r.id === roleId);
-              return role ? (
-                <Chip key={role.id} tone="ghost" dot={role.tone}>
-                  {role.name}
-                </Chip>
-              ) : null;
-            })}
-          </div>
-        </button>
-      }
-      items={GLOBAL_ROLES.map(role => ({
-        label: role.name,
-        icon: (
-          <span className={styles.roleMenuCheck}>
-            {currentRoles.includes(role.id) ? '\u2713' : '\u00A0'}
-          </span>
-        ),
-        keepOpen: true,
-        onClick: () => onToggle(role.id)
-      }))}
-    />
-  );
-};
+const RolesList = ({ roles }: { roles: GlobalRole[] }) => (
+  <div className={styles.assignedRoles}>
+    {roles.length === 0 && <span className={styles.noRoles}>No roles</span>}
+    {roles.map(roleId => {
+      const role = GLOBAL_ROLES.find(r => r.id === roleId);
+      return role ? (
+        <Chip key={role.id} tone="ghost" dot={role.tone}>
+          {role.name}
+        </Chip>
+      ) : null;
+    })}
+  </div>
+);
 
 export const GlobalPermissionsSubSection = ({
   addDialogOpen,
@@ -168,7 +143,10 @@ export const GlobalPermissionsSubSection = ({
             {assignedUsers.map(assignedUser => {
               const assignedRoles = roleMap[assignedUser.id] ?? [];
               return (
-                <Table.Row key={assignedUser.id}>
+                <Table.Row
+                  key={assignedUser.id}
+                  onClick={() => setSelectedUserId(assignedUser.id)}
+                >
                   <Table.NameCell
                     icon={
                       <MemberAvatar
@@ -181,19 +159,7 @@ export const GlobalPermissionsSubSection = ({
                     subtitle={assignedUser.email ?? assignedUser.id}
                   />
                   <Table.Cell>
-                    <RolesMenu
-                      currentRoles={assignedRoles}
-                      onToggle={role => {
-                        const next = assignedRoles.includes(role)
-                          ? assignedRoles.filter(r => r !== role)
-                          : [...assignedRoles, role];
-                        void updateMutation
-                          .mutateAsync({ userId: assignedUser.id, roles: next })
-                          .then(() => {
-                            if (assignedUser.id === user?.id) void reloadUser();
-                          });
-                      }}
-                    />
+                    <RolesList roles={assignedRoles} />
                   </Table.Cell>
                   <Table.Cell>
                     {assignedUser.is_system_actor ? (
@@ -238,14 +204,50 @@ export const GlobalPermissionsSubSection = ({
         users={unassignedUsers}
         canCreateUsers={canCreateUsers}
         onClose={onCloseAddDialog}
-        onSelect={userId => {
+        onCreated={userId => {
           onCloseAddDialog();
           setSelectedUserId(userId);
         }}
+        onSave={async (userId, roles) => {
+          await updateMutation.mutateAsync({ userId, roles });
+          if (userId === user?.id) await reloadUser();
+          onCloseAddDialog();
+        }}
+        isSaving={updateMutation.isPending}
       />
     </div>
   );
 };
+
+const RoleCheckboxList = ({
+  roles,
+  onToggle,
+  disabled
+}: {
+  roles: GlobalRole[];
+  onToggle: (role: GlobalRole) => void;
+  disabled: boolean;
+}) => (
+  <div className={styles.dialogList}>
+    {GLOBAL_ROLES.map(role => (
+      <label key={role.id} className={styles.dialogRoleRow}>
+        <div>
+          <div className={styles.dialogRoleTitle}>
+            <span className={styles.roleDot} style={{ background: role.tone }} />
+            {role.name}
+          </div>
+          <div className={styles.dialogRoleDescription}>{role.description}</div>
+        </div>
+        <input
+          type="checkbox"
+          checked={roles.includes(role.id)}
+          onChange={() => onToggle(role.id)}
+          disabled={disabled}
+        />
+      </label>
+    ))}
+  </div>
+);
 
 const RoleAssignmentDialog = ({
   open,
@@ -282,28 +284,10 @@ const RoleAssignmentDialog = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} title={`Global roles for ${getUserLabel(user)}`}>
+    <Dialog open={open} onClose={onClose} title={`Edit global permission for ${getUserLabel(user)}`}>
       <div className={styles.dialogBody}>
         <div className={styles.dialogMeta}>{user.email ?? user.id}</div>
-        <div className={styles.dialogList}>
-          {GLOBAL_ROLES.map(role => (
-            <label key={role.id} className={styles.dialogRoleRow}>
-              <div>
-                <div className={styles.dialogRoleTitle}>
-                  <span className={styles.roleDot} style={{ background: role.tone }} />
-                  {role.name}
-                </div>
-                <div className={styles.dialogRoleDescription}>{role.description}</div>
-              </div>
-              <input
-                type="checkbox"
-                checked={draftRoles.includes(role.id)}
-                onChange={() => toggleRole(role.id)}
-                disabled={isSaving}
-              />
-            </label>
-          ))}
-        </div>
+        <RoleCheckboxList roles={draftRoles} onToggle={toggleRole} disabled={isSaving} />
         <div className={styles.dialogActions}>
           <Button onClick={onClose} disabled={isSaving}>
             Cancel
@@ -326,20 +310,26 @@ const AddUserDialog = ({
   users,
   canCreateUsers,
   onClose,
-  onSelect
+  onCreated,
+  onSave,
+  isSaving
 }: {
   open: boolean;
   users: AuthUserInfo[];
   canCreateUsers: boolean;
   onClose: () => void;
-  onSelect: (userId: string) => void;
+  onCreated: (userId: string) => void;
+  onSave: (userId: string, roles: GlobalRole[]) => Promise<void>;
+  isSaving: boolean;
 }) => {
   const [selectedUserId, setSelectedUserId] = useState<string>('');
+  const [draftRoles, setDraftRoles] = useState<GlobalRole[]>([]);
   const [createUserDialogOpen, setCreateUserDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     setSelectedUserId(users[0]?.id ?? '');
+    setDraftRoles([]);
   }, [open, users]);
 
   if (!open) return null;
@@ -366,7 +356,7 @@ const AddUserDialog = ({
               <div className={styles.fieldLeft}>
                 <div className={styles.fieldLabel}>User</div>
                 <div className={styles.fieldHint}>
-                  Select an existing user, then assign their global roles.
+                  Select an existing user and assign their global roles.
                 </div>
               </div>
               <div className={styles.fieldRight}>
@@ -384,19 +374,30 @@ const AddUserDialog = ({
                 </Select.Root>
               </div>
             </div>
+            <RoleCheckboxList
+              roles={draftRoles}
+              onToggle={role =>
+                setDraftRoles(current =>
+                  current.includes(role) ? current.filter(r => r !== role) : [...current, role]
+                )
+              }
+              disabled={isSaving}
+            />
             <div className={styles.dialogActions}>
               {canCreateUsers && (
                 <Button variant="secondary" onClick={() => setCreateUserDialogOpen(true)}>
                   Create new user
                 </Button>
               )}
-              <Button onClick={onClose}>Cancel</Button>
+              <Button onClick={onClose} disabled={isSaving}>
+                Cancel
+              </Button>
               <Button
                 variant="primary"
-                onClick={() => onSelect(selectedUserId)}
-                disabled={!selectedUserId}
+                onClick={() => void onSave(selectedUserId, draftRoles)}
+                disabled={!selectedUserId || draftRoles.length === 0 || isSaving}
               >
-                Continue
+                {isSaving ? 'Saving…' : 'Add user'}
               </Button>
             </div>
           </>
@@ -406,7 +407,7 @@ const AddUserDialog = ({
           onClose={() => setCreateUserDialogOpen(false)}
           onCreated={(createdUser: UserDetail) => {
             setCreateUserDialogOpen(false);
-            onSelect(createdUser.id);
+            onCreated(createdUser.id);
           }}
         />
       </div>
