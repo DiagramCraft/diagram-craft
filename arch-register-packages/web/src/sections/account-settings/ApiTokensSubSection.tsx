@@ -23,6 +23,8 @@ import {
 } from '../../hooks/useAccountApiTokens';
 import { useWorkspaces } from '../../hooks/useWorkspaces';
 import { formatDate } from '../../utils/dateFormat';
+import { getWorkspaceCapabilityLabel } from '../../lib/workspaceCapabilityLabels';
+import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
 import styles from './ApiTokensSubSection.module.css';
 
 const EDITOR_CAPABILITIES = [
@@ -30,21 +32,6 @@ const EDITOR_CAPABILITIES = [
   'ent.external_update' as const,
   'governance.external' as const
 ];
-
-const CAPABILITY_LABELS: Record<string, string> = {
-  'ws.view': 'View workspace',
-  'ws.manage_views': 'Manage views',
-  'proj.create': 'Create projects',
-  'proj.edit': 'Edit projects and diagrams',
-  'content.view': 'View content',
-  'content.edit': 'Edit content',
-  'ent.edit': 'Edit entities',
-  'ent.external_update': 'Update externally managed fields',
-  'governance.external': 'Manage external governance workflows',
-  'ent.propose': 'Propose entity changes',
-  comments: 'Comment and discuss',
-  export: 'Export data'
-};
 
 const toExpiryIso = (value: string) =>
   value === '' ? null : new Date(`${value}T23:59:59.999Z`).toISOString();
@@ -157,7 +144,7 @@ const TokenCreateDialog = ({
                   value={capabilities.includes(capability)}
                   onChange={() => toggleCapability(capability)}
                 />
-                <span>{CAPABILITY_LABELS[capability] ?? capability}</span>
+                <span>{getWorkspaceCapabilityLabel(capability)}</span>
               </label>
             ))}
           </div>
@@ -306,13 +293,19 @@ export const ApiTokensSubSection = ({
                       {token.expires_at ? formatDate(token.expires_at) : 'Never'}
                     </Table.Cell>
                     <Table.ActionsCell>
-                      <Button
-                        variant="icon-only"
-                        title={`Revoke ${token.name}`}
-                        onClick={() => setRevokeId(token.id)}
-                      >
-                        <TbTrash size={14} />
-                      </Button>
+                      <DropdownMenu
+                      trigger={<Table.DotsButton aria-label={`Actions for ${token.name}`} />}
+                      items={
+                        [
+                          {
+                            label: 'Revoke token',
+                            icon: <TbTrash size={14} />,
+                            danger: true,
+                            onClick: () => setRevokeId(token.id)
+                          }
+                        ] satisfies MenuItem[]
+                      }
+                    />
                     </Table.ActionsCell>
                   </Table.Row>
                 ))}
