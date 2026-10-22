@@ -5,6 +5,7 @@ import { groupSchemasByCategory } from '../../lib/schemaPresentation';
 import type { EntityCategoryState, EntityCategoryStates } from './schemaGraphState';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import styles from './SchemaGraphView.module.css';
+import { TbCategory } from 'react-icons/tb';
 
 type Props = {
   schemas: EntitySchema[];
@@ -20,8 +21,8 @@ export const CategoryVisibilityPopover = ({ schemas, categoryStates, onChange }:
     <Popover.Root>
       <Popover.Trigger
         element={
-          <Button size="sm" variant="secondary" data-testid="model-overview-categories">
-            Categories{nonVisibleCount > 0 ? ` (${nonVisibleCount})` : ''}
+          <Button size="sm" data-testid="model-overview-categories">
+            <TbCategory /> Categories{nonVisibleCount > 0 ? ` (${nonVisibleCount})` : ''}
           </Button>
         }
       />
@@ -34,9 +35,7 @@ export const CategoryVisibilityPopover = ({ schemas, categoryStates, onChange }:
       >
         {groups.map(group => (
           <div key={group.category} className={styles.categoryRow}>
-            <span className={styles.categoryRowLabel}>
-              {group.category} ({group.items.length})
-            </span>
+            <span className={styles.categoryRowLabel}>{group.category}</span>
             <ToggleButtonGroup.Root
               type="single"
               aria-label={`${group.category} visibility`}

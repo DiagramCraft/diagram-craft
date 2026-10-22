@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import { getRouteApi } from '@tanstack/react-router';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { TreeRow } from '../../components/TreeRow';
@@ -50,6 +51,46 @@ export const DocumentSettingsSidebar = ({ workspaceSlug }: { workspaceSlug: stri
   const archivedTypes = types.filter(type => type.archived);
   const activeTemplates = templates.filter(template => !template.archived);
   const archivedTemplates = templates.filter(template => template.archived);
+
+  const renderTemplate = (template: (typeof templates)[number], showType: boolean) => {
+    const type = types.find(item => item.id === template.document_type_id);
+    return (
+      <TreeRow
+        key={template.id}
+        label={template.name}
+        active={templateId === template.id}
+        onClick={() => selectTemplate(template.id)}
+        tagColor={type ? typeColor.get(type.id) : undefined}
+        icon={
+          type ? (
+            <TypeBadge
+              color={typeColor.get(type.id) ?? 'var(--base-fg-dim)'}
+              name={type.name}
+              icon={type.icon}
+              size={14}
+            />
+          ) : undefined
+        }
+        trailing={showType ? <span className="dim">{type?.name ?? 'Unknown'}</span> : undefined}
+      />
+    );
+  };
+
+  const templateGroups = [
+    ...activeTypes.map(type => ({ id: type.id, name: type.name })),
+    ...(activeTemplates.some(t => !activeTypes.some(type => type.id === t.document_type_id))
+      ? [{ id: '__unknown__', name: 'Unknown type' }]
+      : [])
+  ]
+    .map(group => ({
+      ...group,
+      templates: activeTemplates.filter(t =>
+        group.id === '__unknown__'
+          ? !activeTypes.some(type => type.id === t.document_type_id)
+          : t.document_type_id === group.id
+      )
+    }))
+    .filter(group => group.templates.length > 0);
 
   return (
     <>
@@ -118,61 +159,22 @@ export const DocumentSettingsSidebar = ({ workspaceSlug }: { workspaceSlug: stri
         </div>
       ) : (
         <div className={styles.scroll}>
-          <SidebarGroupLabel>Templates</SidebarGroupLabel>
           {activeTemplates.length === 0 && (
-            <div className={`${styles.emptyState} dim`}>No templates defined.</div>
+            <>
+              <SidebarGroupLabel>Templates</SidebarGroupLabel>
+              <div className={`${styles.emptyState} dim`}>No templates defined.</div>
+            </>
           )}
-          {activeTemplates.map(template => (
-            <TreeRow
-              key={template.id}
-              label={template.name}
-              active={templateId === template.id}
-              onClick={() => selectTemplate(template.id)}
-              tagColor={typeColor.get(template.document_type_id)}
-              icon={(() => {
-                const type = types.find(item => item.id === template.document_type_id);
-                return type ? (
-                  <TypeBadge
-                    color={typeColor.get(type.id) ?? 'var(--base-fg-dim)'}
-                    name={type.name}
-                    icon={type.icon}
-                    size={14}
-                  />
-                ) : undefined;
-              })()}
-              trailing={
-                <span className="dim">
-                  {types.find(type => type.id === template.document_type_id)?.name ?? 'Unknown'}
-                </span>
-              }
-            />
+          {templateGroups.map(group => (
+            <Fragment key={group.id}>
+              <SidebarGroupLabel>{group.name}</SidebarGroupLabel>
+              {group.templates.map(template => renderTemplate(template, false))}
+            </Fragment>
           ))}
           {archivedTemplates.length > 0 && (
             <>
               <SidebarGroupLabel>Archived</SidebarGroupLabel>
-              {archivedTemplates.map(template => {
-                const type = types.find(item => item.id === template.document_type_id);
-                return (
-                  <TreeRow
-                    key={template.id}
-                    label={template.name}
-                    active={templateId === template.id}
-                    onClick={() => selectTemplate(template.id)}
-                    tagColor={type ? typeColor.get(type.id) : undefined}
-                    icon={
-                      type ? (
-                        <TypeBadge
-                          color={typeColor.get(type.id) ?? 'var(--base-fg-dim)'}
-                          name={type.name}
-                          icon={type.icon}
-                          size={14}
-                        />
-                      ) : undefined
-                    }
-                    trailing={<span className="dim">{type?.name ?? 'Unknown'}</span>}
-                  />
-                );
-              })}
+              {archivedTemplates.map(template => renderTemplate(template, true))}
             </>
           )}
         </div>

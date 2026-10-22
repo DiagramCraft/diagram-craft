@@ -543,17 +543,23 @@ export const listMembers = async (
     const users = await db.auth.listUsers();
     const userMap = new Map(users.map(u => [u.id, u]));
 
-    return members.map(m => {
-      const user = userMap.get(m.user_id);
-      return {
-        workspace: m.workspace,
-        user_id: m.user_id,
-        role: m.role,
-        display_name: user?.display_name ?? m.user_id,
-        email: user?.email ?? null,
-        created_at: m.created_at.toISOString()
-      };
-    });
+    return members
+      .map(m => {
+        const user = userMap.get(m.user_id);
+        return {
+          workspace: m.workspace,
+          user_id: m.user_id,
+          role: m.role,
+          display_name: user?.display_name ?? m.user_id,
+          email: user?.email ?? null,
+          created_at: m.created_at.toISOString()
+        };
+      })
+      .sort(
+        (a, b) =>
+          a.display_name.localeCompare(b.display_name, undefined, { sensitivity: 'base' }) ||
+          a.user_id.localeCompare(b.user_id)
+      );
   });
 };
 

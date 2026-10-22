@@ -226,10 +226,6 @@
   white-space: nowrap;
 }
 
-.blockLocked {
-  color: var(--cmp-fg-disabled);
-}
-
 .blockOrder {
   display: flex;
   gap: 1px;

@@ -78,7 +78,8 @@ test.describe('settings section', () => {
     await page.getByRole('button', { name: 'Save changes', exact: true }).click();
     await expect(page.getByRole('heading', { name: renamed, exact: true })).toBeVisible();
 
-    await page.getByRole('button', { name: 'Delete application', exact: true }).click();
+    await page.getByRole('button', { name: 'Application actions', exact: true }).click();
+    await page.getByRole('menuitem', { name: 'Delete application', exact: true }).click();
     await expect(page.getByText('Delete application?', { exact: true })).toBeVisible();
     await page
       .getByRole('alertdialog')

@@ -10,13 +10,9 @@ import { Menu } from '@diagram-craft/app-components/Menu';
 import { DerivedExpressionTestDialog } from '../../components/DerivedExpressionTestDialog';
 import { FIELD_TYPES, type FieldType } from '../../lib/schemaPresentation';
 import { toFieldId } from '../../utils/fieldId';
-import type {
-  EntitySchema,
-  SchemaField,
-  SchemaGroup
-} from '@arch-register/api-types/schemaContract';
-import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
-import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
+import type { SchemaField, SchemaGroup } from '@arch-register/api-types/schemaContract';
+import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
+import { useOptionalSchemaEditor } from './schemaEditorContext';
 import styles from './SchemaSettingsScreen.module.css';
 import { ScalarCardinalityControls } from './ScalarCardinalityControls';
 import {
@@ -29,10 +25,6 @@ const NO_GROUP = '__no_group__';
 
 export const SchemaFieldRow = ({
   field,
-  schemas,
-  relationSchemas,
-  enums,
-  groups,
   onUpdate,
   onChangeType,
   onRemove,
@@ -41,10 +33,6 @@ export const SchemaFieldRow = ({
   dragHandleRef
 }: {
   field: SchemaField;
-  schemas: EntitySchema[];
-  relationSchemas: RelationSchema[];
-  enums: WorkspaceEnum[];
-  groups: SchemaGroup[];
   onUpdate: (patch: Partial<SchemaField>) => void;
   onChangeType: (type: FieldType) => void;
   onRemove?: () => void;
@@ -52,6 +40,10 @@ export const SchemaFieldRow = ({
   canEdit: boolean;
   dragHandleRef: RefCallback<HTMLElement>;
 }) => {
+  const { schemas, relationSchemas, enums } = useWorkspaceContext();
+  // Outside a schema editor (e.g. shared field groups) there are no groups to move fields between
+  const editor = useOptionalSchemaEditor<SchemaField, SchemaGroup>();
+  const groups = editor?.draft?.groups ?? [];
   const [idUserEdited, setIdUserEdited] = useState(() => field.id !== toFieldId(field.name));
   const [expressionTestOpen, setExpressionTestOpen] = useState(false);
 
@@ -361,32 +353,31 @@ export const SchemaFieldRow = ({
         }
       />
       <MenuButton.Menu>
-        <Menu.SubMenu label="Move to group">
-          <Menu.RadioGroup value={field.groupId ?? NO_GROUP}>
-            <Menu.RadioItem value={NO_GROUP} onClick={() => onUpdate({ groupId: undefined })}>
-              No group
-            </Menu.RadioItem>
-            {groups.map(group => (
-              <Menu.RadioItem
-                key={group.id}
-                value={group.id}
-                onClick={() => onUpdate({ groupId: group.id })}
-              >
-                {group.name}
+        {editor && (
+          <Menu.SubMenu label="Move to group">
+            <Menu.RadioGroup value={field.groupId ?? NO_GROUP}>
+              <Menu.RadioItem value={NO_GROUP} onClick={() => onUpdate({ groupId: undefined })}>
+                No group
               </Menu.RadioItem>
-            ))}
-          </Menu.RadioGroup>
-        </Menu.SubMenu>
+              {groups.map(group => (
+                <Menu.RadioItem
+                  key={group.id}
+                  value={group.id}
+                  onClick={() => onUpdate({ groupId: group.id })}
+                >
+                  {group.name}
+                </Menu.RadioItem>
+              ))}
+            </Menu.RadioGroup>
+          </Menu.SubMenu>
+        )}
         {field.type === 'derived' && (
           <Menu.Item onClick={() => setExpressionTestOpen(true)}>Test expression</Menu.Item>
         )}
         {onRemove && (
-          <>
-            <Menu.Separator />
-            <Menu.Item type="danger" onClick={onRemove}>
-              Delete field
-            </Menu.Item>
-          </>
+          <Menu.Item type="danger" onClick={onRemove}>
+            Delete field
+          </Menu.Item>
         )}
       </MenuButton.Menu>
     </MenuButton.Root>

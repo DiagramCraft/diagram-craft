@@ -9,20 +9,18 @@ import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { Menu } from '@diagram-craft/app-components/Menu';
 import { RELATION_FIELD_TYPES, type RelationFieldType } from '../../lib/schemaPresentation';
 import { toFieldId } from '../../utils/fieldId';
-import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type {
   RelationField,
   RelationSchemaGroup
 } from '@arch-register/api-types/relationSchemaContract';
+import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
+import { useSchemaEditor } from './schemaEditorContext';
 import styles from './SchemaSettingsScreen.module.css';
 
 const NO_GROUP = '__no_group__';
 
 export const RelationFieldRow = ({
   field,
-  schemas,
-  enums,
-  groups,
   onUpdate,
   onChangeType,
   onRemove,
@@ -30,15 +28,14 @@ export const RelationFieldRow = ({
   dragHandleRef
 }: {
   field: RelationField;
-  schemas: EntitySchema[];
-  enums: { id: string; name: string }[];
-  groups: RelationSchemaGroup[];
   onUpdate: (patch: Partial<RelationField>) => void;
   onChangeType: (type: RelationFieldType) => void;
   onRemove?: () => void;
   canEdit: boolean;
   dragHandleRef: RefCallback<HTMLElement>;
 }) => {
+  const { schemas, enums } = useWorkspaceContext();
+  const groups = useSchemaEditor<RelationField, RelationSchemaGroup>().draft?.groups ?? [];
   const [idUserEdited, setIdUserEdited] = useState(() => field.id !== toFieldId(field.name));
 
   const optionsDisplay = () => {

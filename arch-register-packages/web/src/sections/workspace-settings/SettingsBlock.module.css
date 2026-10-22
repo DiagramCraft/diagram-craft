@@ -1,45 +1,58 @@
 /* Block list */
-.blockList {
+.list {
   display: flex;
   flex-direction: column;
   gap: 14px;
   padding: 16px 24px 32px;
 }
 
-/* Section actions (save/cancel row) */
-.sectionActions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 6px;
-}
-
 /* Section (Block) */
-.section {
+.block {
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);
   border-radius: var(--r-md);
   overflow: hidden;
 }
 
-.sectionHead {
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
   padding: 14px 16px 10px;
   border-bottom: 1px solid var(--panel-border);
 }
 
-.sectionTitle {
+.headText {
+  min-width: 0;
+}
+
+.headActions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+}
+
+.title {
   color: var(--base-fg);
   font-size: 13.5px;
   font-weight: 500;
 }
 
-.sectionSub {
+.description {
   font-size: 11.5px;
   margin-top: 2px;
   color: var(--cmp-fg-disabled);
 }
 
-.sectionBody {
+.body {
   padding: 8px 16px 14px;
+}
+
+.footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--panel-border);
 }
 
 /* Field row */
@@ -49,6 +62,10 @@
   gap: 24px;
   padding: 12px 0;
   border-bottom: 1px dashed var(--panel-border);
+  align-items: center;
+}
+
+.fieldTop {
   align-items: flex-start;
 }
 
@@ -76,4 +93,16 @@
 
 .fieldRight {
   min-width: 0;
+  font-size: 11px;
+}
+
+/* Page (list-style settings content) */
+.page {
+  padding: 0 24px 24px;
+}
+
+.pageStacked {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }

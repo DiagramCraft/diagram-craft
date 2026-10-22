@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getRouteApi } from '@tanstack/react-router';
-import { TbPlus, TbTrash, TbArchive, TbEye, TbFileText } from 'react-icons/tb';
+import { TbPlus, TbArchive, TbEye, TbFileText } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
@@ -25,6 +25,7 @@ import { TypeBadge } from '../../components/TypeBadge';
 import { EmptyState } from '../../components/EmptyState';
 
 import { Title } from '../../components/Title';
+import { EditorActionsMenu } from './EditorActionsMenu';
 import { resolveDocumentTypeColor } from '../../lib/schemaPresentation';
 
 import styles from './DocumentSettingsScreen.module.css';
@@ -153,6 +154,40 @@ export const DocumentTemplateEditor = ({
                   size={26}
                 />
               }
+              buttons={
+                <Button
+                  variant="primary"
+                  onClick={() => void handleSave()}
+                  disabled={
+                    !dirty ||
+                    !name.trim() ||
+                    !documentTypeId ||
+                    createTemplate.isPending ||
+                    updateTemplate.isPending
+                  }
+                >
+                  {createTemplate.isPending || updateTemplate.isPending ? 'Saving…' : 'Save'}
+                </Button>
+              }
+              menu={
+                selected ? (
+                  <EditorActionsMenu
+                    deleteLabel="Delete template"
+                    onDelete={() => setConfirmDelete(true)}
+                    extraItems={[
+                      {
+                        label: selected.archived ? 'Unarchive' : 'Archive',
+                        icon: selected.archived ? <TbEye size={14} /> : <TbArchive size={14} />,
+                        onClick: () =>
+                          void archiveTemplate.mutateAsync({
+                            id: selected.id,
+                            archived: !selected.archived
+                          })
+                      }
+                    ]}
+                  />
+                ) : undefined
+              }
               title={name ?? 'New template'}
               description={`For ${selectedType ? selectedType.name : 'an unknown type'}${selectedType?.archived ? ' · archived type' : ''}`}
             />
@@ -232,45 +267,6 @@ export const DocumentTemplateEditor = ({
             ) : (
               <div className={styles.fieldEmpty}>Select a document type to set field defaults.</div>
             )}
-
-            <div className={styles.bottomActions}>
-              {selected && (
-                <div className={styles.bottomActionGroup}>
-                  <Button
-                    variant="secondary"
-                    icon={selected.archived ? <TbEye size={13} /> : <TbArchive size={13} />}
-                    onClick={() =>
-                      void archiveTemplate.mutateAsync({
-                        id: selected.id,
-                        archived: !selected.archived
-                      })
-                    }
-                  >
-                    {selected.archived ? 'Unarchive' : 'Archive'}
-                  </Button>
-                  <Button
-                    variant="danger"
-                    icon={<TbTrash size={13} />}
-                    onClick={() => setConfirmDelete(true)}
-                  >
-                    Delete
-                  </Button>
-                </div>
-              )}
-              <Button
-                variant="primary"
-                onClick={() => void handleSave()}
-                disabled={
-                  !dirty ||
-                  !name.trim() ||
-                  !documentTypeId ||
-                  createTemplate.isPending ||
-                  updateTemplate.isPending
-                }
-              >
-                {createTemplate.isPending || updateTemplate.isPending ? 'Saving…' : 'Save'}
-              </Button>
-            </div>
           </div>
         </div>
       ) : (

@@ -1,6 +1,6 @@
+import { SaveBarButtons } from '../SaveBarButtons';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { TbAlertTriangle, TbBox } from 'react-icons/tb';
-import { Button } from '@diagram-craft/app-components/Button';
 import { Select } from '@diagram-craft/app-components/Select';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
@@ -144,21 +144,13 @@ export const CapabilityBindingEditor = ({
 
   useEffect(() => {
     onActionsChange(
-      <>
-        <Button
-          disabled={!dirty || mutation.isPending || deleteMutation.isPending}
-          onClick={resetDraft}
-        >
-          Cancel
-        </Button>
-        <Button
-          variant="primary"
-          disabled={!enabled || !dirty || mutation.isPending || deleteMutation.isPending}
-          onClick={() => void save()}
-        >
-          {mutation.isPending ? 'Saving...' : 'Save changes'}
-        </Button>
-      </>
+      <SaveBarButtons
+        dirty={dirty}
+        pending={mutation.isPending || deleteMutation.isPending}
+        canSave={enabled}
+        onCancel={resetDraft}
+        onSave={save}
+      />
     );
   }, [
     deleteMutation.isPending,

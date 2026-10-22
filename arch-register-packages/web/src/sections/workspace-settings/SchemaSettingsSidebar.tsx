@@ -7,7 +7,9 @@ import {
   TbPlus,
   TbShare2,
   TbPencil,
-  TbTrash
+  TbTrash,
+  TbChevronsDown,
+  TbChevronsUp
 } from 'react-icons/tb';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { Menu } from '@diagram-craft/app-components/Menu';
@@ -32,7 +34,7 @@ import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useCreateCategory, useDeleteCategory, useUpdateCategory } from '../../hooks/useCategories';
 import { NEW_SCHEMA_ID } from './SchemaSettingsScreen';
 import { NEW_RELATION_SCHEMA_ID } from './RelationSchemaSettingsScreen';
-import { NEW_ENUM_ID } from './EnumEditorScreen';
+import { NEW_ENUM_ID } from './useEnumDraft';
 import { NEW_FIELD_GROUP_ID } from './FieldGroupEditorScreen';
 
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/schemas');
@@ -96,11 +98,18 @@ export const SchemaSettingsSidebar = ({
     });
   };
 
+  const categoryKeys = categoryRows.map(row => row.id ?? '');
+  const collapseAll = () => setCollapsed(new Set(categoryKeys));
+  const expandAll = () => setCollapsed(new Set());
+  const allCollapsed = categoryKeys.every(key => collapsed.has(key));
+  const noneCollapsed = categoryKeys.every(key => !collapsed.has(key));
+
   const [addCategoryOpen, setAddCategoryOpen] = useState(false);
   const [categoryMenu, setCategoryMenu] = useState<{
     x: number;
     y: number;
-    category: Category;
+    // null for the synthetic Uncategorized bucket or when the user can't edit categories
+    category: Category | null;
   } | null>(null);
   const [renameCategoryTarget, setRenameCategoryTarget] = useState<Category | null>(null);
   const [deleteCategoryTarget, setDeleteCategoryTarget] = useState<Category | null>(null);
@@ -210,11 +219,11 @@ export const SchemaSettingsSidebar = ({
                 onExpand={() => toggleCategory(categoryKey)}
                 onClick={() => toggleCategory(categoryKey)}
                 onContextMenu={event => {
-                  if (!permissions.canEditSchemas || category.id === null) return;
                   event.preventDefault();
                   event.stopPropagation();
-                  const fullCategory = categories.find(c => c.id === category.id);
-                  if (!fullCategory) return;
+                  const fullCategory = permissions.canEditSchemas
+                    ? (categories.find(c => c.id === category.id) ?? null)
+                    : null;
                   setCategoryMenu({ x: event.clientX, y: event.clientY, category: fullCategory });
                 }}
               />
@@ -354,30 +363,49 @@ export const SchemaSettingsSidebar = ({
           onClose={() => setCategoryMenu(null)}
         >
           <Menu.Item
-            leftSlot={<TbPencil size={13} />}
-            onClick={() => setRenameCategoryTarget(categoryMenu.category)}
+            leftSlot={<TbChevronsUp size={13} />}
+            disabled={allCollapsed}
+            onClick={collapseAll}
           >
-            Rename
+            Collapse all
           </Menu.Item>
-          <Menu.Separator />
           <Menu.Item
-            type="danger"
-            disabled={
-              (schemaGroups.find(g => g.categoryId === categoryMenu.category.id)?.items.length ??
-                0) +
-                (enumGroups.find(g => g.categoryId === categoryMenu.category.id)?.items.length ??
-                  0) +
-                (fieldGroupGroups.find(g => g.categoryId === categoryMenu.category.id)?.items
-                  .length ?? 0) +
-                (relationSchemaGroups.find(g => g.categoryId === categoryMenu.category.id)?.items
-                  .length ?? 0) >
-              0
-            }
-            leftSlot={<TbTrash size={13} />}
-            onClick={() => setDeleteCategoryTarget(categoryMenu.category)}
+            leftSlot={<TbChevronsDown size={13} />}
+            disabled={noneCollapsed}
+            onClick={expandAll}
           >
-            Delete
+            Expand all
           </Menu.Item>
+          {categoryMenu.category && (
+            <>
+              <Menu.Separator />
+              <Menu.Item
+                leftSlot={<TbPencil size={13} />}
+                onClick={() => setRenameCategoryTarget(categoryMenu.category)}
+              >
+                Rename
+              </Menu.Item>
+              <Menu.Separator />
+              <Menu.Item
+                type="danger"
+                disabled={
+                  (schemaGroups.find(g => g.categoryId === categoryMenu.category?.id)?.items
+                    .length ?? 0) +
+                    (enumGroups.find(g => g.categoryId === categoryMenu.category?.id)?.items
+                      .length ?? 0) +
+                    (fieldGroupGroups.find(g => g.categoryId === categoryMenu.category?.id)?.items
+                      .length ?? 0) +
+                    (relationSchemaGroups.find(g => g.categoryId === categoryMenu.category?.id)
+                      ?.items.length ?? 0) >
+                  0
+                }
+                leftSlot={<TbTrash size={13} />}
+                onClick={() => setDeleteCategoryTarget(categoryMenu.category)}
+              >
+                Delete
+              </Menu.Item>
+            </>
+          )}
         </ContextMenu.Imperative>
       )}
 

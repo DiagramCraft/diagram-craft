@@ -1,4 +1,5 @@
 import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { DateInput } from '@diagram-craft/app-components/DateInput';
 import { Select } from '@diagram-craft/app-components/Select';
 
 import type { DocumentField, DocumentMetadata } from '@arch-register/api-types/documentContract';
@@ -44,10 +45,9 @@ export const TemplateDefaultInput = ({
   }
   if (field.type === 'date') {
     return (
-      <input
-        type="date"
+      <DateInput
         value={typeof value === 'string' ? value : ''}
-        onChange={event => onChange(event.target.value ?? undefined)}
+        onChange={v => onChange(v === undefined || v === '' ? undefined : v)}
       />
     );
   }

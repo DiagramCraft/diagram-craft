@@ -84,6 +84,8 @@ export type SchemaEditorAdapter<
   selectAfterDelete: (items: Selected[], deletedId: string) => string;
   labels: {
     subject: string;
+    /** Subject shown in the field-migration dialog; defaults to `subject`. */
+    migrationSubject?: string;
     itemNoun: string;
     deleteTitle: string;
     deleteConfirmLabel: string;
@@ -126,6 +128,11 @@ export type SchemaEditorController<
   setPendingFieldChanges: Dispatch<SetStateAction<PendingFieldChange[] | null>>;
   setGroupDialogOpen: Dispatch<SetStateAction<boolean>>;
   setEditingGroup: Dispatch<SetStateAction<Group | null>>;
+  /** Opens the group dialog for a new group. */
+  addGroup: () => void;
+  /** Opens the group dialog for an existing group. */
+  editGroup: (group: Group) => void;
+  labels: SchemaEditorAdapter<Selected, Field, Group, Extra, FieldType>['labels'];
   addField: (groupId?: string) => void;
   updateField: (fieldId: string, patch: Partial<Field>) => void;
   changeFieldType: (fieldId: string, newType: FieldType) => void;
@@ -143,6 +150,8 @@ export type SchemaEditorController<
   save: (fieldMigrations?: FieldMigrations) => Promise<void>;
   confirmFieldMigrations: (choices: FieldMigrationChoices) => void;
   deleteSelected: () => Promise<void>;
+  /** Discards unsaved edits and restores the draft from the saved schema (or a blank new one). */
+  revert: () => void;
 };
 
 export const buildFieldMigrations = (
@@ -518,6 +527,27 @@ export const useSchemaEditorController = <
     [pendingFieldChanges, save]
   );
 
+  const revert = useCallback(() => {
+    if (selected) {
+      setDraft(adapterRef.current.createDraft(selected));
+      resetTransientState();
+    } else if (isNew) {
+      setDraft(adapterRef.current.createDraft(null));
+      resetTransientState();
+      setDirty(true);
+    }
+  }, [selected, isNew, resetTransientState]);
+
+  const addGroup = useCallback(() => {
+    setEditingGroup(null);
+    setGroupDialogOpen(true);
+  }, []);
+
+  const editGroup = useCallback((group: Group) => {
+    setEditingGroup(group);
+    setGroupDialogOpen(true);
+  }, []);
+
   const deleteSelected = useCallback(async () => {
     if (!selected) return;
     setConfirmDelete(false);
@@ -554,6 +584,9 @@ export const useSchemaEditorController = <
     setPendingFieldChanges,
     setGroupDialogOpen,
     setEditingGroup,
+    addGroup,
+    editGroup,
+    labels: adapter.labels,
     addField,
     updateField,
     changeFieldType,
@@ -570,6 +603,7 @@ export const useSchemaEditorController = <
     removeGroup,
     save,
     confirmFieldMigrations,
-    deleteSelected
+    deleteSelected,
+    revert
   };
 };

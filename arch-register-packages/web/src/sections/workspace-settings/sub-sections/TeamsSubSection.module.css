@@ -1,7 +1,3 @@
-.container {
-  padding: 0 24px 24px;
-}
-
 /* ============= Card list ============= */
 .teamList {
   display: flex;
@@ -222,16 +218,6 @@
 }
 
 /* ============= Avatar ============= */
-.avatar {
-  color: var(--base-fg);
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  font-weight: 500;
-  letter-spacing: 0.3px;
-}
 
 /* ============= Shared utilities ============= */
 .dim {
@@ -297,42 +283,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.assignmentList {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.assignmentRow {
-  display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(170px, 220px) auto;
-  gap: 8px;
-  align-items: center;
-}
-
-.roleLegend {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  border: 1px solid var(--cmp-border);
-  border-radius: 8px;
-  background: var(--base-bg);
-  padding: 12px;
-}
-
-.roleLegendItem {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.roleLegendText {
-  color: var(--cmp-fg-disabled);
-  font-size: 11px;
-  line-height: 1.45;
 }
 
 .dialogActions {

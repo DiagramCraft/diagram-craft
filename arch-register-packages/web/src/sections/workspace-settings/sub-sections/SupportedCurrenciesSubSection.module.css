@@ -1,0 +1,13 @@
+.fieldGrid {
+  gap: 14px;
+  grid-row-gap: 6px;
+  display: grid;
+  grid-template-columns: 26px 120px 1fr auto;
+  margin-top: 6px;
+  margin-bottom: 16px;
+  align-items: center;
+}
+
+.defaultRadio {
+  justify-self: start;
+}

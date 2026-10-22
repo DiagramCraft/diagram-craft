@@ -1,0 +1,15 @@
+.fieldGrid {
+  gap: 14px;
+  grid-row-gap: 6px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  margin-top: 6px;
+  margin-bottom: 16px;
+  align-items: center;
+}
+
+.divider {
+  grid-column: 1 / 3;
+  border-bottom: 1px dashed var(--panel-border);
+  margin-bottom: 4px;
+}

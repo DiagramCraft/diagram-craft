@@ -4,3 +4,11 @@
     cursor: pointer;
   }
 }
+
+/** Apply to chrome only */
+/* biome-ignore lint/correctness/noUnknownMediaFeatureName: ok */
+@media screen and (-webkit-min-device-pixel-ratio: 0) and (min-resolution: 0.001dpcm) {
+  .eInput {
+    margin-right: 4px;
+  }
+}

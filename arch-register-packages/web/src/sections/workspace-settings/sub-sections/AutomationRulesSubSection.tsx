@@ -1,3 +1,4 @@
+import { SettingsPage } from '../SettingsBlock';
 import { useEffect, useMemo, useState } from 'react';
 import { TbBolt, TbEdit, TbPlus, TbTrash } from 'react-icons/tb';
 import type {
@@ -11,6 +12,7 @@ import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { Button } from '@diagram-craft/app-components/Button';
+import { SectionActions } from '../SectionActions';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
@@ -21,8 +23,8 @@ import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteCo
 import { Table } from '../../../components/table/Table';
 import { DropdownMenu, type MenuItem } from '../../../components/DropdownMenu';
 import { Chip } from '../../../components/Chip';
-import { EmptyState } from '../../../components/EmptyState';
-import { LoadingState } from '../../../components/LoadingState';
+import { QueryState } from '../QueryState';
+import { MutationError } from '../MutationError';
 import { formatDateTime } from '../../../utils/dateFormat';
 import {
   useAutomationRuleOperations,
@@ -666,7 +668,7 @@ const EditorDialog = ({
           <Checkbox value={enabled} onChange={value => setEnabled(value ?? false)} /> Enabled
         </label>
 
-        {error && <div className={styles.error}>{error.message}</div>}
+        <MutationError error={error} />
       </div>
     </Dialog>
   );
@@ -712,36 +714,34 @@ export const AutomationRulesSubSection = ({
   };
 
   return (
-    <div className={styles.container}>
-      <Tabs.Root value={tab} onValueChange={v => setTab(v as AutomationTab)}>
-        <Tabs.List>
-          <Tabs.Trigger value="rules">Rules ({rules.length})</Tabs.Trigger>
-          <Tabs.Trigger value="runs">Runs</Tabs.Trigger>
-        </Tabs.List>
-      </Tabs.Root>
+    <>
+      <SectionActions>
+        tab === 'rules' ? (
+        <Button variant="primary" icon={<TbPlus size={12} />} onClick={() => setEditor('new')}>
+          New rule
+        </Button>
+        ) : undefined
+      </SectionActions>
+      <SettingsPage>
+        <Tabs.Root value={tab} onValueChange={v => setTab(v as AutomationTab)}>
+          <Tabs.List>
+            <Tabs.Trigger value="rules">Rules ({rules.length})</Tabs.Trigger>
+            <Tabs.Trigger value="runs">Runs</Tabs.Trigger>
+          </Tabs.List>
+        </Tabs.Root>
 
-      {tab === 'rules' && (
-        <>
-          <div className={styles.intro}>
-            <span>
-              Rules are matched synchronously when entities change; their actions run asynchronously
-              on the job server.
-            </span>
-            <Button variant="primary" icon={<TbPlus size={13} />} onClick={() => setEditor('new')}>
-              New rule
-            </Button>
-          </div>
-          {error ? (
-            <div className={styles.error}>Automation rules could not be loaded.</div>
-          ) : isLoading ? (
-            <LoadingState text="Loading automation rules…" size="sm" />
-          ) : rules.length === 0 ? (
-            <EmptyState
-              icon={<TbBolt size={20} />}
-              title="No automation rules"
-              subtitle="Create a rule to act automatically when entities change."
-            />
-          ) : (
+        {tab === 'rules' && (
+          <QueryState
+            isLoading={isLoading}
+            error={error}
+            isEmpty={rules.length === 0}
+            subject="automation rules"
+            empty={{
+              icon: <TbBolt size={20} />,
+              title: 'No automation rules',
+              subtitle: 'Create a rule to act automatically when entities change.'
+            }}
+          >
             <div className={styles.tableWrap}>
               <Table.Root>
                 <Table.Head>
@@ -801,83 +801,84 @@ export const AutomationRulesSubSection = ({
                 </Table.Body>
               </Table.Root>
             </div>
-          )}
-        </>
-      )}
+          </QueryState>
+        )}
 
-      {tab === 'runs' &&
-        (runsLoading ? (
-          <LoadingState text="Loading rule runs…" size="sm" />
-        ) : runsError ? (
-          <div className={styles.error}>Rule runs could not be loaded.</div>
-        ) : runs == null || runs.items.length === 0 ? (
-          <EmptyState compact title="No automation rule runs yet." />
-        ) : (
-          <div className={styles.tableWrap}>
-            <Table.Root layout="fixed" bordered={false}>
-              <Table.Head>
-                <Table.Row>
-                  <Table.HeaderCell width={155}>Planned</Table.HeaderCell>
-                  <Table.HeaderCell width={155}>Completed</Table.HeaderCell>
-                  <Table.HeaderCell width={100}>Status</Table.HeaderCell>
-                  <Table.HeaderCell width={90} numeric>
-                    Attempts
-                  </Table.HeaderCell>
-                  <Table.HeaderCell>Result / error</Table.HeaderCell>
-                </Table.Row>
-              </Table.Head>
-              <Table.Body>
-                {runs.items.map(run => (
-                  <Table.Row key={run.id}>
-                    <Table.Cell>{formatDateTime(run.planned_at)}</Table.Cell>
-                    <Table.Cell>{formatDateTime(run.completed_at)}</Table.Cell>
-                    <Table.Cell>
-                      <Chip
-                        dot={
-                          run.status === 'succeeded'
-                            ? 'var(--green)'
-                            : run.status === 'failed'
-                              ? 'var(--error-fg)'
-                              : 'var(--warning-fg)'
-                        }
-                        tone="ghost"
-                      >
-                        {run.status}
-                      </Chip>
-                    </Table.Cell>
-                    <Table.Cell numeric>
-                      {run.attempt_count}/{run.max_attempts}
-                    </Table.Cell>
-                    <Table.Cell>
-                      <div className={styles.summary}>{formatSummary(run.result, run.error)}</div>
-                    </Table.Cell>
+        {tab === 'runs' && (
+          <QueryState
+            isLoading={runsLoading}
+            error={runsError}
+            isEmpty={runs == null || runs.items.length === 0}
+            subject="rule runs"
+            empty={{ compact: true, title: 'No automation rule runs yet.' }}
+          >
+            <div className={styles.tableWrap}>
+              <Table.Root layout="fixed">
+                <Table.Head>
+                  <Table.Row>
+                    <Table.HeaderCell width={155}>Planned</Table.HeaderCell>
+                    <Table.HeaderCell width={155}>Completed</Table.HeaderCell>
+                    <Table.HeaderCell width={100}>Status</Table.HeaderCell>
+                    <Table.HeaderCell width={90} numeric>
+                      Attempts
+                    </Table.HeaderCell>
+                    <Table.HeaderCell>Result / error</Table.HeaderCell>
                   </Table.Row>
-                ))}
-              </Table.Body>
-            </Table.Root>
-          </div>
-        ))}
+                </Table.Head>
+                <Table.Body>
+                  {(runs?.items ?? []).map(run => (
+                    <Table.Row key={run.id}>
+                      <Table.Cell>{formatDateTime(run.planned_at)}</Table.Cell>
+                      <Table.Cell>{formatDateTime(run.completed_at)}</Table.Cell>
+                      <Table.Cell>
+                        <Chip
+                          dot={
+                            run.status === 'succeeded'
+                              ? 'var(--green)'
+                              : run.status === 'failed'
+                                ? 'var(--error-fg)'
+                                : 'var(--warning-fg)'
+                          }
+                          tone="ghost"
+                        >
+                          {run.status}
+                        </Chip>
+                      </Table.Cell>
+                      <Table.Cell numeric>
+                        {run.attempt_count}/{run.max_attempts}
+                      </Table.Cell>
+                      <Table.Cell>
+                        <div className={styles.summary}>{formatSummary(run.result, run.error)}</div>
+                      </Table.Cell>
+                    </Table.Row>
+                  ))}
+                </Table.Body>
+              </Table.Root>
+            </div>
+          </QueryState>
+        )}
 
-      <EditorDialog
-        rule={editor}
-        schemas={schemas}
-        relationSchemas={relationSchemas}
-        lifecycleStates={lifecycleStates}
-        pending={operations.create.isPending || operations.update.isPending}
-        error={(operations.create.error ?? operations.update.error) as Error | null}
-        onClose={() => setEditor(null)}
-        onSave={input => void save(input)}
-      />
-      <DeleteConfirmationDialog
-        open={deleteId != null}
-        title="Delete automation rule?"
-        message="Queued runs for this rule will still execute, but no new runs will be enqueued."
-        onCancel={() => setDeleteId(null)}
-        onConfirm={() => {
-          if (!deleteId) return;
-          void operations.remove.mutateAsync(deleteId).then(() => setDeleteId(null));
-        }}
-      />
-    </div>
+        <EditorDialog
+          rule={editor}
+          schemas={schemas}
+          relationSchemas={relationSchemas}
+          lifecycleStates={lifecycleStates}
+          pending={operations.create.isPending || operations.update.isPending}
+          error={(operations.create.error ?? operations.update.error) as Error | null}
+          onClose={() => setEditor(null)}
+          onSave={input => void save(input)}
+        />
+        <DeleteConfirmationDialog
+          open={deleteId != null}
+          title="Delete automation rule?"
+          message="Queued runs for this rule will still execute, but no new runs will be enqueued."
+          onCancel={() => setDeleteId(null)}
+          onConfirm={() => {
+            if (!deleteId) return;
+            void operations.remove.mutateAsync(deleteId).then(() => setDeleteId(null));
+          }}
+        />
+      </SettingsPage>
+    </>
   );
 };

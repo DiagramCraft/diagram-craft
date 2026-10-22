@@ -1,0 +1,47 @@
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  flex-wrap: wrap;
+}
+
+.toolbarNoPadding {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 26px;
+  padding: 0 6px 0 8px;
+  border: 1px solid var(--cmp-border);
+  border-radius: var(--r);
+  background: var(--panel-bg);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.filter:hover {
+  border-color: var(--base-fg-more-dim);
+}
+
+.filterLabel {
+  color: var(--cmp-fg-disabled);
+  font-size: 11px;
+  padding: 2px 5px 0 1px;
+}
+
+.filterControl {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  color: var(--base-fg);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  padding-right: 2px;
+}

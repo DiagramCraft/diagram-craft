@@ -1,47 +1,3 @@
-/* Block list */
-.blockList {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 16px 24px 32px;
-}
-
-/* Section actions (save/cancel row) */
-.sectionActions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 6px;
-}
-
-/* Section (Block) */
-.section {
-  background: var(--panel-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r-md);
-  overflow: hidden;
-}
-
-.sectionHead {
-  padding: 14px 16px 10px;
-  border-bottom: 1px solid var(--panel-border);
-}
-
-.sectionTitle {
-  color: var(--base-fg);
-  font-size: 13.5px;
-  font-weight: 500;
-}
-
-.sectionSub {
-  font-size: 11.5px;
-  margin-top: 2px;
-  color: var(--cmp-fg-disabled);
-}
-
-.sectionBody {
-  padding: 8px 16px 14px;
-}
-
 /* Field row */
 .field {
   display: grid;
@@ -76,6 +32,7 @@
 
 .fieldRight {
   min-width: 0;
+  font-size: 11px;
 }
 
 /* Notification preference table */

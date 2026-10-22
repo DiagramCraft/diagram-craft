@@ -1,4 +1,7 @@
+import { SettingsPage } from '../SettingsBlock';
 import { useEffect, useState } from 'react';
+import { SectionActions } from '../SectionActions';
+import { TbPlus } from 'react-icons/tb';
 import { TbCopy, TbKey, TbTrash } from 'react-icons/tb';
 import { WORKSPACE_ROLE_CAPABILITIES } from '@arch-register/permissions';
 import type {
@@ -12,14 +15,16 @@ import { Dialog, KbdHints } from '@diagram-craft/app-components/Dialog';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { Table } from '../../../components/table/Table';
-import { EmptyState } from '../../../components/EmptyState';
-import { LoadingState } from '../../../components/LoadingState';
+import { QueryState } from '../QueryState';
+import { MutationError } from '../MutationError';
 import {
   useWorkspaceApiTokens,
   useCreateWorkspaceApiToken,
   useRevokeWorkspaceApiToken
 } from '../../../hooks/useWorkspaceApiTokens';
 import { formatDate } from '../../../utils/dateFormat';
+import { getWorkspaceCapabilityLabel } from '../../../lib/workspaceCapabilityLabels';
+import { DropdownMenu, type MenuItem } from '../../../components/DropdownMenu';
 import styles from './WorkspaceApiTokensSubSection.module.css';
 
 const EDITOR_CAPABILITIES = [
@@ -27,21 +32,6 @@ const EDITOR_CAPABILITIES = [
   'ent.external_update' as const,
   'governance.external' as const
 ];
-
-const CAPABILITY_LABELS: Record<string, string> = {
-  'ws.view': 'View workspace',
-  'ws.manage_views': 'Manage views',
-  'proj.create': 'Create projects',
-  'proj.edit': 'Edit projects and diagrams',
-  'content.view': 'View content',
-  'content.edit': 'Edit content',
-  'ent.edit': 'Edit entities',
-  'ent.external_update': 'Update externally managed fields',
-  'governance.external': 'Manage external governance workflows',
-  'ent.propose': 'Propose entity changes',
-  comments: 'Comment and discuss',
-  export: 'Export data'
-};
 
 const toExpiryIso = (value: string) =>
   value === '' ? null : new Date(`${value}T23:59:59.999Z`).toISOString();
@@ -133,12 +123,12 @@ const TokenCreateDialog = ({
                   value={capabilities.includes(capability)}
                   onChange={() => toggleCapability(capability)}
                 />
-                <span>{CAPABILITY_LABELS[capability] ?? capability}</span>
+                <span>{getWorkspaceCapabilityLabel(capability)}</span>
               </label>
             ))}
           </div>
         </div>
-        {error && <div className={styles.error}>{error.message}</div>}
+        <MutationError error={error} />
       </div>
     </Dialog>
   );
@@ -170,15 +160,9 @@ const SecretDialog = ({ token, onClose }: { token: string | null; onClose: () =>
   );
 };
 
-export const WorkspaceApiTokensSubSection = ({
-  workspaceSlug,
-  createDialogOpen,
-  onCloseCreateDialog
-}: {
-  workspaceSlug: string;
-  createDialogOpen: boolean;
-  onCloseCreateDialog: () => void;
-}) => {
+export const WorkspaceApiTokensSubSection = ({ workspaceSlug }: { workspaceSlug: string }) => {
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const onCloseCreateDialog = () => setCreateDialogOpen(false);
   const { data: tokens = [], isLoading, error } = useWorkspaceApiTokens(workspaceSlug);
   const createToken = useCreateWorkspaceApiToken(workspaceSlug);
   const revokeToken = useRevokeWorkspaceApiToken(workspaceSlug);
@@ -194,81 +178,104 @@ export const WorkspaceApiTokensSubSection = ({
     setSecret(created.token);
   };
 
+  const header = (
+    <SectionActions>
+      <Button
+        variant="primary"
+        icon={<TbPlus size={12} />}
+        onClick={() => setCreateDialogOpen(true)}
+      >
+        Create token
+      </Button>
+    </SectionActions>
+  );
+
   return (
-    <div className={styles.container}>
-      <div className={styles.intro}>
-        Tokens created here are owned by the workspace itself, not any individual member, so they
-        keep working even if the admin who created them leaves. For a personal token tied to your
-        own account, use Account Settings instead.
-      </div>
+    <>
+      {header}
+      <SettingsPage stacked={false}>
+        <div className={styles.intro}>
+          Tokens created here are owned by the workspace itself, not any individual member, so they
+          keep working even if the admin who created them leaves. For a personal token tied to your
+          own account, use Account Settings instead.
+        </div>
 
-      {error ? (
-        <div className={styles.error}>Failed to load API tokens: {error.message}</div>
-      ) : isLoading ? (
-        <LoadingState text="Loading API tokens…" size="sm" />
-      ) : tokens.length === 0 ? (
-        <EmptyState
-          icon={<TbKey size={20} />}
-          title="No API tokens"
-          subtitle="Create a token for a CI pipeline or service integration."
-          compact
-        />
-      ) : (
-        <Table.Root>
-          <Table.Head>
-            <Table.Row>
-              <Table.HeaderCell>Token</Table.HeaderCell>
-              <Table.HeaderCell>Capabilities</Table.HeaderCell>
-              <Table.HeaderCell>Last used</Table.HeaderCell>
-              <Table.HeaderCell>Expires</Table.HeaderCell>
-              <Table.HeaderCell />
-            </Table.Row>
-          </Table.Head>
-          <Table.Body>
-            {tokens.map(token => (
-              <Table.Row key={token.id}>
-                <Table.NameCell
-                  title={token.name}
-                  subtitle={`Created ${formatDate(token.created_at, 'Never')}`}
-                  icon={<TbKey size={14} />}
-                />
-                <Table.Cell>{token.capabilities.length} editor capabilities</Table.Cell>
-                <Table.Cell>{formatDate(token.last_used_at, 'Never')}</Table.Cell>
-                <Table.Cell>{token.expires_at ? formatDate(token.expires_at) : 'Never'}</Table.Cell>
-                <Table.ActionsCell>
-                  <Button
-                    variant="icon-only"
-                    title={`Revoke ${token.name}`}
-                    onClick={() => setRevokeId(token.id)}
-                  >
-                    <TbTrash size={14} />
-                  </Button>
-                </Table.ActionsCell>
+        <QueryState
+          isLoading={isLoading}
+          error={error}
+          isEmpty={tokens.length === 0}
+          subject="API tokens"
+          empty={{
+            icon: <TbKey size={20} />,
+            title: 'No API tokens',
+            subtitle: 'Create a token for a CI pipeline or service integration.',
+            compact: true
+          }}
+        >
+          <Table.Root>
+            <Table.Head>
+              <Table.Row>
+                <Table.HeaderCell>Token</Table.HeaderCell>
+                <Table.HeaderCell>Capabilities</Table.HeaderCell>
+                <Table.HeaderCell>Last used</Table.HeaderCell>
+                <Table.HeaderCell>Expires</Table.HeaderCell>
+                <Table.HeaderCell />
               </Table.Row>
-            ))}
-          </Table.Body>
-        </Table.Root>
-      )}
+            </Table.Head>
+            <Table.Body>
+              {tokens.map(token => (
+                <Table.Row key={token.id}>
+                  <Table.NameCell
+                    title={token.name}
+                    subtitle={`Created ${formatDate(token.created_at, 'Never')}`}
+                    icon={<TbKey size={14} />}
+                  />
+                  <Table.Cell>{token.capabilities.length} editor capabilities</Table.Cell>
+                  <Table.Cell>{formatDate(token.last_used_at, 'Never')}</Table.Cell>
+                  <Table.Cell>
+                    {token.expires_at ? formatDate(token.expires_at) : 'Never'}
+                  </Table.Cell>
+                  <Table.ActionsCell>
+                    <DropdownMenu
+                      trigger={<Table.DotsButton aria-label={`Actions for ${token.name}`} />}
+                      items={
+                        [
+                          {
+                            label: 'Revoke token',
+                            icon: <TbTrash size={14} />,
+                            danger: true,
+                            onClick: () => setRevokeId(token.id)
+                          }
+                        ] satisfies MenuItem[]
+                      }
+                    />
+                  </Table.ActionsCell>
+                </Table.Row>
+              ))}
+            </Table.Body>
+          </Table.Root>
+        </QueryState>
 
-      <TokenCreateDialog
-        open={createDialogOpen}
-        pending={createToken.isPending}
-        error={createToken.error instanceof Error ? createToken.error : null}
-        onClose={onCloseCreateDialog}
-        onCreate={handleCreate}
-      />
-      <SecretDialog token={secret} onClose={() => setSecret(null)} />
-      <DeleteConfirmationDialog
-        open={tokenToRevoke != null}
-        title={`Revoke ${tokenToRevoke?.name ?? 'API token'}?`}
-        message="This token will stop working immediately."
-        confirmLabel={revokeToken.isPending ? 'Revoking…' : 'Revoke token'}
-        onCancel={() => setRevokeId(null)}
-        onConfirm={() => {
-          if (!revokeId || revokeToken.isPending) return;
-          void revokeToken.mutateAsync(revokeId).then(() => setRevokeId(null));
-        }}
-      />
-    </div>
+        <TokenCreateDialog
+          open={createDialogOpen}
+          pending={createToken.isPending}
+          error={createToken.error instanceof Error ? createToken.error : null}
+          onClose={onCloseCreateDialog}
+          onCreate={handleCreate}
+        />
+        <SecretDialog token={secret} onClose={() => setSecret(null)} />
+        <DeleteConfirmationDialog
+          open={tokenToRevoke != null}
+          title={`Revoke ${tokenToRevoke?.name ?? 'API token'}?`}
+          message="This token will stop working immediately."
+          confirmLabel={revokeToken.isPending ? 'Revoking…' : 'Revoke token'}
+          onCancel={() => setRevokeId(null)}
+          onConfirm={() => {
+            if (!revokeId || revokeToken.isPending) return;
+            void revokeToken.mutateAsync(revokeId).then(() => setRevokeId(null));
+          }}
+        />
+      </SettingsPage>
+    </>
   );
 };

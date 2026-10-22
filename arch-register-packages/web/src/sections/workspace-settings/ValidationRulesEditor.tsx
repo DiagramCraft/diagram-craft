@@ -30,63 +30,6 @@ export const ValidationRulesEditor = ({
   onToggle: (index: number) => void;
   onDelete: (index: number) => void;
 }) => {
-  if (variant === 'relation') {
-    return (
-      <>
-        <div className={styles.fieldsHead}>
-          <div className={styles.sectionLabel}>Validation rules</div>
-          {canEdit && (
-            <Button variant="ghost" icon={<TbPlus size={11} />} onClick={onAdd}>
-              Add rule
-            </Button>
-          )}
-        </div>
-        <div className={styles.fieldsTable}>
-          {rules.map((rule, index) => (
-            <div className={styles.formRow} key={rule.id}>
-              <TextInput
-                value={rule.name}
-                disabled={!canEdit}
-                onChange={value => onUpdate(index, { name: value ?? '' })}
-              />
-              <TextArea
-                value={rule.expression}
-                disabled={!canEdit}
-                onChange={value => onUpdate(index, { expression: value ?? '' })}
-                rows={2}
-              />
-              <TextInput
-                value={rule.message}
-                disabled={!canEdit}
-                onChange={value => onUpdate(index, { message: value ?? '' })}
-              />
-              <Select.Root
-                value={rule.severity}
-                disabled={!canEdit}
-                onChange={value =>
-                  onUpdate(index, { severity: (value ?? 'error') as ValidationRule['severity'] })
-                }
-              >
-                <Select.Item value="error">Blocking error</Select.Item>
-                <Select.Item value="warning">Warning</Select.Item>
-              </Select.Root>
-              <Button variant="ghost" disabled={!canEdit} onClick={() => onToggle(index)}>
-                {rule.active ? 'Deactivate' : 'Activate'}
-              </Button>
-              {canEdit && (
-                <Button
-                  variant="ghost"
-                  icon={<TbTrash size={12} />}
-                  onClick={() => onDelete(index)}
-                />
-              )}
-            </div>
-          ))}
-        </div>
-      </>
-    );
-  }
-
   return (
     <>
       <div className={styles.fieldsHead}>
@@ -139,7 +82,7 @@ export const ValidationRulesEditor = ({
                     disabled={!canEdit}
                     onChange={value => onUpdate(index, { expression: value ?? '' })}
                     rows={2}
-                    placeholder="entity.status != 'retired'"
+                    placeholder={variant === 'entity' ? "entity.status != 'retired'" : undefined}
                   />
                 </FormElement>
                 <FormElement label="Message">
