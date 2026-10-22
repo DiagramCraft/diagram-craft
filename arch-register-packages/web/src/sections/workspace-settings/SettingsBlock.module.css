@@ -1,0 +1,36 @@
+/* Block list */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px 24px 32px;
+}
+
+/* Section (Block) */
+.block {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.head {
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.title {
+  color: var(--base-fg);
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+.description {
+  font-size: 11.5px;
+  margin-top: 2px;
+  color: var(--cmp-fg-disabled);
+}
+
+.body {
+  padding: 8px 16px 14px;
+}

@@ -34,6 +34,7 @@ const WorkspaceAnalyticsScreen = lazy(() =>
 // Sections that render their own header because it carries section-specific actions
 const SELF_HEADED_SECTIONS = [
   'general',
+  'currencies',
   'members',
   'teams',
   'roles',

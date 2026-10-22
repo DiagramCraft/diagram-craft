@@ -25,7 +25,9 @@ export const ApplicationAuxMenu = ({
   return (
     <>
       <DropdownMenu
-        trigger={<Button aria-label="Application actions" variant="ghost" icon={<TbDots size={14} />} />}
+        trigger={
+          <Button aria-label="Application actions" variant="ghost" icon={<TbDots size={14} />} />
+        }
         items={[
           {
             label: 'Delete application',
