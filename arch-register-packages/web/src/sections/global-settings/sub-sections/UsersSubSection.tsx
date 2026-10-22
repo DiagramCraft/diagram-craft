@@ -13,6 +13,7 @@ import { EmptyState } from '../../../components/EmptyState';
 import { LoadingState } from '../../../components/LoadingState';
 import { MemberAvatar } from '../../../components/MemberAvatar';
 import { SearchInput } from '../../../components/SearchInput';
+import { UserStatusChip } from '../UserStatusChip';
 import { Table } from '../../../components/table/Table';
 import { getUserLabel } from '../../../utils/userLabel';
 import type { UserSummary } from '@arch-register/api-types/authContract';
@@ -127,18 +128,10 @@ export const UsersSubSection = ({
                     <Chip tone="ghost">{candidate.auth_provider}</Chip>
                   </Table.Cell>
                   <Table.Cell>
-                    {candidate.is_system_actor ? (
-                      <Chip tone="ghost" dot="var(--cmp-fg-disabled)">
-                        System
-                      </Chip>
-                    ) : (
-                      <Chip
-                        tone="ghost"
-                        dot={candidate.is_active ? 'var(--green)' : 'var(--cmp-fg-disabled)'}
-                      >
-                        {candidate.is_active ? 'Active' : 'Inactive'}
-                      </Chip>
-                    )}
+                    <UserStatusChip
+                      isSystemActor={candidate.is_system_actor}
+                      isActive={candidate.is_active}
+                    />
                   </Table.Cell>
                   <Table.ActionsCell>
                     <DropdownMenu
