@@ -1,0 +1,61 @@
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 16px;
+}
+
+.meta {
+  color: var(--cmp-fg-disabled);
+  font-size: 12px;
+}
+
+.emptyInline {
+  color: var(--cmp-fg-disabled);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.roleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid var(--cmp-border);
+  border-radius: 8px;
+  background: var(--base-bg);
+  padding: 12px;
+}
+
+.roleRow input {
+  margin-top: 2px;
+}
+
+.roleTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--base-fg);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.roleDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.roleDescription {
+  margin-top: 4px;
+  color: var(--cmp-fg-disabled);
+  font-size: 11px;
+  line-height: 1.45;
+}
