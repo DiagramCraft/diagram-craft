@@ -83,3 +83,45 @@
   color: var(--warning-fg);
   font-size: 11px;
 }
+
+/* Lifecycle states editor */
+.stateControls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.swatches {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.swatch {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 1px solid var(--cmp-border);
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.swatchActive {
+  box-shadow: 0 0 0 2px var(--accent-fg);
+}
+
+.addRow {
+  padding-top: 8px;
+}
+
+.fieldGrid {
+  gap: 14px;
+  grid-row-gap: 6px;
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  margin-top: 6px;
+  margin-bottom: 16px;
+  align-items: center;
+}

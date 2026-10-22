@@ -3,8 +3,9 @@ import styles from './LifecycleSubSection.module.css';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Select } from '@diagram-craft/app-components/Select';
-import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { LIFECYCLE_COLOR_PRESETS } from '@arch-register/api-types/colors';
+import { SettingsBlock, SettingsBlockField, SettingsBlockList } from '../SettingsBlock';
+import { WorkspaceSettingsSectionHeader } from '../WorkspaceSettingsSectionHeader';
 import { TbPlus, TbTrash } from 'react-icons/tb';
 import { useUpdateLifecycleStates } from '../../../hooks/useWorkspaceConfig';
 import { Workspace, WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
@@ -91,79 +92,81 @@ export const LifecycleSubSection = ({
     ]);
 
   return (
-    <div className={styles.blockList}>
-      <div className={styles.sectionActions}>
-        <Button onClick={handleCancel} disabled={!isDirty}>
-          Cancel
-        </Button>
-        <Button
-          variant="primary"
-          onClick={handleSave}
-          disabled={!isDirty || updateLifecycleStatesMutation.isPending}
+    <>
+      <WorkspaceSettingsSectionHeader
+        section="lifecycle-owners"
+        buttons={
+          <>
+            <Button onClick={handleCancel} disabled={!isDirty}>
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleSave}
+              disabled={!isDirty || updateLifecycleStatesMutation.isPending}
+            >
+              {updateLifecycleStatesMutation.isPending ? 'Saving...' : 'Save changes'}
+            </Button>
+          </>
+        }
+      />
+      <SettingsBlockList>
+        <SettingsBlock
+          title="Lifecycle states"
+          description="Define the lifecycle stages an entity can be in. Each state has a display label and a color."
         >
-          {updateLifecycleStatesMutation.isPending ? 'Saving...' : 'Save changes'}
-        </Button>
-      </div>
-
-      <div className={styles.section}>
-        <div className={styles.sectionHead}>
-          <div className={styles.sectionTitle}>Lifecycle states</div>
-          <div className={styles.sectionSub}>
-            Define the lifecycle stages an entity can be in. Each state has a display label and a
-            color.
-          </div>
-        </div>
-        <div className={styles.sectionBody}>
-          {states.map((s, i) => (
-            <div key={i} className={styles.field} style={{ gridTemplateColumns: '1fr auto auto' }}>
-              <div className={styles.fieldRight}>
+          <div className={styles.fieldGrid}>
+            {states.map((s, i) => (
+              <>
                 <TextInput
                   value={s.label}
                   onChange={value => updateState(i, { label: value ?? '' })}
                   placeholder="Label (e.g. Production)"
                 />
-              </div>
-              <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                {COLOR_PRESETS.map(c => (
-                  <button
-                    key={c.value}
-                    type="button"
-                    title={c.label}
-                    onClick={() => updateState(i, { color: c.value })}
+
+                <div className={styles.swatches}>
+                  {COLOR_PRESETS.map(c => (
+                    <button
+                      key={c.value}
+                      type="button"
+                      title={c.label}
+                      onClick={() => updateState(i, { color: c.value })}
+                      className={`${styles.swatch} ${s.color === c.value ? styles.swatchActive : ''}`}
+                      style={{ background: c.value }}
+                    />
+                  ))}
+                </div>
+                <Button
+                  variant="danger"
+                  onClick={() => removeState(i)}
+                  style={{ padding: '0 6px' }}
+                >
+                  <TbTrash size={12} />
+                </Button>
+                {i < states.length - 1 && (
+                  <div
                     style={{
-                      width: 18,
-                      height: 18,
-                      borderRadius: '50%',
-                      background: c.value,
-                      border:
-                        s.color === c.value ? '2px solid var(--base-fg)' : '2px solid transparent',
-                      cursor: 'pointer',
-                      padding: 0,
-                      flexShrink: 0
+                      gridColumn: '1 / 5',
+                      borderBottom: '1px dashed var(--panel-border)',
+                      margin: '4px 0'
                     }}
                   />
-                ))}
-              </div>
-              <Button onClick={() => removeState(i)} style={{ padding: '0 6px' }}>
-                <TbTrash size={12} />
-              </Button>
-            </div>
-          ))}
-          <Button icon={<TbPlus size={12} />} onClick={addState} style={{ marginTop: 8 }}>
-            Add state
-          </Button>
-        </div>
-      </div>
-
-      <div className={styles.section}>
-        <div className={styles.sectionHead}>
-          <div className={styles.sectionTitle}>Deprecated state</div>
-          <div className={styles.sectionSub}>
-            Entities move to this lifecycle state when a deprecation is finalized.
+                )}
+              </>
+            ))}
           </div>
-        </div>
-        <div className={styles.sectionBody}>
-          <FormElement label="Deprecated state" required={false}>
+          <div className={styles.addRow}>
+            <Button icon={<TbPlus size={12} />} onClick={addState}>
+              Add state
+            </Button>
+          </div>
+        </SettingsBlock>
+
+        <SettingsBlock title="Deprecated state">
+          <SettingsBlockField
+            label="Deprecated state"
+            hint="Entities move to this lifecycle state when a deprecation is finalized."
+          >
             <Select.Root
               value={deprecatedStateId}
               placeholder="None"
@@ -176,9 +179,9 @@ export const LifecycleSubSection = ({
                 </Select.Item>
               ))}
             </Select.Root>
-          </FormElement>
-        </div>
-      </div>
-    </div>
+          </SettingsBlockField>
+        </SettingsBlock>
+      </SettingsBlockList>
+    </>
   );
 };
