@@ -1,65 +1,30 @@
-import { useEffect, useRef, useState } from 'react';
 import { getRouteApi } from '@tanstack/react-router';
-import { TbPlus, TbTrash, TbArchive, TbEye, TbInfoCircle } from 'react-icons/tb';
+import { TbArchive, TbEye, TbInfoCircle, TbPlus } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
-
+import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
-
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { ErrorDialog } from '@diagram-craft/app-components/ErrorDialog';
-import type {
-  DocumentAiAction,
-  DocumentField,
-  DocumentType,
-  FieldMigrations,
-  PendingFieldChange
-} from '@arch-register/api-types/documentContract';
-import {
-  useArchiveDocumentType,
-  useCreateDocumentType,
-  useDeleteDocumentType,
-  useUpdateDocumentType
-} from '../../hooks/useDocuments';
-import { getDocumentTypeMigrationRequired } from '../../queries/documents';
-import { useAiStatus } from '../../hooks/useAiConfig';
-
+import type { DocumentType } from '@arch-register/api-types/documentContract';
 import { TypeBadge } from '../../components/TypeBadge';
 import { ICON_MAP } from '../../components/TypeBadge';
 import { EmptyState } from '../../components/EmptyState';
-
 import { Title } from '../../components/Title';
 import { SCHEMA_ICONS } from '../../lib/schemaPresentation';
 import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
-
-import { FieldMigrationDialog, FieldMigrationChoices } from '../../dialogs/FieldMigrationDialog';
-import { settingsSectionTarget } from '../../routes/settingsNavigation';
+import { FieldMigrationDialog } from '../../dialogs/FieldMigrationDialog';
 import { DocumentTypeVersionHistorySubSection } from './sub-sections/DocumentTypeVersionHistorySubSection';
-import { AiActionDialog } from './AiActionDialog';
 import { FieldConfigList } from '../../components/FieldConfigList';
-import { moveInArray } from '../../utils/arrayReorder';
+import { DocumentAiActionsSection } from './DocumentAiActionsSection';
+import { DocumentFieldRow } from './DocumentFieldRow';
+import { EditorActionsMenu, EditorSaveButtons } from './EditorActionsMenu';
+import { NEW_DOCUMENT_TYPE_ID, useDocumentTypeDraft } from './useDocumentTypeDraft';
 import styles from './DocumentSettingsScreen.module.css';
 
 const FIELDS_LIST_ID = 'document-fields';
 
-const newDocumentField = (existingIds: ReadonlySet<string> = new Set<string>()): DocumentField => {
-  let id = 'new_field';
-  let suffix = 2;
-  while (existingIds.has(id)) {
-    id = `new_field_${suffix}`;
-    suffix += 1;
-  }
-  return {
-    id,
-    name: id,
-    type: 'text',
-    requirement: 'optional',
-    retired: false
-  };
-};
-
-const NEW_DOCUMENT_TYPE_ID = 'new';
-
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/documents');
+
 export const DocumentTypeEditor = ({
   workspaceSlug,
   types,
@@ -77,165 +42,18 @@ export const DocumentTypeEditor = ({
   const selected = types.find(type => type.id === selectedId) ?? null;
   const isNew = selectedId === NEW_DOCUMENT_TYPE_ID;
 
-  const createType = useCreateDocumentType(workspaceSlug);
-  const updateType = useUpdateDocumentType(workspaceSlug);
-  const archiveType = useArchiveDocumentType(workspaceSlug);
-  const deleteType = useDeleteDocumentType(workspaceSlug);
-  const { data: aiStatus, isLoading: aiStatusLoading } = useAiStatus(workspaceSlug);
-
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [fields, setFields] = useState<DocumentField[]>([]);
-  const [aiActions, setAiActions] = useState<DocumentAiAction[]>([]);
-  const [color, setColor] = useState<string | null>(null);
-  const [icon, setIcon] = useState<string | null>(null);
-  const [dirty, setDirty] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [aiActionDialogOpen, setAiActionDialogOpen] = useState(false);
-  const [editingAiAction, setEditingAiAction] = useState<DocumentAiAction | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [showHistory, setShowHistory] = useState(false);
-  const [pendingFieldChanges, setPendingFieldChanges] = useState<PendingFieldChange[] | null>(null);
-  const fieldKeysRef = useRef<Map<string, string>>(new Map());
-
-  useEffect(() => {
-    fieldKeysRef.current.clear();
-    if (selected) {
-      selected.fields.forEach(field => fieldKeysRef.current.set(field.id, crypto.randomUUID()));
-      setName(selected.name);
-      setDescription(selected.description);
-      setFields(selected.fields);
-      setAiActions(selected.aiActions);
-      setColor(selected.color);
-      setIcon(selected.icon);
-      setDirty(false);
-      setShowHistory(false);
-      setPendingFieldChanges(null);
-      setAiActionDialogOpen(false);
-      setEditingAiAction(null);
-    } else if (isNew) {
-      setName('');
-      setDescription('');
-      setFields([]);
-      setAiActions([]);
-      setColor(null);
-      setIcon(null);
-      setDirty(true);
-      setAiActionDialogOpen(false);
-      setEditingAiAction(null);
-    }
-  }, [isNew, selected]);
-
-  const updateField = (fieldId: string, patch: Partial<DocumentField>) => {
-    if (patch.id !== undefined && patch.id !== fieldId) {
-      const stableKey = fieldKeysRef.current.get(fieldId);
-      if (stableKey) {
-        fieldKeysRef.current.delete(fieldId);
-        fieldKeysRef.current.set(patch.id, stableKey);
-      }
-    }
-    setFields(current =>
-      current.map(field =>
-        field.id === fieldId ? ({ ...field, ...patch } as DocumentField) : field
-      )
-    );
-    setDirty(true);
-  };
-
-  const removeField = (field: DocumentField) => {
-    fieldKeysRef.current.delete(field.id);
-    setFields(current => current.filter(item => item.id !== field.id));
-    setDirty(true);
-  };
-
-  const addField = () => {
-    const field = newDocumentField(new Set(fields.map(item => item.id)));
-    fieldKeysRef.current.set(field.id, crypto.randomUUID());
-    setFields(current => [...current, field]);
-    setDirty(true);
-  };
-
-  const reorderFields = (fromIndex: number, toIndex: number) => {
-    setFields(current => moveInArray(current, fromIndex, toIndex));
-    setDirty(true);
-  };
-
-  const removeAiAction = (actionId: string) => {
-    setAiActions(current => current.filter(action => action.id !== actionId));
-    setDirty(true);
-  };
-
-  const openAddAiAction = () => {
-    setEditingAiAction(null);
-    setAiActionDialogOpen(true);
-  };
-
-  const openEditAiAction = (action: DocumentAiAction) => {
-    setEditingAiAction(action);
-    setAiActionDialogOpen(true);
-  };
-
-  const saveAiActionFromDialog = (action: DocumentAiAction) => {
-    setAiActions(current => {
-      const exists = current.some(item => item.id === action.id);
-      return exists
-        ? current.map(item => (item.id === action.id ? action : item))
-        : [...current, action];
-    });
-    setDirty(true);
-    setAiActionDialogOpen(false);
-    setEditingAiAction(null);
-  };
-
-  const handleSave = async (fieldMigrations?: FieldMigrations) => {
-    if (!dirty) return;
-    try {
-      const body = { name, description, fields, aiActions, color, icon, fieldMigrations };
-      if (isNew) {
-        const created = await createType.mutateAsync(body);
-        onSelect(created.id);
-      } else if (selected) {
-        await updateType.mutateAsync({ id: selected.id, body });
-        setDirty(false);
-        setPendingFieldChanges(null);
-      } else {
-        return;
-      }
-    } catch (cause) {
-      const migrationRequired = getDocumentTypeMigrationRequired(cause);
-      if (migrationRequired) {
-        setPendingFieldChanges(migrationRequired.pendingChanges);
-        return;
-      }
-      setErrorMessage(cause instanceof Error ? cause.message : 'Failed to save document type');
-    }
-  };
-
-  const confirmFieldMigrations = (choices: FieldMigrationChoices) => {
-    if (!pendingFieldChanges) return;
-    const fieldMigrations: FieldMigrations = {};
-    for (const change of pendingFieldChanges) {
-      const action = choices[change.fieldId] ?? 'remove';
-      fieldMigrations[change.fieldId] =
-        action === 'rename' ? { action, renameTo: change.renamedToId } : { action };
-    }
-    void handleSave(fieldMigrations);
-  };
-
-  const doDelete = async () => {
-    if (!selected) return;
-    setConfirmDelete(false);
-    try {
-      await deleteType.mutateAsync(selected.id);
+  const draft = useDocumentTypeDraft({
+    workspaceSlug,
+    selected,
+    isNew,
+    onSelect,
+    onDeleted: () =>
       navigate({
         to: '/$workspaceSlug/settings/documents',
         params: { workspaceSlug },
         search: { tab: 'types' }
-      });
-    } catch (cause) {
-      setErrorMessage(cause instanceof Error ? cause.message : 'Failed to delete document type');
-    }
-  };
+      })
+  });
 
   return (
     <>
@@ -250,31 +68,62 @@ export const DocumentTypeEditor = ({
                 },
                 { label: 'Settings' }
               ]}
+              eyebrow="Document type"
               icon={
                 <TypeBadge
                   color={
-                    color ??
+                    draft.color ??
                     (selected ? typeColor.get(selected.id) : undefined) ??
                     'var(--base-fg-dim)'
                   }
-                  name={name ?? 'New document type'}
-                  icon={icon}
+                  name={draft.name || 'New document type'}
+                  icon={draft.icon}
                   size={26}
                 />
               }
-              title={name ?? 'New document type'}
+              title={draft.name || 'New document type'}
               description={
-                description ??
-                `${fields.filter(field => !field.retired).length} fields${selected ? ` · version ${selected.version}` : ''}`
+                draft.description ||
+                `${draft.fields.filter(field => !field.retired).length} fields${selected ? ` · version ${selected.version}` : ''}`
+              }
+              buttons={
+                <EditorSaveButtons
+                  canSave={draft.dirty && draft.name.trim() !== ''}
+                  dirty={draft.dirty}
+                  pending={draft.isSaving}
+                  onSave={() => void draft.save()}
+                  onCancel={draft.revert}
+                />
+              }
+              menu={
+                selected ? (
+                  <EditorActionsMenu
+                    deleteLabel="Delete type"
+                    onDelete={() => draft.setConfirmDelete(true)}
+                    extraItems={[
+                      {
+                        label: selected.archived ? 'Unarchive' : 'Archive',
+                        icon: selected.archived ? <TbEye size={14} /> : <TbArchive size={14} />,
+                        onClick: () => void draft.toggleArchived()
+                      }
+                    ]}
+                  />
+                ) : undefined
               }
             />
-            {selected && (
-              <Button variant="ghost" onClick={() => setShowHistory(v => !v)}>
-                {showHistory ? 'Back to fields' : 'View history'}
-              </Button>
-            )}
           </div>
-          {showHistory && selected ? (
+          {selected && (
+            <Tabs.Root
+              value={draft.showHistory ? 'history' : 'edit'}
+              onValueChange={value => draft.setShowHistory(value === 'history')}
+            >
+              <Tabs.List aria-label="Editor views">
+                <Tabs.Trigger value="edit">Edit</Tabs.Trigger>
+                <Tabs.Trigger value="history">Version history</Tabs.Trigger>
+              </Tabs.List>
+            </Tabs.Root>
+          )}
+          {draft.showHistory && selected ? (
             <DocumentTypeVersionHistorySubSection
               workspaceId={workspaceSlug}
               documentTypeId={selected.id}
@@ -293,22 +142,16 @@ export const DocumentTypeEditor = ({
                 <div>
                   <div className={styles.formLabel}>Name</div>
                   <TextInput
-                    value={name}
-                    onChange={value => {
-                      setName(value ?? '');
-                      setDirty(true);
-                    }}
+                    value={draft.name}
+                    onChange={value => draft.setName(value ?? '')}
                     style={{ width: '100%' }}
                   />
                 </div>
                 <div style={{ flex: 2 }}>
                   <div className={styles.formLabel}>Description</div>
                   <TextInput
-                    value={description}
-                    onChange={value => {
-                      setDescription(value ?? '');
-                      setDirty(true);
-                    }}
+                    value={draft.description}
+                    onChange={value => draft.setDescription(value ?? '')}
                     style={{ width: '100%' }}
                   />
                 </div>
@@ -322,13 +165,10 @@ export const DocumentTypeEditor = ({
                       <button
                         type="button"
                         key={preset}
-                        className={`${styles.swatch} ${color === preset ? styles.swatchActive : ''}`}
+                        className={`${styles.swatch} ${draft.color === preset ? styles.swatchActive : ''}`}
                         style={{ background: preset }}
                         title={preset}
-                        onClick={() => {
-                          setColor(preset);
-                          setDirty(true);
-                        }}
+                        onClick={() => draft.setColor(preset)}
                       />
                     ))}
                   </div>
@@ -342,12 +182,9 @@ export const DocumentTypeEditor = ({
                         <button
                           type="button"
                           key={id}
-                          className={`${styles.iconOption} ${icon === id ? styles.iconOptionActive : ''}`}
+                          className={`${styles.iconOption} ${draft.icon === id ? styles.iconOptionActive : ''}`}
                           title={id}
-                          onClick={() => {
-                            setIcon(id);
-                            setDirty(true);
-                          }}
+                          onClick={() => draft.setIcon(id)}
                         >
                           <Icon size={14} />
                         </button>
@@ -359,23 +196,23 @@ export const DocumentTypeEditor = ({
 
               <div className={styles.fieldsHead}>
                 <div className={styles.sectionLabel}>Fields</div>
-                <Button variant="ghost" icon={<TbPlus size={11} />} onClick={addField}>
+                <Button variant="ghost" icon={<TbPlus size={11} />} onClick={draft.addField}>
                   Add field
                 </Button>
               </div>
 
-              {fields.length > 0 ? (
+              {draft.fields.length > 0 ? (
                 <div className={styles.fieldsTable}>
                   <FieldConfigList
-                    items={fields}
-                    getId={field => fieldKeysRef.current.get(field.id) ?? field.id}
+                    items={draft.fields}
+                    getId={field => draft.fieldKeys.get(field.id) ?? field.id}
                     listId={FIELDS_LIST_ID}
-                    onReorder={reorderFields}
+                    onReorder={draft.reorderFields}
                     renderItem={(field, _index, drag) => (
                       <DocumentFieldRow
                         field={field}
-                        onUpdate={patch => updateField(field.id, patch)}
-                        onRemove={() => removeField(field)}
+                        onUpdate={patch => draft.updateField(field.id, patch)}
+                        onRemove={() => draft.removeField(field)}
                         dragHandleRef={drag.ref}
                       />
                     )}
@@ -394,120 +231,13 @@ export const DocumentTypeEditor = ({
                 field will ask you to choose how to migrate its data before saving.
               </div>
 
-              {!aiStatusLoading && !aiStatus?.configured && (
-                <div className={styles.fieldsHead}>
-                  <div className={styles.sectionLabel}>AI Actions</div>
-                </div>
-              )}
-              {!aiStatusLoading && !aiStatus?.configured && (
-                <div className={styles.fieldsTable}>
-                  <div className={styles.fieldEmpty}>
-                    AI isn&apos;t configured for this workspace yet.{' '}
-                    <button
-                      type="button"
-                      className={styles.linkButton}
-                      onClick={() => navigate(settingsSectionTarget(workspaceSlug, 'ai'))}
-                    >
-                      Set up AI
-                    </button>{' '}
-                    to define metadata generators and interactive actions for this document type.
-                  </div>
-                </div>
-              )}
-
-              {aiStatus?.configured && (
-                <>
-                  <div className={styles.fieldsHead}>
-                    <div className={styles.sectionLabel}>AI Actions</div>
-                    <Button variant="ghost" icon={<TbPlus size={11} />} onClick={openAddAiAction}>
-                      Add AI action
-                    </Button>
-                  </div>
-
-                  {aiActions.length > 0 ? (
-                    <div className={styles.fieldsTable}>
-                      {aiActions.map(action => (
-                        <DocumentAiActionRow
-                          key={action.id}
-                          action={action}
-                          onEdit={() => openEditAiAction(action)}
-                          onRemove={() => removeAiAction(action.id)}
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className={styles.fieldsTable}>
-                      <div className={styles.fieldEmpty}>
-                        No AI actions defined yet. Click &quot;Add AI action&quot; to get started.
-                      </div>
-                    </div>
-                  )}
-                  <div className={styles.fieldsHint}>
-                    <TbInfoCircle size={11} />
-                    Interactive AI actions run a predefined prompt against the document body,
-                    metadata, and location using read-only tools, and show the result in the
-                    document sidebar. They cannot modify entities, documents, or metadata.
-                  </div>
-                </>
-              )}
-
-              <AiActionDialog
-                open={aiActionDialogOpen}
-                onClose={() => {
-                  setAiActionDialogOpen(false);
-                  setEditingAiAction(null);
-                }}
-                onSave={saveAiActionFromDialog}
+              <DocumentAiActionsSection
                 workspaceSlug={workspaceSlug}
                 documentTypeId={selected?.id ?? null}
-                action={editingAiAction}
-                fields={fields}
-                claimedFieldIds={
-                  new Set(
-                    aiActions
-                      .filter(
-                        (
-                          other
-                        ): other is Extract<DocumentAiAction, { kind: 'metadata_generator' }> =>
-                          other.id !== editingAiAction?.id && other.kind === 'metadata_generator'
-                      )
-                      .map(other => other.outputFieldId)
-                  )
-                }
+                fields={draft.fields}
+                aiActions={draft.aiActions}
+                onChange={draft.setAiActions}
               />
-
-              <div className={styles.bottomActions}>
-                {selected && (
-                  <div className={styles.bottomActionGroup}>
-                    <Button
-                      variant="secondary"
-                      icon={selected.archived ? <TbEye size={13} /> : <TbArchive size={13} />}
-                      onClick={() =>
-                        void archiveType.mutateAsync({
-                          id: selected.id,
-                          archived: !selected.archived
-                        })
-                      }
-                    >
-                      {selected.archived ? 'Unarchive' : 'Archive'}
-                    </Button>
-                    <Button
-                      variant="danger"
-                      icon={<TbTrash size={13} />}
-                      onClick={() => setConfirmDelete(true)}
-                    >
-                      Delete
-                    </Button>
-                  </div>
-                )}
-                <Button
-                  variant="primary"
-                  onClick={() => void handleSave()}
-                  disabled={!dirty || !name.trim() || createType.isPending || updateType.isPending}
-                >
-                  {createType.isPending || updateType.isPending ? 'Saving…' : 'Save'}
-                </Button>
-              </div>
             </div>
           )}
         </div>
@@ -528,7 +258,7 @@ export const DocumentTypeEditor = ({
       )}
 
       <DeleteConfirmationDialog
-        open={confirmDelete}
+        open={draft.confirmDelete}
         title="Delete document type?"
         message={
           selected ? (
@@ -541,26 +271,23 @@ export const DocumentTypeEditor = ({
         }
         detail="Types used by existing documents can't be deleted — archive them instead."
         confirmLabel="Delete type"
-        onConfirm={() => void doDelete()}
-        onCancel={() => setConfirmDelete(false)}
+        onConfirm={() => void draft.remove()}
+        onCancel={() => draft.setConfirmDelete(false)}
       />
       <ErrorDialog
-        open={errorMessage !== null}
+        open={draft.errorMessage !== null}
         title="Something went wrong"
-        message={errorMessage}
-        onClose={() => setErrorMessage(null)}
+        message={draft.errorMessage}
+        onClose={() => draft.setErrorMessage(null)}
       />
       <FieldMigrationDialog
-        open={pendingFieldChanges !== null}
-        pendingChanges={pendingFieldChanges ?? []}
+        open={draft.pendingFieldChanges !== null}
+        pendingChanges={draft.pendingFieldChanges ?? []}
         subjectLabel="document type"
         itemNoun="document"
-        onCancel={() => setPendingFieldChanges(null)}
-        onConfirm={confirmFieldMigrations}
+        onCancel={() => draft.setPendingFieldChanges(null)}
+        onConfirm={draft.confirmFieldMigrations}
       />
     </>
   );
 };
-
-import { DocumentFieldRow } from './DocumentFieldRow';
-import { DocumentAiActionRow } from './DocumentAiActionRow';

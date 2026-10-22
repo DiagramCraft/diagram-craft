@@ -3,9 +3,11 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { Menu } from '@diagram-craft/app-components/Menu';
 import { TbDots, TbLock, TbPlus } from 'react-icons/tb';
-import type { SharedFieldGroupLink } from '@arch-register/api-types/schemaContract';
 import { resolveGroupAccessControl } from '../../lib/fieldGroupAccess';
 import { FieldConfigList, type FieldConfigDragHandle } from '../../components/FieldConfigList';
+import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
+import { useCanEditSchemas, useSchemaEditor } from './schemaEditorContext';
+import type { EditorField, EditorGroup } from './schemaEditorState';
 import styles from './SchemaSettingsScreen.module.css';
 
 const UNGROUPED_LIST_ID = '__ungrouped__';
@@ -22,23 +24,7 @@ export type FieldGroupsEditorGroup = {
   accessControl?: { teamIds: string[] };
 };
 
-export type FieldGroupsEditorProps<
-  Field extends FieldGroupsEditorField,
-  Group extends FieldGroupsEditorGroup
-> = {
-  fields: Field[];
-  groups: Group[];
-  sharedFieldGroupLinks: SharedFieldGroupLink[];
-  fieldKeys: ReadonlyMap<string, string>;
-  teams: { id: string; name: string }[];
-  canEdit: boolean;
-  onAddField: (groupId?: string) => void;
-  onAddGroup: () => void;
-  onEditGroup: (group: Group) => void;
-  onAccessGroup: (groupId: string) => void;
-  onRemoveGroup: (groupId: string) => void;
-  onRemoveSharedGroup: (groupId: string) => void;
-  onReorderField: (bucketFieldIds: string[], fromIndex: number, toIndex: number) => void;
+export type FieldGroupsEditorProps<Field extends FieldGroupsEditorField> = {
   renderField: (
     field: Field,
     options: { inherited: boolean; canEdit: boolean },
@@ -46,25 +32,23 @@ export type FieldGroupsEditorProps<
   ) => ReactNode;
 };
 
+/**
+ * Fields grouped by field group, with add / edit / access / delete actions. Reads the draft and
+ * its operations from the surrounding `SchemaEditorProvider`; callers only say how to render a
+ * field row.
+ */
 export function FieldGroupsEditor<
   Field extends FieldGroupsEditorField,
   Group extends FieldGroupsEditorGroup
->({
-  fields,
-  groups,
-  sharedFieldGroupLinks,
-  fieldKeys,
-  teams,
-  canEdit,
-  onAddField,
-  onAddGroup,
-  onEditGroup,
-  onAccessGroup,
-  onRemoveGroup,
-  onRemoveSharedGroup,
-  onReorderField,
-  renderField
-}: FieldGroupsEditorProps<Field, Group>) {
+>({ renderField }: FieldGroupsEditorProps<Field>) {
+  const editor = useSchemaEditor<Field & EditorField, Group & EditorGroup>();
+  const canEdit = useCanEditSchemas();
+  const { teams } = useWorkspaceContext();
+  const { fieldKeys } = editor;
+  const fields: Field[] = editor.draft?.fields ?? [];
+  const groups: Group[] = editor.draft?.groups ?? [];
+  const sharedFieldGroupLinks = editor.draft?.sharedFieldGroupLinks ?? [];
+
   const groupIds = new Set(groups.map(group => group.id));
   const ungroupedFields = fields.filter(field => !field.groupId || !groupIds.has(field.groupId));
   const fieldsByGroup = new Map<string, Field[]>();
@@ -79,10 +63,10 @@ export function FieldGroupsEditor<
         <div className={styles.sectionLabel}>Fields</div>
         {canEdit && (
           <div style={{ display: 'flex', gap: 8 }}>
-            <Button variant="ghost" icon={<TbPlus size={11} />} onClick={onAddGroup}>
+            <Button variant="ghost" icon={<TbPlus size={11} />} onClick={editor.addGroup}>
               Add group
             </Button>
-            <Button variant="ghost" icon={<TbPlus size={11} />} onClick={() => onAddField()}>
+            <Button variant="ghost" icon={<TbPlus size={11} />} onClick={() => editor.addField()}>
               Add field
             </Button>
           </div>
@@ -96,7 +80,7 @@ export function FieldGroupsEditor<
             getId={field => fieldKeys.get(field.id) ?? field.id}
             listId={UNGROUPED_LIST_ID}
             onReorder={(from, to) =>
-              onReorderField(
+              editor.reorderFields(
                 ungroupedFields.map(field => field.id),
                 from,
                 to
@@ -144,7 +128,7 @@ export function FieldGroupsEditor<
                         <Button
                           variant="ghost"
                           icon={<TbPlus size={11} />}
-                          onClick={() => onAddField(group.id)}
+                          onClick={() => editor.addField(group.id)}
                         >
                           Add field
                         </Button>
@@ -158,17 +142,19 @@ export function FieldGroupsEditor<
                           }
                         />
                         <MenuButton.Menu>
-                          <Menu.Item disabled={inherited} onClick={() => onEditGroup(group)}>
+                          <Menu.Item disabled={inherited} onClick={() => editor.editGroup(group)}>
                             Edit
                           </Menu.Item>
-                          <Menu.Item onClick={() => onAccessGroup(group.id)}>
+                          <Menu.Item onClick={() => editor.setAccessDialogGroupId(group.id)}>
                             Change access
                           </Menu.Item>
                           <Menu.Separator />
                           <Menu.Item
                             type="danger"
                             onClick={() =>
-                              inherited ? onRemoveSharedGroup(group.id) : onRemoveGroup(group.id)
+                              inherited
+                                ? editor.removeSharedFieldGroup(group.id)
+                                : editor.removeGroup(group.id)
                             }
                           >
                             Delete
@@ -184,7 +170,7 @@ export function FieldGroupsEditor<
                     getId={field => fieldKeys.get(field.id) ?? field.id}
                     listId={group.id}
                     onReorder={(from, to) =>
-                      onReorderField(
+                      editor.reorderFields(
                         groupFields.map(field => field.id),
                         from,
                         to

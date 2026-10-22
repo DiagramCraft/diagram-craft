@@ -1,18 +1,24 @@
 import { TbDots, TbTrash } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
-import { DropdownMenu } from '../../components/DropdownMenu';
+import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
 
-/** Overflow (…) menu for an editor's `Title`, currently holding just the delete action. */
+/** Overflow (…) menu for an editor's `Title`: optional extra actions, then delete. */
 export const EditorActionsMenu = ({
   deleteLabel,
-  onDelete
+  onDelete,
+  extraItems = []
 }: {
   deleteLabel: string;
   onDelete: () => void;
+  /** Additional actions shown above the delete action. */
+  extraItems?: MenuItem[];
 }) => (
   <DropdownMenu
     trigger={<Button aria-label="Actions" icon={<TbDots size={14} />} />}
-    items={[{ label: deleteLabel, icon: <TbTrash size={14} />, danger: true, onClick: onDelete }]}
+    items={[
+      ...extraItems,
+      { label: deleteLabel, icon: <TbTrash size={14} />, danger: true, onClick: onDelete }
+    ]}
   />
 );
 
