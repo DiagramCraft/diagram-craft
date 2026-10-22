@@ -6,7 +6,6 @@ import { Select } from '@diagram-craft/app-components/Select';
 import { Banner } from '../../../components/Banner';
 import { Chip } from '../../../components/Chip';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
-import { DropdownMenu } from '../../../components/DropdownMenu';
 import { MemberAvatar, stableHue } from '../../../components/MemberAvatar';
 import { SearchInput } from '../../../components/SearchInput';
 import { ToolbarFilterBar, ToolbarFilterSelect } from '../../../components/ToolbarFilter';
@@ -39,38 +38,19 @@ const TeamChip = ({ teamId, label }: { teamId: string; label: string }) => {
   );
 };
 
-const RoleMenu = ({
-  current,
-  roles,
-  onSelect
-}: {
-  current: string;
-  roles: WorkspaceRoleDefinition[];
-  onSelect: (role: string) => void;
-}) => {
+const RoleChip = ({ current, roles }: { current: string; roles: WorkspaceRoleDefinition[] }) => {
   const roleMeta = roles.find(r => r.id === current);
   if (!roleMeta) return null;
-
   return (
-    <DropdownMenu
-      trigger={
-        <button type="button" className={styles.roleBtn}>
-          <Chip tone="ghost" dot={roleMeta.tone}>
-            {roleMeta.name}
-          </Chip>
-        </button>
-      }
-      items={roles.map(role => ({
-        label: role.name,
-        icon: <span className={styles.roleMenuDot} style={{ background: role.tone }} />,
-        onClick: () => onSelect(role.id)
-      }))}
-    />
+    <Chip tone="ghost" dot={roleMeta.tone}>
+      {roleMeta.name}
+    </Chip>
   );
 };
 
 export const MembersSubSection = ({ workspaceSlug }: { workspaceSlug: string }) => {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const onCloseAddDialog = () => setAddDialogOpen(false);
   const { data: members = [], isLoading, error } = useWorkspaceMembers(workspaceSlug);
   const { data: users = [], isLoading: isLoadingUsers } = useWorkspaceUsers(workspaceSlug, true);
@@ -203,7 +183,7 @@ export const MembersSubSection = ({ workspaceSlug }: { workspaceSlug: string }) 
                 const userInfo = usersById.get(member.user_id);
                 const memberTeams = teamsByUser.get(member.user_id) ?? [];
                 return (
-                  <Table.Row key={member.user_id}>
+                  <Table.Row key={member.user_id} onClick={() => setEditingUserId(member.user_id)}>
                     <Table.NameCell
                       icon={
                         <MemberAvatar
@@ -217,19 +197,7 @@ export const MembersSubSection = ({ workspaceSlug }: { workspaceSlug: string }) 
                       subtitle={member.email ?? member.user_id}
                     />
                     <Table.Cell>
-                      <RoleMenu
-                        current={member.role}
-                        roles={roles}
-                        onSelect={role => {
-                          void updateMemberRole
-                            .mutateAsync({ userId: member.user_id, role })
-                            .then(() => {
-                              if (member.user_id === user?.id) {
-                                void reloadUser();
-                              }
-                            });
-                        }}
-                      />
+                      <RoleChip current={member.role} roles={roles} />
                     </Table.Cell>
                     <Table.Cell>
                       <div className={styles.tags}>
@@ -265,6 +233,19 @@ export const MembersSubSection = ({ workspaceSlug }: { workspaceSlug: string }) 
             </Table.Body>
           </Table.Root>
         )}
+        <EditMemberDialog
+          member={members.find(m => m.user_id === editingUserId) ?? null}
+          roles={roles}
+          isSaving={updateMemberRole.isPending}
+          onClose={() => setEditingUserId(null)}
+          onSave={async (userId, role) => {
+            await updateMemberRole.mutateAsync({ userId, role });
+            if (userId === user?.id) {
+              await reloadUser();
+            }
+            setEditingUserId(null);
+          }}
+        />
         <AddMemberDialog
           open={addDialogOpen}
           users={availableUsers}
@@ -435,6 +416,77 @@ const AddMemberDialog = ({
             setCreateUserDialogOpen(false);
           }}
         />
+      </div>
+    </Dialog>
+  );
+};
+
+const EditMemberDialog = ({
+  member,
+  roles,
+  isSaving,
+  onClose,
+  onSave
+}: {
+  member: { user_id: string; display_name: string; email: string | null; role: string } | null;
+  roles: WorkspaceRoleDefinition[];
+  isSaving: boolean;
+  onClose: () => void;
+  onSave: (userId: string, role: string) => Promise<void>;
+}) => {
+  const [selectedRole, setSelectedRole] = useState('');
+
+  useEffect(() => {
+    setSelectedRole(member?.role ?? '');
+  }, [member]);
+
+  if (!member) return null;
+
+  return (
+    <Dialog open onClose={onClose} title="Edit workspace member">
+      <div className={styles.dialogBody}>
+        <div className={styles.field}>
+          <div className={styles.fieldLeft}>
+            <div className={styles.fieldLabel}>Member</div>
+          </div>
+          <div className={styles.fieldRight}>
+            {member.display_name}
+            {member.email ? ` (${member.email})` : ''}
+          </div>
+        </div>
+        <div className={styles.field}>
+          <div className={styles.fieldLeft}>
+            <div className={styles.fieldLabel}>Role</div>
+            <div className={styles.fieldHint}>
+              Set the workspace role that is stored on this membership.
+            </div>
+          </div>
+          <div className={styles.fieldRight}>
+            <Select.Root
+              value={selectedRole}
+              onChange={value => setSelectedRole(value ?? '')}
+              style={{ width: '100%' }}
+            >
+              {roles.map(role => (
+                <Select.Item key={role.id} value={role.id}>
+                  {role.name}
+                </Select.Item>
+              ))}
+            </Select.Root>
+          </div>
+        </div>
+        <div className={styles.dialogActions}>
+          <Button onClick={onClose} disabled={isSaving}>
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            onClick={() => void onSave(member.user_id, selectedRole)}
+            disabled={!selectedRole || selectedRole === member.role || isSaving}
+          >
+            {isSaving ? 'Saving…' : 'Save'}
+          </Button>
+        </div>
       </div>
     </Dialog>
   );

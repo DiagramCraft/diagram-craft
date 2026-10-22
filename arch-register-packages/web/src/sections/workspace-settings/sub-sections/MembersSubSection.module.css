@@ -17,21 +17,6 @@
   color: var(--cmp-fg-disabled);
 }
 
-.roleBtn {
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  font: inherit;
-}
-
-.roleMenuDot {
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  flex-shrink: 0;
-}
-
 .tags {
   display: flex;
   flex-wrap: wrap;
