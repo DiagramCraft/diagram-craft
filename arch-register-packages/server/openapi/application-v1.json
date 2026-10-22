@@ -160584,6 +160584,9 @@
                           "supportsSubkind": {
                             "type": "boolean"
                           },
+                          "supportsMultiScope": {
+                            "type": "boolean"
+                          },
                           "supportsWorkspaceScope": {
                             "type": "boolean"
                           },
@@ -160915,6 +160918,7 @@
                           "label",
                           "description",
                           "supportsSubkind",
+                          "supportsMultiScope",
                           "supportsWorkspaceScope",
                           "supportsApprovals",
                           "supportsReminders",
@@ -160944,25 +160948,17 @@
                           "case_kind_description": {
                             "type": "string"
                           },
-                          "case_subkind": {
-                            "anyOf": [
-                              {
-                                "type": "string"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
+                          "case_subkinds": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
                           },
-                          "case_subkind_label": {
-                            "anyOf": [
-                              {
-                                "type": "string"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
+                          "case_subkind_labels": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
                           },
                           "name": {
                             "type": "string",
@@ -161257,8 +161253,8 @@
                           "case_kind",
                           "case_kind_label",
                           "case_kind_description",
-                          "case_subkind",
-                          "case_subkind_label",
+                          "case_subkinds",
+                          "case_subkind_labels",
                           "name",
                           "description",
                           "enabled",
@@ -161303,20 +161299,20 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
                   "case_kind": {
                     "type": "string",
                     "minLength": 1
                   },
-                  "case_subkind": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "minLength": 1
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                  "case_subkinds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
                   },
                   "name": {
                     "type": "string",
@@ -161596,7 +161592,7 @@
                 },
                 "required": [
                   "case_kind",
-                  "case_subkind",
+                  "case_subkinds",
                   "name",
                   "config"
                 ]
@@ -161625,25 +161621,17 @@
                     "case_kind_description": {
                       "type": "string"
                     },
-                    "case_subkind": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
+                    "case_subkinds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
                     },
-                    "case_subkind_label": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
+                    "case_subkind_labels": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
                     },
                     "name": {
                       "type": "string",
@@ -161938,8 +161926,8 @@
                     "case_kind",
                     "case_kind_label",
                     "case_kind_description",
-                    "case_subkind",
-                    "case_subkind_label",
+                    "case_subkinds",
+                    "case_subkind_labels",
                     "name",
                     "description",
                     "enabled",
@@ -161977,25 +161965,13 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "case_kind": {
+                  "id": {
                     "type": "string",
                     "minLength": 1
-                  },
-                  "case_subkind": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "minLength": 1
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
                   }
                 },
                 "required": [
-                  "case_kind",
-                  "case_subkind"
+                  "id"
                 ]
               }
             }

@@ -1,4 +1,5 @@
 import { upsertRelationApprovalPolicy } from '../governance/schemaGovernancePolicy';
+import { upsertGovernanceConfigClaimingScope } from '../governance/governanceScope';
 import { randomUUID } from 'node:crypto';
 import {
   dashboardKeyFromName,
@@ -438,6 +439,19 @@ export const importWorkspaceCapabilityConfigurations = async (
   return imported;
 };
 
+/** This schema plus the other schemas that share its workflow (source ids remapped, skipped ones dropped). */
+const sharedWorkflowSubkinds = (
+  nextId: string,
+  sharedWith: string[] | undefined,
+  mapping: Map<string, string>
+) => [
+  encodeCaseSubkind(nextId),
+  ...(sharedWith ?? []).flatMap(sourceId => {
+    const mapped = mapping.get(sourceId);
+    return mapped ? [encodeCaseSubkind(mapped)] : [];
+  })
+];
+
 export const importSchemas = async (
   db: DatabaseAdapter,
   workspace: string,
@@ -599,10 +613,10 @@ export const importSchemas = async (
       created++;
     }
     for (const config of schema.governance_configs ?? []) {
-      await db.governanceCaseConfig.upsertCaseConfig({
+      await upsertGovernanceConfigClaimingScope(db, {
         workspace,
         case_kind: config.case_kind,
-        case_subkind: encodeCaseSubkind(nextId),
+        case_subkinds: sharedWorkflowSubkinds(nextId, config.shared_with, idMapping.schemas),
         name: config.name,
         description: config.description,
         enabled: config.enabled,
@@ -758,6 +772,23 @@ export const importRelationSchemas = async (
       now,
       null
     );
+    for (const config of source.governance_configs ?? []) {
+      await upsertGovernanceConfigClaimingScope(db, {
+        workspace,
+        case_kind: config.case_kind,
+        case_subkinds: sharedWorkflowSubkinds(
+          nextId,
+          config.shared_with,
+          idMapping.relation_schemas
+        ),
+        name: config.name,
+        description: config.description,
+        enabled: config.enabled,
+        config: remapGovernanceConfigTeams(config.config, idMapping.teams),
+        updated_at: now,
+        updated_by: null
+      });
+    }
   }
 
   return { created, updated };
@@ -1584,7 +1615,7 @@ export const importDocuments = async (
     await db.governanceCaseConfig.upsertCaseConfig({
       workspace,
       case_kind: config.case_kind ?? DOCUMENT_STATUS_CASE_KIND,
-      case_subkind: encodeCaseSubkind(documentTypeId, fieldId),
+      case_subkinds: [encodeCaseSubkind(documentTypeId, fieldId)],
       name: config.name,
       description: config.description,
       enabled: config.enabled,

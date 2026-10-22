@@ -221,7 +221,7 @@ test('workspace copy preserves typed documents, links, templates, and entity con
   await server.db.governanceCaseConfig.upsertCaseConfig({
     workspace: sourceWorkspace,
     case_kind: 'entity.deprecation',
-    case_subkind: encodeCaseSubkind(schema.id),
+    case_subkinds: [encodeCaseSubkind(schema.id)],
     name: 'Replicated schema deprecation review',
     description: 'Retain this description when cloning schema workflows.',
     enabled: true,
@@ -232,7 +232,7 @@ test('workspace copy preserves typed documents, links, templates, and entity con
   await server.db.governanceCaseConfig.upsertCaseConfig({
     workspace: sourceWorkspace,
     case_kind: 'document.status',
-    case_subkind: encodeCaseSubkind(documentType.id, 'status'),
+    case_subkinds: [encodeCaseSubkind(documentType.id, 'status')],
     name: 'Replicated document status review',
     description: 'Retain this description when cloning document workflows.',
     enabled: true,

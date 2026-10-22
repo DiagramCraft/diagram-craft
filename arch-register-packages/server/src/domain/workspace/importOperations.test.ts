@@ -687,7 +687,7 @@ describe('workspace export/import guards', () => {
     const targetDocumentTypeId = idMapping.document_types.get('source-type');
     expect(db.governanceCaseConfig.upsertCaseConfig).toHaveBeenCalledWith(
       expect.objectContaining({
-        case_subkind: `${targetDocumentTypeId}:status`,
+        case_subkinds: [`${targetDocumentTypeId}:status`],
         name: 'Imported status review',
         description: 'Imported workflow description.',
         config: expect.objectContaining({

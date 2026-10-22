@@ -288,8 +288,9 @@ test.describe('workspace config routes', () => {
     const created = await orpc.governanceWorkflowConfig.upsert({
       params: { workspace: 'default' },
       body: {
+        id: existing!.id,
         case_kind: existing!.case_kind,
-        case_subkind: existing!.case_subkind,
+        case_subkinds: existing!.case_subkinds,
         name: 'Assessment response review',
         description: 'Review submitted assessment responses.',
         enabled: true,
@@ -312,8 +313,9 @@ test.describe('workspace config routes', () => {
     const updated = await orpc.governanceWorkflowConfig.upsert({
       params: { workspace: 'default' },
       body: {
+        id: created.id,
         case_kind: existing!.case_kind,
-        case_subkind: existing!.case_subkind,
+        case_subkinds: existing!.case_subkinds,
         name: 'Updated assessment review',
         description: null,
         enabled: true,
@@ -331,13 +333,92 @@ test.describe('workspace config routes', () => {
         params: { workspace: 'default' },
         body: {
           case_kind: 'assessment.response',
-          case_subkind: null,
+          case_subkinds: [],
           name: '   ',
           enabled: true,
           config: existing!.config
         }
       })
     ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+  });
+
+  test('attaches one workflow to several schemas, rejects overlap and cleans up on schema deletion', async ({
+    orpc,
+    seededUsers: _
+  }) => {
+    const suffix = Math.random().toString(36).slice(2, 8);
+    const createSchema = (letter: string) =>
+      orpc.schemas.create({
+        params: { workspace: 'default' },
+        body: { name: `${letter} ${suffix}` }
+      });
+    const first = await createSchema('Alpha');
+    const second = await createSchema('Bravo');
+    const third = await createSchema('Charlie');
+    const workflow = {
+      case_kind: 'entity.change-case',
+      name: `Shared change review ${suffix}`,
+      enabled: true,
+      config: { extensions: {} }
+    };
+
+    const shared = await orpc.governanceWorkflowConfig.upsert({
+      params: { workspace: 'default' },
+      body: { ...workflow, case_subkinds: [first.id, second.id] }
+    });
+    expect([...shared.case_subkinds].sort()).toEqual([first.id, second.id].sort());
+    expect([...shared.case_subkind_labels].sort()).toEqual([first.name, second.name].sort());
+
+    // Overlap is rejected and names the conflicting schema
+    await expect(
+      orpc.governanceWorkflowConfig.upsert({
+        params: { workspace: 'default' },
+        body: { ...workflow, name: 'Overlapping', case_subkinds: [second.id, third.id] }
+      })
+    ).rejects.toMatchObject({ code: 'CONFLICT', message: expect.stringContaining(second.name) });
+
+    // Pair-scoped kinds cannot be attached to several scopes
+    await expect(
+      orpc.governanceWorkflowConfig.upsert({
+        params: { workspace: 'default' },
+        body: {
+          ...workflow,
+          case_kind: 'field-date-reminder',
+          name: 'Reminder',
+          case_subkinds: [`${first.id}:a`, `${second.id}:b`]
+        }
+      })
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+
+    // Editing the scope in place frees the removed schema
+    const narrowed = await orpc.governanceWorkflowConfig.upsert({
+      params: { workspace: 'default' },
+      body: { ...workflow, id: shared.id, case_subkinds: [first.id] }
+    });
+    expect(narrowed.id).toBe(shared.id);
+    expect(narrowed.case_subkinds).toEqual([first.id]);
+    const widened = await orpc.governanceWorkflowConfig.upsert({
+      params: { workspace: 'default' },
+      body: { ...workflow, id: shared.id, case_subkinds: [first.id, second.id] }
+    });
+    expect(widened.case_subkinds).toHaveLength(2);
+
+    // Deleting one schema shrinks the workflow; deleting the last one removes it
+    await orpc.schemas.remove({ params: { workspace: 'default', id: first.id } });
+    const afterFirst = await orpc.governanceWorkflowConfig.list({
+      params: { workspace: 'default' }
+    });
+    expect(afterFirst.configs.find(row => row.id === shared.id)?.case_subkinds).toEqual([
+      second.id
+    ]);
+
+    await orpc.schemas.remove({ params: { workspace: 'default', id: second.id } });
+    const afterSecond = await orpc.governanceWorkflowConfig.list({
+      params: { workspace: 'default' }
+    });
+    expect(afterSecond.configs.some(row => row.id === shared.id)).toBe(false);
+
+    await orpc.schemas.remove({ params: { workspace: 'default', id: third.id } });
   });
 
   test('configures a workspace capability against a schema and reports invalid bindings', async ({

@@ -8,6 +8,7 @@ const governanceWorkflowCaseKindSchema = z.object({
   label: z.string(),
   description: z.string(),
   supportsSubkind: z.boolean(),
+  supportsMultiScope: z.boolean(),
   supportsWorkspaceScope: z.boolean(),
   supportsApprovals: z.boolean(),
   supportsReminders: z.boolean(),
@@ -35,8 +36,9 @@ const governanceWorkflowConfigRowSchema = z.object({
   case_kind: z.string().min(1),
   case_kind_label: z.string(),
   case_kind_description: z.string(),
-  case_subkind: z.string().nullable(),
-  case_subkind_label: z.string().nullable(),
+  /** Empty for the workspace-wide (fallback) workflow. */
+  case_subkinds: z.array(z.string()),
+  case_subkind_labels: z.array(z.string()),
   name: z.string().trim().min(1).max(200),
   description: z.string().nullable(),
   enabled: z.boolean(),
@@ -46,8 +48,11 @@ const governanceWorkflowConfigRowSchema = z.object({
 });
 
 const governanceWorkflowConfigUpsertSchema = z.object({
+  /** Omit to create a new workflow; set to update an existing one (including its scope). */
+  id: z.string().min(1).optional(),
   case_kind: z.string().min(1),
-  case_subkind: z.string().min(1).nullable(),
+  /** Schemas/relation schemas/etc. the workflow applies to. Empty means workspace-wide. */
+  case_subkinds: z.array(z.string().min(1)),
   name: z.string().trim().min(1).max(200),
   description: z.preprocess(
     value => (typeof value === 'string' && value.trim() === '' ? null : value),
@@ -58,8 +63,7 @@ const governanceWorkflowConfigUpsertSchema = z.object({
 });
 
 const governanceWorkflowConfigResetSchema = z.object({
-  case_kind: z.string().min(1),
-  case_subkind: z.string().min(1).nullable()
+  id: z.string().min(1)
 });
 
 export const governanceWorkflowConfigContract = oc.tag('Governance').router({

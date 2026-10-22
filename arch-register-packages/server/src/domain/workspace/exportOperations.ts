@@ -12,6 +12,7 @@ import type {
   ExportOptions,
   ExportManifest,
   ExportConfig,
+  ExportGovernanceConfig,
   ExportSchema,
   ExportRelationSchema,
   ExportEntity,
@@ -31,6 +32,7 @@ import { DOCUMENT_STATUS_CASE_KIND } from '../document/documentWorkflowOperation
 import { parseGovernanceWorkflowConfig } from '../governance/governanceWorkflowConfig';
 import {
   ENTITY_CHANGE_POLICY_CASE_KIND,
+  RELATION_CHANGE_POLICY_CASE_KIND,
   ENTITY_DEPRECATION_POLICY_CASE_KIND,
   getRelationApprovalPoliciesBySchema,
   getSchemaGovernancePoliciesBySchema
@@ -299,6 +301,29 @@ const exportConfig = async (db: DatabaseAdapter, workspace: string): Promise<Exp
   };
 };
 
+/** One entry per covered schema; workflows shared by several schemas list the others in `shared_with`. */
+const groupGovernanceConfigsBySchema = (
+  rows: Awaited<ReturnType<DatabaseAdapter['governanceCaseConfig']['listCaseConfig']>>
+) => {
+  const bySchema = new Map<string, ExportGovernanceConfig[]>();
+  for (const row of rows) {
+    for (const schemaId of row.case_subkinds) {
+      const others = row.case_subkinds.filter(other => other !== schemaId);
+      const entries = bySchema.get(schemaId) ?? [];
+      entries.push({
+        case_kind: row.case_kind,
+        name: row.name,
+        description: row.description,
+        enabled: row.enabled,
+        config: parseGovernanceWorkflowConfig(row.config, row.enabled),
+        ...(others.length > 0 && { shared_with: others })
+      });
+      bySchema.set(schemaId, entries);
+    }
+  }
+  return bySchema;
+};
+
 const exportSchemas = async (db: DatabaseAdapter, workspace: string): Promise<ExportSchema[]> => {
   const [schemas, policiesBySchema, governanceRows, categories] = await Promise.all([
     db.catalog.listSchemas(workspace),
@@ -309,25 +334,13 @@ const exportSchemas = async (db: DatabaseAdapter, workspace: string): Promise<Ex
   const categoryNamesById = new Map(categories.map(category => [category.id, category.name]));
   const sharedGroups = await db.catalog.listSharedFieldGroups(workspace);
   const sharedGroupsById = new Map(sharedGroups.map(group => [group.id, group]));
-  const governanceRowsBySchema = new Map<string, ExportSchema['governance_configs']>();
-  for (const row of governanceRows) {
-    if (
-      row.case_subkind == null ||
-      (row.case_kind !== ENTITY_CHANGE_POLICY_CASE_KIND &&
-        row.case_kind !== ENTITY_DEPRECATION_POLICY_CASE_KIND)
-    ) {
-      continue;
-    }
-    const rows = governanceRowsBySchema.get(row.case_subkind) ?? [];
-    rows.push({
-      case_kind: row.case_kind,
-      name: row.name,
-      description: row.description,
-      enabled: row.enabled,
-      config: parseGovernanceWorkflowConfig(row.config, row.enabled)
-    });
-    governanceRowsBySchema.set(row.case_subkind, rows);
-  }
+  const governanceRowsBySchema = groupGovernanceConfigsBySchema(
+    governanceRows.filter(
+      row =>
+        row.case_kind === ENTITY_CHANGE_POLICY_CASE_KIND ||
+        row.case_kind === ENTITY_DEPRECATION_POLICY_CASE_KIND
+    )
+  );
 
   return schemas.map(schema => ({
     id: schema.id,
@@ -355,12 +368,15 @@ const exportRelationSchemas = async (
   db: DatabaseAdapter,
   workspace: string
 ): Promise<ExportRelationSchema[]> => {
-  const [schemas, sharedGroups, categories, policiesBySchema] = await Promise.all([
+  const [schemas, sharedGroups, categories, policiesBySchema, governanceRows] = await Promise.all([
     db.relation.listRelationSchemas(workspace),
     db.catalog.listSharedFieldGroups(workspace),
     db.catalog.listCategories(workspace),
-    getRelationApprovalPoliciesBySchema(db, workspace)
+    getRelationApprovalPoliciesBySchema(db, workspace),
+    db.governanceCaseConfig?.listCaseConfigForKind(workspace, RELATION_CHANGE_POLICY_CASE_KIND) ??
+      Promise.resolve([])
   ]);
+  const governanceRowsBySchema = groupGovernanceConfigsBySchema(governanceRows);
   const sharedGroupsById = new Map(sharedGroups.map(group => [group.id, group]));
   const categoryNamesById = new Map(categories.map(category => [category.id, category.name]));
 
@@ -383,6 +399,7 @@ const exportRelationSchemas = async (
     color: schema.color,
     icon: schema.icon,
     relation_approval_policy: policiesBySchema.get(schema.id) ?? 'disabled',
+    governance_configs: governanceRowsBySchema.get(schema.id) ?? [],
     unique_endpoint_pair: schema.unique_endpoint_pair ?? false,
     version: schema.version ?? 1
   }));
@@ -756,11 +773,11 @@ const exportDocuments = async (
   const workflowConfigs = (
     await db.governanceCaseConfig.listCaseConfigForKind(workspace, DOCUMENT_STATUS_CASE_KIND)
   ).flatMap(row =>
-    row.case_subkind
+    row.case_subkinds[0]
       ? [
           {
             case_kind: row.case_kind,
-            case_subkind: row.case_subkind,
+            case_subkind: row.case_subkinds[0],
             name: row.name,
             description: row.description,
             enabled: row.enabled,

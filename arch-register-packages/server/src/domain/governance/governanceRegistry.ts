@@ -41,6 +41,8 @@ export type GovernanceCaseKindConfig = {
   /** Metadata and validation used by the centralized workflow configuration API. */
   workflowConfig?: {
     supportsSubkind?: boolean;
+    /** Whether one workflow may be scoped to several subkinds (otherwise at most one). */
+    supportsMultiScope?: boolean;
     supportsWorkspaceScope?: boolean;
     supportsApprovals?: boolean;
     supportsReminders?: boolean;

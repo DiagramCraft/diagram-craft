@@ -14,7 +14,7 @@ test.describe('external governance integration surface', () => {
     await server.db.governanceCaseConfig.upsertCaseConfig({
       workspace: seedIds.workspace.default,
       case_kind: 'assessment.response',
-      case_subkind: null,
+      case_subkinds: [],
       name: 'Assessment response integration policy',
       enabled: true,
       config: { external: true },

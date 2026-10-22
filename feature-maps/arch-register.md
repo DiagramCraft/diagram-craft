@@ -1358,6 +1358,15 @@
                   workspace-wide or supported case-subkind scope. Each configuration has an administrator-defined short
                   name and optional description, which are shown in the configuration list.
 
+                - @id:ar.collaboration.governance-inbox.scheduled-reminders.workspace-config.multi-scope A
+                  configuration for entity change, entity deprecation, or relation change workflows can be attached
+                  to several entity schemas or relation schemas at once and edited in one place, instead of being
+                  duplicated per schema. The Workflows list shows every attached schema. A schema or relation schema
+                  can belong to only one configuration per workflow kind; saving an overlapping scope is rejected
+                  with the conflicting schemas named. Removing a schema from the scope, or deleting it, falls back to
+                  the workspace-wide configuration or default, and a configuration left without any schema is deleted.
+                  Workspace export and import carries shared configurations with their schema scope remapped.
+
             - @id:ar.collaboration.governance-inbox.escalation For governance case kinds that support escalation (entity
               changes, entity deprecations, and document status approvals), a case left open past a
               configured number of days overdue is automatically escalated once. Each case kind resolves its own

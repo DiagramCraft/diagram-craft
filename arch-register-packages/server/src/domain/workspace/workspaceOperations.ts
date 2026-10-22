@@ -67,30 +67,28 @@ const shortCodeFrom = (name: string): string =>
 
 const logger = createLogger('workspace-operations');
 
-const remappedCloneGovernanceSubkind = (
+const remappedCloneGovernanceSubkinds = (
   caseKind: string,
-  caseSubkind: string | null,
+  caseSubkinds: string[],
   schemaMap: Map<string, string>
-): string | null | undefined => {
-  if (caseSubkind == null) {
-    return caseKind === ENTITY_CHANGE_POLICY_CASE_KIND ||
-      caseKind === ENTITY_DEPRECATION_POLICY_CASE_KIND
-      ? null
-      : undefined;
-  }
-  if (
-    caseKind === ENTITY_CHANGE_POLICY_CASE_KIND ||
-    caseKind === ENTITY_DEPRECATION_POLICY_CASE_KIND
-  ) {
-    return schemaMap.get(caseSubkind);
-  }
-  if (caseKind === FIELD_DATE_REMINDER_CASE_KIND) {
-    const separator = caseSubkind.indexOf(':');
-    if (separator <= 0) return undefined;
-    const schemaId = schemaMap.get(caseSubkind.slice(0, separator));
-    return schemaId ? `${schemaId}:${caseSubkind.slice(separator + 1)}` : undefined;
-  }
-  return undefined;
+): string[] | undefined => {
+  const isEntityPolicy =
+    caseKind === ENTITY_CHANGE_POLICY_CASE_KIND || caseKind === ENTITY_DEPRECATION_POLICY_CASE_KIND;
+  if (caseSubkinds.length === 0) return isEntityPolicy ? [] : undefined;
+  const remapped = caseSubkinds.flatMap(caseSubkind => {
+    if (isEntityPolicy) {
+      const schemaId = schemaMap.get(caseSubkind);
+      return schemaId ? [schemaId] : [];
+    }
+    if (caseKind === FIELD_DATE_REMINDER_CASE_KIND) {
+      const separator = caseSubkind.indexOf(':');
+      if (separator <= 0) return [];
+      const schemaId = schemaMap.get(caseSubkind.slice(0, separator));
+      return schemaId ? [`${schemaId}:${caseSubkind.slice(separator + 1)}`] : [];
+    }
+    return [];
+  });
+  return remapped.length > 0 ? remapped : undefined;
 };
 
 const buildCreateInput = (
@@ -678,16 +676,16 @@ export const createWorkspace = async (
               ) {
                 continue;
               }
-              const caseSubkind = remappedCloneGovernanceSubkind(
+              const caseSubkinds = remappedCloneGovernanceSubkinds(
                 config.case_kind,
-                config.case_subkind,
+                config.case_subkinds,
                 schemaMap
               );
-              if (caseSubkind === undefined) continue;
+              if (caseSubkinds === undefined) continue;
               await db.governanceCaseConfig.upsertCaseConfig({
                 workspace: row.id,
                 case_kind: config.case_kind,
-                case_subkind: caseSubkind,
+                case_subkinds: caseSubkinds,
                 name: config.name,
                 description: config.description,
                 enabled: config.enabled,
@@ -833,20 +831,20 @@ export const createWorkspace = async (
                 replicate_from,
                 DOCUMENT_STATUS_CASE_KIND
               )) {
-                const separator = config.case_subkind?.indexOf(':') ?? -1;
-                if (separator <= 0) continue;
+                const sourceSubkind = config.case_subkinds[0];
+                const separator = sourceSubkind?.indexOf(':') ?? -1;
+                if (sourceSubkind == null || separator <= 0) continue;
                 const targetTypeId = resolveMappedIdOrNull(
                   typeMap,
-                  config.case_subkind!.slice(0, separator)
+                  sourceSubkind.slice(0, separator)
                 );
                 if (!targetTypeId) continue;
                 await db.governanceCaseConfig.upsertCaseConfig({
                   workspace: row.id,
                   case_kind: config.case_kind,
-                  case_subkind: encodeCaseSubkind(
-                    targetTypeId,
-                    config.case_subkind!.slice(separator + 1)
-                  ),
+                  case_subkinds: [
+                    encodeCaseSubkind(targetTypeId, sourceSubkind.slice(separator + 1))
+                  ],
                   name: config.name,
                   description: config.description,
                   enabled: config.enabled,

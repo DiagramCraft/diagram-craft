@@ -19,6 +19,12 @@ import { WorkflowConfigDialog } from './WorkflowConfigDialog';
 import { WorkflowSubkindEditor } from './WorkflowSubkindEditor';
 import styles from './WorkflowsSubSection.module.css';
 
+const scopeSummary = (labels: string[]) => {
+  if (labels.length === 0) return 'Workspace-wide';
+  if (labels.length <= 2) return labels.join(', ');
+  return `${labels.slice(0, 2).join(', ')} +${labels.length - 2}`;
+};
+
 export const WorkflowsSubSection = ({
   workspaceSlug,
   addDialogOpen,
@@ -33,7 +39,7 @@ export const WorkflowsSubSection = ({
   const reset = useResetGovernanceWorkflowConfig(workspaceSlug);
   const [editing, setEditing] = useState<GovernanceWorkflowConfigRow | null>(null);
   const [addingKind, setAddingKind] = useState<GovernanceWorkflowCaseKind | null>(null);
-  const [newSubkind, setNewSubkind] = useState<string | null>(null);
+  const [newSubkinds, setNewSubkinds] = useState<string[]>([]);
 
   const kindById = useMemo(
     () => new Map((data?.case_kinds ?? []).map(kind => [kind.case_kind, kind])),
@@ -44,36 +50,47 @@ export const WorkflowsSubSection = ({
       [...(data?.configs ?? [])].sort((left, right) => {
         const workflowOrder = left.name.localeCompare(right.name);
         if (workflowOrder !== 0) return workflowOrder;
-        return (left.case_subkind_label ?? '').localeCompare(right.case_subkind_label ?? '');
+        return left.case_subkind_labels
+          .join(',')
+          .localeCompare(right.case_subkind_labels.join(','));
       }),
     [data?.configs]
   );
 
   const closeAdd = () => {
     setAddingKind(null);
-    setNewSubkind(null);
+    setNewSubkinds([]);
     onCloseAddDialog();
   };
 
   const subkindReady =
     addingKind?.supportsSubkind !== true ||
-    (newSubkind != null &&
+    (newSubkinds.length > 0 &&
       (addingKind.case_kind === 'document.status' || addingKind.case_kind === 'field-date-reminder'
-        ? newSubkind.split(':').every(Boolean)
+        ? newSubkinds[0]!.split(':').every(Boolean)
         : true));
-  const duplicateConfig =
-    addingKind != null &&
-    subkindReady &&
-    (data?.configs ?? []).some(
-      row =>
-        row.case_kind === addingKind.case_kind &&
-        row.case_subkind === (addingKind.supportsSubkind ? newSubkind : null)
-    );
+  const scope = addingKind?.supportsSubkind ? newSubkinds : [];
+  const overlap =
+    addingKind != null && subkindReady
+      ? (data?.configs ?? []).filter(
+          row =>
+            row.case_kind === addingKind.case_kind &&
+            (scope.length === 0
+              ? row.case_subkinds.length === 0
+              : row.case_subkinds.some(subkind => scope.includes(subkind)))
+        )
+      : [];
+  const duplicateConfig = overlap.length > 0;
+  const overlappingLabels = overlap.flatMap(row =>
+    row.case_subkinds.flatMap((subkind, index) =>
+      scope.includes(subkind) ? [row.case_subkind_labels[index] ?? subkind] : []
+    )
+  );
 
   useEffect(() => {
     if (!addDialogOpen) {
       setAddingKind(null);
-      setNewSubkind(null);
+      setNewSubkinds([]);
       return;
     }
     setAddingKind(data?.case_kinds[0] ?? null);
@@ -91,6 +108,7 @@ export const WorkflowsSubSection = ({
           <Table.Head>
             <Table.Row>
               <Table.HeaderCell width={260}>Workflow</Table.HeaderCell>
+              <Table.HeaderCell width={180}>Type</Table.HeaderCell>
               <Table.HeaderCell width={220}>Scope</Table.HeaderCell>
               <Table.HeaderCell>Configuration</Table.HeaderCell>
               <Table.HeaderCell width={150}>Actions</Table.HeaderCell>
@@ -108,7 +126,8 @@ export const WorkflowsSubSection = ({
                     {row.description ?? row.case_kind_description}
                   </div>
                 </Table.Cell>
-                <Table.Cell>{row.case_subkind_label ?? 'Workspace-wide'}</Table.Cell>
+                <Table.Cell>{row.case_kind_label}</Table.Cell>
+                <Table.Cell>{scopeSummary(row.case_subkind_labels)}</Table.Cell>
                 <Table.Cell>
                   <div className={styles.configChips}>
                     {row.config.approvals && <Chip dot="var(--accent-fg)">Approvals</Chip>}
@@ -148,12 +167,7 @@ export const WorkflowsSubSection = ({
                     <Button variant="ghost" onClick={() => setEditing(row)}>
                       Edit
                     </Button>
-                    <Button
-                      variant="ghost"
-                      onClick={() =>
-                        reset.mutate({ case_kind: row.case_kind, case_subkind: row.case_subkind })
-                      }
-                    >
+                    <Button variant="ghost" onClick={() => reset.mutate({ id: row.id })}>
                       Remove
                     </Button>
                   </div>
@@ -181,8 +195,8 @@ export const WorkflowsSubSection = ({
                 case_kind: addingKind.case_kind,
                 case_kind_label: addingKind.label,
                 case_kind_description: addingKind.description,
-                case_subkind: addingKind.supportsSubkind ? newSubkind : null,
-                case_subkind_label: null,
+                case_subkinds: scope,
+                case_subkind_labels: [],
                 name: addingKind.label,
                 description: null,
                 enabled: true,
@@ -201,7 +215,7 @@ export const WorkflowsSubSection = ({
             onChange={value => {
               const next = data?.case_kinds.find(kind => kind.case_kind === value) ?? null;
               setAddingKind(next);
-              setNewSubkind(null);
+              setNewSubkinds([]);
             }}
           >
             {(data?.case_kinds ?? []).map(kind => (
@@ -216,14 +230,16 @@ export const WorkflowsSubSection = ({
             <WorkflowSubkindEditor
               workspaceSlug={workspaceSlug}
               caseKind={addingKind}
-              value={newSubkind}
-              onChange={setNewSubkind}
+              value={newSubkinds}
+              onChange={setNewSubkinds}
             />
           </div>
         )}
         {duplicateConfig && (
           <div className={styles.errorNote}>
-            A configuration already exists for this workflow and scope.
+            {overlappingLabels.length > 0
+              ? `Another configuration of this workflow already covers: ${overlappingLabels.join(', ')}.`
+              : 'A workspace-wide configuration already exists for this workflow.'}
           </div>
         )}
       </Dialog>
@@ -236,7 +252,8 @@ export const WorkflowsSubSection = ({
               case_kind: editing.case_kind,
               label: editing.case_kind_label,
               description: editing.case_kind_description,
-              supportsSubkind: editing.case_subkind != null,
+              supportsSubkind: editing.case_subkinds.length > 0,
+              supportsMultiScope: editing.case_subkinds.length > 1,
               supportsWorkspaceScope: true,
               supportsApprovals: true,
               supportsReminders: true,

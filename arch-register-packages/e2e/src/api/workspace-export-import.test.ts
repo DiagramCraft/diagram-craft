@@ -86,7 +86,7 @@ test.describe('workspace export/import', () => {
     await server.db.governanceCaseConfig.upsertCaseConfig({
       workspace: source.id,
       case_kind: 'entity.deprecation',
-      case_subkind: encodeCaseSubkind(schema.id),
+      case_subkinds: [encodeCaseSubkind(schema.id)],
       name: 'Schema deprecation workflow',
       description: 'Description carried through schema export and import.',
       enabled: true,
@@ -105,7 +105,7 @@ test.describe('workspace export/import', () => {
     await server.db.governanceCaseConfig.upsertCaseConfig({
       workspace: source.id,
       case_kind: 'document.status',
-      case_subkind: encodeCaseSubkind(documentType.id, 'status'),
+      case_subkinds: [encodeCaseSubkind(documentType.id, 'status')],
       name: 'Document status workflow',
       description: 'Description carried through document export and import.',
       enabled: true,
@@ -174,6 +174,74 @@ test.describe('workspace export/import', () => {
         name: 'Document status workflow',
         description: 'Description carried through document export and import.'
       })
+    );
+  });
+
+  test('round-trips a workflow shared by several schemas with remapped schema ids', async ({
+    orpc,
+    server
+  }) => {
+    const suffix = randomUUID();
+    const source = await orpc.workspaces.create({
+      body: { name: `Shared workflow source ${suffix}`, badge: 'SWS' }
+    });
+    const first = await orpc.schemas.create({
+      params: { workspace: source.url_slug },
+      body: { name: `Alpha ${suffix}` }
+    });
+    const second = await orpc.schemas.create({
+      params: { workspace: source.url_slug },
+      body: { name: `Bravo ${suffix}` }
+    });
+    await orpc.governanceWorkflowConfig.upsert({
+      params: { workspace: source.url_slug },
+      body: {
+        case_kind: 'entity.change-case',
+        case_subkinds: [first.id, second.id],
+        name: 'Shared change review',
+        enabled: true,
+        config: { extensions: {} }
+      }
+    });
+
+    const archive = await orpc.workspaces.export({
+      params: { workspace: source.url_slug },
+      body: { include: ['schemas'], options: { include_content: false } }
+    });
+    const target = await orpc.workspaces.create({
+      body: { name: `Shared workflow target ${suffix}`, badge: 'SWT' }
+    });
+    const parsed = await orpc.workspaces.importParse({
+      params: { workspace: target.url_slug },
+      body: {
+        file: new File([archive.body as Blob], 'shared-workflow-export.zip', {
+          type: 'application/zip'
+        })
+      }
+    });
+    expect(parsed.valid).toBe(true);
+    const execute = await orpc.workspaces.importExecute({
+      params: { workspace: target.url_slug },
+      body: {
+        import_id: (parsed as any).import_id,
+        include: ['schemas'],
+        conflict_resolutions: suggestedResolutions(parsed as any),
+        options: { preserve_ids: false, update_references: true }
+      }
+    });
+    expect(execute.success).toBe(true);
+
+    const targetSchemas = await server.db.catalog.listSchemas(target.id);
+    const targetFirst = targetSchemas.find(item => item.name === first.name)!;
+    const targetSecond = targetSchemas.find(item => item.name === second.name)!;
+    expect(targetFirst.id).not.toBe(first.id);
+
+    const workflows = (
+      await server.db.governanceCaseConfig.listCaseConfigForKind(target.id, 'entity.change-case')
+    ).filter(row => row.name === 'Shared change review');
+    expect(workflows).toHaveLength(1);
+    expect([...workflows[0]!.case_subkinds].sort()).toEqual(
+      [targetFirst.id, targetSecond.id].sort()
     );
   });
 

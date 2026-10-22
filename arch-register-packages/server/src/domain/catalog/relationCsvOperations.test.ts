@@ -168,7 +168,7 @@ const makeDb = ({
       listCaseConfig: vi.fn(async () =>
         approvalRequiredSchemaIds.map(id => ({
           case_kind: 'relation.change-case',
-          case_subkind: id,
+          case_subkinds: [id],
           enabled: true
         }))
       )
