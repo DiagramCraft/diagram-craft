@@ -1,6 +1,15 @@
 import { useCallback, useState } from 'react';
 import { WorkspaceSettingsSectionHeader } from '../WorkspaceSettingsSectionHeader';
-import { TbPencil, TbPlayerPlay, TbPlus, TbRefresh, TbShieldCheck } from 'react-icons/tb';
+import {
+  TbCheck,
+  TbPencil,
+  TbPlayerPause,
+  TbPlayerPlay,
+  TbPlus,
+  TbRefresh,
+  TbShieldCheck,
+  TbTrash
+} from 'react-icons/tb';
 import type {
   ConformanceCheck,
   ConformanceCheckStatus,
@@ -17,7 +26,6 @@ import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { Table } from '../../../components/table/Table';
-import { Banner } from '../../../components/Banner';
 import { Chip } from '../../../components/Chip';
 import {
   CHECK_TYPE_META,
@@ -25,9 +33,10 @@ import {
   ViolationStatusChip,
   STATUS_META
 } from '../../../components/ConformanceBadges';
+import { DropdownMenu, type MenuItem } from '../../../components/DropdownMenu';
 import { Drawer } from '../../../components/Drawer';
 import { EmptyState } from '../../../components/EmptyState';
-import { FilterDropdown } from '../../../components/FilterDropdown';
+import { ToolbarFilterBar, ToolbarFilterSelect } from '../../../components/ToolbarFilter';
 import { LoadingState } from '../../../components/LoadingState';
 import { Pagination } from '../../../components/Pagination';
 import { formatDateTime } from '../../../utils/dateFormat';
@@ -209,27 +218,19 @@ const ViolationDrawer = ({
       }
       footer={
         canExempt || canRevoke || canSetStatusManually ? (
-          <>
+          <div style={{ display: 'flex', gap: '8px' }}>
             {canSetStatusManually && violation.status === 'active' && (
-              <Button
-                variant="secondary"
-                onClick={() => onSetStatus('acknowledged')}
-                disabled={setStatusPending}
-              >
+              <Button onClick={() => onSetStatus('acknowledged')} disabled={setStatusPending}>
                 Acknowledge
               </Button>
             )}
             {canSetStatusManually && (
-              <Button
-                variant="secondary"
-                onClick={() => onSetStatus('resolved')}
-                disabled={setStatusPending}
-              >
+              <Button onClick={() => onSetStatus('resolved')} disabled={setStatusPending}>
                 Resolve
               </Button>
             )}
             {canRevoke && (
-              <Button variant="secondary" onClick={onRevokeExemption} disabled={revokePending}>
+              <Button onClick={onRevokeExemption} disabled={revokePending}>
                 Revoke exemption
               </Button>
             )}
@@ -238,7 +239,7 @@ const ViolationDrawer = ({
                 Exempt…
               </Button>
             )}
-          </>
+          </div>
         ) : undefined
       }
     >
@@ -408,6 +409,11 @@ export const ConformanceSubSection = ({
 
   const aiConfigured = aiStatus?.configured === true;
 
+  const openEdit = (check: ConformanceCheck) => {
+    setEditingCheck(check);
+    setDialogOpen(true);
+  };
+
   const handleSubmit = (body: CreateConformanceCheck) => {
     if (editingCheck) {
       updateCheck.mutate(
@@ -442,7 +448,16 @@ export const ConformanceSubSection = ({
         section="conformance"
         buttons={
           canManageWorkspaces ? (
-            <AddCheckMenu aiConfigured={aiConfigured} onSelect={handleAddCheck} />
+            <>
+              <Button
+                icon={<TbRefresh size={12} />}
+                disabled={runConformance.isPending}
+                onClick={() => runConformance.mutate(undefined)}
+              >
+                Run workspace scan
+              </Button>
+              <AddCheckMenu aiConfigured={aiConfigured} onSelect={handleAddCheck} />
+            </>
           ) : undefined
         }
       />
@@ -470,7 +485,7 @@ export const ConformanceSubSection = ({
               <div className={styles.summaryLabel}>Exempt</div>
             </div>
             <div className={styles.summaryCard}>
-              <div className={styles.summaryValue} style={{ fontSize: 13 }}>
+              <div className={styles.summaryValue}>
                 {summary.lastRunAt ? formatDateTime(summary.lastRunAt) : 'Never'}
               </div>
               <div className={styles.summaryLabel}>Last completed evaluation</div>
@@ -487,23 +502,6 @@ export const ConformanceSubSection = ({
 
         {tab === 'checks' && (
           <section className={styles.section}>
-            <Banner variant="neutral">
-              Conformance checks are centrally managed and run on demand or on a schedule, unlike
-              schema validation, which checks entities immediately on save. Results here persist for
-              review, acknowledgement, or exemption.
-            </Banner>
-            {canManageWorkspaces && (
-              <div className={styles.toolbar}>
-                <Button
-                  size="sm"
-                  icon={<TbRefresh size={12} />}
-                  disabled={runConformance.isPending}
-                  onClick={() => runConformance.mutate(undefined)}
-                >
-                  Run workspace scan
-                </Button>
-              </div>
-            )}
             {checksLoading ? (
               <LoadingState text="Loading conformance checks…" size="sm" />
             ) : checksError ? (
@@ -528,18 +526,21 @@ export const ConformanceSubSection = ({
                       <Table.HeaderCell>Name</Table.HeaderCell>
                       <Table.HeaderCell>Type</Table.HeaderCell>
                       <Table.HeaderCell>Severity</Table.HeaderCell>
-                      <Table.HeaderCell width={80}>Enabled</Table.HeaderCell>
+                      <Table.HeaderCell width={110}>Status</Table.HeaderCell>
                       <Table.HeaderCell width={80}>Revision</Table.HeaderCell>
-                      <Table.HeaderCell width={230}>Actions</Table.HeaderCell>
+                      {canManageWorkspaces && <Table.HeaderCell width={48} />}
                     </Table.Row>
                   </Table.Head>
                   <Table.Body>
                     {checks.map(check => {
                       const TypeIcon = CHECK_TYPE_META[check.definition.type].icon;
                       return (
-                        <Table.Row key={check.id}>
+                        <Table.Row
+                          key={check.id}
+                          onClick={canManageWorkspaces ? () => openEdit(check) : undefined}
+                        >
                           <Table.Cell>
-                            <div>{check.name}</div>
+                            <div className={styles.title}>{check.name}</div>
                             <div className={styles.muted}>
                               {check.description ?? 'No description'}
                             </div>
@@ -553,46 +554,61 @@ export const ConformanceSubSection = ({
                             <SeverityBadge severity={check.severity} />
                           </Table.Cell>
                           <Table.Cell>
-                            <input type="checkbox" checked={check.enabled} readOnly />
+                            <Chip
+                              dot={check.enabled ? 'var(--green)' : 'var(--cmp-fg-disabled)'}
+                              tone="ghost"
+                            >
+                              {check.enabled ? 'Enabled' : 'Disabled'}
+                            </Chip>
                           </Table.Cell>
                           <Table.Cell>
                             <span className={styles.revision}>v{check.revision}</span>
                           </Table.Cell>
-                          <Table.Cell>
-                            {canManageWorkspaces && (
-                              <div className={styles.actions}>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  icon={<TbPencil size={12} />}
-                                  onClick={() => {
-                                    setEditingCheck(check);
-                                    setDialogOpen(true);
-                                  }}
-                                >
-                                  Edit
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  icon={<TbPlayerPlay size={12} />}
-                                  onClick={() => runConformance.mutate(check.id)}
-                                >
-                                  Run
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    if (window.confirm(`Delete '${check.name}'?`))
-                                      deleteCheck.mutate(check.id);
-                                  }}
-                                >
-                                  Delete
-                                </Button>
-                              </div>
-                            )}
-                          </Table.Cell>
+                          {canManageWorkspaces && (
+                            <Table.ActionsCell>
+                              <DropdownMenu
+                                trigger={
+                                  <Table.DotsButton aria-label={`Actions for ${check.name}`} />
+                                }
+                                items={
+                                  [
+                                    {
+                                      label: 'Edit',
+                                      icon: <TbPencil size={14} />,
+                                      onClick: () => openEdit(check)
+                                    },
+                                    {
+                                      label: 'Run',
+                                      icon: <TbPlayerPlay size={14} />,
+                                      onClick: () => runConformance.mutate(check.id)
+                                    },
+                                    {
+                                      label: check.enabled ? 'Disable' : 'Enable',
+                                      icon: check.enabled ? (
+                                        <TbPlayerPause size={14} />
+                                      ) : (
+                                        <TbCheck size={14} />
+                                      ),
+                                      onClick: () =>
+                                        updateCheck.mutate({
+                                          id: check.id,
+                                          body: { enabled: !check.enabled }
+                                        })
+                                    },
+                                    {
+                                      label: 'Delete',
+                                      icon: <TbTrash size={14} />,
+                                      danger: true,
+                                      onClick: () => {
+                                        if (window.confirm(`Delete '${check.name}'?`))
+                                          deleteCheck.mutate(check.id);
+                                      }
+                                    }
+                                  ] satisfies MenuItem[]
+                                }
+                              />
+                            </Table.ActionsCell>
+                          )}
                         </Table.Row>
                       );
                     })}
@@ -605,8 +621,8 @@ export const ConformanceSubSection = ({
 
         {tab === 'violations' && (
           <section className={styles.section}>
-            <div className={styles.filterRow}>
-              <FilterDropdown
+            <ToolbarFilterBar noPadding>
+              <ToolbarFilterSelect
                 label="Status"
                 value={status}
                 onChange={value => {
@@ -615,7 +631,7 @@ export const ConformanceSubSection = ({
                 }}
                 options={STATUS_OPTIONS}
               />
-              <FilterDropdown
+              <ToolbarFilterSelect
                 label="Severity"
                 value={severity}
                 onChange={value => {
@@ -624,7 +640,7 @@ export const ConformanceSubSection = ({
                 }}
                 options={SEVERITY_OPTIONS}
               />
-              <FilterDropdown
+              <ToolbarFilterSelect
                 label="Check"
                 value={checkId}
                 onChange={value => {
@@ -636,7 +652,7 @@ export const ConformanceSubSection = ({
                   ...checks.map(check => ({ value: check.id, label: check.name }))
                 ]}
               />
-              <FilterDropdown
+              <ToolbarFilterSelect
                 label="Schema"
                 value={schemaId}
                 onChange={value => {
@@ -648,7 +664,7 @@ export const ConformanceSubSection = ({
                   ...schemas.map(schema => ({ value: schema.id, label: schema.name }))
                 ]}
               />
-              <FilterDropdown
+              <ToolbarFilterSelect
                 label="Owner"
                 value={ownerId}
                 onChange={value => {
@@ -660,55 +676,65 @@ export const ConformanceSubSection = ({
                   ...teams.map(team => ({ value: team.id, label: team.name }))
                 ]}
               />
-            </div>
+            </ToolbarFilterBar>
+            <div style={{ height: '8px' }}></div>
             {!violations ? (
               <LoadingState text="Loading violations…" size="sm" />
             ) : violations.items.length === 0 ? (
               <div className={styles.empty}>No violations match the current filter.</div>
             ) : (
               <div className={styles.vlist}>
-                {violations.items.map(violation => {
-                  const violationSchemaName =
-                    schemas.find(schema => schema.id === violation.schema_id)?.name ??
-                    violation.schema_id ??
-                    '—';
-                  const violationOwnerName =
-                    teams.find(team => team.id === violation.owner_team_id)?.name ?? 'No owner';
-                  return (
-                    <div
-                      key={violation.id}
-                      className={styles.vrow}
-                      onClick={() => setOpenViolationId(violation.id)}
-                    >
-                      <div className={styles.vrowMain}>
-                        <div className={styles.vrowHead}>
-                          <span className={styles.vrowEntity}>
-                            {violation.entity_name ?? violation.entity_id}
-                          </span>
-                          <SeverityBadge severity={violation.severity} />
-                        </div>
-                        <div className={styles.vrowMsg}>{violation.message}</div>
-                        <div className={styles.vrowMeta}>
-                          <span>{violation.check_name}</span>
-                          <span>·</span>
-                          <span>{violationSchemaName}</span>
-                          <span>·</span>
-                          <span>Owner: {violationOwnerName}</span>
-                          <span>·</span>
-                          <span>Last seen {formatDateTime(violation.last_seen_at)}</span>
-                        </div>
-                      </div>
-                      <div className={styles.vrowSide}>
-                        <ViolationStatusChip status={violation.status} />
-                        {violation.status === 'exempt' && violation.exemption?.expires_at && (
-                          <span className={styles.muted}>
-                            expires {formatDateTime(violation.exemption.expires_at)}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
+                <div className={styles.tableWrap}>
+                  <Table.Root layout="fixed">
+                    <Table.Head>
+                      <Table.Row>
+                        <Table.HeaderCell>Entity</Table.HeaderCell>
+                        <Table.HeaderCell width={90}>Severity</Table.HeaderCell>
+                        <Table.HeaderCell width={140}>Status</Table.HeaderCell>
+                        <Table.HeaderCell>Message</Table.HeaderCell>
+                        <Table.HeaderCell>Check</Table.HeaderCell>
+                        <Table.HeaderCell width={130}>Schema</Table.HeaderCell>
+                        <Table.HeaderCell width={130}>Owner</Table.HeaderCell>
+                        <Table.HeaderCell width={150}>Last seen</Table.HeaderCell>
+                      </Table.Row>
+                    </Table.Head>
+                    <Table.Body>
+                      {violations.items.map(violation => {
+                        const violationSchemaName =
+                          schemas.find(schema => schema.id === violation.schema_id)?.name ??
+                          violation.schema_id ??
+                          '—';
+                        const violationOwnerName =
+                          teams.find(team => team.id === violation.owner_team_id)?.name ??
+                          'No owner';
+                        return (
+                          <Table.Row
+                            key={violation.id}
+                            onClick={() => setOpenViolationId(violation.id)}
+                          >
+                            <Table.Cell>{violation.entity_name ?? violation.entity_id}</Table.Cell>
+                            <Table.Cell>
+                              <SeverityBadge severity={violation.severity} />
+                            </Table.Cell>
+                            <Table.Cell>
+                              <ViolationStatusChip status={violation.status} />
+                              {violation.status === 'exempt' && violation.exemption?.expires_at && (
+                                <div className={styles.muted}>
+                                  expires {formatDateTime(violation.exemption.expires_at)}
+                                </div>
+                              )}
+                            </Table.Cell>
+                            <Table.Cell>{violation.message}</Table.Cell>
+                            <Table.Cell>{violation.check_name}</Table.Cell>
+                            <Table.Cell>{violationSchemaName}</Table.Cell>
+                            <Table.Cell>{violationOwnerName}</Table.Cell>
+                            <Table.Cell>{formatDateTime(violation.last_seen_at)}</Table.Cell>
+                          </Table.Row>
+                        );
+                      })}
+                    </Table.Body>
+                  </Table.Root>
+                </div>
                 <Pagination
                   pageSize={pageSize}
                   onPageSizeChange={size => {

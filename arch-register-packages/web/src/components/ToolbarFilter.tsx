@@ -2,8 +2,15 @@ import type { ReactNode } from 'react';
 import styles from './ToolbarFilter.module.css';
 
 /** Row holding a table/list's search box and filter controls. */
-export const ToolbarFilterBar = ({ children }: { children: ReactNode }) => (
-  <div className={styles.toolbar}>{children}</div>
+export const ToolbarFilterBar = ({
+  children,
+  noPadding
+}: {
+  children: ReactNode;
+  /** Remove the vertical padding, e.g. when the parent already provides spacing. */
+  noPadding?: boolean;
+}) => (
+  <div className={`${styles.toolbar} ${noPadding ? styles.toolbarNoPadding : ''}`}>{children}</div>
 );
 
 /** Compact labelled select, e.g. "Role  Any role". */

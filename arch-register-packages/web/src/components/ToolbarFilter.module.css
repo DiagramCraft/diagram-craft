@@ -6,6 +6,11 @@
   flex-wrap: wrap;
 }
 
+.toolbarNoPadding {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
 .filter {
   display: inline-flex;
   align-items: center;
