@@ -211,6 +211,7 @@ export const GeneralSubSection = ({ workspace }: { workspace: Workspace }) => {
                 <Select.Root
                   value={dateFormat}
                   onChange={value => setDateFormat((value as WorkspaceDateFormat) ?? dateFormat)}
+                  style={{ width: '340px' }}
                 >
                   {WORKSPACE_DATE_FORMATS.map(preset => (
                     <Select.Item key={preset} value={preset}>
@@ -229,6 +230,7 @@ export const GeneralSubSection = ({ workspace }: { workspace: Workspace }) => {
                 <Select.Root
                   value={timeFormat}
                   onChange={value => setTimeFormat((value as WorkspaceTimeFormat) ?? timeFormat)}
+                  style={{ width: '340px' }}
                 >
                   {WORKSPACE_TIME_FORMATS.map(preset => (
                     <Select.Item key={preset} value={preset}>
