@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { TbEdit, TbPlayerPause, TbPlayerPlay, TbRefresh } from 'react-icons/tb';
+import { TbEdit, TbHistory, TbPlayerPause, TbPlayerPlay, TbRefresh } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbPlus } from 'react-icons/tb';
 import { CreateJobDialog } from '../../../components/jobs/CreateJobDialog';
@@ -22,6 +22,12 @@ import {
   useUpdateJobSchedule
 } from '../../../hooks/useJobs';
 import { useWorkspaceAuthorization } from '../../../auth/WorkspaceAuthorizationContext';
+import { DropdownMenu, type MenuItem } from '../../../components/DropdownMenu';
+import {
+  ToolbarFilterBar,
+  ToolbarFilterDate,
+  ToolbarFilterSelect
+} from '../../../components/ToolbarFilter';
 import { Table } from '../../../components/table/Table';
 import { Chip } from '../../../components/Chip';
 import { EmptyState } from '../../../components/EmptyState';
@@ -365,20 +371,33 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
     setOffset(0);
   };
 
-  const selectedSchedule = schedules.find(schedule => schedule.id === scheduleId);
+  const showScheduleHistory = (schedule: (typeof schedules)[number]) => {
+    updateFilter(() => setScheduleId(schedule.id === scheduleId ? '' : schedule.id));
+    setTab('history');
+  };
 
   return (
     <>
       <WorkspaceSettingsSectionHeader
         section="jobs"
         buttons={
-          <Button
-            variant="primary"
-            icon={<TbPlus size={12} />}
-            onClick={() => setCreateDialogOpen(true)}
-          >
-            Add job
-          </Button>
+          <>
+            <Button
+              icon={<TbRefresh size={12} />}
+              onClick={() =>
+                void Promise.all([refetchServers(), refetchSchedules(), refetchRuns()])
+              }
+            >
+              Refresh
+            </Button>
+            <Button
+              variant="primary"
+              icon={<TbPlus size={12} />}
+              onClick={() => setCreateDialogOpen(true)}
+            >
+              Add job
+            </Button>
+          </>
         }
       />
       <CreateJobDialog
@@ -387,12 +406,6 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
         onClose={() => setCreateDialogOpen(false)}
       />
       <div className={styles.stack}>
-        <div className={styles.notice}>
-          Planned execution times are best-effort. A queued run may start later when workers are at
-          capacity or another scheduled job is using this workspace. Running jobs cannot be stopped
-          from here.
-        </div>
-
         <Tabs.Root value={tab} onValueChange={v => setTab(v as JobsTab)}>
           <Tabs.List>
             <Tabs.Trigger value="schedules">Schedules ({schedules.length})</Tabs.Trigger>
@@ -403,22 +416,6 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
 
         {tab === 'servers' && (
           <section className={styles.section}>
-            <div className={styles.sectionHead}>
-              <div>
-                <div className={styles.sectionTitle}>Job servers</div>
-                <div className={styles.sectionSub}>
-                  Servers are unavailable after two minutes without a status ping.
-                </div>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                icon={<TbRefresh size={13} />}
-                onClick={() => void refetchServers()}
-              >
-                Refresh
-              </Button>
-            </div>
             {serversLoading ? (
               <LoadingState text="Loading job servers…" size="sm" />
             ) : serversError ? (
@@ -462,24 +459,6 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
 
         {tab === 'schedules' && (
           <section className={styles.section}>
-            <div className={styles.sectionHead}>
-              <div>
-                <div className={styles.sectionTitle}>Recurring schedules</div>
-                <div className={styles.sectionSub}>
-                  {canManageJobs
-                    ? 'Workspace admins can edit recurrence, priority, and enabled state. Recurring jobs run on registered job servers.'
-                    : 'Schedules are managed by workspace administrators.'}
-                </div>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                icon={<TbRefresh size={13} />}
-                onClick={() => void refetchSchedules()}
-              >
-                Refresh
-              </Button>
-            </div>
             {runNowError && <div className={styles.error}>{runNowError}</div>}
             {schedulesLoading ? (
               <LoadingState text="Loading schedules…" size="sm" />
@@ -500,21 +479,20 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
                       </Table.HeaderCell>
                       <Table.HeaderCell width={90}>State</Table.HeaderCell>
                       <Table.HeaderCell width={170}>Next planned run</Table.HeaderCell>
-                      {canManageJobs && <Table.HeaderCell width={150} />}
+                      <Table.HeaderCell width={48} />
                     </Table.Row>
                   </Table.Head>
                   <Table.Body>
                     {schedules.map(schedule => (
-                      <Table.Row key={schedule.id} selected={schedule.id === scheduleId}>
-                        <Table.Cell
-                          onClick={() => {
-                            updateFilter(() =>
-                              setScheduleId(schedule.id === scheduleId ? '' : schedule.id)
-                            );
-                            setTab('history');
-                          }}
-                        >
-                          <div>{schedule.job_type}</div>
+                      <Table.Row
+                        key={schedule.id}
+                        selected={schedule.id === scheduleId}
+                        onClick={() =>
+                          canManageJobs ? setEditTarget(schedule) : showScheduleHistory(schedule)
+                        }
+                      >
+                        <Table.Cell>
+                          <div className={styles.name}>{schedule.job_type}</div>
                           <div className={styles.muted}>{schedule.system_identity}</div>
                         </Table.Cell>
                         <Table.Cell>
@@ -531,32 +509,38 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
                           </Chip>
                         </Table.Cell>
                         <Table.Cell>{formatDateTime(schedule.next_occurrence_at)}</Table.Cell>
-                        {canManageJobs && (
-                          <Table.ActionsCell>
-                            <Button
-                              variant="ghost"
-                              size="xs"
-                              icon={<TbPlayerPlay size={13} />}
-                              disabled={!schedule.enabled || runNowTarget === schedule.id}
-                              title={
-                                schedule.enabled
-                                  ? 'Run this job now, outside its normal schedule'
-                                  : 'Enable the schedule to run it now'
-                              }
-                              onClick={() => handleRunNow(schedule)}
-                            >
-                              {runNowTarget === schedule.id ? 'Starting…' : 'Run now'}
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="xs"
-                              icon={<TbEdit size={13} />}
-                              onClick={() => setEditTarget(schedule)}
-                            >
-                              Edit
-                            </Button>
-                          </Table.ActionsCell>
-                        )}
+                        <Table.ActionsCell>
+                          <DropdownMenu
+                            trigger={
+                              <Table.DotsButton aria-label={`Actions for ${schedule.job_type}`} />
+                            }
+                            items={
+                              [
+                                ...(canManageJobs
+                                  ? [
+                                      {
+                                        label: 'Edit',
+                                        icon: <TbEdit size={14} />,
+                                        onClick: () => setEditTarget(schedule)
+                                      },
+                                      {
+                                        label:
+                                          runNowTarget === schedule.id ? 'Starting…' : 'Run now',
+                                        icon: <TbPlayerPlay size={14} />,
+                                        disabled: !schedule.enabled || runNowTarget === schedule.id,
+                                        onClick: () => handleRunNow(schedule)
+                                      }
+                                    ]
+                                  : []),
+                                {
+                                  label: 'View run history',
+                                  icon: <TbHistory size={14} />,
+                                  onClick: () => showScheduleHistory(schedule)
+                                }
+                              ] satisfies MenuItem[]
+                            }
+                          />
+                        </Table.ActionsCell>
                       </Table.Row>
                     ))}
                   </Table.Body>
@@ -567,166 +551,132 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
         )}
 
         {tab === 'history' && (
-          <section className={styles.section}>
-            <div className={styles.sectionHead}>
-              <div>
-                <div className={styles.sectionTitle}>Run history</div>
-                <div className={styles.sectionSub}>
-                  {selectedSchedule
-                    ? `Filtered to ${selectedSchedule.job_type}`
-                    : 'Retained indefinitely'}
-                </div>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                icon={<TbRefresh size={13} />}
-                onClick={() =>
-                  void Promise.all([refetchServers(), refetchSchedules(), refetchRuns()])
-                }
-              >
-                Refresh
-              </Button>
-            </div>
-            <div className={styles.filters}>
-              <select
-                aria-label="Schedule"
-                className={styles.input}
+          <>
+            <ToolbarFilterBar noPadding>
+              <ToolbarFilterSelect
+                label="Schedule"
                 value={scheduleId}
-                onChange={event => updateFilter(() => setScheduleId(event.target.value))}
-              >
-                <option value="">All schedules</option>
-                {schedules.map(schedule => (
-                  <option key={schedule.id} value={schedule.id}>
-                    {schedule.job_type}
-                  </option>
-                ))}
-              </select>
-              <select
-                aria-label="Status"
-                className={styles.input}
+                onChange={value => updateFilter(() => setScheduleId(value))}
+                options={[
+                  { value: '', label: 'All schedules' },
+                  ...schedules.map(schedule => ({ value: schedule.id, label: schedule.job_type }))
+                ]}
+              />
+              <ToolbarFilterSelect
+                label="Status"
                 value={status}
-                onChange={event =>
-                  updateFilter(() => setStatus(event.target.value as '' | JobRunStatus))
-                }
-              >
-                {STATUS_OPTIONS.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              <input
-                aria-label="Planned from"
-                className={styles.input}
-                type="date"
+                onChange={value => updateFilter(() => setStatus(value as '' | JobRunStatus))}
+                options={STATUS_OPTIONS}
+              />
+              <ToolbarFilterDate
+                label="Planned from"
                 value={plannedFrom}
-                onChange={event => updateFilter(() => setPlannedFrom(event.target.value))}
+                onChange={value => updateFilter(() => setPlannedFrom(value))}
               />
-              <input
-                aria-label="Planned to"
-                className={styles.input}
-                type="date"
+              <ToolbarFilterDate
+                label="Planned to"
                 value={plannedTo}
-                onChange={event => updateFilter(() => setPlannedTo(event.target.value))}
+                onChange={value => updateFilter(() => setPlannedTo(value))}
               />
-            </div>
-            {runsLoading ? (
-              <LoadingState text="Loading job history…" size="sm" />
-            ) : runsError ? (
-              <div className={styles.error}>Job history could not be loaded.</div>
-            ) : runs == null || runs.items.length === 0 ? (
-              <EmptyState compact title="No job runs match the current filters." />
-            ) : (
-              <>
-                <div className={styles.tableWrap}>
-                  <Table.Root layout="fixed" bordered={false}>
-                    <Table.Head>
-                      <Table.Row>
-                        <Table.HeaderCell width={150}>Job</Table.HeaderCell>
-                        <Table.HeaderCell width={155}>Planned</Table.HeaderCell>
-                        <Table.HeaderCell width={155}>Started</Table.HeaderCell>
-                        <Table.HeaderCell width={155}>Completed</Table.HeaderCell>
-                        <Table.HeaderCell width={90}>Queue</Table.HeaderCell>
-                        <Table.HeaderCell width={90}>Duration</Table.HeaderCell>
-                        <Table.HeaderCell width={100}>Status</Table.HeaderCell>
-                        <Table.HeaderCell>Worker / result</Table.HeaderCell>
-                        <Table.HeaderCell width={90}>Action</Table.HeaderCell>
-                      </Table.Row>
-                    </Table.Head>
-                    <Table.Body>
-                      {runs.items.map(run => (
-                        <Table.Row key={run.id}>
-                          <Table.Cell>
-                            <div>{run.job_type}</div>
-                            <div className={styles.muted}>
-                              Priority {run.priority} · attempt {run.attempt_count}/
-                              {run.max_attempts}
-                            </div>
-                          </Table.Cell>
-                          <Table.Cell>{formatDateTime(run.planned_at)}</Table.Cell>
-                          <Table.Cell>{formatDateTime(run.started_at)}</Table.Cell>
-                          <Table.Cell>{formatDateTime(run.completed_at)}</Table.Cell>
-                          <Table.Cell>{formatDuration(run.queue_delay_ms)}</Table.Cell>
-                          <Table.Cell>{formatDuration(run.duration_ms)}</Table.Cell>
-                          <Table.Cell>
-                            <Chip dot={statusColor[run.status]} tone="ghost">
-                              {run.status}
-                            </Chip>
-                          </Table.Cell>
-                          <Table.Cell>
-                            <div>{run.worker_id ?? 'Not started'}</div>
-                            <div
-                              className={styles.summary}
-                              title={formatSummary(run.result, run.error)}
-                            >
-                              {formatSummary(run.result, run.error)}
-                            </div>
-                          </Table.Cell>
-                          <Table.Cell>
-                            {run.status === 'queued' ? (
-                              <Button
-                                variant="danger"
-                                size="xs"
-                                icon={<TbPlayerPause size={12} />}
-                                onClick={() => setCancelTarget(run.id)}
-                              >
-                                Cancel
-                              </Button>
-                            ) : (
-                              <span className={styles.muted}>—</span>
-                            )}
-                          </Table.Cell>
+            </ToolbarFilterBar>
+            <section className={styles.section}>
+              {runsLoading ? (
+                <LoadingState text="Loading job history…" size="sm" />
+              ) : runsError ? (
+                <div className={styles.error}>Job history could not be loaded.</div>
+              ) : runs == null || runs.items.length === 0 ? (
+                <EmptyState compact title="No job runs match the current filters." />
+              ) : (
+                <>
+                  <div className={styles.tableWrap}>
+                    <Table.Root layout="fixed" bordered={false}>
+                      <Table.Head>
+                        <Table.Row>
+                          <Table.HeaderCell width={150}>Job</Table.HeaderCell>
+                          <Table.HeaderCell width={155}>Planned</Table.HeaderCell>
+                          <Table.HeaderCell width={155}>Started</Table.HeaderCell>
+                          <Table.HeaderCell width={155}>Completed</Table.HeaderCell>
+                          <Table.HeaderCell width={90}>Queue</Table.HeaderCell>
+                          <Table.HeaderCell width={90}>Duration</Table.HeaderCell>
+                          <Table.HeaderCell width={100}>Status</Table.HeaderCell>
+                          <Table.HeaderCell>Worker / result</Table.HeaderCell>
+                          <Table.HeaderCell width={90}>Action</Table.HeaderCell>
                         </Table.Row>
-                      ))}
-                    </Table.Body>
-                  </Table.Root>
-                </div>
-                <div className={styles.pagination}>
-                  <div className={styles.pageLabel}>
-                    {runs.total} run{runs.total === 1 ? '' : 's'} · page {currentPage} of{' '}
-                    {pageCount}
+                      </Table.Head>
+                      <Table.Body>
+                        {runs.items.map(run => (
+                          <Table.Row key={run.id}>
+                            <Table.Cell>
+                              <div className={styles.name}>{run.job_type}</div>
+                              <div className={styles.muted}>
+                                Priority {run.priority} · attempt {run.attempt_count}/
+                                {run.max_attempts}
+                              </div>
+                            </Table.Cell>
+                            <Table.Cell>{formatDateTime(run.planned_at)}</Table.Cell>
+                            <Table.Cell>{formatDateTime(run.started_at)}</Table.Cell>
+                            <Table.Cell>{formatDateTime(run.completed_at)}</Table.Cell>
+                            <Table.Cell>{formatDuration(run.queue_delay_ms)}</Table.Cell>
+                            <Table.Cell>{formatDuration(run.duration_ms)}</Table.Cell>
+                            <Table.Cell>
+                              <Chip dot={statusColor[run.status]} tone="ghost">
+                                {run.status}
+                              </Chip>
+                            </Table.Cell>
+                            <Table.Cell>
+                              <div>{run.worker_id ?? 'Not started'}</div>
+                              <div
+                                className={styles.summary}
+                                title={formatSummary(run.result, run.error)}
+                              >
+                                {formatSummary(run.result, run.error)}
+                              </div>
+                            </Table.Cell>
+                            <Table.Cell>
+                              {run.status === 'queued' ? (
+                                <Button
+                                  variant="danger"
+                                  size="xs"
+                                  icon={<TbPlayerPause size={12} />}
+                                  onClick={() => setCancelTarget(run.id)}
+                                >
+                                  Cancel
+                                </Button>
+                              ) : (
+                                <span className={styles.muted}>—</span>
+                              )}
+                            </Table.Cell>
+                          </Table.Row>
+                        ))}
+                      </Table.Body>
+                    </Table.Root>
                   </div>
-                  <Button
-                    variant="secondary"
-                    size="xs"
-                    disabled={offset === 0}
-                    onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}
-                  >
-                    Previous
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    size="xs"
-                    disabled={currentPage >= pageCount}
-                    onClick={() => setOffset(offset + PAGE_SIZE)}
-                  >
-                    Next
-                  </Button>
-                </div>
-              </>
-            )}
-          </section>
+                  <div className={styles.pagination}>
+                    <div className={styles.pageLabel}>
+                      {runs.total} run{runs.total === 1 ? '' : 's'} · page {currentPage} of{' '}
+                      {pageCount}
+                    </div>
+                    <Button
+                      variant="secondary"
+                      size="xs"
+                      disabled={offset === 0}
+                      onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}
+                    >
+                      Previous
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="xs"
+                      disabled={currentPage >= pageCount}
+                      onClick={() => setOffset(offset + PAGE_SIZE)}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </>
+              )}
+            </section>
+          </>
         )}
 
         <ScheduleEditorDialog
