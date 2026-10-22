@@ -1,4 +1,7 @@
 import { useMemo, useState, Fragment, useEffect } from 'react';
+import { WorkspaceSettingsSectionHeader } from '../WorkspaceSettingsSectionHeader';
+import { Button } from '@diagram-craft/app-components/Button';
+import { TbPlus } from 'react-icons/tb';
 import { WORKSPACE_CAPABILITY_GROUPS } from '@arch-register/permissions';
 import {
   TbBuilding,
@@ -50,15 +53,9 @@ const sortRoles = (roles: WorkspaceRoleDefinition[]) =>
     return left.name.localeCompare(right.name);
   });
 
-export const RolesPermissionsSubSection = ({
-  workspaceSlug,
-  createDialogOpen,
-  onCloseCreateDialog
-}: {
-  workspaceSlug: string;
-  createDialogOpen: boolean;
-  onCloseCreateDialog: () => void;
-}) => {
+export const RolesPermissionsSubSection = ({ workspaceSlug }: { workspaceSlug: string }) => {
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const onCloseCreateDialog = () => setCreateDialogOpen(false);
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [editRoleId, setEditRoleId] = useState<string | null>(null);
   const [deleteRoleId, setDeleteRoleId] = useState<string | null>(null);
@@ -93,165 +90,188 @@ export const RolesPermissionsSubSection = ({
     return counts;
   }, [members]);
 
+  const header = (
+    <WorkspaceSettingsSectionHeader
+      section="roles"
+      buttons={
+        <Button
+          variant="primary"
+          icon={<TbPlus size={12} />}
+          onClick={() => setCreateDialogOpen(true)}
+        >
+          New custom role
+        </Button>
+      }
+    />
+  );
+
   if (error) {
-    return <div className={styles.container}>Failed to load workspace roles.</div>;
+    return (
+      <>
+        {header}
+        <div className={styles.container}>Failed to load workspace roles.</div>
+      </>
+    );
   }
 
   return (
-    <div className={styles.container}>
-      <div className={styles.roleGrid}>
-        {roles.map(role => {
-          const isSelected = selectedRole === role.id;
-          return (
-            <div
-              key={role.id}
-              className={`${styles.roleCard} ${isSelected ? styles.roleCardSelected : ''}`}
-              onClick={() => setSelectedRole(isSelected ? null : role.id)}
-            >
-              <div className={styles.roleCardHeader}>
-                <span className={styles.rolePill}>
-                  <span className={styles.roleDot} style={{ background: role.tone }} />
-                  {role.name}
-                </span>
-                {role.builtin && <span className={styles.builtinChip}>Built-in</span>}
-              </div>
-              <div className={styles.roleDescription}>{role.description}</div>
-              <div className={styles.roleStats}>
-                <span>
-                  <span className={styles.roleStatValue}>{memberCountByRole[role.id] ?? 0}</span>{' '}
-                  members
-                </span>
-                <span>
-                  <span className={styles.roleStatValue}>{role.capabilities.length}</span>{' '}
-                  capabilities
-                </span>
-              </div>
-              {!role.builtin && (
-                <div className={styles.roleActions}>
-                  <button
-                    type="button"
-                    className={styles.roleActionBtn}
-                    onClick={event => {
-                      event.stopPropagation();
-                      setEditRoleId(role.id);
-                    }}
-                  >
-                    <TbPencil size={12} /> Edit
-                  </button>
-                  <button
-                    type="button"
-                    className={styles.roleActionBtn}
-                    onClick={event => {
-                      event.stopPropagation();
-                      setDeleteRoleId(role.id);
-                    }}
-                  >
-                    <TbTrash size={12} /> Delete
-                  </button>
+    <>
+      {header}
+      <div className={styles.container}>
+        <div className={styles.roleGrid}>
+          {roles.map(role => {
+            const isSelected = selectedRole === role.id;
+            return (
+              <div
+                key={role.id}
+                className={`${styles.roleCard} ${isSelected ? styles.roleCardSelected : ''}`}
+                onClick={() => setSelectedRole(isSelected ? null : role.id)}
+              >
+                <div className={styles.roleCardHeader}>
+                  <span className={styles.rolePill}>
+                    <span className={styles.roleDot} style={{ background: role.tone }} />
+                    {role.name}
+                  </span>
+                  {role.builtin && <span className={styles.builtinChip}>Built-in</span>}
                 </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+                <div className={styles.roleDescription}>{role.description}</div>
+                <div className={styles.roleStats}>
+                  <span>
+                    <span className={styles.roleStatValue}>{memberCountByRole[role.id] ?? 0}</span>{' '}
+                    members
+                  </span>
+                  <span>
+                    <span className={styles.roleStatValue}>{role.capabilities.length}</span>{' '}
+                    capabilities
+                  </span>
+                </div>
+                {!role.builtin && (
+                  <div className={styles.roleActions}>
+                    <button
+                      type="button"
+                      className={styles.roleActionBtn}
+                      onClick={event => {
+                        event.stopPropagation();
+                        setEditRoleId(role.id);
+                      }}
+                    >
+                      <TbPencil size={12} /> Edit
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.roleActionBtn}
+                      onClick={event => {
+                        event.stopPropagation();
+                        setDeleteRoleId(role.id);
+                      }}
+                    >
+                      <TbTrash size={12} /> Delete
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
 
-      <div className={styles.matrixWrap}>
-        <Table.Root stickyHeader bordered={false}>
-          <Table.Head>
-            <tr>
-              <Table.HeaderCell>Capability</Table.HeaderCell>
-              {roles.map(role => (
-                <Table.HeaderCell
-                  key={role.id}
-                  align="center"
-                  className={
-                    selectedRoleDefinition?.id === role.id ? styles.matrixColHighlight : undefined
-                  }
-                >
-                  {role.name}
-                </Table.HeaderCell>
-              ))}
-            </tr>
-          </Table.Head>
-          <Table.Body>
-            {WORKSPACE_CAPABILITY_GROUPS.map(group => (
-              <Fragment key={group.label}>
-                <Table.GroupHeaderRow colSpan={roles.length + 1}>
-                  {group.label}
-                </Table.GroupHeaderRow>
-                {group.caps.map(cap => (
-                  <Table.Row key={cap.id}>
-                    <Table.Cell className={styles.matrixCapName}>{cap.name}</Table.Cell>
-                    {roles.map(role => {
-                      const has = role.capabilities.includes(cap.id);
-                      const highlight = selectedRoleDefinition?.id === role.id;
-                      return (
-                        <Table.Cell
-                          key={role.id}
-                          align="center"
-                          className={highlight ? styles.matrixColHighlight : undefined}
-                        >
-                          {has ? (
-                            <span className={styles.matrixCheck}>
-                              <TbCheck />
-                            </span>
-                          ) : (
-                            <span className={styles.matrixDash}>-</span>
-                          )}
-                        </Table.Cell>
-                      );
-                    })}
-                  </Table.Row>
+        <div className={styles.matrixWrap}>
+          <Table.Root stickyHeader bordered={false}>
+            <Table.Head>
+              <tr>
+                <Table.HeaderCell>Capability</Table.HeaderCell>
+                {roles.map(role => (
+                  <Table.HeaderCell
+                    key={role.id}
+                    align="center"
+                    className={
+                      selectedRoleDefinition?.id === role.id ? styles.matrixColHighlight : undefined
+                    }
+                  >
+                    {role.name}
+                  </Table.HeaderCell>
                 ))}
-              </Fragment>
-            ))}
-          </Table.Body>
-        </Table.Root>
+              </tr>
+            </Table.Head>
+            <Table.Body>
+              {WORKSPACE_CAPABILITY_GROUPS.map(group => (
+                <Fragment key={group.label}>
+                  <Table.GroupHeaderRow colSpan={roles.length + 1}>
+                    {group.label}
+                  </Table.GroupHeaderRow>
+                  {group.caps.map(cap => (
+                    <Table.Row key={cap.id}>
+                      <Table.Cell className={styles.matrixCapName}>{cap.name}</Table.Cell>
+                      {roles.map(role => {
+                        const has = role.capabilities.includes(cap.id);
+                        const highlight = selectedRoleDefinition?.id === role.id;
+                        return (
+                          <Table.Cell
+                            key={role.id}
+                            align="center"
+                            className={highlight ? styles.matrixColHighlight : undefined}
+                          >
+                            {has ? (
+                              <span className={styles.matrixCheck}>
+                                <TbCheck />
+                              </span>
+                            ) : (
+                              <span className={styles.matrixDash}>-</span>
+                            )}
+                          </Table.Cell>
+                        );
+                      })}
+                    </Table.Row>
+                  ))}
+                </Fragment>
+              ))}
+            </Table.Body>
+          </Table.Root>
+        </div>
+
+        <RoleEditorDialog
+          open={createDialogOpen}
+          title="Create custom role"
+          initialRole={null}
+          pending={createRole.isPending}
+          errorMessage={createRole.error instanceof Error ? createRole.error.message : null}
+          onClose={onCloseCreateDialog}
+          onSave={async draft => {
+            await createRole.mutateAsync(draft);
+            await reloadUser();
+            onCloseCreateDialog();
+          }}
+        />
+
+        <RoleEditorDialog
+          open={editRole != null}
+          title={editRole ? `Edit ${editRole.name}` : 'Edit role'}
+          initialRole={editRole}
+          pending={updateRole.isPending}
+          errorMessage={updateRole.error instanceof Error ? updateRole.error.message : null}
+          onClose={() => setEditRoleId(null)}
+          onSave={async draft => {
+            if (!editRole) return;
+            await updateRole.mutateAsync({ roleId: editRole.id, role: draft });
+            await reloadUser();
+            setEditRoleId(null);
+          }}
+        />
+
+        <RoleDeleteConfirmDialog
+          open={deleteRoleDefinition != null}
+          role={deleteRoleDefinition}
+          pending={deleteRole.isPending}
+          error={deleteRole.error instanceof Error ? deleteRole.error : null}
+          onClose={() => setDeleteRoleId(null)}
+          onDelete={async () => {
+            if (!deleteRoleDefinition) return;
+            await deleteRole.mutateAsync(deleteRoleDefinition.id);
+            await reloadUser();
+            setDeleteRoleId(null);
+          }}
+        />
       </div>
-
-      <RoleEditorDialog
-        open={createDialogOpen}
-        title="Create custom role"
-        initialRole={null}
-        pending={createRole.isPending}
-        errorMessage={createRole.error instanceof Error ? createRole.error.message : null}
-        onClose={onCloseCreateDialog}
-        onSave={async draft => {
-          await createRole.mutateAsync(draft);
-          await reloadUser();
-          onCloseCreateDialog();
-        }}
-      />
-
-      <RoleEditorDialog
-        open={editRole != null}
-        title={editRole ? `Edit ${editRole.name}` : 'Edit role'}
-        initialRole={editRole}
-        pending={updateRole.isPending}
-        errorMessage={updateRole.error instanceof Error ? updateRole.error.message : null}
-        onClose={() => setEditRoleId(null)}
-        onSave={async draft => {
-          if (!editRole) return;
-          await updateRole.mutateAsync({ roleId: editRole.id, role: draft });
-          await reloadUser();
-          setEditRoleId(null);
-        }}
-      />
-
-      <RoleDeleteConfirmDialog
-        open={deleteRoleDefinition != null}
-        role={deleteRoleDefinition}
-        pending={deleteRole.isPending}
-        error={deleteRole.error instanceof Error ? deleteRole.error : null}
-        onClose={() => setDeleteRoleId(null)}
-        onDelete={async () => {
-          if (!deleteRoleDefinition) return;
-          await deleteRole.mutateAsync(deleteRoleDefinition.id);
-          await reloadUser();
-          setDeleteRoleId(null);
-        }}
-      />
-    </div>
+    </>
   );
 };
 

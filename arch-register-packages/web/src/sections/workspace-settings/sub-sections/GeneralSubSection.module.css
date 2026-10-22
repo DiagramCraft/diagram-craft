@@ -6,13 +6,6 @@
   padding: 16px 24px 32px;
 }
 
-/* Section actions (save/cancel row) */
-.sectionActions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 6px;
-}
-
 /* Section (Block) */
 .section {
   background: var(--panel-bg);
