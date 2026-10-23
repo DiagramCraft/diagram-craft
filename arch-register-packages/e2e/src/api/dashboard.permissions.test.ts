@@ -15,10 +15,14 @@ test.describe('workspace dashboard permission routes', () => {
     ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
   });
 
-  test('authorization: viewer and reviewer can read dashboards but cannot create or update them', async ({
+  test('authorization: viewer, reviewer, and editor can read dashboards but cannot create or update them', async ({
     personas
   }) => {
-    for (const persona of [personas.workspaceViewer, personas.workspaceReviewer]) {
+    for (const persona of [
+      personas.workspaceViewer,
+      personas.workspaceReviewer,
+      personas.workspaceEditor
+    ]) {
       const dashboards = await persona.orpc.dashboard.list({ params: { workspace: 'default' } });
       expect(dashboards.length).toBeGreaterThan(0);
       const [dashboard] = dashboards;
@@ -45,14 +49,10 @@ test.describe('workspace dashboard permission routes', () => {
     }
   });
 
-  test('authorization: editor, admin, and owner can create, update, and delete dashboards', async ({
+  test('authorization: admin and owner can create, update, and delete dashboards', async ({
     personas
   }) => {
-    for (const persona of [
-      personas.workspaceEditor,
-      personas.workspaceAdmin,
-      personas.workspaceOwner
-    ]) {
+    for (const persona of [personas.workspaceAdmin, personas.workspaceOwner]) {
       const created = await persona.orpc.dashboard.create({
         params: { workspace: 'default' },
         body: { name: `Dashboard for ${persona.userId}` }

@@ -167,7 +167,6 @@ export const WORKSPACE_ROLE_CAPABILITIES: Record<BuiltinWorkspaceRole, Workspace
   editor: [
     'ws.view',
     'ws.manage_views',
-    'ws.manage_dashboard',
     'proj.create',
     'proj.edit',
     'content.view',

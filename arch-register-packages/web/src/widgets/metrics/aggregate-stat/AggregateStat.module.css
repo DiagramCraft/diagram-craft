@@ -18,7 +18,7 @@ div[data-frame="true"] .card {
   width: auto;
   height: 100%;
   margin: 0;
-  padding: 14px 16px 16px;
+  padding: 14px 10px 16px;
   gap: 2px;
   min-width: 0;
 }
