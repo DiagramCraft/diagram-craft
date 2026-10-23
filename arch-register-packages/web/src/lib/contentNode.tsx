@@ -9,7 +9,8 @@ import {
   TbFileTypePpt,
   TbFileTypeTxt,
   TbFileTypeXls,
-  TbPhoto
+  TbPhoto,
+  TbSitemap
 } from 'react-icons/tb';
 import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 
@@ -53,6 +54,7 @@ export const getFileNodeIcon = (
   fileName?: string | null
 ): React.ReactElement => {
   if (type === 'markdown') return <TbFileText size={size} />;
+  if (type === 'diagram') return <TbSitemap size={size} />;
   const extension = type === 'file' ? fileName?.split('.').pop()?.toLowerCase() : undefined;
   const Icon = (extension && FILE_EXTENSION_ICONS[extension]) || TbFile;
   return <Icon size={size} />;
