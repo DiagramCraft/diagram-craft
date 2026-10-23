@@ -1,10 +1,12 @@
 import type React from 'react';
 import { Button } from '@diagram-craft/app-components/Button';
-import { TextInput } from '@diagram-craft/app-components/TextInput';
-import { TbFolder, TbLayoutGrid, TbList, TbPlus } from 'react-icons/tb';
+import { TbFolder, TbPlus } from 'react-icons/tb';
 import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 import { DiagramCard, DiagramRow } from '../DiagramCard';
 import { EmptyState } from '../EmptyState';
+import { FilterDropdown } from '../FilterDropdown';
+import { SearchInput } from '../SearchInput';
+import toolbarStyles from './DiagramBrowserToolbar.module.css';
 import styles from '../../sections/projects/ProjectDetailScreen.module.css';
 
 export type DiagramViewMode = 'grid' | 'list';
@@ -63,41 +65,43 @@ export const DiagramBrowserToolbar = ({
   filter,
   onFilterChange,
   viewMode,
-  onViewModeChange
+  onViewModeChange,
+  sort,
+  onSortChange,
+  sortOptions
 }: {
   label?: React.ReactNode;
   filter: string;
   onFilterChange: (value: string) => void;
   viewMode: DiagramViewMode;
   onViewModeChange: (value: DiagramViewMode) => void;
+  sort?: string;
+  onSortChange?: (value: string) => void;
+  sortOptions?: { value: string; label: string }[];
 }) => (
-  <div className={styles.tabBar}>
+  <div className={toolbarStyles.toolbar}>
     {label}
-    <div className={styles.tabBarRight}>
-      <TextInput
-        variant="search"
-        placeholder="Filter diagrams…"
-        value={filter}
-        onChange={value => onFilterChange(value ?? '')}
-        onClear={() => onFilterChange('')}
-      />
-      <button
-        type="button"
-        className={`${styles.iconBtn} ${viewMode === 'grid' ? styles.iconBtnActive : ''}`}
-        title="Grid view"
-        onClick={() => onViewModeChange('grid')}
-      >
-        <TbLayoutGrid size={13} />
-      </button>
-      <button
-        type="button"
-        className={`${styles.iconBtn} ${viewMode === 'list' ? styles.iconBtnActive : ''}`}
-        title="List view"
-        onClick={() => onViewModeChange('list')}
-      >
-        <TbList size={13} />
-      </button>
-    </div>
+    <SearchInput
+      size="sm"
+      className={toolbarStyles.search}
+      placeholder="Filter diagrams…"
+      value={filter}
+      onChange={onFilterChange}
+      onClear={() => onFilterChange('')}
+    />
+    <div className={toolbarStyles.spacer} />
+    {sortOptions && sort !== undefined && onSortChange && (
+      <FilterDropdown label="Sort" value={sort} onChange={onSortChange} options={sortOptions} />
+    )}
+    <FilterDropdown
+      label="View"
+      value={viewMode}
+      onChange={value => onViewModeChange(value as DiagramViewMode)}
+      options={[
+        { value: 'grid', label: 'Grid' },
+        { value: 'list', label: 'List' }
+      ]}
+    />
   </div>
 );
 

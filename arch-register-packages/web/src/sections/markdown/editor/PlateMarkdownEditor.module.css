@@ -11,7 +11,7 @@
   composes: articleTypography from "../articleTypography.module.css";
   flex: 1;
   width: 100%;
-  padding: 28px 100px 80px 40px;
+  padding: 28px 100px 80px 24px;
   outline: none;
   overflow-y: auto;
   background: var(--base-bg);

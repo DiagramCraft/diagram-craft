@@ -46,8 +46,10 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
   const [addDiagramOpen, setAddDiagramOpen] = useState(false);
   const [addMarkdownOpen, setAddMarkdownOpen] = useState(false);
   const [addFolderOpen, setAddFolderOpen] = useState(false);
+  const folderSegments = folder ? folder.split('/').filter(Boolean) : [];
   const filter = search.contentQuery ?? '';
   const viewMode = search.contentView ?? 'grid';
+  const [sort, setSort] = useState('default');
 
   const setFilter = (value: string) => {
     const route = folder
@@ -109,7 +111,15 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
   const files = folder ? (folderData?.files ?? []) : (data?.rootFiles ?? []);
 
   const lc = filter.toLowerCase();
-  const filtered = lc ? files.filter(f => f.name.toLowerCase().includes(lc)) : files;
+  const matching = lc ? files.filter(f => f.name.toLowerCase().includes(lc)) : files;
+  const filtered =
+    sort === 'name-asc'
+      ? [...matching].sort((a, b) => a.name.localeCompare(b.name))
+      : sort === 'name-desc'
+        ? [...matching].sort((a, b) => b.name.localeCompare(a.name))
+        : sort === 'size'
+          ? [...matching].sort((a, b) => b.size_bytes - a.size_bytes)
+          : matching;
 
   return (
     <div className={styles.screen}>
@@ -119,9 +129,31 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
             {
               label: 'Home',
               onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
-            }
+            },
+            ...(folderSegments.length > 0
+              ? [
+                  {
+                    label: workspace?.name ?? workspaceSlug,
+                    onClick: () =>
+                      navigate({ to: '/$workspaceSlug/content', params: { workspaceSlug } })
+                  },
+                  ...folderSegments.map((segment, i) => ({
+                    label: segment,
+                    onClick:
+                      i === folderSegments.length - 1
+                        ? undefined
+                        : () =>
+                      navigate(
+                        workspaceContentFolderRoute(
+                          workspaceSlug,
+                          folderSegments.slice(0, i + 1).join('/')
+                        )
+                      )
+                  }))
+                ]
+              : [])
           ]}
-          title={workspace?.name ?? workspaceSlug}
+          title={folderSegments.at(-1) ?? workspace?.name ?? workspaceSlug}
           buttons={
             !isReadOnly && (
               <MenuButton.Root>
@@ -164,20 +196,19 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
         />
       </div>
 
-      <div className={styles.meta}>
-        <div className={styles.metaItem}>
-          <div className={styles.metaLabel}>Items</div>
-          <div className={styles.metaValue}>
-            <span className="mono tabular">{files.length}</span>
-          </div>
-        </div>
-      </div>
-
       <DiagramBrowserToolbar
         filter={filter}
         onFilterChange={setFilter}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
+        sort={sort}
+        onSortChange={setSort}
+        sortOptions={[
+          { value: 'default', label: 'Default' },
+          { value: 'name-asc', label: 'Name A–Z' },
+          { value: 'name-desc', label: 'Name Z–A' },
+          { value: 'size', label: 'Size' }
+        ]}
       />
 
       <DiagramBrowserView
