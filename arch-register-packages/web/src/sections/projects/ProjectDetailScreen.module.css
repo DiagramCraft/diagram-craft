@@ -208,6 +208,12 @@
   height: 100%;
 }
 
+/* Small corner icon for non-diagram items; must not inherit the full-size svg rule above */
+.diagramThumbNodes .diagramThumbIcon svg {
+  width: 24px;
+  height: 24px;
+}
+
 .diagramPin {
   position: absolute;
   top: 8px;

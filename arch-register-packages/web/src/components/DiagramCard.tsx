@@ -13,6 +13,31 @@ import styles from '../sections/projects/ProjectDetailScreen.module.css';
 import { DiagramMetadataPopover } from './DiagramMetadataPopover';
 import { formatDate } from '../utils/dateFormat';
 
+const thumbIconStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'flex-start',
+  justifyContent: 'flex-start',
+  height: '100%',
+  padding: 10,
+  color: 'var(--accent-fg)'
+};
+
+/**
+ * Makes a stored preview svg cover its thumbnail (cropping to the thumbnail's aspect ratio)
+ * instead of being letterboxed: ensures a viewBox, drops fixed dimensions and sets `slice`.
+ */
+const coverPreviewSvg = (svg: string): string =>
+  svg.replace(/<svg\b([^>]*)>/i, (_match, attrs: string) => {
+    const attr = (name: string) => new RegExp(`\\s${name}\\s*=\\s*"([^"]*)"`, 'i').exec(attrs)?.[1];
+    const width = Number.parseFloat(attr('width') ?? '');
+    const height = Number.parseFloat(attr('height') ?? '');
+    let next = attrs
+      .replace(/\s(width|height|preserveAspectRatio)\s*=\s*"[^"]*"/gi, '')
+      .replace(/\sstyle\s*=\s*"[^"]*"/i, '');
+    if (!attr('viewBox') && width > 0 && height > 0) next += ` viewBox="0 0 ${width} ${height}"`;
+    return `<svg${next} preserveAspectRatio="xMidYMid slice">`;
+  });
+
 const CommentPill = ({ file }: { file: ProjectFile }) => {
   const total = file.comment_count ?? 0;
   const unresolved = file.unresolved_comment_count ?? 0;
@@ -69,70 +94,41 @@ export const DiagramCard = ({
       onContextMenu={onContextMenu}
     >
       <div className={styles.diagramThumb}>
-        <div className={styles.diagramThumbGrid} />
         <div className={styles.diagramThumbNodes}>
           {file.type === 'markdown' || file.type === 'file' ? (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: '100%',
-                color: 'var(--base-fg-more-dim)'
-              }}
-            >
+            <div className={styles.diagramThumbIcon} style={thumbIconStyle}>
               {file.type === 'file' ? (
-                getFileNodeIcon(file.type, 36, file.original_filename ?? file.name)
+                getFileNodeIcon(file.type, 18, file.original_filename ?? file.name)
               ) : (
-                <TbFileText size={36} />
+                <TbFileText size={18} />
               )}
             </div>
           ) : file.preview_svg ? (
-            <div dangerouslySetInnerHTML={{ __html: file.preview_svg }} />
+            <>
+              <div
+                style={{ height: '100%' }}
+                dangerouslySetInnerHTML={{ __html: coverPreviewSvg(file.preview_svg) }}
+              />
+              <div
+                className={styles.diagramThumbIcon}
+                style={{
+                  position: 'absolute',
+                  top: 8,
+                  left: 8,
+                  display: 'flex',
+                  padding: 3,
+                  borderRadius: 'var(--r-sm)',
+                  background: 'color-mix(in srgb, var(--panel-bg) 85%, transparent)',
+                  color: 'var(--accent-fg)'
+                }}
+              >
+                <TbSitemap size={18} />
+              </div>
+            </>
           ) : (
-            <svg viewBox="0 0 140 80" preserveAspectRatio="none">
-              <rect
-                x="10"
-                y="14"
-                width="32"
-                height="18"
-                rx="2"
-                fill="var(--cmp-bg)"
-                stroke="var(--base-fg-more-dim)"
-              />
-              <rect
-                x="56"
-                y="6"
-                width="32"
-                height="18"
-                rx="2"
-                fill="var(--cmp-bg)"
-                stroke="var(--base-fg-more-dim)"
-              />
-              <rect
-                x="56"
-                y="44"
-                width="32"
-                height="18"
-                rx="2"
-                fill="var(--cmp-bg)"
-                stroke="var(--base-fg-more-dim)"
-              />
-              <rect
-                x="100"
-                y="26"
-                width="32"
-                height="18"
-                rx="2"
-                fill="color-mix(in oklch, var(--tag-component) 28%, var(--cmp-bg))"
-                stroke="var(--tag-component)"
-              />
-              <path
-                d="M42 23 L56 15 M42 23 L56 53 M88 15 L100 35 M88 53 L100 35"
-                stroke="var(--cmp-fg-disabled)"
-                fill="none"
-              />
-            </svg>
+            <div className={styles.diagramThumbIcon} style={thumbIconStyle}>
+              <TbSitemap size={18} />
+            </div>
           )}
         </div>
         <CommentPill file={file} />
@@ -195,13 +191,13 @@ export const DiagramRow = ({
     >
       <div className={styles.diagramRowName}>
         {file.type === 'markdown' && (
-          <TbFileText size={13} style={{ flexShrink: 0, color: 'var(--base-fg-more-dim)' }} />
+          <TbFileText size={13} style={{ flexShrink: 0, color: 'var(--accent-fg)' }} />
         )}
         {file.type === 'diagram' && (
-          <TbSitemap size={13} style={{ flexShrink: 0, color: 'var(--base-fg-more-dim)' }} />
+          <TbSitemap size={13} style={{ flexShrink: 0, color: 'var(--accent-fg)' }} />
         )}
         {file.type === 'file' && (
-          <span style={{ display: 'inline-flex', flexShrink: 0, color: 'var(--base-fg-more-dim)' }}>
+          <span style={{ display: 'inline-flex', flexShrink: 0, color: 'var(--accent-fg)' }}>
             {getFileNodeIcon(file.type, 13, file.original_filename ?? file.name)}
           </span>
         )}
@@ -251,18 +247,9 @@ export const FolderCard = ({
 }) => (
   <button type="button" className={styles.diagramCard} onClick={onOpen}>
     <div className={styles.diagramThumb}>
-      <div className={styles.diagramThumbGrid} />
       <div className={styles.diagramThumbNodes}>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            height: '100%',
-            color: 'var(--base-fg-more-dim)'
-          }}
-        >
-          {folder.readOnly ? <TbFolderSymlink size={36} /> : <TbFolder size={36} />}
+        <div className={styles.diagramThumbIcon} style={thumbIconStyle}>
+          {folder.readOnly ? <TbFolderSymlink size={18} /> : <TbFolder size={18} />}
         </div>
       </div>
     </div>
@@ -291,9 +278,9 @@ export const FolderRow = ({
   >
     <div className={styles.diagramRowName}>
       {folder.readOnly ? (
-        <TbFolderSymlink size={13} style={{ flexShrink: 0, color: 'var(--base-fg-more-dim)' }} />
+        <TbFolderSymlink size={13} style={{ flexShrink: 0, color: 'var(--accent-fg)' }} />
       ) : (
-        <TbFolder size={13} style={{ flexShrink: 0, color: 'var(--base-fg-more-dim)' }} />
+        <TbFolder size={13} style={{ flexShrink: 0, color: 'var(--accent-fg)' }} />
       )}
       <span>{folder.name}</span>
     </div>
