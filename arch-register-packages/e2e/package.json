@@ -17,7 +17,7 @@
     "@orpc/client": "^1.15.0",
     "@orpc/contract": "^1.15.0",
     "@orpc/openapi-client": "^1.15.0",
-    "h3": "2.0.2",
+    "h3": "2.0.8",
     "postgres": "^3.4.5"
   },
   "devDependencies": {
