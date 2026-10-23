@@ -194,27 +194,27 @@ export const ContentTree = forwardRef<ContentTreeHandle, Props>(function Content
   };
 
   const fileRow = (file: ProjectFile, depth?: number) => (
-      <TreeRow
-        key={file.id}
-        depth={depth}
-        icon={getFileNodeIcon(file.type, 13, file.original_filename ?? file.name)}
-        label={file.original_filename ?? file.name}
-        active={file.id === activeFileId}
-        onClick={() => (file.type === 'file' ? onDownload(file) : onFileClick(file))}
-        onContextMenu={
-          file.read_only
-            ? undefined
-            : event => {
-                event.preventDefault();
-                event.stopPropagation();
-                setMenu({
-                  x: event.clientX,
-                  y: event.clientY,
-                  target: { type: fileMenuTargetType(file.type), file }
-                });
-              }
-        }
-      />
+    <TreeRow
+      key={file.id}
+      depth={depth}
+      icon={getFileNodeIcon(file.type, 13, file.original_filename ?? file.name)}
+      label={file.original_filename ?? file.name}
+      active={file.id === activeFileId}
+      onClick={() => (file.type === 'file' ? onDownload(file) : onFileClick(file))}
+      onContextMenu={
+        file.read_only
+          ? undefined
+          : event => {
+              event.preventDefault();
+              event.stopPropagation();
+              setMenu({
+                x: event.clientX,
+                y: event.clientY,
+                target: { type: fileMenuTargetType(file.type), file }
+              });
+            }
+      }
+    />
   );
 
   const folderNode = (node: ContentFolderNode, depth = 0): ReactNode => {
