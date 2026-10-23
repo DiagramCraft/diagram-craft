@@ -2,7 +2,13 @@ import type React from 'react';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbFolder, TbPlus } from 'react-icons/tb';
 import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
-import { DiagramCard, DiagramRow } from '../DiagramCard';
+import {
+  DiagramCard,
+  DiagramRow,
+  FolderCard,
+  FolderRow,
+  type DiagramBrowserFolderItem
+} from '../DiagramCard';
 import { EmptyState } from '../EmptyState';
 import { FilterDropdown } from '../FilterDropdown';
 import { SearchInput } from '../SearchInput';
@@ -110,6 +116,8 @@ export const DiagramBrowserView = ({
   viewMode,
   listItems,
   gridSections,
+  subfolders = [],
+  onOpenFolder,
   onOpenDiagram,
   onOpenMarkdown,
   onDownloadFile,
@@ -122,6 +130,9 @@ export const DiagramBrowserView = ({
   viewMode: DiagramViewMode;
   listItems: DiagramBrowserItem[];
   gridSections: DiagramBrowserGridSection[];
+  /** Subfolders of the current folder, shown before the files */
+  subfolders?: DiagramBrowserFolderItem[];
+  onOpenFolder?: (folder: DiagramBrowserFolderItem) => void;
   onOpenDiagram: (file: ProjectFile) => void;
   onOpenMarkdown?: (file: ProjectFile) => void;
   onDownloadFile?: (file: ProjectFile) => void;
@@ -130,7 +141,7 @@ export const DiagramBrowserView = ({
   emptyState: { title: string; sub: string };
   noMatchState: { title: string; sub: string };
 }) => {
-  const totalItems = listItems.length;
+  const totalItems = listItems.length + subfolders.length;
 
   if (totalItems === 0 && !hasFilter) {
     return (
@@ -146,6 +157,9 @@ export const DiagramBrowserView = ({
   if (totalItems === 0) {
     return <DiagramBrowserEmptyState title={noMatchState.title} sub={noMatchState.sub} />;
   }
+
+  // The folder column only helps when the list spans several folders
+  const showFolder = listItems.some(item => item.folder !== undefined);
 
   const renderItem = ({ file, folder }: DiagramBrowserItem) => ({
     file,
@@ -164,13 +178,23 @@ export const DiagramBrowserView = ({
   if (viewMode === 'list') {
     return (
       <div className={styles.diagramListPanel}>
-        <div className={styles.diagramListHead}>
+        <div
+          className={`${styles.diagramListHead} ${showFolder ? styles.diagramListHeadWithFolder : ''}`}
+        >
           <span>Name</span>
-          <span>Folder</span>
+          {showFolder && <span>Folder</span>}
           <span>Last edit</span>
         </div>
+        {subfolders.map(folder => (
+          <FolderRow
+            key={folder.path}
+            folder={folder}
+            showFolder={showFolder}
+            onOpen={() => onOpenFolder?.(folder)}
+          />
+        ))}
         {listItems.map(item => (
-          <DiagramRow key={item.file.path} {...renderItem(item)} />
+          <DiagramRow key={item.file.path} showFolder={showFolder} {...renderItem(item)} />
         ))}
       </div>
     );
@@ -178,6 +202,13 @@ export const DiagramBrowserView = ({
 
   return (
     <>
+      {subfolders.length > 0 && (
+        <div className={styles.diagramGrid} style={{ marginBottom: 10 }}>
+          {subfolders.map(folder => (
+            <FolderCard key={folder.path} folder={folder} onOpen={() => onOpenFolder?.(folder)} />
+          ))}
+        </div>
+      )}
       {gridSections.map(section => (
         <div key={section.key}>
           {section.label ? <div className={styles.sectionLabel}>{section.label}</div> : null}

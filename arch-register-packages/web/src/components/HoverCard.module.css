@@ -9,6 +9,16 @@
   display: block;
 }
 
+/* Block anchor whose single child fills it, e.g. a card in a grid row taller than the card. */
+.fillAnchor {
+  display: flex;
+}
+
+.fillAnchor > * {
+  flex: 1;
+  min-width: 0;
+}
+
 .panel {
   width: min(280px, calc(100vw - 24px));
   padding: 12px 14px;

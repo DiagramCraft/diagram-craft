@@ -1,5 +1,16 @@
 import type React from 'react';
-import { TbFile, TbFileText } from 'react-icons/tb';
+import type { IconType } from 'react-icons';
+import {
+  TbFile,
+  TbFileText,
+  TbFileTypeDoc,
+  TbFileTypeDocx,
+  TbFileTypePdf,
+  TbFileTypePpt,
+  TbFileTypeTxt,
+  TbFileTypeXls,
+  TbPhoto
+} from 'react-icons/tb';
 import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 
 export type ContentNodeType = ProjectFile['type']; // 'diagram' | 'folder' | 'markdown' | 'file'
@@ -14,9 +25,38 @@ export type MenuTarget =
 export const fileMenuTargetType = (type: ContentNodeType): 'diagram' | 'markdown' | 'file' =>
   type === 'markdown' ? 'markdown' : type === 'file' ? 'file' : 'diagram';
 
-/** Icon for a file node in tree/list views */
-export const getFileNodeIcon = (type: ContentNodeType, size = 13): React.ReactElement =>
-  type === 'markdown' ? <TbFileText size={size} /> : <TbFile size={size} />;
+const FILE_EXTENSION_ICONS: Record<string, IconType> = {
+  ppt: TbFileTypePpt,
+  pptx: TbFileTypePpt,
+  doc: TbFileTypeDoc,
+  docx: TbFileTypeDocx,
+  xls: TbFileTypeXls,
+  xlsx: TbFileTypeXls,
+  pdf: TbFileTypePdf,
+  txt: TbFileTypeTxt,
+  png: TbPhoto,
+  jpg: TbPhoto,
+  jpeg: TbPhoto,
+  gif: TbPhoto,
+  svg: TbPhoto,
+  webp: TbPhoto,
+  bmp: TbPhoto
+};
+
+/**
+ * Icon for a file node in tree/list views. For uploaded files, pass `fileName` to get an icon
+ * matching the file format.
+ */
+export const getFileNodeIcon = (
+  type: ContentNodeType,
+  size = 13,
+  fileName?: string | null
+): React.ReactElement => {
+  if (type === 'markdown') return <TbFileText size={size} />;
+  const extension = type === 'file' ? fileName?.split('.').pop()?.toLowerCase() : undefined;
+  const Icon = (extension && FILE_EXTENSION_ICONS[extension]) || TbFile;
+  return <Icon size={size} />;
+};
 
 /** Human-readable label for rename / delete dialogs */
 export const entityTypeLabel = (type: ContentNodeType): string =>

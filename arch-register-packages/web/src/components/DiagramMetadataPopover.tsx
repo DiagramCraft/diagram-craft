@@ -31,7 +31,7 @@ export const DiagramMetadataPopover = ({
 
   return (
     <HoverCard
-      anchorClassName={hoverCardStyles.blockAnchor}
+      anchorClassName={hoverCardStyles.fillAnchor}
       content={
         <>
           <HoverCardTitle>{title}</HoverCardTitle>

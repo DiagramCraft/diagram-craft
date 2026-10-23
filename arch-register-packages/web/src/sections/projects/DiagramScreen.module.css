@@ -4,7 +4,8 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: white;
+  background: var(--base-bg, white);
+  font-family: var(--font-sans, system-ui);
   z-index: 1000;
 }
 
@@ -44,20 +45,21 @@
 }
 
 .error {
-  color: #333;
+  color: var(--base-fg, #333);
 }
 
 .button {
   padding: 0.5rem 1rem;
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--cmp-border, #e5e5e5);
   border-radius: 4px;
-  background: white;
-  color: #333;
+  background: var(--cmp-bg, white);
+  color: var(--base-fg, #333);
   cursor: pointer;
+  font-family: inherit;
   font-size: 0.875rem;
   transition: background 0.15s;
 }
 
 .button:hover {
-  background: #f0f0f0;
+  background: var(--cmp-bg-hover, #f0f0f0);
 }

@@ -169,7 +169,7 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
       <DiagramBrowserView
         hasFilter={filter.length > 0}
         viewMode={viewMode}
-        listItems={filtered.map(file => ({ file, folder }))}
+        listItems={filtered.map(file => ({ file }))}
         gridSections={[
           {
             key: 'entity-content',

@@ -7,7 +7,13 @@ import {
   useRef,
   useState
 } from 'react';
-import { TbMessage, TbMessageCirclePlus, TbSparkles } from 'react-icons/tb';
+import {
+  TbChevronDown,
+  TbChevronRight,
+  TbMessage,
+  TbMessageCirclePlus,
+  TbSparkles
+} from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 import type { DocumentAiAction } from '@arch-register/api-types/documentContract';
@@ -94,6 +100,7 @@ export const MarkdownEditorPane = (props: {
     rect: DOMRect;
   } | null>(null);
   const [commentComposerOpen, setCommentComposerOpen] = useState(false);
+  const [discussionOpen, setDiscussionOpen] = useState(true);
   const [activeCommentId, setActiveCommentId] = useState<string | null>(null);
   const [inlinePopupRect, setInlinePopupRect] = useState<DOMRect | null>(null);
 
@@ -322,34 +329,51 @@ export const MarkdownEditorPane = (props: {
                 />
               </div>
             )}
+            <div className={styles.articleFooter}>
+              {updatedLabel && <>Last edited {updatedLabel} · </>}
+              {readTime} min read
+            </div>
             <MarkdownAttachmentManager
               attachments={attachments.items}
               onOpen={attachments.onOpen}
               onDeleteRequest={attachments.onDeleteRequest}
               isDeleting={attachments.isDeleting}
             />
-            <div className={styles.articleFooter}>
-              {updatedLabel && <>Last edited {updatedLabel} · </>}
-              {readTime} min read
-            </div>
             {showBacklinks && (
               <DocumentBacklinksSection workspaceId={workspaceId} nodeId={nodeId} />
             )}
             {showDiscussion && (
               <section className={styles.discussionSection}>
-                <div className={styles.discussionHead}>
-                  <TbMessage size={14} />
+                <button
+                  type="button"
+                  className={styles.discussionHead}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    width: '100%',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    marginBottom: discussionOpen ? undefined : 15
+                  }}
+                  onClick={() => setDiscussionOpen(open => !open)}
+                  aria-expanded={discussionOpen}
+                >
+                  {discussionOpen ? <TbChevronDown size={14} /> : <TbChevronRight size={14} />}
+                  <TbMessage size={14} className={styles.discussionIcon} />
                   <span className={styles.discussionTitle}>Discussion</span>
                   {discussionPosts.length > 0 && (
                     <span className={styles.discussionCount}>{discussionPosts.length}</span>
                   )}
-                </div>
-                <DiscussionThread
-                  workspaceId={workspaceId}
-                  objectType="content_node"
-                  objectId={nodeId}
-                  showEmptyState={false}
-                />
+                </button>
+                {discussionOpen && (
+                  <DiscussionThread
+                    workspaceId={workspaceId}
+                    objectType="content_node"
+                    objectId={nodeId}
+                    showEmptyState={false}
+                  />
+                )}
               </section>
             )}
           </>

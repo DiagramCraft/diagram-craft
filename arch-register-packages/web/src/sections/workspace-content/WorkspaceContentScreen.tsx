@@ -2,6 +2,8 @@ import { useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { TbFileText, TbFolderOpen, TbPlus, TbUpload } from 'react-icons/tb';
 import styles from '../projects/ProjectDetailScreen.module.css';
+import { parentPath } from '../../lib/contentPath';
+import { useContentFileContextMenu } from '../../components/useContentFileContextMenu';
 import { Title } from '../../components/Title';
 import {
   contentDownloadUrl,
@@ -43,6 +45,11 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
   const { data } = useContentTree(scope);
   const contentOperations = useContentScopeOperations(scope);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileMenu = useContentFileContextMenu({
+    folders: data?.folders ?? [],
+    operations: contentOperations,
+    onDownload: file => handleDownloadClick(file.path, file.name, file.original_filename ?? null)
+  });
   const [addDiagramOpen, setAddDiagramOpen] = useState(false);
   const [addMarkdownOpen, setAddMarkdownOpen] = useState(false);
   const [addFolderOpen, setAddFolderOpen] = useState(false);
@@ -109,6 +116,23 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
   const folderData = folder ? data?.folders.find(f => f.path === folder) : undefined;
   const isReadOnly = folderData?.read_only ?? false;
   const files = folder ? (folderData?.files ?? []) : (data?.rootFiles ?? []);
+
+  const subfolders = (data?.folders ?? [])
+    .filter(f => parentPath(f.path) === (folder || null))
+    .filter(f => !filter || f.name.toLowerCase().includes(filter.toLowerCase()))
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map(f => ({
+      path: f.path,
+      name: f.name,
+      fileCount: f.files.length,
+      readOnly: f.read_only
+    }));
+
+  const handleOpenFolder = (path: string) =>
+    navigate({
+      ...workspaceContentFolderRoute(workspaceSlug, path),
+      search: { contentView: search.contentView }
+    });
 
   const lc = filter.toLowerCase();
   const matching = lc ? files.filter(f => f.name.toLowerCase().includes(lc)) : files;
@@ -214,13 +238,16 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
       <DiagramBrowserView
         hasFilter={filter.length > 0}
         viewMode={viewMode}
-        listItems={filtered.map(file => ({ file, folder }))}
+        listItems={filtered.map(file => ({ file }))}
         gridSections={[{ key: 'workspace-content', items: filtered, showAddButton: false }].map(
           section => ({
             ...section,
             items: section.items.map(file => ({ file }))
           })
         )}
+        subfolders={subfolders}
+        onOpenFolder={f => handleOpenFolder(f.path)}
+        onContextMenu={fileMenu.open}
         onOpenDiagram={file => handleDiagramClick(file.id)}
         onOpenMarkdown={file => handleMarkdownClick(file.id)}
         onDownloadFile={file =>
@@ -232,6 +259,8 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
         }}
         noMatchState={{ title: 'No matches', sub: `No items match "${filter}".` }}
       />
+
+      {fileMenu.element}
 
       <input
         ref={fileInputRef}

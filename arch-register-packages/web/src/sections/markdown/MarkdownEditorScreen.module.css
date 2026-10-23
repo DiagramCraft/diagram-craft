@@ -214,8 +214,6 @@
 
 .attachmentsSection {
   margin-top: 36px;
-  padding-top: 18px;
-  border-top: 1px solid var(--panel-border);
 }
 
 .discussionSection {
@@ -267,6 +265,11 @@
   color: var(--cmp-fg-dimmed);
 }
 
+.discussionIcon {
+  color: var(--accent-fg);
+  flex-shrink: 0;
+}
+
 .discussionTitle {
   font-size: 15px;
   font-weight: 600;
@@ -287,28 +290,6 @@
   color: var(--base-bg);
   background: var(--accent-fg);
   border-radius: 8px;
-}
-
-.attachmentsHeader {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 14px;
-}
-
-.attachmentsTitle {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--base-fg);
-}
-
-.attachmentsCount {
-  font-size: 11px;
-  color: var(--cmp-fg-disabled);
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
 }
 
 .attachmentsList {

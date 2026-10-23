@@ -1,5 +1,14 @@
-import { TbCheck, TbFolder, TbFileText, TbMessageCircle, TbStar } from 'react-icons/tb';
+import {
+  TbCheck,
+  TbFolder,
+  TbFileText,
+  TbFolderSymlink,
+  TbMessageCircle,
+  TbSitemap,
+  TbStar
+} from 'react-icons/tb';
 import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
+import { getFileNodeIcon } from '../lib/contentNode';
 import styles from '../sections/projects/ProjectDetailScreen.module.css';
 import { DiagramMetadataPopover } from './DiagramMetadataPopover';
 import { formatDate } from '../utils/dateFormat';
@@ -62,7 +71,7 @@ export const DiagramCard = ({
       <div className={styles.diagramThumb}>
         <div className={styles.diagramThumbGrid} />
         <div className={styles.diagramThumbNodes}>
-          {file.type === 'markdown' ? (
+          {file.type === 'markdown' || file.type === 'file' ? (
             <div
               style={{
                 display: 'flex',
@@ -72,7 +81,11 @@ export const DiagramCard = ({
                 color: 'var(--base-fg-more-dim)'
               }}
             >
-              <TbFileText size={36} />
+              {file.type === 'file' ? (
+                getFileNodeIcon(file.type, 36, file.original_filename ?? file.name)
+              ) : (
+                <TbFileText size={36} />
+              )}
             </div>
           ) : file.preview_svg ? (
             <div dangerouslySetInnerHTML={{ __html: file.preview_svg }} />
@@ -156,11 +169,14 @@ export const DiagramCard = ({
 export const DiagramRow = ({
   file,
   folder,
+  showFolder = false,
   onOpen,
   onContextMenu
 }: {
   file: ProjectFile;
   folder?: string;
+  /** Adds the folder column; the list header must show it too. */
+  showFolder?: boolean;
   onOpen: () => void;
   onContextMenu?: (e: React.MouseEvent) => void;
 }) => (
@@ -173,13 +189,21 @@ export const DiagramRow = ({
   >
     <button
       type="button"
-      className={styles.diagramRow}
+      className={`${styles.diagramRow} ${showFolder ? styles.diagramRowWithFolder : ''}`}
       onClick={onOpen}
       onContextMenu={onContextMenu}
     >
       <div className={styles.diagramRowName}>
         {file.type === 'markdown' && (
           <TbFileText size={13} style={{ flexShrink: 0, color: 'var(--base-fg-more-dim)' }} />
+        )}
+        {file.type === 'diagram' && (
+          <TbSitemap size={13} style={{ flexShrink: 0, color: 'var(--base-fg-more-dim)' }} />
+        )}
+        {file.type === 'file' && (
+          <span style={{ display: 'inline-flex', flexShrink: 0, color: 'var(--base-fg-more-dim)' }}>
+            {getFileNodeIcon(file.type, 13, file.original_filename ?? file.name)}
+          </span>
         )}
         <span>{file.content_metadata?.title ?? file.name}</span>
         {file.is_workspace_template && (
@@ -193,14 +217,87 @@ export const DiagramRow = ({
           </span>
         )}
       </div>
-      <div className={styles.diagramRowFolder}>
-        {folder && (
-          <>
-            <TbFolder size={10} /> {folder}
-          </>
-        )}
-      </div>
+      {showFolder && (
+        <div className={styles.diagramRowFolder}>
+          {folder && (
+            <>
+              <TbFolder size={10} /> {folder}
+            </>
+          )}
+        </div>
+      )}
       <div className={styles.diagramRowDate}>{formatDate(file.updated_at)}</div>
     </button>
   </DiagramMetadataPopover>
+);
+
+export type DiagramBrowserFolderItem = {
+  path: string;
+  name: string;
+  /** Number of files directly inside the folder */
+  fileCount: number;
+  readOnly?: boolean;
+};
+
+const folderSummary = (folder: DiagramBrowserFolderItem) =>
+  `${folder.fileCount} ${folder.fileCount === 1 ? 'item' : 'items'}`;
+
+export const FolderCard = ({
+  folder,
+  onOpen
+}: {
+  folder: DiagramBrowserFolderItem;
+  onOpen: () => void;
+}) => (
+  <button type="button" className={styles.diagramCard} onClick={onOpen}>
+    <div className={styles.diagramThumb}>
+      <div className={styles.diagramThumbGrid} />
+      <div className={styles.diagramThumbNodes}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100%',
+            color: 'var(--base-fg-more-dim)'
+          }}
+        >
+          {folder.readOnly ? <TbFolderSymlink size={36} /> : <TbFolder size={36} />}
+        </div>
+      </div>
+    </div>
+    <div className={styles.diagramMeta}>
+      <div className={styles.diagramName}>
+        <span>{folder.name}</span>
+      </div>
+      <div className={styles.diagramSub}>{folderSummary(folder)}</div>
+    </div>
+  </button>
+);
+
+export const FolderRow = ({
+  folder,
+  showFolder = false,
+  onOpen
+}: {
+  folder: DiagramBrowserFolderItem;
+  showFolder?: boolean;
+  onOpen: () => void;
+}) => (
+  <button
+    type="button"
+    className={`${styles.diagramRow} ${showFolder ? styles.diagramRowWithFolder : ''}`}
+    onClick={onOpen}
+  >
+    <div className={styles.diagramRowName}>
+      {folder.readOnly ? (
+        <TbFolderSymlink size={13} style={{ flexShrink: 0, color: 'var(--base-fg-more-dim)' }} />
+      ) : (
+        <TbFolder size={13} style={{ flexShrink: 0, color: 'var(--base-fg-more-dim)' }} />
+      )}
+      <span>{folder.name}</span>
+    </div>
+    {showFolder && <div className={styles.diagramRowFolder} />}
+    <div className={styles.diagramRowDate}>{folderSummary(folder)}</div>
+  </button>
 );

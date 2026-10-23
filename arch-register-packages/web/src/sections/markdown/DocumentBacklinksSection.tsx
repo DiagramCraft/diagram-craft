@@ -77,7 +77,7 @@ export const DocumentBacklinksSection = ({
         }}
       >
         {open ? <TbChevronDown size={14} /> : <TbChevronRight size={14} />}
-        <TbLink size={14} />
+        <TbLink size={14} className={styles.discussionIcon} />
         <span className={styles.discussionTitle}>
           Backlinks{!open && data.length > 0 ? ` (${data.length})` : ''}
         </span>
