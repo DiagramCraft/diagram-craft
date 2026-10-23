@@ -482,7 +482,7 @@ test.describe('entities section', () => {
       `/${defaultWorkspace.slug}/entities/${authApiEntity.publicId}/folders/security`
     );
 
-    const filterInput = page.getByPlaceholder('Filter diagrams…');
+    const filterInput = page.getByPlaceholder('Filter…');
     const listViewButton = page.locator('button[title="List view"]');
 
     await expect(page.getByRole('heading', { name: 'Security' })).toBeVisible();

@@ -143,12 +143,12 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
                       i === folderSegments.length - 1
                         ? undefined
                         : () =>
-                      navigate(
-                        workspaceContentFolderRoute(
-                          workspaceSlug,
-                          folderSegments.slice(0, i + 1).join('/')
-                        )
-                      )
+                            navigate(
+                              workspaceContentFolderRoute(
+                                workspaceSlug,
+                                folderSegments.slice(0, i + 1).join('/')
+                              )
+                            )
                   }))
                 ]
               : [])

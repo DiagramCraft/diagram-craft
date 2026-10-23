@@ -380,21 +380,19 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
   return (
     <>
       <SectionActions>
-        <>
-          <Button
-            icon={<TbRefresh size={12} />}
-            onClick={() => void Promise.all([refetchServers(), refetchSchedules(), refetchRuns()])}
-          >
-            Refresh
-          </Button>
-          <Button
-            variant="primary"
-            icon={<TbPlus size={12} />}
-            onClick={() => setCreateDialogOpen(true)}
-          >
-            Add job
-          </Button>
-        </>
+        <Button
+          icon={<TbRefresh size={12} />}
+          onClick={() => void Promise.all([refetchServers(), refetchSchedules(), refetchRuns()])}
+        >
+          Refresh
+        </Button>
+        <Button
+          variant="primary"
+          icon={<TbPlus size={12} />}
+          onClick={() => setCreateDialogOpen(true)}
+        >
+          Add job
+        </Button>
       </SectionActions>
       <CreateJobDialog
         open={createDialogOpen}

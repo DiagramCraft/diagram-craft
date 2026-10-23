@@ -107,6 +107,19 @@ export const ContentTree = forwardRef<ContentTreeHandle, Props>(function Content
     }
   };
 
+  const expand = (path: string) => {
+    if (initiallyExpanded) {
+      setCollapsed(previous => {
+        if (!previous.has(path)) return previous;
+        const next = new Set(previous);
+        next.delete(path);
+        return next;
+      });
+    } else {
+      setExpanded(previous => (previous.has(path) ? previous : new Set(previous).add(path)));
+    }
+  };
+
   const openUpload = (folder: string | null) => {
     setUploadFolder(folder);
     fileInputRef.current?.click();
@@ -305,7 +318,10 @@ export const ContentTree = forwardRef<ContentTreeHandle, Props>(function Content
           active={activeFolder === node.path}
           depth={depth}
           onExpand={() => toggle(node.path)}
-          onClick={() => onFolderClick(node.path)}
+          onClick={() => {
+            expand(node.path);
+            onFolderClick(node.path);
+          }}
           onContextMenu={
             node.read_only
               ? node.mount_id && parentPath(node.path) === null && onMountContextMenu

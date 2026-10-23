@@ -170,7 +170,7 @@ test.describe('projects section', () => {
       `/${defaultWorkspace.slug}/projects/${authMigrationProject.id}/folders/Test?tab=projects&q=auth&viewMode=timeline`
     );
 
-    const filterInput = page.getByPlaceholder('Filter diagrams…');
+    const filterInput = page.getByPlaceholder('Filter…');
     const listViewButton = page.locator('button[title="List view"]');
     const gridViewButton = page.locator('button[title="Grid view"]');
 
@@ -205,7 +205,7 @@ test.describe('projects section', () => {
     await expect(page).toHaveURL(
       /\/projects\/DW-2\/folders\/Test\?contentQuery=migration&contentView=list/
     );
-    await expect(page.getByPlaceholder('Filter diagrams…')).toHaveValue('migration');
+    await expect(page.getByPlaceholder('Filter…')).toHaveValue('migration');
     await expect(page.locator('button[title="List view"]')).toHaveClass(/iconBtnActive/);
 
     await page.goto(`/${defaultWorkspace.slug}/projects/${authMigrationProject.id}/folders/Test`);

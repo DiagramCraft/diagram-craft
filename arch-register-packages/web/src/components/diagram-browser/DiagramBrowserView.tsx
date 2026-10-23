@@ -84,7 +84,7 @@ export const DiagramBrowserToolbar = ({
     <SearchInput
       size="sm"
       className={toolbarStyles.search}
-      placeholder="Filter diagrams…"
+      placeholder="Filter…"
       value={filter}
       onChange={onFilterChange}
       onClear={() => onFilterChange('')}
