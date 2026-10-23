@@ -58,6 +58,23 @@ const seededRiskComplianceDashboardWidgets = resolveTemplateDashboardWidgets(
     : widget
 );
 
+// A few widgets on the seeded Overview get a tint for emphasis.
+const SEEDED_OVERVIEW_TINTS: Record<string, NonNullable<DashboardWidget['frame']>['tint']> = {
+  'default-entity-count': 'blue',
+  'default-completeness-percent': 'green',
+  'risks-outside-appetite': 'red',
+  'control-coverage': 'purple'
+};
+const seededOverviewWidgets: DashboardWidget[] = seededRiskComplianceDashboardWidgets.map(
+  widget => ({
+    ...widget,
+    frame: {
+      ...widget.frame,
+      tint: SEEDED_OVERVIEW_TINTS[widget.id]
+    }
+  })
+);
+
 // The default workspace's "Overview" dashboard is otherwise seeded lazily on first client visit
 // (see web's DEFAULT_SEEDED_WIDGETS, which shares its generic starter widgets with this template
 // via GENERIC_STARTER_DASHBOARD_WIDGETS). The risk/compliance template owns this complete seeded
@@ -74,7 +91,7 @@ export const seedWorkspaceDashboards: {
     workspace: WORKSPACE_ID,
     name: 'Overview',
     sort_order: 0,
-    layout: seededRiskComplianceDashboardWidgets
+    layout: seededOverviewWidgets
   }
 ];
 
