@@ -624,7 +624,7 @@ export const MarkdownPropertiesPanel = ({
                 <div key={field.id} className={`${styles.row} ${error ? styles.rowError : ''}`}>
                   <div className={styles.label}>
                     <span>{field.name}</span>
-                    {field.requirement === 'optional' && !isExternal && (
+                    {field.requirement === 'optional' && !isExternal && !readOnly && (
                       <span className={styles.optionalLabel}>(optional)</span>
                     )}
                   </div>

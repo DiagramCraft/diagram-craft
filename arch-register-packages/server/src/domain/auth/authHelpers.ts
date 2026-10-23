@@ -136,7 +136,7 @@ export const buildUserUpdateInput = (body: UserUpdateBody, updatedAt: Date) => {
 
   return {
     display_name: body.display_name as string | undefined,
-    color: (body.color as string | null | undefined) ?? null,
+    color: body.color as string | null | undefined,
     updated_at: updatedAt
   };
 };

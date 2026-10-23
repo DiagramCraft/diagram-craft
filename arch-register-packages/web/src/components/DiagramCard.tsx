@@ -1,8 +1,42 @@
-import { TbCheck, TbFolder, TbFileText, TbMessageCircle, TbStar } from 'react-icons/tb';
+import {
+  TbCheck,
+  TbFolder,
+  TbFileText,
+  TbFolderSymlink,
+  TbMessageCircle,
+  TbSitemap,
+  TbStar
+} from 'react-icons/tb';
 import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
+import { getFileNodeIcon } from '../lib/contentNode';
 import styles from '../sections/projects/ProjectDetailScreen.module.css';
 import { DiagramMetadataPopover } from './DiagramMetadataPopover';
 import { formatDate } from '../utils/dateFormat';
+
+const thumbIconStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'flex-start',
+  justifyContent: 'flex-start',
+  height: '100%',
+  padding: 10,
+  color: 'var(--accent-fg)'
+};
+
+/**
+ * Makes a stored preview svg cover its thumbnail (cropping to the thumbnail's aspect ratio)
+ * instead of being letterboxed: ensures a viewBox, drops fixed dimensions and sets `slice`.
+ */
+const coverPreviewSvg = (svg: string): string =>
+  svg.replace(/<svg\b([^>]*)>/i, (_match, attrs: string) => {
+    const attr = (name: string) => new RegExp(`\\s${name}\\s*=\\s*"([^"]*)"`, 'i').exec(attrs)?.[1];
+    const width = Number.parseFloat(attr('width') ?? '');
+    const height = Number.parseFloat(attr('height') ?? '');
+    let next = attrs
+      .replace(/\s(width|height|preserveAspectRatio)\s*=\s*"[^"]*"/gi, '')
+      .replace(/\sstyle\s*=\s*"[^"]*"/i, '');
+    if (!attr('viewBox') && width > 0 && height > 0) next += ` viewBox="0 0 ${width} ${height}"`;
+    return `<svg${next} preserveAspectRatio="xMidYMid slice">`;
+  });
 
 const CommentPill = ({ file }: { file: ProjectFile }) => {
   const total = file.comment_count ?? 0;
@@ -60,66 +94,41 @@ export const DiagramCard = ({
       onContextMenu={onContextMenu}
     >
       <div className={styles.diagramThumb}>
-        <div className={styles.diagramThumbGrid} />
         <div className={styles.diagramThumbNodes}>
-          {file.type === 'markdown' ? (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: '100%',
-                color: 'var(--base-fg-more-dim)'
-              }}
-            >
-              <TbFileText size={36} />
+          {file.type === 'markdown' || file.type === 'file' ? (
+            <div className={styles.diagramThumbIcon} style={thumbIconStyle}>
+              {file.type === 'file' ? (
+                getFileNodeIcon(file.type, 18, file.original_filename ?? file.name)
+              ) : (
+                <TbFileText size={18} />
+              )}
             </div>
           ) : file.preview_svg ? (
-            <div dangerouslySetInnerHTML={{ __html: file.preview_svg }} />
+            <>
+              <div
+                style={{ height: '100%' }}
+                dangerouslySetInnerHTML={{ __html: coverPreviewSvg(file.preview_svg) }}
+              />
+              <div
+                className={styles.diagramThumbIcon}
+                style={{
+                  position: 'absolute',
+                  top: 8,
+                  left: 8,
+                  display: 'flex',
+                  padding: 3,
+                  borderRadius: 'var(--r-sm)',
+                  background: 'color-mix(in srgb, var(--panel-bg) 85%, transparent)',
+                  color: 'var(--accent-fg)'
+                }}
+              >
+                <TbSitemap size={18} />
+              </div>
+            </>
           ) : (
-            <svg viewBox="0 0 140 80" preserveAspectRatio="none">
-              <rect
-                x="10"
-                y="14"
-                width="32"
-                height="18"
-                rx="2"
-                fill="var(--cmp-bg)"
-                stroke="var(--base-fg-more-dim)"
-              />
-              <rect
-                x="56"
-                y="6"
-                width="32"
-                height="18"
-                rx="2"
-                fill="var(--cmp-bg)"
-                stroke="var(--base-fg-more-dim)"
-              />
-              <rect
-                x="56"
-                y="44"
-                width="32"
-                height="18"
-                rx="2"
-                fill="var(--cmp-bg)"
-                stroke="var(--base-fg-more-dim)"
-              />
-              <rect
-                x="100"
-                y="26"
-                width="32"
-                height="18"
-                rx="2"
-                fill="color-mix(in oklch, var(--tag-component) 28%, var(--cmp-bg))"
-                stroke="var(--tag-component)"
-              />
-              <path
-                d="M42 23 L56 15 M42 23 L56 53 M88 15 L100 35 M88 53 L100 35"
-                stroke="var(--cmp-fg-disabled)"
-                fill="none"
-              />
-            </svg>
+            <div className={styles.diagramThumbIcon} style={thumbIconStyle}>
+              <TbSitemap size={18} />
+            </div>
           )}
         </div>
         <CommentPill file={file} />
@@ -156,11 +165,14 @@ export const DiagramCard = ({
 export const DiagramRow = ({
   file,
   folder,
+  showFolder = false,
   onOpen,
   onContextMenu
 }: {
   file: ProjectFile;
   folder?: string;
+  /** Adds the folder column; the list header must show it too. */
+  showFolder?: boolean;
   onOpen: () => void;
   onContextMenu?: (e: React.MouseEvent) => void;
 }) => (
@@ -173,13 +185,21 @@ export const DiagramRow = ({
   >
     <button
       type="button"
-      className={styles.diagramRow}
+      className={`${styles.diagramRow} ${showFolder ? styles.diagramRowWithFolder : ''}`}
       onClick={onOpen}
       onContextMenu={onContextMenu}
     >
       <div className={styles.diagramRowName}>
         {file.type === 'markdown' && (
-          <TbFileText size={13} style={{ flexShrink: 0, color: 'var(--base-fg-more-dim)' }} />
+          <TbFileText size={13} style={{ flexShrink: 0, color: 'var(--accent-fg)' }} />
+        )}
+        {file.type === 'diagram' && (
+          <TbSitemap size={13} style={{ flexShrink: 0, color: 'var(--accent-fg)' }} />
+        )}
+        {file.type === 'file' && (
+          <span style={{ display: 'inline-flex', flexShrink: 0, color: 'var(--accent-fg)' }}>
+            {getFileNodeIcon(file.type, 13, file.original_filename ?? file.name)}
+          </span>
         )}
         <span>{file.content_metadata?.title ?? file.name}</span>
         {file.is_workspace_template && (
@@ -193,14 +213,78 @@ export const DiagramRow = ({
           </span>
         )}
       </div>
-      <div className={styles.diagramRowFolder}>
-        {folder && (
-          <>
-            <TbFolder size={10} /> {folder}
-          </>
-        )}
-      </div>
+      {showFolder && (
+        <div className={styles.diagramRowFolder}>
+          {folder && (
+            <>
+              <TbFolder size={10} /> {folder}
+            </>
+          )}
+        </div>
+      )}
       <div className={styles.diagramRowDate}>{formatDate(file.updated_at)}</div>
     </button>
   </DiagramMetadataPopover>
+);
+
+export type DiagramBrowserFolderItem = {
+  path: string;
+  name: string;
+  /** Number of files directly inside the folder */
+  fileCount: number;
+  readOnly?: boolean;
+};
+
+const folderSummary = (folder: DiagramBrowserFolderItem) =>
+  `${folder.fileCount} ${folder.fileCount === 1 ? 'item' : 'items'}`;
+
+export const FolderCard = ({
+  folder,
+  onOpen
+}: {
+  folder: DiagramBrowserFolderItem;
+  onOpen: () => void;
+}) => (
+  <button type="button" className={styles.diagramCard} onClick={onOpen}>
+    <div className={styles.diagramThumb}>
+      <div className={styles.diagramThumbNodes}>
+        <div className={styles.diagramThumbIcon} style={thumbIconStyle}>
+          {folder.readOnly ? <TbFolderSymlink size={18} /> : <TbFolder size={18} />}
+        </div>
+      </div>
+    </div>
+    <div className={styles.diagramMeta}>
+      <div className={styles.diagramName}>
+        <span>{folder.name}</span>
+      </div>
+      <div className={styles.diagramSub}>{folderSummary(folder)}</div>
+    </div>
+  </button>
+);
+
+export const FolderRow = ({
+  folder,
+  showFolder = false,
+  onOpen
+}: {
+  folder: DiagramBrowserFolderItem;
+  showFolder?: boolean;
+  onOpen: () => void;
+}) => (
+  <button
+    type="button"
+    className={`${styles.diagramRow} ${showFolder ? styles.diagramRowWithFolder : ''}`}
+    onClick={onOpen}
+  >
+    <div className={styles.diagramRowName}>
+      {folder.readOnly ? (
+        <TbFolderSymlink size={13} style={{ flexShrink: 0, color: 'var(--accent-fg)' }} />
+      ) : (
+        <TbFolder size={13} style={{ flexShrink: 0, color: 'var(--accent-fg)' }} />
+      )}
+      <span>{folder.name}</span>
+    </div>
+    {showFolder && <div className={styles.diagramRowFolder} />}
+    <div className={styles.diagramRowDate}>{folderSummary(folder)}</div>
+  </button>
 );

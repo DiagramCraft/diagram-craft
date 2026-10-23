@@ -15,12 +15,6 @@ export const MarkdownAttachmentManager = (props: {
 
   return (
     <section className={styles.attachmentsSection}>
-      <div className={styles.attachmentsHeader}>
-        <h2 className={styles.attachmentsTitle}>Attachments</h2>
-        <span className={styles.attachmentsCount}>
-          {attachments.length} {attachments.length === 1 ? 'item' : 'items'}
-        </span>
-      </div>
       <div className={styles.attachmentsList}>
         {attachments.map(attachment => (
           <div key={attachment.id} className={styles.attachmentItem}>
@@ -29,7 +23,13 @@ export const MarkdownAttachmentManager = (props: {
               className={styles.attachmentMain}
               onClick={() => onOpen(attachment)}
             >
-              <span className={styles.attachmentIcon}>{getFileNodeIcon(attachment.type, 14)}</span>
+              <span className={styles.attachmentIcon}>
+                {getFileNodeIcon(
+                  attachment.type,
+                  14,
+                  attachment.original_filename ?? attachment.name
+                )}
+              </span>
               <span className={styles.attachmentBody}>
                 <span className={styles.attachmentName}>
                   {attachment.original_filename ?? attachment.name}

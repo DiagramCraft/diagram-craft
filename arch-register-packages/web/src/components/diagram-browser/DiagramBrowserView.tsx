@@ -1,10 +1,18 @@
 import type React from 'react';
 import { Button } from '@diagram-craft/app-components/Button';
-import { TextInput } from '@diagram-craft/app-components/TextInput';
-import { TbFolder, TbLayoutGrid, TbList, TbPlus } from 'react-icons/tb';
+import { TbFolder, TbPlus } from 'react-icons/tb';
 import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
-import { DiagramCard, DiagramRow } from '../DiagramCard';
+import {
+  DiagramCard,
+  DiagramRow,
+  FolderCard,
+  FolderRow,
+  type DiagramBrowserFolderItem
+} from '../DiagramCard';
 import { EmptyState } from '../EmptyState';
+import { FilterDropdown } from '../FilterDropdown';
+import { SearchInput } from '../SearchInput';
+import toolbarStyles from './DiagramBrowserToolbar.module.css';
 import styles from '../../sections/projects/ProjectDetailScreen.module.css';
 
 export type DiagramViewMode = 'grid' | 'list';
@@ -63,41 +71,43 @@ export const DiagramBrowserToolbar = ({
   filter,
   onFilterChange,
   viewMode,
-  onViewModeChange
+  onViewModeChange,
+  sort,
+  onSortChange,
+  sortOptions
 }: {
   label?: React.ReactNode;
   filter: string;
   onFilterChange: (value: string) => void;
   viewMode: DiagramViewMode;
   onViewModeChange: (value: DiagramViewMode) => void;
+  sort?: string;
+  onSortChange?: (value: string) => void;
+  sortOptions?: { value: string; label: string }[];
 }) => (
-  <div className={styles.tabBar}>
+  <div className={toolbarStyles.toolbar}>
     {label}
-    <div className={styles.tabBarRight}>
-      <TextInput
-        variant="search"
-        placeholder="Filter diagrams…"
-        value={filter}
-        onChange={value => onFilterChange(value ?? '')}
-        onClear={() => onFilterChange('')}
-      />
-      <button
-        type="button"
-        className={`${styles.iconBtn} ${viewMode === 'grid' ? styles.iconBtnActive : ''}`}
-        title="Grid view"
-        onClick={() => onViewModeChange('grid')}
-      >
-        <TbLayoutGrid size={13} />
-      </button>
-      <button
-        type="button"
-        className={`${styles.iconBtn} ${viewMode === 'list' ? styles.iconBtnActive : ''}`}
-        title="List view"
-        onClick={() => onViewModeChange('list')}
-      >
-        <TbList size={13} />
-      </button>
-    </div>
+    <SearchInput
+      size="sm"
+      className={toolbarStyles.search}
+      placeholder="Filter…"
+      value={filter}
+      onChange={onFilterChange}
+      onClear={() => onFilterChange('')}
+    />
+    <div className={toolbarStyles.spacer} />
+    {sortOptions && sort !== undefined && onSortChange && (
+      <FilterDropdown label="Sort" value={sort} onChange={onSortChange} options={sortOptions} />
+    )}
+    <FilterDropdown
+      label="View"
+      value={viewMode}
+      onChange={value => onViewModeChange(value as DiagramViewMode)}
+      options={[
+        { value: 'grid', label: 'Grid' },
+        { value: 'list', label: 'List' }
+      ]}
+    />
   </div>
 );
 
@@ -106,6 +116,8 @@ export const DiagramBrowserView = ({
   viewMode,
   listItems,
   gridSections,
+  subfolders = [],
+  onOpenFolder,
   onOpenDiagram,
   onOpenMarkdown,
   onDownloadFile,
@@ -118,6 +130,9 @@ export const DiagramBrowserView = ({
   viewMode: DiagramViewMode;
   listItems: DiagramBrowserItem[];
   gridSections: DiagramBrowserGridSection[];
+  /** Subfolders of the current folder, shown before the files */
+  subfolders?: DiagramBrowserFolderItem[];
+  onOpenFolder?: (folder: DiagramBrowserFolderItem) => void;
   onOpenDiagram: (file: ProjectFile) => void;
   onOpenMarkdown?: (file: ProjectFile) => void;
   onDownloadFile?: (file: ProjectFile) => void;
@@ -126,7 +141,7 @@ export const DiagramBrowserView = ({
   emptyState: { title: string; sub: string };
   noMatchState: { title: string; sub: string };
 }) => {
-  const totalItems = listItems.length;
+  const totalItems = listItems.length + subfolders.length;
 
   if (totalItems === 0 && !hasFilter) {
     return (
@@ -142,6 +157,9 @@ export const DiagramBrowserView = ({
   if (totalItems === 0) {
     return <DiagramBrowserEmptyState title={noMatchState.title} sub={noMatchState.sub} />;
   }
+
+  // The folder column only helps when the list spans several folders
+  const showFolder = listItems.some(item => item.folder !== undefined);
 
   const renderItem = ({ file, folder }: DiagramBrowserItem) => ({
     file,
@@ -160,13 +178,23 @@ export const DiagramBrowserView = ({
   if (viewMode === 'list') {
     return (
       <div className={styles.diagramListPanel}>
-        <div className={styles.diagramListHead}>
+        <div
+          className={`${styles.diagramListHead} ${showFolder ? styles.diagramListHeadWithFolder : ''}`}
+        >
           <span>Name</span>
-          <span>Folder</span>
+          {showFolder && <span>Folder</span>}
           <span>Last edit</span>
         </div>
+        {subfolders.map(folder => (
+          <FolderRow
+            key={folder.path}
+            folder={folder}
+            showFolder={showFolder}
+            onOpen={() => onOpenFolder?.(folder)}
+          />
+        ))}
         {listItems.map(item => (
-          <DiagramRow key={item.file.path} {...renderItem(item)} />
+          <DiagramRow key={item.file.path} showFolder={showFolder} {...renderItem(item)} />
         ))}
       </div>
     );
@@ -174,6 +202,13 @@ export const DiagramBrowserView = ({
 
   return (
     <>
+      {subfolders.length > 0 && (
+        <div className={styles.diagramGrid} style={{ marginBottom: 10 }}>
+          {subfolders.map(folder => (
+            <FolderCard key={folder.path} folder={folder} onOpen={() => onOpenFolder?.(folder)} />
+          ))}
+        </div>
+      )}
       {gridSections.map(section => (
         <div key={section.key}>
           {section.label ? <div className={styles.sectionLabel}>{section.label}</div> : null}

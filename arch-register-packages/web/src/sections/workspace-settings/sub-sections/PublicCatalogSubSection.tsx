@@ -324,45 +324,36 @@ export const PublicCatalogSubSection = ({
 
   if (configLoading || optionsLoading)
     return (
-      <>
-        <SettingsBlockList>
-          <LoadingState text="Loading public catalog settings…" size="sm" />
-        </SettingsBlockList>
-      </>
+      <SettingsBlockList>
+        <LoadingState text="Loading public catalog settings…" size="sm" />
+      </SettingsBlockList>
     );
   if (configError || optionsError)
     return (
-      <>
-        <SettingsBlockList>
-          <Banner variant="error">Failed to load public catalog settings.</Banner>
-        </SettingsBlockList>
-      </>
+      <SettingsBlockList>
+        <Banner variant="error">Failed to load public catalog settings.</Banner>
+      </SettingsBlockList>
     );
 
   return (
     <>
       <SectionActions>
-        <>
-          <Button
-            disabled={!dirty || update.isPending || previewMutation.isPending}
-            onClick={cancel}
-          >
-            Cancel
-          </Button>
-          <Button
-            disabled={validation.errors.length > 0 || previewMutation.isPending}
-            onClick={() => void previewDraft()}
-          >
-            {previewMutation.isPending ? 'Building preview…' : 'Preview catalog'}
-          </Button>
-          <Button
-            variant="primary"
-            disabled={!canSubmit || update.isPending || previewMutation.isPending}
-            onClick={() => void save()}
-          >
-            {update.isPending ? 'Saving…' : 'Save changes'}
-          </Button>
-        </>
+        <Button disabled={!dirty || update.isPending || previewMutation.isPending} onClick={cancel}>
+          Cancel
+        </Button>
+        <Button
+          disabled={validation.errors.length > 0 || previewMutation.isPending}
+          onClick={() => void previewDraft()}
+        >
+          {previewMutation.isPending ? 'Building preview…' : 'Preview catalog'}
+        </Button>
+        <Button
+          variant="primary"
+          disabled={!canSubmit || update.isPending || previewMutation.isPending}
+          onClick={() => void save()}
+        >
+          {update.isPending ? 'Saving…' : 'Save changes'}
+        </Button>
       </SectionActions>
       <SettingsBlockList>
         {validation.errors.length > 0 && (

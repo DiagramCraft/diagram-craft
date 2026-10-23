@@ -170,12 +170,11 @@ test.describe('projects section', () => {
       `/${defaultWorkspace.slug}/projects/${authMigrationProject.id}/folders/Test?tab=projects&q=auth&viewMode=timeline`
     );
 
-    const filterInput = page.getByPlaceholder('Filter diagrams…');
-    const listViewButton = page.locator('button[title="List view"]');
-    const gridViewButton = page.locator('button[title="Grid view"]');
+    const filterInput = page.getByPlaceholder('Filter…');
+    const listViewButton = page.locator('select:has(option[value="list"])');
 
     await filterInput.fill('migration');
-    await listViewButton.click();
+    await listViewButton.selectOption('list');
 
     await expect(page).toHaveURL(/q=auth/);
     await expect(page).toHaveURL(/viewMode=timeline/);
@@ -184,15 +183,14 @@ test.describe('projects section', () => {
 
     await page.reload();
     await expect(filterInput).toHaveValue('migration');
-    await expect(listViewButton).toHaveClass(/iconBtnActive/);
-    await expect(gridViewButton).not.toHaveClass(/iconBtnActive/);
+    await expect(listViewButton).toHaveValue('list');
 
     await page.goBack();
     await expect(filterInput).toHaveValue('migration');
     await expect(page).not.toHaveURL(/contentView=list/);
     await expect(page).toHaveURL(/q=auth/);
     await expect(page).toHaveURL(/viewMode=timeline/);
-    await expect(gridViewButton).toHaveClass(/iconBtnActive/);
+    await expect(listViewButton).toHaveValue('grid');
   });
 
   test('navigates directly to project content folders, including nested folders', async ({
@@ -205,8 +203,8 @@ test.describe('projects section', () => {
     await expect(page).toHaveURL(
       /\/projects\/DW-2\/folders\/Test\?contentQuery=migration&contentView=list/
     );
-    await expect(page.getByPlaceholder('Filter diagrams…')).toHaveValue('migration');
-    await expect(page.locator('button[title="List view"]')).toHaveClass(/iconBtnActive/);
+    await expect(page.getByPlaceholder('Filter…')).toHaveValue('migration');
+    await expect(page.locator('select:has(option[value="list"])')).toHaveValue('list');
 
     await page.goto(`/${defaultWorkspace.slug}/projects/${authMigrationProject.id}/folders/Test`);
 

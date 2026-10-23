@@ -482,28 +482,28 @@ test.describe('entities section', () => {
       `/${defaultWorkspace.slug}/entities/${authApiEntity.publicId}/folders/security`
     );
 
-    const filterInput = page.getByPlaceholder('Filter diagrams…');
-    const listViewButton = page.locator('button[title="List view"]');
+    const filterInput = page.getByPlaceholder('Filter…');
+    const listViewButton = page.locator('select:has(option[value="list"])');
 
     await expect(page.getByRole('heading', { name: 'Security' })).toBeVisible();
 
     await filterInput.fill('Threat');
     await expect(page).toHaveURL(/contentQuery=Threat/);
 
-    await listViewButton.click();
+    await listViewButton.selectOption('list');
     await expect(page).toHaveURL(/contentView=list/);
     await expect(page.getByText('Threat Model')).toBeVisible();
-    await expect(page.getByText('Name')).toBeVisible();
+    await expect(page.getByText('Name', { exact: true })).toBeVisible();
 
     await page.reload();
     await expect(filterInput).toHaveValue('Threat');
     await expect(page.getByText('Threat Model')).toBeVisible();
-    await expect(page.getByText('Name')).toBeVisible();
+    await expect(page.getByText('Name', { exact: true })).toBeVisible();
 
     await page.goBack();
     await expect(filterInput).toHaveValue('Threat');
     await expect(page).not.toHaveURL(/contentView=list/);
-    await expect(page.getByText('Name')).toHaveCount(0);
+    await expect(page.getByText('Name', { exact: true })).toHaveCount(0);
     await expect(page.getByText('Threat Model')).toBeVisible();
   });
 

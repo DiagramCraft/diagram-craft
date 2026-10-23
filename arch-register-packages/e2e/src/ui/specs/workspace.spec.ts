@@ -26,32 +26,32 @@ test('restores workspace content filter and view mode through reload and browser
 }) => {
   await page.goto(`/${defaultWorkspace.slug}/content`);
 
-  const filterInput = page.getByPlaceholder('Filter diagrams…');
-  const listViewButton = page.locator('button[title="List view"]');
+  const filterInput = page.getByPlaceholder('Filter…');
+  const listViewButton = page.locator('select:has(option[value="list"])');
 
   await filterInput.fill('Arch');
   await expect(page).toHaveURL(/contentQuery=Arch/);
 
-  await listViewButton.click();
+  await listViewButton.selectOption('list');
   await expect(page).toHaveURL(/contentView=list/);
-  await expect(page.getByText('Name')).toBeVisible();
+  await expect(page.getByText('Name', { exact: true })).toBeVisible();
 
   await filterInput.fill('Architecture');
   await expect(page).toHaveURL(/contentQuery=Architecture/);
 
   await page.reload();
   await expect(filterInput).toHaveValue('Architecture');
-  await expect(page.getByText('Name')).toBeVisible();
+  await expect(page.getByText('Name', { exact: true })).toBeVisible();
 
   await page.goBack();
   await expect(filterInput).toHaveValue('Arch');
   await expect(page).not.toHaveURL(/contentView=list/);
-  await expect(page.getByText('Name')).toHaveCount(0);
+  await expect(page.getByText('Name', { exact: true })).toHaveCount(0);
 
   await page.goForward();
   await expect(filterInput).toHaveValue('Architecture');
   await expect(page).toHaveURL(/contentView=list/);
-  await expect(page.getByText('Name')).toBeVisible();
+  await expect(page.getByText('Name', { exact: true })).toBeVisible();
 });
 
 test('navigates directly to workspace content folders, including nested folders', async ({
@@ -62,8 +62,8 @@ test('navigates directly to workspace content folders, including nested folders'
   );
 
   await expect(page).toHaveURL(/\/content\/folders\/wiki\?contentQuery=Home&contentView=list/);
-  await expect(page.getByPlaceholder('Filter diagrams…')).toHaveValue('Home');
-  await expect(page.getByText('Name')).toBeVisible();
+  await expect(page.getByPlaceholder('Filter…')).toHaveValue('Home');
+  await expect(page.getByText('Name', { exact: true })).toBeVisible();
 
   await page.goto(`/${defaultWorkspace.slug}/content/folders/docs/guides`);
 
