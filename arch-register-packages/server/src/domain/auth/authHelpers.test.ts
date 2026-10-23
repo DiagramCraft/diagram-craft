@@ -89,12 +89,13 @@ describe('auth route helpers', () => {
     });
   });
 
-  it('defaults user color to null when omitted', () => {
+  it('leaves user color untouched when omitted and clears it when null', () => {
     expect(buildUserUpdateInput({}, now)).toEqual({
       display_name: undefined,
-      color: null,
+      color: undefined,
       updated_at: now
     });
+    expect(buildUserUpdateInput({ color: null }, now).color).toBeNull();
   });
 
   it('parses valid requested global roles', () => {
