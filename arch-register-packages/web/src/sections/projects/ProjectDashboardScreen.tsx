@@ -3,7 +3,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@diagram-craft/app-components/Button';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
-import { TbBookmark, TbDots, TbFileText, TbLayoutGrid, TbPencil, TbStar } from 'react-icons/tb';
+import { TbBookmark, TbDots, TbFileText, TbPencil, TbStar } from 'react-icons/tb';
 import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectCrudContract';
 import { ProjectMetaItem, ProjectScreenLayout } from './ProjectScreenLayout';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
@@ -81,7 +81,7 @@ export const ProjectDashboardScreen = ({
       actions={
         project.canEdit &&
         !isEditing && (
-          <Button icon={<TbPencil size={12} />} onClick={onEdit}>
+          <Button icon={<TbPencil size={12} />} onClick={() => setIsEditing(true)}>
             Edit
           </Button>
         )
@@ -105,8 +105,8 @@ export const ProjectDashboardScreen = ({
               >
                 Create project baseline
               </Menu.Item>
-              <Menu.Item leftSlot={<TbLayoutGrid size={13} />} onClick={() => setIsEditing(true)}>
-                Edit dashboard
+              <Menu.Item leftSlot={<TbPencil size={13} />} onClick={onEdit}>
+                Edit project
               </Menu.Item>
             </MenuButton.Menu>
           </MenuButton.Root>

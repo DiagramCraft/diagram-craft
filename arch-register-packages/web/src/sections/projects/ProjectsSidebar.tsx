@@ -54,7 +54,11 @@ export const ProjectsSidebar = ({
   const allParams = Object.assign({}, ...matches.map(m => m.params)) as Record<string, string>;
   const projectId = allParams.projectId ?? null;
   const projectFolder = allParams._splat ?? null;
-  const projectSidebarTab: ProjectSidebarTab = search.tab === 'archive' ? 'archive' : 'projects';
+  const hasArchivedProjects = projects.some(
+    p => p.status === 'complete' || p.status === 'cancelled'
+  );
+  const projectSidebarTab: ProjectSidebarTab =
+    search.tab === 'archive' && hasArchivedProjects ? 'archive' : 'projects';
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const selectedProject =
     projects.find(project => project.id === projectId || project.public_id === projectId) ?? null;
@@ -189,7 +193,7 @@ export const ProjectsSidebar = ({
         >
           <Tabs.List>
             <Tabs.Trigger value="projects">Projects</Tabs.Trigger>
-            <Tabs.Trigger value="archive">Archive</Tabs.Trigger>
+            {hasArchivedProjects && <Tabs.Trigger value="archive">Archive</Tabs.Trigger>}
           </Tabs.List>
         </Tabs.Root>
       </SidebarHeader>

@@ -24,8 +24,6 @@ export class ProjectsPage extends WorkspacePage {
 
   pinProjectButton = () => this.page.getByRole('button', { name: /Pin project|Unpin project/ });
 
-  editProjectButton = () => this.page.getByRole('button', { name: 'Edit', exact: true });
-
   projectActionsButton = () => this.page.getByRole('button', { name: 'Project actions' });
 
   projectBaselinesSection = () => this.page.getByText('Project baselines', { exact: true });
@@ -135,7 +133,8 @@ export class ProjectsPage extends WorkspacePage {
   };
 
   openEditProjectDialog = async () => {
-    await this.editProjectButton().click();
+    await this.projectActionsButton().click();
+    await this.page.getByRole('menuitem', { name: 'Edit project' }).click();
     await expect(this.page.getByRole('alertdialog', { name: 'Edit project' })).toBeVisible();
   };
 
@@ -156,8 +155,7 @@ export class ProjectsPage extends WorkspacePage {
   };
 
   openDashboardEditor = async () => {
-    await this.projectActionsButton().click();
-    await this.page.getByRole('menuitem', { name: 'Edit dashboard' }).click();
+    await this.page.getByRole('button', { name: 'Edit', exact: true }).click();
     await expect(this.page.getByRole('button', { name: 'Save', exact: true })).toBeVisible();
   };
 
