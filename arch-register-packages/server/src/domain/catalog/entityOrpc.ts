@@ -218,10 +218,14 @@ const entityHandlers = {
   clone: entityRouter.entities.clone.handler(async ({ input, context }) => {
     const { workspace, authCtx } = context;
     const auditUser = context.event.context.user;
-    return await cloneEntity(context.db, workspace, input.params.id, authCtx, {
-      id: auditUser.id,
-      displayName: auditUser.display_name
-    });
+    return await cloneEntity(
+      context.db,
+      workspace,
+      input.params.id,
+      authCtx,
+      { id: auditUser.id, displayName: auditUser.display_name },
+      input.body?.project_id
+    );
   }),
 
   remove: entityRouter.entities.remove.handler(async ({ input, context }) => {

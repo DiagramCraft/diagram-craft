@@ -5,11 +5,13 @@ import type { EntityRecord } from '@arch-register/api-types/entityContract';
 type UseEntityBrowserEntityActionsProps = {
   workspaceId: string;
   onNavigateToEntity: (entityPublicId: string) => void;
+  projectId?: string;
 };
 
 export const useEntityBrowserEntityActions = ({
   workspaceId,
-  onNavigateToEntity
+  onNavigateToEntity,
+  projectId
 }: UseEntityBrowserEntityActionsProps) => {
   const [deleteTarget, setDeleteTarget] = useState<EntityRecord | null>(null);
   const [mergeSource, setMergeSource] = useState<EntityRecord | null>(null);
@@ -33,13 +35,16 @@ export const useEntityBrowserEntityActions = ({
   const handleCloneEntity = useCallback(
     async (entity: EntityRecord) => {
       try {
-        const cloned = await cloneMutation.mutateAsync(entity._uid);
+        const cloned = await cloneMutation.mutateAsync({
+          entityId: entity._uid,
+          projectId
+        });
         onNavigateToEntity(cloned._publicId);
       } catch {
         // Error handling is done by TanStack Query
       }
     },
-    [cloneMutation, onNavigateToEntity]
+    [cloneMutation, onNavigateToEntity, projectId]
   );
 
   const handleMergeEntity = useCallback((entity: EntityRecord) => {

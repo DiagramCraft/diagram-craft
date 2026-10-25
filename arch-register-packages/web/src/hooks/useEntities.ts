@@ -147,8 +147,11 @@ export const useCloneEntity = (workspaceId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (entityId: string) =>
-      orpcClient.entities.clone({ params: { workspace: workspaceId, id: entityId } }),
+    mutationFn: ({ entityId, projectId }: { entityId: string; projectId?: string }) =>
+      orpcClient.entities.clone({
+        params: { workspace: workspaceId, id: entityId },
+        body: projectId ? { project_id: projectId } : undefined
+      }),
     onSuccess: async () => {
       await invalidateEntityQueries(queryClient, workspaceId);
     }

@@ -721,6 +721,8 @@ export type CatalogDatabase = {
   // Runs a SELECT COUNT(*) compiled by entityQueryIRCompiler.ts for entity-query totals.
   runCompiledEntityCountQuery(sql: string, params: unknown[]): Promise<number>;
   listEntities(ws: string): Promise<EntityDbResult[]>;
+  // Includes soft-deleted records, which still occupy their slug.
+  listEntitySlugs(ws: string, schemaId: string, namespace: string): Promise<string[]>;
   getEntity(ws: string, identifier: string): Promise<EntityDbResult | null>;
   createCatalogRecordMerge(input: CatalogRecordMergeDbCreate): Promise<CatalogRecordMergeDbResult>;
   resolveCatalogRecordMerge(

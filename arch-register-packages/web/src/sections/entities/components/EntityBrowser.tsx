@@ -418,7 +418,8 @@ export const EntityBrowser = ({
     setMergeSource
   } = useEntityBrowserEntityActions({
     workspaceId,
-    onNavigateToEntity: navigateToEntity
+    onNavigateToEntity: navigateToEntity,
+    projectId
   });
   const {
     addFieldRow,
@@ -662,8 +663,10 @@ export const EntityBrowser = ({
                       onEntityClick: navigateToEntity,
                       onDelete: handleDeleteEntity,
                       onClone: handleCloneEntity,
-                      onManageCollections: entity => setCollectionTarget(entity),
-                      onMerge: handleMergeEntity,
+                      onManageCollections: projectContext
+                        ? undefined
+                        : entity => setCollectionTarget(entity),
+                      onMerge: projectContext ? undefined : handleMergeEntity,
                       selectedIds,
                       onSelectAll: handleSelectAll,
                       onSelectRow: handleSelectRow

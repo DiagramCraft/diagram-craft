@@ -414,7 +414,7 @@ export const ProjectEntities = ({
       actions={
         !readOnly && project.canEdit ? (
           <Button variant="primary" icon={<TbPlus size={12} />} onClick={onAddEntity}>
-            Link
+            Add Entity
           </Button>
         ) : undefined
       }

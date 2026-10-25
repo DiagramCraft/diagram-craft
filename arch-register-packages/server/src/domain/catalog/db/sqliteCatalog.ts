@@ -372,6 +372,14 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     return Number(row?.count ?? 0);
   }
 
+  async listEntitySlugs(workspace: string, schemaId: string, namespace: string) {
+    return this.all<string>(
+      `SELECT slug FROM catalog_record WHERE workspace = ? AND schema_id = ? AND namespace = ?`,
+      [workspace, schemaId, namespace],
+      row => String(row['slug'])
+    );
+  }
+
   async listEntities(workspace: string) {
     return this.all(
       `${ENTITY_JOINS_SQL} WHERE e.workspace = ? AND e.deleted_at IS NULL ORDER BY e.name, e.id`,
