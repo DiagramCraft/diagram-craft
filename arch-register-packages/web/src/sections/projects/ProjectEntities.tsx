@@ -336,6 +336,7 @@ export const ProjectEntities = ({
     const hasActiveProjectView =
       activeSavedView != null && activeSavedView.scope === 'project' && project.canEdit;
     const canUseViewActions = activeTab === 'entities' && hasActiveProjectView;
+    const canSaveNewView = activeTab === 'entities' && project.canEdit;
 
     items.push({
       label: activeSavedView != null ? `Save View (${activeSavedView.name})` : 'Save View',
@@ -347,7 +348,7 @@ export const ProjectEntities = ({
     items.push({
       label: 'Save View As...',
       icon: <TbCopy size={14} />,
-      disabled: !canUseViewActions,
+      disabled: !canSaveNewView,
       onClick: () => setIsSavingView(true)
     });
 

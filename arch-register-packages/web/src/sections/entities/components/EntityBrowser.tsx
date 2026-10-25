@@ -59,7 +59,8 @@ export const SaveViewDialog = ({
   onSave,
   scopeOptions,
   defaultScope,
-  showAdminOption
+  showAdminOption,
+  adminOptionLabel = 'Pin as shared view (managed by admins)'
 }: {
   open: boolean;
   onClose: () => void;
@@ -72,6 +73,7 @@ export const SaveViewDialog = ({
   scopeOptions?: Array<{ value: 'workspace' | 'project'; label: string }>;
   defaultScope?: 'workspace' | 'project';
   showAdminOption?: boolean;
+  adminOptionLabel?: string;
 }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -151,7 +153,7 @@ export const SaveViewDialog = ({
             }}
           >
             <Checkbox value={isAdminView} onChange={v => setIsAdminView(v ?? false)} />
-            <span>Pin as workspace view (visible to all members)</span>
+            <span>{adminOptionLabel}</span>
           </label>
         )}
       </div>

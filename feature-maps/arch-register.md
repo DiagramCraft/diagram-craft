@@ -1106,7 +1106,8 @@
           display modes, and joined data such as assessment fields. Saved views may also use relationship-aware
           structured queries with projected fields. Schema templates (full or cross-cutting) can seed initial saved
           views into a workspace at creation time, so users see a populated view list for template-provided schemas
-          without configuring one themselves.
+          without configuring one themselves. Saved views are shared with everyone who can see the workspace or project;
+          admins can pin a view so that only admins can change it, and pinned views are listed separately.
 
         - @id:ar.entity-views.technology-lifecycle Users can use saved table, radar, and timeline views to review
           technology release lifecycles, radar governance status, and end-of-life planning dates.
@@ -1166,7 +1167,9 @@
         - @id:ar.projects.lifecycle Users can create, edit, view, and delete projects and manage their project-level
           metadata, including optional start and target dates shown on the project home screen. Entities can be linked
           to one or more projects, making the project's milestones, assessments, and planned changes available as
-          project context for that entity.
+          project context for that entity. Within a project's entity list, users can add entities, mark each as done or
+          not done for the project, clone an entity into the project as a project-scoped copy, and remove it from the
+          project.
 
         - @id:ar.projects.dashboard The project home screen shows a composable dashboard of widgets scoped to that
           project, built from the same widget catalog as the workspace dashboard (stat metrics, saved-view embeds,

@@ -340,7 +340,7 @@ export const ProjectContentSidebar = ({
           />
         ) : tab === 'views' ? (
           <>
-            {renderViews(true, 'Workspace views')}
+            {renderViews(true, 'Pinned views')}
             {renderViews(false, 'Views')}
             {!projectViews.length && (
               <div className={`${styles.emptyState} dim`}>No saved views yet.</div>

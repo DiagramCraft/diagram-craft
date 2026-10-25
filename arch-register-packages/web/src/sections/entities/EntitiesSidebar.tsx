@@ -444,7 +444,7 @@ export const EntitiesSidebar = ({
           <>
             {savedViews.filter(v => v.isAdminView).length > 0 && (
               <>
-                <SidebarGroupLabel>Workspace views</SidebarGroupLabel>
+                <SidebarGroupLabel>Pinned views</SidebarGroupLabel>
                 {savedViews
                   .filter(v => v.isAdminView)
                   .map(view => (
@@ -464,7 +464,7 @@ export const EntitiesSidebar = ({
                   ))}
               </>
             )}
-            <SidebarGroupLabel>Saved views</SidebarGroupLabel>
+            <SidebarGroupLabel>Views</SidebarGroupLabel>
             {savedViews.filter(v => !v.isAdminView).length === 0 && (
               <div className={`${styles.emptyState} dim`}>No saved views yet.</div>
             )}
