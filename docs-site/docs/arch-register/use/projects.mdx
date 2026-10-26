@@ -64,8 +64,8 @@ another baseline or the current scope. See [Entity Baselines](entity-baselines).
 
 Milestones name project checkpoints. Each has a target date and one of four statuses: **Planned**, **Active**,
 **Complete**, or **Cancelled**. Planned changes can use a milestone's date as their effective date, so moving the
-milestone also moves the planned change on the timeline. Open **Milestones** from the project sidebar to create, edit,
-filter, or delete checkpoints.
+milestone also moves the planned change on the timeline. Open **Plan** from the project sidebar and choose the **Milestones**
+tab to create, edit, filter, or delete checkpoints.
 
 <ThemedImage
   alt="Project milestones in Arch Register"
@@ -75,12 +75,14 @@ filter, or delete checkpoints.
   }}
 />
 
-In **Entities**, choose **Plan change** to create a named change case for one or more entities. You can propose future
+In **Plan**, choose **Plan change** to create a named change case for one or more entities. You can propose future
 field values without changing the current live entities, and add a new project-scoped entity to a change case. Related
 entity updates can share one case so they are reviewed and applied together. Schedule a case for a future date or
 associate it with a milestone; a case may also remain undated.
 
-Use the **Future changes** tab to review planned cases, grouped by entity or date. **Timeline** places dated changes
+In **Plan**, use the **Future changes** tab to review planned cases, grouped by entity or date. Changes whose target
+date (or milestone date) has passed are flagged **Overdue**; use **Show** to list all changes, only planned or applied ones, or only overdue ones. Applied changes stay
+listed for reference but can no longer be edited, applied, or removed. **Timeline** places dated changes
 beside milestones and historical updates and lists unscheduled changes separately. Select a change to inspect its
 proposed state. Users who can edit the project can update or withdraw a planned case and apply it when ready. Applying
 a case promotes all of its proposed member states to the live entities atomically.
@@ -93,11 +95,14 @@ a case promotes all of its proposed member states to the live entities atomicall
   }}
 />
 
-The **What's changed** tab compares the project's planned future state with the current state, showing entities and
+In **Plan**, the **Project Diff** tab compares the project's planned future state with the current state, showing entities and
 relations added, removed, or changed, with field-level differences for changed entities. Its comparison date is the
 latest effective date among the project's planned changes, falling back to the project target date when none of the
-changes has a date. If neither provides a date, the comparison is unavailable. Use **Overdue changes** to include
-planned changes whose effective dates have passed, or select another project to compare the two proposed futures.
+changes has a date. If neither provides a date, the comparison is unavailable. Planned changes whose dates have
+passed are still included, so a late change keeps appearing until it is applied or withdrawn. Select another project to
+compare the two proposed futures against the current state. Each entity and relation is attributed to the project that
+changes it, or flagged as a **Conflict** when both projects change the same field to different values, and conflicts
+are listed first.
 Restricted field values remain hidden according to your access; the comparison may show that restricted changes exist
 without exposing their values.
 

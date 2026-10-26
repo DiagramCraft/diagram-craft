@@ -33,10 +33,10 @@ export const useProjectDetailController = (folder?: string) => {
   const section =
     search.section === 'entities'
       ? ('entities' as const)
-      : search.section === 'assessments'
-        ? ('assessments' as const)
-        : search.section === 'milestones'
-          ? ('milestones' as const)
+      : search.section === 'plan'
+        ? ('plan' as const)
+        : search.section === 'assessments'
+          ? ('assessments' as const)
           : ('home' as const);
   const pendingDialog = search.dialog;
   const contentFolderFilter = section === 'home' ? folderFilter : null;

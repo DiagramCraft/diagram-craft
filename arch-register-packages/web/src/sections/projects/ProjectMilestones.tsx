@@ -7,9 +7,7 @@ import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteCo
 import { TbPlus, TbTrash, TbFlag, TbPencil } from 'react-icons/tb';
 import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectCrudContract';
 import type { Milestone, CreateMilestoneRequest } from '@arch-register/api-types/milestoneContract';
-import { getRouteApi } from '@tanstack/react-router';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import { ProjectScreenLayout } from './ProjectScreenLayout';
 import styles from './ProjectMilestones.module.css';
 import { DropdownMenu } from '../../components/DropdownMenu';
 import {
@@ -22,8 +20,6 @@ import { EmptyState } from '../../components/EmptyState';
 import { Table } from '../../components/table/Table';
 import { useTableSort } from '../../components/table/useTableSort';
 import { ToolbarFilterBar, ToolbarFilterSelect } from '../../components/ToolbarFilter';
-
-const routeApi = getRouteApi('/authenticated/$workspaceSlug/projects/$projectId');
 
 type StatusFilter = 'default' | 'complete' | 'cancelled' | 'all';
 type MilestoneFormData = Omit<CreateMilestoneRequest, 'project_id'>;
@@ -44,14 +40,13 @@ const STATUS_BADGE_CLASS: Record<Milestone['status'], string> = {
 
 export const ProjectMilestones = ({
   project,
-  onNavigateHome,
-  onNavigateProject
+  creating,
+  onCreatingChange
 }: {
   project: ProjectDetailData;
-  onNavigateHome: () => void;
-  onNavigateProject: () => void;
+  creating: boolean;
+  onCreatingChange: (creating: boolean) => void;
 }) => {
-  const navigate = routeApi.useNavigate();
   const { workspaceSlug } = useWorkspaceContext();
 
   const { data: milestones = [] } = useMilestones(workspaceSlug, project.id);
@@ -60,7 +55,6 @@ export const ProjectMilestones = ({
   const deleteMutation = useDeleteMilestone(workspaceSlug, project.id);
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('default');
-  const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<Milestone | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Milestone | null>(null);
 
@@ -79,7 +73,7 @@ export const ProjectMilestones = ({
 
   const handleCreate = async (data: MilestoneFormData) => {
     await createMutation.mutateAsync(data);
-    setCreating(false);
+    onCreatingChange(false);
   };
 
   const handleUpdate = async (data: MilestoneFormData) => {
@@ -96,39 +90,21 @@ export const ProjectMilestones = ({
 
   return (
     <>
-      <ProjectScreenLayout
-        breadcrumbs={[
-          {
-            label: 'Home',
-            onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
-          },
-          { label: 'Projects', onClick: onNavigateHome },
-          { label: project.name, onClick: onNavigateProject }
-        ]}
-        title="Milestones"
-        actions={
-          project.canEdit ? (
-            <Button variant="primary" icon={<TbPlus size={12} />} onClick={() => setCreating(true)}>
-              New milestone
-            </Button>
-          ) : undefined
-        }
-        toolbar={
-          <ToolbarFilterBar>
-            <ToolbarFilterSelect
-              label="Status"
-              value={statusFilter}
-              onChange={value => setStatusFilter(value as StatusFilter)}
-              options={[
-                { value: 'default', label: `Planned / Active (${counts.default})` },
-                { value: 'complete', label: `Complete (${counts.complete})` },
-                { value: 'cancelled', label: `Cancelled (${counts.cancelled})` },
-                { value: 'all', label: `All (${counts.all})` }
-              ]}
-            />
-          </ToolbarFilterBar>
-        }
-      >
+      <div className={styles.filterBar}>
+        <ToolbarFilterBar noPadding>
+        <ToolbarFilterSelect
+          label="Status"
+          value={statusFilter}
+          onChange={value => setStatusFilter(value as StatusFilter)}
+          options={[
+            { value: 'default', label: `Planned / Active (${counts.default})` },
+            { value: 'complete', label: `Complete (${counts.complete})` },
+            { value: 'cancelled', label: `Cancelled (${counts.cancelled})` },
+            { value: 'all', label: `All (${counts.all})` }
+          ]}
+        />
+        </ToolbarFilterBar>
+      </div>
         {filtered.length === 0 ? (
           <div className={styles.list}>
             <EmptyState
@@ -150,7 +126,7 @@ export const ProjectMilestones = ({
                   <Button
                     variant="primary"
                     icon={<TbPlus size={12} />}
-                    onClick={() => setCreating(true)}
+                    onClick={() => onCreatingChange(true)}
                   >
                     New milestone
                   </Button>
@@ -166,14 +142,13 @@ export const ProjectMilestones = ({
             onDelete={setDeleteTarget}
           />
         )}
-      </ProjectScreenLayout>
 
       {creating && (
         <MilestoneEditorDialog
           milestone={null}
           isSaving={createMutation.isPending}
           onSave={handleCreate}
-          onCancel={() => setCreating(false)}
+          onCancel={() => onCreatingChange(false)}
         />
       )}
 

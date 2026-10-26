@@ -4,15 +4,13 @@ import type { Project } from '@arch-register/api-types/projectCrudContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
-import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { Select } from '@diagram-craft/app-components/Select';
 import { EmptyState } from '../../components/EmptyState';
 import { useChangeCasesByProject } from '../../hooks/useChangeCases';
 import { useEntityLandscapeDiff } from '../../hooks/useEntities';
 import { useRelationSchemas } from '../../hooks/useRelationSchemas';
 import { useMilestones } from '../../hooks/useMilestones';
-import { EntityLandscapeDiffTable } from '../entities/components/EntityLandscapeDiffTable';
-import { RelationLandscapeDiffTable } from '../entities/components/RelationLandscapeDiffTable';
+import { LandscapeDiffTable } from '../entities/components/LandscapeDiffTable';
 import { getProjectScenarioDate, toMilestonesById } from '../entities/components/snapshotDisplay';
 import { formatDate } from '../../utils/dateFormat';
 import styles from './ProjectChangesSummaryTab.module.css';
@@ -30,9 +28,7 @@ export const ProjectChangesSummaryTab = ({
   schemaMap,
   schemas,
   lifecycleStates,
-  teams,
-  includeOverdueChanges,
-  onIncludeOverdueChangesChange
+  teams
 }: {
   workspaceId: string;
   project: Project;
@@ -44,8 +40,6 @@ export const ProjectChangesSummaryTab = ({
   schemas: EntitySchema[];
   lifecycleStates: WorkspaceLifecycleState[];
   teams: WorkspaceTeam[];
-  includeOverdueChanges: boolean;
-  onIncludeOverdueChangesChange: (include: boolean) => void;
 }) => {
   const { data: relationSchemas = [] } = useRelationSchemas(workspaceId, true);
   const relationSchemaMap = useMemo(
@@ -91,17 +85,17 @@ export const ProjectChangesSummaryTab = ({
         projectId: project.id,
         projectScope: 'all' as const,
         includePlannedChanges: true,
-        includeOverdueChanges
+        includeOverdueChanges: true
       },
       to: {
         asOf: comparisonTargetDate,
         projectId: comparisonProject.id,
         projectScope: 'all' as const,
         includePlannedChanges: true,
-        includeOverdueChanges
+        includeOverdueChanges: true
       }
     };
-  }, [comparisonProject, comparisonTargetDate, includeOverdueChanges, project.id, targetDate]);
+  }, [comparisonProject, comparisonTargetDate, project.id, targetDate]);
   const { data: comparisonDiff, isLoading: isComparisonLoading } = useEntityLandscapeDiff(
     workspaceId,
     comparisonStates?.from ?? null,
@@ -158,45 +152,20 @@ export const ProjectChangesSummaryTab = ({
       <div className={styles.wrap}>
         <div className={styles.header}>
           <div className={styles.headerTitle}>
-            {project.name} vs. {comparisonProject.name}
+            Pending project changes compared to {comparisonProject.name} - last change planned for{' '}
+            {formatDate(targetDate > comparisonTargetDate ? targetDate : comparisonTargetDate)}
           </div>
-          <div className={styles.headerCounts}>
-            {formatDate(targetDate)} vs. {formatDate(comparisonTargetDate)} ·{' '}
-            {comparisonDiff.added.length} only in {comparisonProject.name} ·{' '}
-            {comparisonDiff.removed.length} only in {project.name} · {comparisonDiff.changed.length}{' '}
-            different
-          </div>
-          <label className={styles.overdueToggle}>
-            <Checkbox
-              value={includeOverdueChanges}
-              onChange={v => onIncludeOverdueChangesChange(v ?? false)}
-            />
-            <span>Overdue changes</span>
-          </label>
           {comparisonControls}
         </div>
-        <EntityLandscapeDiffTable
+        <LandscapeDiffTable
           diff={comparisonDiff}
           schemaMap={schemaMap}
           schemas={schemas}
-          lifecycleStates={lifecycleStates}
-          teams={teams}
-          addedTitle={`Only in ${comparisonProject.name}`}
-          removedTitle={`Only in ${project.name}`}
-          currentValueLabel="Current value"
-          fromValueLabel={project.name}
-          toValueLabel={comparisonProject.name}
-        />
-        <RelationLandscapeDiffTable
-          diff={comparisonDiff.relations}
           relationSchemaMap={relationSchemaMap}
           relationSchemas={relationSchemas}
           lifecycleStates={lifecycleStates}
           teams={teams}
-          addedTitle={`Relations only in ${comparisonProject.name}`}
-          removedTitle={`Relations only in ${project.name}`}
-          fromValueLabel={project.name}
-          toValueLabel={comparisonProject.name}
+          comparison={{ thisName: project.name, otherName: comparisonProject.name }}
         />
       </div>
     );
@@ -221,46 +190,36 @@ export const ProjectChangesSummaryTab = ({
   return (
     <div className={styles.wrap}>
       <div className={styles.header}>
-        <div className={styles.headerTitle}>What&apos;s changed by {formatDate(targetDate)}</div>
-        <div className={styles.headerCounts}>
-          {diff.added.length} added &middot; {diff.removed.length} removed &middot;{' '}
-          {diff.changed.length} changed
-          {(diff.relations.added.length > 0 ||
-            diff.relations.removed.length > 0 ||
-            diff.relations.changed.length > 0) && (
-            <>
-              {' '}
-              &middot; {diff.relations.added.length} relations added &middot;{' '}
-              {diff.relations.removed.length} relations removed &middot;{' '}
-              {diff.relations.changed.length} relations changed
-            </>
-          )}
+        <div className={styles.headerTitle}>
+          Pending project changes compared to workspace - last change planned for{' '}
+          {formatDate(targetDate)}
         </div>
-        <label className={styles.overdueToggle}>
-          <Checkbox
-            value={includeOverdueChanges}
-            onChange={v => onIncludeOverdueChangesChange(v ?? false)}
-          />
-          <span>Overdue changes</span>
-        </label>
         {comparisonControls}
       </div>
 
-      <EntityLandscapeDiffTable
+      <LandscapeDiffTable
         diff={diff}
         schemaMap={schemaMap}
         schemas={schemas}
-        lifecycleStates={lifecycleStates}
-        teams={teams}
-      />
-
-      <RelationLandscapeDiffTable
-        diff={diff.relations}
         relationSchemaMap={relationSchemaMap}
         relationSchemas={relationSchemas}
         lifecycleStates={lifecycleStates}
         teams={teams}
       />
+      <div className={styles.headerCounts}>
+        {diff.added.length} added &middot; {diff.removed.length} removed &middot;{' '}
+        {diff.changed.length} changed
+        {(diff.relations.added.length > 0 ||
+          diff.relations.removed.length > 0 ||
+          diff.relations.changed.length > 0) && (
+          <>
+            {' '}
+            &middot; {diff.relations.added.length} relations added &middot;{' '}
+            {diff.relations.removed.length} relations removed &middot;{' '}
+            {diff.relations.changed.length} relations changed
+          </>
+        )}
+      </div>
     </div>
   );
 };

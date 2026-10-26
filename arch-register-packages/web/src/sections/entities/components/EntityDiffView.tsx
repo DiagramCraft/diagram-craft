@@ -8,8 +8,7 @@ import { EmptyState } from '../../../components/EmptyState';
 import { formatDate } from '../../../utils/dateFormat';
 import { useEntityLandscapeDiff } from '../../../hooks/useEntities';
 import { useRelationSchemas } from '../../../hooks/useRelationSchemas';
-import { EntityLandscapeDiffTable } from './EntityLandscapeDiffTable';
-import { RelationLandscapeDiffTable } from './RelationLandscapeDiffTable';
+import { LandscapeDiffTable } from './LandscapeDiffTable';
 import styles from './EntityDiffView.module.css';
 
 export const EntityDiffView = ({
@@ -135,16 +134,10 @@ export const EntityDiffView = ({
         </div>
       </div>
 
-      <EntityLandscapeDiffTable
+      <LandscapeDiffTable
         diff={diff}
         schemaMap={schemaMap}
         schemas={schemas}
-        lifecycleStates={lifecycleStates}
-        teams={teams}
-      />
-
-      <RelationLandscapeDiffTable
-        diff={diff.relations}
         relationSchemaMap={relationSchemaMap}
         relationSchemas={relationSchemas}
         lifecycleStates={lifecycleStates}

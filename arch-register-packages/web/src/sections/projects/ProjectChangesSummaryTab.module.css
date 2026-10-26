@@ -24,24 +24,9 @@
   color: var(--base-fg-dim);
 }
 
-.overdueToggle {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-left: auto;
-  font-size: 12px;
-  color: var(--base-fg-dim);
-  cursor: pointer;
-  user-select: none;
-}
-
 .comparisonControls {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-left: 8px;
-}
-
-.header > .comparisonControls:only-child {
   margin-left: auto;
 }

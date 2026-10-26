@@ -14,7 +14,7 @@ import {
   TbClipboardList,
   TbColumns3,
   TbFileText,
-  TbFlag,
+  TbCalendarEvent,
   TbFolderOpen,
   TbHome,
   TbLayoutGrid,
@@ -32,8 +32,12 @@ import { EditViewDialog } from '../entities/components/EntityBrowser';
 import { SidebarGroupLabel, SidebarHeader } from '../../components/sidebar/SidebarPrimitives';
 import { TreeRow } from '../../components/TreeRow';
 import { useProjectAssessments } from '../../hooks/useAssessments';
+import { useChangeCasesByProject } from '../../hooks/useChangeCases';
+import {
+  flattenChangeCaseMembers,
+  flattenRelationChangeCaseMembers
+} from '../entities/components/snapshotDisplay';
 import { useEntityCount } from '../../hooks/useEntities';
-import { useMilestones } from '../../hooks/useMilestones';
 import { useDeleteSavedView, useSavedViews, useUpdateSavedView } from '../../hooks/useSavedViews';
 import {
   contentDownloadUrl,
@@ -58,7 +62,7 @@ import { AddDiagramDialog } from './AddDiagramDialog';
 import { downloadUrl } from '../../lib/browserDownload';
 import { BaselineSidebarSection } from '../baselines/BaselineSidebarSection';
 
-type ProjectSection = 'home' | 'entities' | 'assessments' | 'milestones';
+type ProjectSection = 'home' | 'entities' | 'plan' | 'assessments';
 type SidebarTab = 'content' | 'views' | 'baselines';
 
 export const ProjectContentSidebar = ({
@@ -81,7 +85,13 @@ export const ProjectContentSidebar = ({
     { enabled: project != null }
   );
   const { data: assessments = [] } = useProjectAssessments(workspaceSlug, projectId);
-  const { data: milestones = [] } = useMilestones(workspaceSlug, project?.id);
+  const { data: changeCases = [] } = useChangeCasesByProject(workspaceSlug, projectId);
+  // Distinct planned change cases, matching the count on the Plan screen's Future changes tab.
+  const futureChangeCount = new Set(
+    [...flattenChangeCaseMembers(changeCases), ...flattenRelationChangeCaseMembers(changeCases)]
+      .filter(entry => entry.changeCase.status === 'planned')
+      .map(entry => entry.changeCase.id)
+  ).size;
   const { data: savedViews = [] } = useSavedViews(workspaceSlug, { projectId });
   const projectViews = savedViews.filter(view => view.scope === 'project');
   const deleteView = useDeleteSavedView(workspaceSlug);
@@ -105,8 +115,8 @@ export const ProjectContentSidebar = ({
   }, [search.baselineId]);
   const section: ProjectSection =
     search.section === 'entities' ||
-    search.section === 'assessments' ||
-    search.section === 'milestones'
+    search.section === 'plan' ||
+    search.section === 'assessments'
       ? search.section
       : 'home';
   const contentFolder = section === 'home' ? (params._splat ?? null) : null;
@@ -218,18 +228,18 @@ export const ProjectContentSidebar = ({
         onClick={() => navigateProject({ section: 'entities' })}
       />
       <TreeRow
+        testId="project-secondary-plan"
+        label={`Plan (${futureChangeCount})`}
+        icon={<TbCalendarEvent size={13} />}
+        active={section === 'plan'}
+        onClick={() => navigateProject({ section: 'plan' })}
+      />
+      <TreeRow
         testId="project-secondary-assessments"
         label={`Assessments (${assessments.length})`}
         icon={<TbClipboardList size={13} />}
         active={section === 'assessments'}
         onClick={() => navigateProject({ section: 'assessments' })}
-      />
-      <TreeRow
-        testId="project-secondary-milestones"
-        label={`Milestones (${milestones.length})`}
-        icon={<TbFlag size={13} />}
-        active={section === 'milestones'}
-        onClick={() => navigateProject({ section: 'milestones' })}
       />
     </>
   );

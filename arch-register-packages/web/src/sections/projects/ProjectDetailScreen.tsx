@@ -32,7 +32,6 @@ import { ProjectDashboardScreen } from './ProjectDashboardScreen';
 import { ProjectEntities } from './ProjectEntities';
 import { ProjectAssessments } from './ProjectAssessments';
 import { AssessmentDetailsScreen } from './AssessmentDetailsScreen';
-import { ProjectMilestones } from './ProjectMilestones';
 import {
   deleteConfirmLabel,
   deleteMessage,
@@ -571,14 +570,9 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
           onNavigateHome={handleNavigateHome}
           onNavigateProject={handleNavigateProject}
         />
-      ) : section === 'milestones' ? (
-        <ProjectMilestones
-          project={project}
-          onNavigateHome={handleNavigateHome}
-          onNavigateProject={handleNavigateProject}
-        />
-      ) : section === 'entities' ? (
+      ) : section === 'entities' || section === 'plan' ? (
         <ProjectEntities
+          section={section}
           project={project}
           projectEntities={projectEntities}
           changeCases={changeCases}

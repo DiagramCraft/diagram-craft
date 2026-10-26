@@ -906,6 +906,60 @@ describe('diffEntityLandscapes', () => {
       ]);
     });
 
+    it('adds the live value to changed relations when comparing two projects', async () => {
+      vi.mocked(db.relation.listRelationSchemas).mockResolvedValue([relationSchema] as never);
+      vi.mocked(db.catalog.listSchemas).mockResolvedValue([
+        {
+          id: 'schema-1',
+          fields: [],
+          groups: [],
+          created_at: new Date('2020-01-01T00:00:00.000Z')
+        }
+      ] as never);
+      vi.mocked(db.catalog.getEntity).mockImplementation(
+        async (_ws: string, id: string) => ({ id, schema_id: 'schema-1' }) as never
+      );
+      vi.mocked(db.project.projects.getProject)
+        .mockResolvedValueOnce({ id: 'project-a', owner: 'team-a' } as never)
+        .mockResolvedValueOnce({ id: 'project-b', owner: 'team-b' } as never);
+      vi.mocked(db.project.projectEntities.listProjectEntityLinks).mockResolvedValue([] as never);
+      vi.mocked(reconstructEntitiesAsOf).mockResolvedValue([]);
+      vi.mocked(reconstructRelationsAsOf)
+        .mockResolvedValueOnce([makeRelation('changed', { data: { note: 'project a' } })])
+        .mockResolvedValueOnce([makeRelation('changed', { data: { note: 'live' } })])
+        .mockResolvedValueOnce([makeRelation('changed', { data: { note: 'live' } })]);
+
+      const result = await diffEntityLandscapes(
+        db,
+        'ws-1',
+        authCtxWithTeamRoles({}),
+        state({
+          asOf: '2026-08-01T00:00:00.000Z',
+          projectId: 'project-a',
+          projectScope: 'all',
+          includePlannedChanges: true
+        }),
+        state({
+          asOf: '2026-09-01T00:00:00.000Z',
+          projectId: 'project-b',
+          projectScope: 'all',
+          includePlannedChanges: true
+        })
+      );
+
+      expect(result.relations.changed).toEqual([
+        expect.objectContaining({
+          diff: {
+            data: {
+              before: { note: 'project a' },
+              after: { note: 'live' },
+              current: { note: 'live' }
+            }
+          }
+        })
+      ]);
+    });
+
     it('redacts restricted relation fields for a caller without view access to the group', async () => {
       vi.mocked(db.relation.listRelationSchemas).mockResolvedValue([relationSchema] as never);
       vi.mocked(db.catalog.listSchemas).mockResolvedValue([

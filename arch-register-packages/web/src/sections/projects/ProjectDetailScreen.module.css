@@ -121,15 +121,6 @@
   margin-bottom: -1px;
 }
 
-.tabBarRight {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  padding-right: 4px;
-  padding-bottom: 3px;
-}
-
 .iconBtn {
   width: 28px;
   height: 28px;
@@ -734,28 +725,15 @@
   color: var(--base-fg);
 }
 
-/* Group by toggle buttons */
-.groupByBtn {
-  width: 28px;
-  height: 28px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--r);
-  border: none;
-  background: none;
-  color: var(--base-fg-more-dim);
-  cursor: pointer;
+/* Pushes the last control in a filter bar to the right edge */
+.toolbarEnd {
+  margin-left: auto;
 }
 
-.groupByBtnActive {
-  background: var(--cmp-bg);
-  color: var(--base-fg);
-}
-
-.groupByBtn:hover {
-  background: var(--cmp-bg);
-  color: var(--base-fg);
+/* Spacing below the Future changes toolbar; the filter bar itself has no padding so the gap
+   under the tabs matches the other Plan tabs */
+.futureToolbar {
+  padding-bottom: 20px;
 }
 
 /* Future changes groups */

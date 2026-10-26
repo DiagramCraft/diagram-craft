@@ -338,9 +338,9 @@ export const screenshots: ArchRegisterScreenshotConfig[] = [
     fullPage: false,
     setup: async ({ projectsPage }) => {
       await projectsPage.page.goto(
-        `/${defaultWorkspace.slug}/projects/${authMigrationProject.id}?tab=projects&section=milestones`
+        `/${defaultWorkspace.slug}/projects/${authMigrationProject.id}?tab=projects&section=plan&planTab=milestones`
       );
-      await expect(projectsPage.page.getByRole('heading', { name: 'Milestones' })).toBeVisible();
+      await expect(projectsPage.page.getByRole('heading', { name: 'Plan' })).toBeVisible();
       await expect(projectsPage.page.getByText('Identity platform cutover')).toBeVisible();
     }
   },
@@ -351,9 +351,9 @@ export const screenshots: ArchRegisterScreenshotConfig[] = [
     fullPage: false,
     setup: async ({ projectsPage }) => {
       await projectsPage.page.goto(
-        `/${defaultWorkspace.slug}/projects/${authMigrationProject.id}?tab=projects&section=entities`
+        `/${defaultWorkspace.slug}/projects/${authMigrationProject.id}?tab=projects&section=plan`
       );
-      await expect(projectsPage.page.getByRole('heading', { name: 'Project Entities' })).toBeVisible();
+      await expect(projectsPage.page.getByRole('heading', { name: 'Plan' })).toBeVisible();
       await projectsPage.page.getByRole('button', { name: 'Timeline', exact: true }).click();
       await expect(projectsPage.page.getByRole('toolbar', { name: 'Timeline grouping' })).toBeVisible();
       await expect(projectsPage.page.getByText('Planned change', { exact: true })).toBeVisible();
@@ -366,11 +366,11 @@ export const screenshots: ArchRegisterScreenshotConfig[] = [
     fullPage: false,
     setup: async ({ projectsPage }) => {
       await projectsPage.page.goto(
-        `/${defaultWorkspace.slug}/projects/${authMigrationProject.id}?tab=projects&section=entities`
+        `/${defaultWorkspace.slug}/projects/${authMigrationProject.id}?tab=projects&section=plan`
       );
-      await expect(projectsPage.page.getByRole('heading', { name: 'Project Entities' })).toBeVisible();
-      await projectsPage.page.getByRole('button', { name: "What's changed", exact: true }).click();
-      await expect(projectsPage.page.getByText(/What's changed by/)).toBeVisible();
+      await expect(projectsPage.page.getByRole('heading', { name: 'Plan' })).toBeVisible();
+      await projectsPage.page.getByRole('button', { name: 'Project Diff', exact: true }).click();
+      await expect(projectsPage.page.getByText(/Project changes compared to workspace/)).toBeVisible();
       await expect(projectsPage.page.getByText('Overdue changes')).toBeVisible();
       await projectsPage.page.getByRole('checkbox', { name: 'Overdue changes' }).check();
       await expect(projectsPage.page.getByText('No entity changes')).not.toBeVisible();

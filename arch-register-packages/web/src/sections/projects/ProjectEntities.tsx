@@ -5,8 +5,6 @@ import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteCo
 import {
   TbCalendarEvent,
   TbPlus,
-  TbLayoutList,
-  TbCalendar,
   TbCheck,
   TbDots,
   TbCopy,
@@ -25,9 +23,11 @@ import { Chip } from '../../components/Chip';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
 import { TypeBadge } from '../../components/TypeBadge';
 import { EmptyState } from '../../components/EmptyState';
+import { ToolbarFilterBar, ToolbarFilterSelect } from '../../components/ToolbarFilter';
 import styles from './ProjectDetailScreen.module.css';
 import { ProjectScreenLayout } from './ProjectScreenLayout';
 import { ProjectTimelineTab } from './ProjectTimelineTab';
+import { ProjectMilestones } from './ProjectMilestones';
 import { ProjectChangesSummaryTab } from './ProjectChangesSummaryTab';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useCreateSavedView, useSavedViews, useUpdateSavedView } from '../../hooks/useSavedViews';
@@ -51,6 +51,7 @@ import type { RelationSchema } from '@arch-register/api-types/relationSchemaCont
 import { BaselineDetailView } from '../baselines/BaselineDetailView';
 import {
   getSnapshotEffectiveDate,
+  isChangeOverdue,
   getProjectScenarioDate,
   toMilestonesById,
   flattenChangeCaseMembers,
@@ -66,10 +67,12 @@ import type { ChangeCase } from '@arch-register/api-types/changeCaseContract';
 
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/projects/$projectId');
 
-type ViewTab = 'entities' | 'future-changes' | 'timeline' | 'whats-changed';
+type ViewTab = 'entities' | 'timeline' | 'future-changes' | 'project-diff' | 'milestones';
 type GroupBy = 'entity' | 'date';
+type ShowFilter = 'all' | 'planned' | 'applied' | 'overdue';
 
 export const ProjectEntities = ({
+  section,
   project,
   projectEntities,
   changeCases,
@@ -88,6 +91,7 @@ export const ProjectEntities = ({
   onApplySnapshot,
   onEditSnapshot
 }: {
+  section: 'entities' | 'plan';
   project: ProjectDetailData;
   projectEntities: ProjectEntity[];
   changeCases: ChangeCase[];
@@ -106,11 +110,11 @@ export const ProjectEntities = ({
   onApplySnapshot: (entry: ChangeCaseMemberEntry) => void;
   onEditSnapshot: (entry: ChangeCaseMemberEntry) => void;
 }) => {
-  const [activeTab, setActiveTab] = useState<ViewTab>('entities');
+  const isPlan = section === 'plan';
   const [groupBy, setGroupBy] = useState<GroupBy>('date');
   const [isSavingView, setIsSavingView] = useState(false);
+  const [isCreatingMilestone, setIsCreatingMilestone] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<ChangeCaseMemberEntry | null>(null);
-  const [includeOverdueChanges, setIncludeOverdueChanges] = useState(false);
 
   // Entity and relation members are listed together; relations resolve names/schemas separately.
   const projectEntries = useMemo(
@@ -135,6 +139,12 @@ export const ProjectEntities = ({
   const search = routeApi.useSearch();
   const asOf = search.asOf;
   const readOnly = !!asOf;
+  const setActiveTab = useCallback(
+    (tab: ViewTab) => {
+      navigate({ search: previous => ({ ...previous, planTab: tab as typeof search.planTab }) });
+    },
+    [navigate]
+  );
 
   // "What's changed" target date — the latest effective date across this project's planned
   // changes, falling back to the project's own end date when no planned change is dated.
@@ -142,18 +152,25 @@ export const ProjectEntities = ({
     () => getProjectScenarioDate(project.target_date, changeCases, milestonesById),
     [changeCases, milestonesById, project.target_date]
   );
+  // The Project Diff tab needs a target date; fall back to the default tab when there is none.
+  const requestedTab = search.planTab ?? 'timeline';
+  const activeTab: ViewTab = !isPlan
+    ? 'entities'
+    : requestedTab === 'project-diff' && changesTargetDate == null
+      ? 'timeline'
+      : requestedTab;
   const projectLandscapeDiffStates = useMemo(
     () =>
       changesTargetDate
-        ? buildProjectLandscapeDiffStates(project.id, changesTargetDate, includeOverdueChanges)
+        ? buildProjectLandscapeDiffStates(project.id, changesTargetDate)
         : null,
-    [project.id, changesTargetDate, includeOverdueChanges]
+    [project.id, changesTargetDate]
   );
   const { data: landscapeDiff, isLoading: isLandscapeDiffLoading } = useEntityLandscapeDiff(
     workspaceSlug,
     projectLandscapeDiffStates?.from ?? null,
     projectLandscapeDiffStates?.to ?? null,
-    activeTab === 'whats-changed'
+    activeTab === 'project-diff'
   );
 
   const hasRelationMembers = projectEntries.some(entry => entry.member.kind === 'relation');
@@ -191,10 +208,6 @@ export const ProjectEntities = ({
     await withdrawChangeCaseMutation.mutateAsync({ caseId: deleteTarget.changeCase.id });
     setDeleteTarget(null);
   };
-
-  useEffect(() => {
-    if (readOnly && activeTab !== 'entities') setActiveTab('entities');
-  }, [readOnly, activeTab]);
 
   const timelineMarkers = useMemo<AsOfMarker[]>(() => {
     const counts = new Map<string, number>();
@@ -374,8 +387,22 @@ export const ProjectEntities = ({
   }, [readOnly, project.canEdit, onPlanChange]);
 
   const dotsMenuItems = useMemo<MenuItem[]>(
-    () => [...entityMenuItems, ...viewMenuItems],
-    [entityMenuItems, viewMenuItems]
+    () =>
+      isPlan
+        ? project.canEdit
+          ? [
+              {
+                label: 'New milestone',
+                icon: <TbFlag size={14} />,
+                onClick: () => {
+                  setActiveTab('milestones');
+                  setIsCreatingMilestone(true);
+                }
+              }
+            ]
+          : []
+        : [...entityMenuItems, ...viewMenuItems],
+    [isPlan, project.canEdit, entityMenuItems, viewMenuItems, setActiveTab]
   );
 
   if (search.baselineId) {
@@ -410,10 +437,16 @@ export const ProjectEntities = ({
         { label: 'Projects', onClick: onNavigateHome },
         { label: project.name, onClick: onNavigateProject }
       ]}
-      title={activeSavedView?.name ?? 'Project Entities'}
-      description={activeSavedView?.description || undefined}
+      title={isPlan ? 'Plan' : (activeSavedView?.name ?? 'Project Entities')}
+      description={isPlan ? undefined : activeSavedView?.description || undefined}
       actions={
-        !readOnly && project.canEdit ? (
+        isPlan ? (
+          project.canEdit ? (
+            <Button variant="primary" icon={<TbCalendarEvent size={12} />} onClick={onPlanChange}>
+              Plan change
+            </Button>
+          ) : undefined
+        ) : !readOnly && project.canEdit ? (
           <Button variant="primary" icon={<TbPlus size={12} />} onClick={onAddEntity}>
             Add Entity
           </Button>
@@ -423,32 +456,16 @@ export const ProjectEntities = ({
         dotsMenuItems.length > 0 ? (
           <DropdownMenu
             trigger={
-              <Button aria-label="Project entity view actions" icon={<TbDots size={14} />} />
+              <Button aria-label={isPlan ? 'Plan actions' : 'Project entity view actions'} icon={<TbDots size={14} />} />
             }
             items={dotsMenuItems}
           />
         ) : undefined
       }
       toolbar={
-        <div className={styles.tabBar}>
-          <div className={styles.entityTabNav}>
-            <button
-              type="button"
-              className={`${styles.entityTabBtn} ${activeTab === 'entities' ? styles.entityTabBtnActive : ''}`}
-              onClick={() => setActiveTab('entities')}
-            >
-              Entities
-            </button>
-            {!readOnly && (
-              <button
-                type="button"
-                className={`${styles.entityTabBtn} ${activeTab === 'future-changes' ? styles.entityTabBtnActive : ''}`}
-                onClick={() => setActiveTab('future-changes')}
-              >
-                Future changes{pendingCount > 0 ? ` (${pendingCount})` : ''}
-              </button>
-            )}
-            {!readOnly && (
+        isPlan ? (
+          <div className={styles.tabBar}>
+            <div className={styles.entityTabNav}>
               <button
                 type="button"
                 className={`${styles.entityTabBtn} ${activeTab === 'timeline' ? styles.entityTabBtnActive : ''}`}
@@ -456,38 +473,32 @@ export const ProjectEntities = ({
               >
                 Timeline
               </button>
-            )}
-            {!readOnly && changesTargetDate != null && (
               <button
                 type="button"
-                className={`${styles.entityTabBtn} ${activeTab === 'whats-changed' ? styles.entityTabBtnActive : ''}`}
-                onClick={() => setActiveTab('whats-changed')}
+                className={`${styles.entityTabBtn} ${activeTab === 'future-changes' ? styles.entityTabBtnActive : ''}`}
+                onClick={() => setActiveTab('future-changes')}
               >
-                What&apos;s changed
+                Future changes{pendingCount > 0 ? ` (${pendingCount})` : ''}
               </button>
-            )}
-          </div>
-          {activeTab === 'future-changes' && pendingCount > 0 && (
-            <div className={styles.tabBarRight}>
+              {changesTargetDate != null && (
+                <button
+                  type="button"
+                  className={`${styles.entityTabBtn} ${activeTab === 'project-diff' ? styles.entityTabBtnActive : ''}`}
+                  onClick={() => setActiveTab('project-diff')}
+                >
+                  Project Diff
+                </button>
+              )}
               <button
                 type="button"
-                className={`${styles.groupByBtn} ${groupBy === 'entity' ? styles.groupByBtnActive : ''}`}
-                onClick={() => setGroupBy('entity')}
-                title="Group by entity"
+                className={`${styles.entityTabBtn} ${activeTab === 'milestones' ? styles.entityTabBtnActive : ''}`}
+                onClick={() => setActiveTab('milestones')}
               >
-                <TbLayoutList size={14} />
-              </button>
-              <button
-                type="button"
-                className={`${styles.groupByBtn} ${groupBy === 'date' ? styles.groupByBtnActive : ''}`}
-                onClick={() => setGroupBy('date')}
-                title="Group by date"
-              >
-                <TbCalendar size={14} />
+                Milestones
               </button>
             </div>
-          )}
-        </div>
+          </div>
+        ) : undefined
       }
     >
       {activeTab === 'entities' ? (
@@ -507,7 +518,7 @@ export const ProjectEntities = ({
       ) : activeTab === 'future-changes' ? (
         <FutureChangesTab
           project={project}
-          futureEntries={futureEntries}
+          changeEntries={projectEntries}
           relationNameById={relationNameById}
           relationSchemaById={relationSchemaById}
           relationSchemaIdByRelationId={relationSchemaIdByRelationId}
@@ -517,10 +528,17 @@ export const ProjectEntities = ({
           lifecycleStates={lifecycleStates}
           teams={teams}
           groupBy={groupBy}
+          onGroupByChange={setGroupBy}
           milestonesById={milestonesById}
           onApplySnapshot={onApplySnapshot}
           onEditSnapshot={onEditSnapshot}
           onDeleteSnapshot={setDeleteTarget}
+        />
+      ) : activeTab === 'milestones' ? (
+        <ProjectMilestones
+          project={project}
+          creating={isCreatingMilestone}
+          onCreatingChange={setIsCreatingMilestone}
         />
       ) : activeTab === 'timeline' ? (
         <div className={`${styles.entityTab} ${styles.entityTabFill}`}>
@@ -553,8 +571,6 @@ export const ProjectEntities = ({
             schemas={schemas}
             lifecycleStates={lifecycleStates}
             teams={teams}
-            includeOverdueChanges={includeOverdueChanges}
-            onIncludeOverdueChangesChange={setIncludeOverdueChanges}
           />
         </div>
       )}
@@ -594,7 +610,7 @@ export const ProjectEntities = ({
 
 const FutureChangesTab = ({
   project,
-  futureEntries,
+  changeEntries,
   relationNameById,
   relationSchemaById,
   relationSchemaIdByRelationId,
@@ -604,13 +620,14 @@ const FutureChangesTab = ({
   lifecycleStates,
   teams,
   groupBy,
+  onGroupByChange,
   milestonesById,
   onApplySnapshot,
   onEditSnapshot,
   onDeleteSnapshot
 }: {
   project: ProjectDetailData;
-  futureEntries: ChangeCaseMemberEntry[];
+  changeEntries: ChangeCaseMemberEntry[];
   relationNameById: Map<string, string>;
   relationSchemaById: Map<string, RelationSchema>;
   relationSchemaIdByRelationId: Map<string, string>;
@@ -620,12 +637,15 @@ const FutureChangesTab = ({
   lifecycleStates: WorkspaceLifecycleState[];
   teams: WorkspaceTeam[];
   groupBy: GroupBy;
+  onGroupByChange: (groupBy: GroupBy) => void;
   milestonesById: Map<string, Milestone>;
   onApplySnapshot: (entry: ChangeCaseMemberEntry) => void;
   onEditSnapshot: (entry: ChangeCaseMemberEntry) => void;
   onDeleteSnapshot: (entry: ChangeCaseMemberEntry) => void;
 }) => {
-  if (futureEntries.length === 0) {
+  const [show, setShow] = useState<ShowFilter>('all');
+
+  if (changeEntries.length === 0) {
     return (
       <div className={styles.entityTab}>
         <EmptyState
@@ -633,6 +653,67 @@ const FutureChangesTab = ({
           icon={<TbCalendarEvent size={22} />}
           title="No future changes planned"
           subtitle="Use the entity menu to plan future changes for entities in this project."
+        />
+      </div>
+    );
+  }
+
+  const visibleEntries = changeEntries.filter(entry => {
+    const planned = entry.changeCase.status === 'planned';
+    switch (show) {
+      case 'planned':
+        return planned;
+      case 'applied':
+        return entry.changeCase.status === 'applied';
+      case 'overdue':
+        return planned && isChangeOverdue(getSnapshotEffectiveDate(entry.changeCase, milestonesById));
+      default:
+        return true;
+    }
+  });
+
+  const toolbar = (
+    <div className={styles.futureToolbar}>
+    <ToolbarFilterBar noPadding>
+      <ToolbarFilterSelect
+        label="Show"
+        value={show}
+        onChange={value => setShow(value as ShowFilter)}
+        options={[
+          { value: 'all', label: 'All' },
+          { value: 'planned', label: 'Planned' },
+          { value: 'applied', label: 'Applied' },
+          { value: 'overdue', label: 'Overdue' }
+        ]}
+      />
+      <div className={styles.toolbarEnd}>
+        <ToolbarFilterSelect
+          label="Group by"
+          value={groupBy}
+          onChange={value => onGroupByChange(value as GroupBy)}
+          options={[
+            { value: 'date', label: 'Date' },
+            { value: 'entity', label: 'Entity' }
+          ]}
+        />
+      </div>
+    </ToolbarFilterBar>
+    </div>
+  );
+
+  if (visibleEntries.length === 0) {
+    return (
+      <div className={styles.entityTab}>
+        {toolbar}
+        <EmptyState
+          framed
+          icon={<TbCalendarEvent size={22} />}
+          title={`No ${show} changes`}
+          subtitle={
+            show === 'overdue'
+              ? 'None of the planned changes have a target date in the past.'
+              : 'Nothing matches this filter.'
+          }
         />
       </div>
     );
@@ -655,7 +736,7 @@ const FutureChangesTab = ({
   // Entities sharing a change case with each other — drives the "also includes" note in the
   // group-by-entity view and the nested case panels in the group-by-date view.
   const caseMembersMap = new Map<string, ChangeCaseMemberEntry[]>();
-  for (const entry of futureEntries) {
+  for (const entry of visibleEntries) {
     const list = caseMembersMap.get(entry.changeCase.id);
     if (list) list.push(entry);
     else caseMembersMap.set(entry.changeCase.id, [entry]);
@@ -664,7 +745,7 @@ const FutureChangesTab = ({
   if (groupBy === 'entity') {
     // Group by entity_id
     const groups = new Map<string, ChangeCaseMemberEntry[]>();
-    for (const entry of futureEntries) {
+    for (const entry of visibleEntries) {
       const list = groups.get(entry.member.entity_id);
       if (list) list.push(entry);
       else groups.set(entry.member.entity_id, [entry]);
@@ -672,6 +753,7 @@ const FutureChangesTab = ({
 
     return (
       <div className={styles.entityTab}>
+        {toolbar}
         <div className={styles.futureChangesGroups}>
           {[...groups.entries()].map(([entityId, snaps]) => {
             const pe = entityMap.get(entityId);
@@ -721,7 +803,7 @@ const FutureChangesTab = ({
   // fall back to the milestone's target_date, grouping it alongside any raw-dated snapshots
   // targeting the same day.
   const groups = new Map<string, ChangeCaseMemberEntry[]>();
-  for (const entry of futureEntries) {
+  for (const entry of visibleEntries) {
     const key = getSnapshotEffectiveDate(entry.changeCase, milestonesById) ?? '__no-date__';
     const list = groups.get(key);
     if (list) list.push(entry);
@@ -737,6 +819,7 @@ const FutureChangesTab = ({
 
   return (
     <div className={styles.entityTab}>
+      {toolbar}
       <div className={styles.futureChangesGroups}>
         {sortedKeys.map(key => {
           const snaps = groups.get(key)!;
@@ -774,6 +857,13 @@ const FutureChangesTab = ({
             <div key={key} className={styles.futureGroup}>
               <div className={styles.futureGroupHead}>
                 <span className={styles.futureGroupName}>{label}</span>
+                {key !== '__no-date__' &&
+                  isChangeOverdue(key) &&
+                  snaps.some(entry => entry.changeCase.status === 'planned') && (
+                  <Chip color="var(--warning-fg)" title="The target date has passed">
+                    Overdue
+                  </Chip>
+                )}
                 {groupMilestones.map(milestone => (
                   <Chip
                     key={milestone.id}
@@ -803,7 +893,8 @@ const FutureChangesTab = ({
                           <Chip tone="ghost">{caseEntries.length} entities</Chip>
                         )}
                         <div style={{ flex: 1 }} />
-                        {project.canEdit && (
+                        {changeCase.status === 'applied' && <Chip tone="ghost">Applied</Chip>}
+                        {project.canEdit && changeCase.status === 'planned' && (
                           <DropdownMenu
                             trigger={
                               <Button
@@ -849,6 +940,7 @@ const FutureChangesTab = ({
                             key={entry.member.id}
                             entry={entry}
                             showEntity={true}
+                            showOverdue={false}
                             showMilestone={false}
                             showActions={false}
                             showNote={false}
@@ -892,6 +984,7 @@ const FutureSnapshotRow = ({
   canEdit,
   showActions = true,
   showNote = true,
+  showOverdue = true,
   otherEntityNames = [],
   onApply,
   onEdit,
@@ -910,6 +1003,7 @@ const FutureSnapshotRow = ({
   canEdit: boolean;
   showActions?: boolean;
   showNote?: boolean;
+  showOverdue?: boolean;
   otherEntityNames?: string[];
   onApply: (entry: ChangeCaseMemberEntry) => void;
   onEdit: (entry: ChangeCaseMemberEntry) => void;
@@ -952,6 +1046,12 @@ const FutureSnapshotRow = ({
       <div className={styles.futureRowBody}>
         <div className={styles.futureRowMeta}>
           {dateLabel && <span className={styles.futureRowDate}>{dateLabel}</span>}
+          {changeCase.status === 'applied' && <Chip tone="ghost">Applied</Chip>}
+          {showOverdue && changeCase.status === 'planned' && isChangeOverdue(date) && (
+            <Chip color="var(--warning-fg)" title="The target date has passed">
+              Overdue
+            </Chip>
+          )}
           {showMilestone && milestone && (
             <Chip tone="accent" icon={<TbFlag size={12} style={{ color: 'var(--accent-fg)' }} />}>
               {milestone.name}
@@ -961,7 +1061,7 @@ const FutureSnapshotRow = ({
             <span className={styles.futureRowNote}>{changeCase.commit_message}</span>
           )}
         </div>
-        {canEdit && showActions && (
+        {canEdit && showActions && changeCase.status === 'planned' && (
           <div className={styles.futureRowActions}>
             <DropdownMenu
               trigger={

@@ -1199,6 +1199,7 @@
 
         - @id:ar.projects.milestones Users can manage project milestones with target dates and status, and associate
           planned entity changes with milestones.
+          A project's Plan section groups its future changes, timeline, and milestones as tabs.
 
         - @id:ar.projects.planned-changes Users can record named, coordinated change cases for one or more entities
           within or outside a project without changing the current live entity state, including planning the
@@ -1221,13 +1222,15 @@
               reachable from a selected subject before and after one planned-change case, with traversal limits and
               the caller's existing project and record visibility enforced.
 
-            - @id:ar.projects.planned-changes.whats-changed Users can view a summary of what changes across a
+            - @id:ar.projects.planned-changes.project-diff Users can view a Project Diff in the Plan section, a summary of what changes across a
               project's connected entities once all of its planned changes are applied, compared to the current
               live state — entities added, removed, or changed, with a field-level diff on drill-down for changed
               entities. The comparison date is fixed to the latest effective date among the project's planned
               changes, falling back to the project's target date when no planned change has a date. From this view,
-              users can compare the project's reconstructed future state with another project's future state, showing
-              entities present in only one scenario and field-level differences between both proposals. As with the
+              users can compare the project's reconstructed future state with another project's future state against
+              the live state, attributing each entity and relation to the project that changes it or flagging a conflict
+              when both change the same field differently, with field-level values from the live state and both
+              proposals. As with the
               workspace-wide diff, restricted field-group values are scrubbed per viewer, with a "Restricted changes"
               indicator standing in when redaction would otherwise leave a changed entity's diff empty.
 
