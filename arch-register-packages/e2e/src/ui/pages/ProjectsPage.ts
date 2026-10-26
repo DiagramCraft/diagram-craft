@@ -154,6 +154,14 @@ export class ProjectsPage extends WorkspacePage {
     ).toBeVisible();
   };
 
+  openCreateBaselineFromSidebar = async () => {
+    await this.page.getByRole('button', { name: 'Add', exact: true }).click();
+    await this.page.getByRole('menuitem', { name: 'Create baseline' }).click();
+    await expect(
+      this.page.getByRole('alertdialog', { name: 'Create architecture baseline' })
+    ).toBeVisible();
+  };
+
   openDashboardEditor = async () => {
     await this.page.getByRole('button', { name: 'Edit', exact: true }).click();
     await expect(this.page.getByRole('button', { name: 'Save', exact: true })).toBeVisible();

@@ -7,14 +7,12 @@ import { TbBookmark, TbDots, TbFileText, TbPencil, TbStar } from 'react-icons/tb
 import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectCrudContract';
 import { ProjectMetaItem, ProjectScreenLayout } from '../shared/ProjectScreenLayout';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
-import { CreateBaselineDialog } from '../../baselines/CreateBaselineDialog';
+import { CreateProjectBaselineDialog } from '../shared/CreateProjectBaselineDialog';
 import { MdxContext } from '../../markdown/MdxContext';
 import { DashboardGrid } from '../../dashboard/DashboardGrid';
 import { useProjectDashboard, useUpdateProjectDashboard } from '../../../hooks/useProjectDashboard';
 import { formatDate } from '../../../utils/dateFormat';
-import { asProjectPublicId, projectDetailRoute } from '../../../routes/publicObjectRoutes';
 import styles from './ProjectHome.module.css';
-import { baselineContextSearch } from '../../baselines/baselineContext';
 
 type Props = {
   project: ProjectDetailData;
@@ -145,22 +143,10 @@ export const ProjectHome = ({
           surface="project"
         />
       </MdxContext.Provider>
-      <CreateBaselineDialog
+      <CreateProjectBaselineDialog
+        project={project}
         open={isCreatingBaseline}
         onClose={() => setIsCreatingBaseline(false)}
-        workspaceSlug={workspaceSlug}
-        scope={{ kind: 'project', projectId: project.id, projectScope: 'project' }}
-        scopeLabel="Project entities and links"
-        scopeDetail={`The baseline will capture the current contents of ${project.name} at the selected effective date.`}
-        defaultOwnerTeamId={project.owner?.id}
-        onCreated={baseline =>
-          navigate(
-            projectDetailRoute(workspaceSlug, asProjectPublicId(project.id), {
-              section: 'entities',
-              ...baselineContextSearch(baseline)
-            })
-          )
-        }
       />
     </ProjectScreenLayout>
   );

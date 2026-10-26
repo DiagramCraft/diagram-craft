@@ -24,7 +24,8 @@ import {
   TbPencil,
   TbPlus,
   TbTrash,
-  TbUpload
+  TbUpload,
+  TbBookmark
 } from 'react-icons/tb';
 import { ContentTree, type ContentTreeHandle } from '../../components/ContentTree';
 import { ContentFolderDialog } from '../../components/ContentFolderDialog';
@@ -62,6 +63,8 @@ import { AddDiagramDialog } from './content/AddDiagramDialog';
 import { downloadUrl } from '../../lib/browserDownload';
 import { BaselineSidebarSection } from '../baselines/BaselineSidebarSection';
 
+import { CreateProjectBaselineDialog } from './shared/CreateProjectBaselineDialog';
+
 type ProjectSection = 'home' | 'entities' | 'plan' | 'assessments';
 type SidebarTab = 'content' | 'views' | 'baselines';
 
@@ -98,6 +101,7 @@ export const ProjectContentSidebar = ({
   const updateView = useUpdateSavedView(workspaceSlug);
   const treeRef = useRef<ContentTreeHandle>(null);
   const [tab, setTab] = useState<SidebarTab>('content');
+  const [creatingBaseline, setCreatingBaseline] = useState(false);
   const [folderDialog, setFolderDialog] = useState<{ open: boolean; parent: string | null }>({
     open: false,
     parent: null
@@ -317,6 +321,25 @@ export const ProjectContentSidebar = ({
                 </Menu.Item>
               </MenuButton.Menu>
             </MenuButton.Root>
+          ) : tab === 'baselines' ? (
+            <MenuButton.Root>
+              <MenuButton.Trigger
+                element={
+                  <button type="button" className={styles.action} title="Add">
+                    <TbPlus size={13} />
+                  </button>
+                }
+              />
+              <MenuButton.Menu>
+                <Menu.Item
+                  disabled={!project?.canEdit}
+                  leftSlot={<TbBookmark size={13} />}
+                  onClick={() => setCreatingBaseline(true)}
+                >
+                  Create baseline
+                </Menu.Item>
+              </MenuButton.Menu>
+            </MenuButton.Root>
           ) : null
         }
       >
@@ -452,6 +475,13 @@ export const ProjectContentSidebar = ({
             operations.createMarkdown.mutateAsync({ name, folder: markdownFolder ?? null })
           }
           isPending={operations.createMarkdown.isPending}
+        />
+      )}
+      {project?.canEdit && (
+        <CreateProjectBaselineDialog
+          project={project}
+          open={creatingBaseline}
+          onClose={() => setCreatingBaseline(false)}
         />
       )}
     </>

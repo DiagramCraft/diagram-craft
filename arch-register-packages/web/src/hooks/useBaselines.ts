@@ -58,7 +58,11 @@ export const useDeleteBaseline = (workspaceId: string) => {
   return useMutation({
     mutationFn: (id: string) =>
       orpcClient.baselines.remove({ params: { workspace: workspaceId, id } }),
-    onSuccess: () => invalidateBaselineQueries(queryClient, workspaceId)
+    onSuccess: (_, id) => {
+      // Refetching the deleted baseline's detail would 404 and flash "Baseline not found".
+      queryClient.removeQueries({ queryKey: baselineKeys.detail(workspaceId, id) });
+      return invalidateBaselineQueries(queryClient, workspaceId);
+    }
   });
 };
 
