@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { Select } from '@diagram-craft/app-components/Select';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
@@ -307,29 +308,25 @@ export const MilestoneEditorDialog = ({
         }
       ]}
     >
-      <div className={styles.section}>
-        <div className={styles.sectionLabel}>Basic info</div>
-        <TextInput
-          value={name}
-          onChange={v => setName(v ?? '')}
-          placeholder="e.g. Q3 platform migration"
-          style={{ width: '100%' }}
-        />
-        <div className={styles.formRow}>
-          <label>Target date</label>
+      <div className={styles.form}>
+        <FormElement label="Name" required>
+          <TextInput
+            value={name}
+            onChange={v => setName(v ?? '')}
+            placeholder="e.g. Q3 platform migration"
+            autoFocus
+          />
+        </FormElement>
+        <FormElement label="Target date" required>
           <input
             className={styles.dateInput}
             type="date"
             value={targetDate}
             onChange={e => setTargetDate(e.target.value)}
           />
-        </div>
-      </div>
-
-      {!isNew && (
-        <div className={styles.section}>
-          <div className={styles.sectionLabel}>Status</div>
-          <div style={{ width: 160 }}>
+        </FormElement>
+        {!isNew && (
+          <FormElement label="Status" required>
             <Select.Root
               value={status}
               onChange={v => setStatus((v ?? 'planned') as Milestone['status'])}
@@ -340,9 +337,9 @@ export const MilestoneEditorDialog = ({
                 </Select.Item>
               ))}
             </Select.Root>
-          </div>
-        </div>
-      )}
+          </FormElement>
+        )}
+      </div>
     </Dialog>
   );
 };
