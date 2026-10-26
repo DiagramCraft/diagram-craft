@@ -289,7 +289,9 @@ export const LandscapeDiffTable = ({
                             <Table.HeaderCell width={labelWidth}>Field</Table.HeaderCell>
                             {comparison ? (
                               <>
-                                <Table.HeaderCell width={valueWidth}>Current value</Table.HeaderCell>
+                                <Table.HeaderCell width={valueWidth}>
+                                  Current value
+                                </Table.HeaderCell>
                                 <Table.HeaderCell width={valueWidth}>
                                   {comparison.thisName}
                                 </Table.HeaderCell>
@@ -300,7 +302,9 @@ export const LandscapeDiffTable = ({
                               </>
                             ) : (
                               <>
-                                <Table.HeaderCell width={valueWidth}>Current Value</Table.HeaderCell>
+                                <Table.HeaderCell width={valueWidth}>
+                                  Current Value
+                                </Table.HeaderCell>
                                 <Table.HeaderCell width={valueWidth}>New Value</Table.HeaderCell>
                               </>
                             )}

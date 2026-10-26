@@ -91,7 +91,9 @@ export const ProjectPlanPlannedChanges = ({
       case 'applied':
         return entry.changeCase.status === 'applied';
       case 'overdue':
-        return planned && isChangeOverdue(getSnapshotEffectiveDate(entry.changeCase, milestonesById));
+        return (
+          planned && isChangeOverdue(getSnapshotEffectiveDate(entry.changeCase, milestonesById))
+        );
       default:
         return true;
     }
@@ -99,30 +101,30 @@ export const ProjectPlanPlannedChanges = ({
 
   const toolbar = (
     <div className={styles.plannedToolbar}>
-    <ToolbarFilterBar noPadding>
-      <ToolbarFilterSelect
-        label="Show"
-        value={show}
-        onChange={value => setShow(value as ShowFilter)}
-        options={[
-          { value: 'all', label: 'All' },
-          { value: 'planned', label: 'Planned' },
-          { value: 'applied', label: 'Applied' },
-          { value: 'overdue', label: 'Overdue' }
-        ]}
-      />
-      <div className={styles.toolbarEnd}>
+      <ToolbarFilterBar noPadding>
         <ToolbarFilterSelect
-          label="Group by"
-          value={groupBy}
-          onChange={value => setGroupBy(value as GroupBy)}
+          label="Show"
+          value={show}
+          onChange={value => setShow(value as ShowFilter)}
           options={[
-            { value: 'date', label: 'Date' },
-            { value: 'entity', label: 'Entity' }
+            { value: 'all', label: 'All' },
+            { value: 'planned', label: 'Planned' },
+            { value: 'applied', label: 'Applied' },
+            { value: 'overdue', label: 'Overdue' }
           ]}
         />
-      </div>
-    </ToolbarFilterBar>
+        <div className={styles.toolbarEnd}>
+          <ToolbarFilterSelect
+            label="Group by"
+            value={groupBy}
+            onChange={value => setGroupBy(value as GroupBy)}
+            options={[
+              { value: 'date', label: 'Date' },
+              { value: 'entity', label: 'Entity' }
+            ]}
+          />
+        </div>
+      </ToolbarFilterBar>
     </div>
   );
 
@@ -285,10 +287,10 @@ export const ProjectPlanPlannedChanges = ({
                 {key !== '__no-date__' &&
                   isChangeOverdue(key) &&
                   snaps.some(entry => entry.changeCase.status === 'planned') && (
-                  <Chip color="var(--warning-fg)" title="The target date has passed">
-                    Overdue
-                  </Chip>
-                )}
+                    <Chip color="var(--warning-fg)" title="The target date has passed">
+                      Overdue
+                    </Chip>
+                  )}
                 {groupMilestones.map(milestone => (
                   <Chip
                     key={milestone.id}

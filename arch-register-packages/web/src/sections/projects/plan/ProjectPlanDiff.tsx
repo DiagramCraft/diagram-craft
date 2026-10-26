@@ -6,11 +6,17 @@ import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigCont
 import { Select } from '@diagram-craft/app-components/Select';
 import { EmptyState } from '../../../components/EmptyState';
 import { useChangeCasesByProject } from '../../../hooks/useChangeCases';
-import { buildProjectLandscapeDiffStates, useEntityLandscapeDiff } from '../../../hooks/useEntities';
+import {
+  buildProjectLandscapeDiffStates,
+  useEntityLandscapeDiff
+} from '../../../hooks/useEntities';
 import { useRelationSchemas } from '../../../hooks/useRelationSchemas';
 import { useMilestones } from '../../../hooks/useMilestones';
 import { LandscapeDiffTable } from '../../entities/components/LandscapeDiffTable';
-import { getProjectScenarioDate, toMilestonesById } from '../../entities/components/snapshotDisplay';
+import {
+  getProjectScenarioDate,
+  toMilestonesById
+} from '../../entities/components/snapshotDisplay';
 import { formatDate } from '../../../utils/dateFormat';
 import styles from './ProjectPlanDiff.module.css';
 

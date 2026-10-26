@@ -495,7 +495,10 @@ export const diffEntityLandscapes = async (
         ? Object.fromEntries(
             Object.entries(redactedDiff).map(([key, fieldDiff]) => {
               if (key !== 'data') {
-                return [key, { ...fieldDiff, current: relationState(currentRelation)[key] ?? null }];
+                return [
+                  key,
+                  { ...fieldDiff, current: relationState(currentRelation)[key] ?? null }
+                ];
               }
               const current = filterKnownRestrictedFieldGroups(
                 authCtx,

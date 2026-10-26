@@ -117,11 +117,10 @@ const AssessmentRowsTable = ({
   schemas: Pick<EntitySchema, 'id' | 'name'>[];
   onOpen: (assessmentId: string) => void;
 }) => {
-  const { sorted, sort, toggleSort } = useTableSort<Assessment, SortKey>(
-    assessments,
-    COMPARATORS,
-    { key: 'name', dir: 'asc' }
-  );
+  const { sorted, sort, toggleSort } = useTableSort<Assessment, SortKey>(assessments, COMPARATORS, {
+    key: 'name',
+    dir: 'asc'
+  });
 
   return (
     <Table.Root>
@@ -238,4 +237,3 @@ const AssessmentRow = ({
     </Table.Row>
   );
 };
-

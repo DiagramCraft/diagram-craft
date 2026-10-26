@@ -40,10 +40,7 @@ import { EntityNavigationLink } from '../../../components/EntityNavigationLink';
 import { ProjectScreenLayout } from '../shared/ProjectScreenLayout';
 import { AssessmentEditorDialog } from './AssessmentEditorDialog';
 import { AssessmentFieldCell } from './AssessmentFieldCells';
-import {
-  AssessmentFilterBuilder,
-  type AssessmentFilterCondition
-} from './AssessmentFilterBuilder';
+import { AssessmentFilterBuilder, type AssessmentFilterCondition } from './AssessmentFilterBuilder';
 import { AssessmentSummaryTab } from './AssessmentSummaryTab';
 import { Table } from '../../../components/table/Table';
 import { useTableSort } from '../../../components/table/useTableSort';

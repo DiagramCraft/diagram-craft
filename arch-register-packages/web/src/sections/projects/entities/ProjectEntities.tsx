@@ -8,7 +8,11 @@ import type { ProjectEntity } from '@arch-register/api-types/projectEntityContra
 import type { BrowserView } from '@arch-register/api-types/viewContract';
 import { DropdownMenu, type MenuItem } from '../../../components/DropdownMenu';
 import { useMilestones } from '../../../hooks/useMilestones';
-import { useCreateSavedView, useSavedViews, useUpdateSavedView } from '../../../hooks/useSavedViews';
+import {
+  useCreateSavedView,
+  useSavedViews,
+  useUpdateSavedView
+} from '../../../hooks/useSavedViews';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { asProjectPublicId, projectDetailRoute } from '../../../routes/publicObjectRoutes';
 import { EntityBrowser, SaveViewDialog } from '../../entities/components/EntityBrowser';
@@ -66,7 +70,10 @@ export const ProjectEntities = ({
   const timelineMarkers = useMemo(
     () =>
       buildTimelineMarkers(
-        [...flattenChangeCaseMembers(changeCases), ...flattenRelationChangeCaseMembers(changeCases)],
+        [
+          ...flattenChangeCaseMembers(changeCases),
+          ...flattenRelationChangeCaseMembers(changeCases)
+        ],
         toMilestonesById(milestones)
       ),
     [changeCases, milestones]
@@ -215,13 +222,7 @@ export const ProjectEntities = ({
     });
 
     return items;
-  }, [
-    activeSavedView,
-    handleUpdateSavedView,
-    project.canEdit,
-    activeSavedView?.name,
-    readOnly
-  ]);
+  }, [activeSavedView, handleUpdateSavedView, project.canEdit, activeSavedView?.name, readOnly]);
 
   const entityMenuItems = useMemo<MenuItem[]>(() => {
     if (readOnly || !project.canEdit) return [];

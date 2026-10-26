@@ -114,9 +114,7 @@ export const ProjectContentSidebar = ({
     setTab(search.baselineId != null ? 'baselines' : 'content');
   }, [search.baselineId]);
   const section: ProjectSection =
-    search.section === 'entities' ||
-    search.section === 'plan' ||
-    search.section === 'assessments'
+    search.section === 'entities' || search.section === 'plan' || search.section === 'assessments'
       ? search.section
       : 'home';
   const contentFolder = section === 'home' ? (params._splat ?? null) : null;

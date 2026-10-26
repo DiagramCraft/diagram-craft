@@ -92,56 +92,56 @@ export const ProjectPlanMilestones = ({
     <>
       <div className={styles.filterBar}>
         <ToolbarFilterBar noPadding>
-        <ToolbarFilterSelect
-          label="Status"
-          value={statusFilter}
-          onChange={value => setStatusFilter(value as StatusFilter)}
-          options={[
-            { value: 'default', label: `Planned / Active (${counts.default})` },
-            { value: 'complete', label: `Complete (${counts.complete})` },
-            { value: 'cancelled', label: `Cancelled (${counts.cancelled})` },
-            { value: 'all', label: `All (${counts.all})` }
-          ]}
-        />
+          <ToolbarFilterSelect
+            label="Status"
+            value={statusFilter}
+            onChange={value => setStatusFilter(value as StatusFilter)}
+            options={[
+              { value: 'default', label: `Planned / Active (${counts.default})` },
+              { value: 'complete', label: `Complete (${counts.complete})` },
+              { value: 'cancelled', label: `Cancelled (${counts.cancelled})` },
+              { value: 'all', label: `All (${counts.all})` }
+            ]}
+          />
         </ToolbarFilterBar>
       </div>
-        {filtered.length === 0 ? (
-          <div className={styles.list}>
-            <EmptyState
-              framed
-              icon={<TbFlag size={20} />}
-              title={
-                statusFilter === 'default'
-                  ? 'No planned or active milestones'
-                  : statusFilter === 'complete'
-                    ? 'No complete milestones'
-                    : statusFilter === 'cancelled'
-                      ? 'No cancelled milestones'
-                      : 'No milestones yet'
-              }
-              subtitle="Milestones let you name and group planned entity changes around a shared target date."
-              action={
-                project.canEdit &&
-                statusFilter !== 'cancelled' && (
-                  <Button
-                    variant="primary"
-                    icon={<TbPlus size={12} />}
-                    onClick={() => onCreatingChange(true)}
-                  >
-                    New milestone
-                  </Button>
-                )
-              }
-            />
-          </div>
-        ) : (
-          <MilestoneTable
-            milestones={filtered}
-            canEdit={project.canEdit}
-            onEdit={setEditing}
-            onDelete={setDeleteTarget}
+      {filtered.length === 0 ? (
+        <div className={styles.list}>
+          <EmptyState
+            framed
+            icon={<TbFlag size={20} />}
+            title={
+              statusFilter === 'default'
+                ? 'No planned or active milestones'
+                : statusFilter === 'complete'
+                  ? 'No complete milestones'
+                  : statusFilter === 'cancelled'
+                    ? 'No cancelled milestones'
+                    : 'No milestones yet'
+            }
+            subtitle="Milestones let you name and group planned entity changes around a shared target date."
+            action={
+              project.canEdit &&
+              statusFilter !== 'cancelled' && (
+                <Button
+                  variant="primary"
+                  icon={<TbPlus size={12} />}
+                  onClick={() => onCreatingChange(true)}
+                >
+                  New milestone
+                </Button>
+              )
+            }
           />
-        )}
+        </div>
+      ) : (
+        <MilestoneTable
+          milestones={filtered}
+          canEdit={project.canEdit}
+          onEdit={setEditing}
+          onDelete={setDeleteTarget}
+        />
+      )}
 
       {creating && (
         <MilestoneEditorDialog
@@ -244,7 +244,11 @@ const MilestoneTable = ({
                 <DropdownMenu
                   trigger={<Table.DotsButton aria-label={`Actions for ${milestone.name}`} />}
                   items={[
-                    { label: 'Edit', icon: <TbPencil size={14} />, onClick: () => onEdit(milestone) },
+                    {
+                      label: 'Edit',
+                      icon: <TbPencil size={14} />,
+                      onClick: () => onEdit(milestone)
+                    },
                     {
                       label: 'Remove',
                       icon: <TbTrash size={14} />,
