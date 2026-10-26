@@ -150,38 +150,37 @@ export const PropertyRow = ({
     if (field.type === 'containment') {
       const candidates = referenceOptions[field.schemaId] ?? [];
       return (
-        <select
-          className={styles.selectInline}
+        <Select.Root
           value={relationIds(editValue)[0] ?? ''}
-          onChange={e => onChange(e.target.value ? [e.target.value] : [])}
+          onChange={next => onChange(next ? [next] : [])}
+          placeholder="—"
+          style={{ width: '100%' }}
         >
-          <option value="">—</option>
+          <Select.Item value="">—</Select.Item>
           {candidates.map(e => (
-            <option key={e._uid} value={e._uid}>
+            <Select.Item key={e._uid} value={e._uid}>
               {e._name ?? e._slug}
-            </option>
+            </Select.Item>
           ))}
-        </select>
+        </Select.Root>
+      );
+    }
+    if (isMultiValuedScalarField(field) && field.type === 'select') {
+      const availableItems: MultiSelectItem[] = selectableEnumOptions(field.options, editValue).map(
+        option => ({ value: option.value, label: option.label })
+      );
+      return (
+        <MultiSelect
+          selectedValues={Array.isArray(editValue) ? (editValue as string[]) : []}
+          availableItems={availableItems}
+          onSelectionChange={onChange}
+          placeholder={`Select ${field.name.toLowerCase()}...`}
+          style={{ width: '100%' }}
+        />
       );
     }
     if (isMultiValuedScalarField(field)) {
       const renderItem = (item: unknown, _index: number, update: (value: unknown) => void) => {
-        if (field.type === 'select') {
-          return (
-            <select
-              className={styles.selectInline}
-              value={typeof item === 'string' ? item : ''}
-              onChange={event => update(event.target.value)}
-            >
-              <option value="">—</option>
-              {selectableEnumOptions(field.options, item).map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          );
-        }
         if (field.type === 'longtext') {
           return (
             <textarea
@@ -296,18 +295,19 @@ export const PropertyRow = ({
     }
     if (field.type === 'select') {
       return (
-        <select
-          className={styles.selectInline}
+        <Select.Root
           value={(editValue as string) ?? ''}
-          onChange={e => onChange(e.target.value)}
+          onChange={next => onChange(next ?? '')}
+          placeholder="—"
+          style={{ width: '100%' }}
         >
-          <option value="">—</option>
+          <Select.Item value="">—</Select.Item>
           {selectableEnumOptions(field.options, editValue).map(o => (
-            <option key={o.value} value={o.value}>
+            <Select.Item key={o.value} value={o.value}>
               {o.label}
-            </option>
+            </Select.Item>
           ))}
-        </select>
+        </Select.Root>
       );
     }
     if (field.type === 'longtext') {
