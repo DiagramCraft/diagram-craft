@@ -36,3 +36,9 @@
 .entityLink:hover {
   text-decoration: underline;
 }
+
+.endpoint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
