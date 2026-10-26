@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Button } from '@diagram-craft/app-components/Button';
 
 export const MultiValueEditor = ({
   value,
@@ -32,24 +33,18 @@ export const MultiValueEditor = ({
       {values.map((item, index) => (
         <div key={index} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
           <div style={{ flex: 1 }}>{renderItem(item, index, next => updateAt(index, next))}</div>
-          <button type="button" disabled={index === 0} onClick={() => move(index, -1)}>
+          <Button size="sm" disabled={index === 0} onClick={() => move(index, -1)}>
             ↑
-          </button>
-          <button
-            type="button"
-            disabled={index === values.length - 1}
-            onClick={() => move(index, 1)}
-          >
+          </Button>
+          <Button size="sm" disabled={index === values.length - 1} onClick={() => move(index, 1)}>
             ↓
-          </button>
-          <button type="button" onClick={() => removeAt(index)} aria-label="Remove value">
+          </Button>
+          <Button size="sm" onClick={() => removeAt(index)} aria-label="Remove value">
             ×
-          </button>
+          </Button>
         </div>
       ))}
-      <button type="button" onClick={() => onChange([...values, createValue()])}>
-        {addLabel}
-      </button>
+      <Button onClick={() => onChange([...values, createValue()])}>{addLabel}</Button>
     </div>
   );
 };
