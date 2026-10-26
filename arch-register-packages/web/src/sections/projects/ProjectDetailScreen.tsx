@@ -1,6 +1,6 @@
 import styles from './ProjectDetailScreen.module.css';
-import { AddFolderDialog } from './AddFolderDialog';
-import { AddDiagramDialog } from './AddDiagramDialog';
+import { AddFolderDialog } from './content/AddFolderDialog';
+import { AddDiagramDialog } from './content/AddDiagramDialog';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
@@ -27,11 +27,13 @@ import {
   projectMarkdownRoute,
   projectMarkdownDraftRoute
 } from '../../routes/publicObjectRoutes';
-import { ProjectContent } from './ProjectContent';
-import { ProjectDashboardScreen } from './ProjectDashboardScreen';
-import { ProjectEntities } from './ProjectEntities';
-import { ProjectAssessments } from './ProjectAssessments';
-import { AssessmentDetailsScreen } from './AssessmentDetailsScreen';
+import { ProjectContent } from './content/ProjectContent';
+import { ProjectHome } from './home/ProjectHome';
+import { ProjectEntities } from './entities/ProjectEntities';
+import { ProjectPlan } from './plan/ProjectPlan';
+import { BaselineDetailView } from '../baselines/BaselineDetailView';
+import { ProjectAssessments } from './assessments/ProjectAssessments';
+import { AssessmentDetailsScreen } from './assessments/AssessmentDetailsScreen';
 import {
   deleteConfirmLabel,
   deleteMessage,
@@ -41,11 +43,11 @@ import {
 } from '../../lib/contentNode';
 import { RenameDialog } from '../../components/RenameDialog';
 import { AddMarkdownDialog } from '../markdown/AddMarkdownDialog';
-import { AddEntityToProjectDialog } from './components/AddEntityToProjectDialog';
-import { ProjectSettingsForm } from './components/ProjectSettingsForm';
-import { ProjectMarkdownTemplatesDialog } from './components/ProjectMarkdownTemplatesDialog';
-import { PlanChangeDialog } from './components/PlanChangeDialog';
-import { ApplyChangeCaseDialog } from './components/ApplyChangeCaseDialog';
+import { AddEntityToProjectDialog } from './entities/AddEntityToProjectDialog';
+import { ProjectSettingsForm } from './home/ProjectSettingsForm';
+import { ProjectMarkdownTemplatesDialog } from './home/ProjectMarkdownTemplatesDialog';
+import { PlanChangeDialog } from './plan/PlanChangeDialog';
+import { ApplyChangeCaseDialog } from './plan/ApplyChangeCaseDialog';
 import { buildFolderTree, type FolderTreeNode } from '../../lib/folderTree';
 import { EmptyState } from '../../components/EmptyState';
 import { LoadingState } from '../../components/LoadingState';
@@ -570,9 +572,42 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
           onNavigateHome={handleNavigateHome}
           onNavigateProject={handleNavigateProject}
         />
-      ) : section === 'entities' || section === 'plan' ? (
+      ) : section === 'entities' && search.baselineId ? (
+        <BaselineDetailView
+          workspaceSlug={workspaceSlug}
+          baselineId={search.baselineId}
+          onDeleted={() =>
+            navigate({
+              ...projectDetailRoute(workspaceSlug, asProjectPublicId(project.id)),
+              search: (previous: Record<string, unknown>) => ({
+                ...previous,
+                section: 'entities' as const,
+                baselineId: undefined,
+                sidebarTab: undefined,
+                asOf: undefined,
+                asOfIncludeProjects: undefined
+              })
+            })
+          }
+        />
+      ) : section === 'entities' ? (
         <ProjectEntities
-          section={section}
+          project={project}
+          projectEntities={projectEntities}
+          changeCases={changeCases}
+          entityTypeColorMap={entityTypeColorMap}
+          onNavigateHome={handleNavigateHome}
+          onNavigateProject={handleNavigateProject}
+          onAddEntity={() => setAddEntityOpen(true)}
+          onToggleDone={(entityId, isDone) =>
+            updateEntityMutation.mutate({ entityId, is_done: !isDone })
+          }
+          onRemoveEntity={entityId => removeEntityMutation.mutate(entityId)}
+          onPlanFutureChange={entityId => setPlanDialog({ mode: 'create', entityId })}
+          onPlanChange={() => setPlanDialog({ mode: 'create' })}
+        />
+      ) : section === 'plan' ? (
+        <ProjectPlan
           project={project}
           projectEntities={projectEntities}
           changeCases={changeCases}
@@ -583,12 +618,6 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
           teams={teams}
           onNavigateHome={handleNavigateHome}
           onNavigateProject={handleNavigateProject}
-          onAddEntity={() => setAddEntityOpen(true)}
-          onToggleDone={(entityId, isDone) =>
-            updateEntityMutation.mutate({ entityId, is_done: !isDone })
-          }
-          onRemoveEntity={entityId => removeEntityMutation.mutate(entityId)}
-          onPlanFutureChange={entityId => setPlanDialog({ mode: 'create', entityId })}
           onPlanChange={() => setPlanDialog({ mode: 'create' })}
           onApplySnapshot={entry => setApplyCaseId(entry.changeCase.id)}
           onEditSnapshot={entry => setPlanDialog({ mode: 'edit', caseId: entry.changeCase.id })}
@@ -635,7 +664,7 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
           onContextMenu={project.canManageFiles ? openContextMenu : undefined}
         />
       ) : (
-        <ProjectDashboardScreen
+        <ProjectHome
           project={project}
           allFilesCount={allFiles.length}
           folderCount={project.files.folders.length}

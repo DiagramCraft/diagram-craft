@@ -20,7 +20,7 @@ import {
   type ChangeOwner,
   type RowOwner
 } from './landscapeDiffComparison';
-import styles from './EntityLandscapeDiffTable.module.css';
+import styles from './LandscapeDiffTable.module.css';
 
 type SchemaInfo = { color: string; icon: string | null };
 type ChangeKind = 'added' | 'removed' | 'changed';

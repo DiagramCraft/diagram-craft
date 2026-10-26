@@ -12,7 +12,7 @@ import {
   useAssessmentResponses,
   useUpsertAssessmentResponse
 } from '../../../hooks/useAssessmentResponses';
-import { AssessmentFieldCell } from '../../projects/components/AssessmentFieldCells';
+import { AssessmentFieldCell } from '../../projects/assessments/AssessmentFieldCells';
 import { asProjectPublicId, projectDetailRoute } from '../../../routes/publicObjectRoutes';
 import { MemberAvatar } from '../../../components/MemberAvatar';
 import { EmptyState } from '../../../components/EmptyState';

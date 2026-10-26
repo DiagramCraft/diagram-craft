@@ -41,7 +41,7 @@ import {
 import type { WorkspaceContentSearchParams } from '../../routes/searchParams';
 import styles from '../../shell/SidePanel.module.css';
 import { AddMarkdownDialog } from '../markdown/AddMarkdownDialog';
-import { AddDiagramDialog } from '../projects/AddDiagramDialog';
+import { AddDiagramDialog } from '../projects/content/AddDiagramDialog';
 import { downloadUrl } from '../../lib/browserDownload';
 import { ApiError } from '../../lib/http';
 

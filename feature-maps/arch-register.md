@@ -1199,7 +1199,7 @@
 
         - @id:ar.projects.milestones Users can manage project milestones with target dates and status, and associate
           planned entity changes with milestones.
-          A project's Plan section groups its future changes, timeline, and milestones as tabs.
+          A project's Plan section groups its timeline, planned changes, project diff, and milestones as tabs.
 
         - @id:ar.projects.planned-changes Users can record named, coordinated change cases for one or more entities
           within or outside a project without changing the current live entity state, including planning the

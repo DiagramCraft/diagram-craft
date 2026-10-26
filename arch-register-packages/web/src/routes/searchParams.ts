@@ -176,7 +176,7 @@ const projectSearchSchema = defineSearchParamSchema({
   ...sharedContentBrowserSearchSchema,
   tab: enumCodec(['projects', 'archive'] as const),
   section: enumCodec(['home', 'entities', 'plan', 'assessments'] as const),
-  planTab: enumCodec(['timeline', 'future-changes', 'project-diff', 'milestones'] as const),
+  planTab: enumCodec(['timeline', 'planned-changes', 'project-diff', 'milestones'] as const),
   assessmentId: stringCodec,
   assessmentTab: enumCodec(['details', 'summary', 'discussion'] as const),
   dialog: enumCodec(['add-entity'] as const)

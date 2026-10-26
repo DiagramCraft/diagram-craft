@@ -1,0 +1,23 @@
+.diagramCard {
+  width: 100%;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  text-align: left;
+  color: var(--base-fg-dim);
+  display: flex;
+  flex-direction: column;
+  transition:
+    border-color 80ms,
+    background 80ms;
+  cursor: pointer;
+}
+
+.diagramCard:hover {
+  border-color: var(--accent-fg);
+}
+
+.diagramCard:hover .cmtPill {
+  border-color: var(--cmp-border-strong, var(--cmp-border));
+}

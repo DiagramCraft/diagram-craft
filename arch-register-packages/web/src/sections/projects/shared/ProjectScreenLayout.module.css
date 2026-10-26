@@ -1,0 +1,51 @@
+/* Project Detail */
+.screen {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  padding: 20px 24px 32px;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Header */
+.header {
+  position: relative;
+  margin-bottom: 14px;
+}
+
+/* Meta bar */
+.meta {
+  display: flex;
+  gap: 24px;
+  padding: 12px 14px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  margin-bottom: 12px;
+}
+
+.metaItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.metaLabel {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--cmp-fg-disabled);
+}
+
+.metaValue {
+  color: var(--base-fg-dim);
+}
+
+.screenBody {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}

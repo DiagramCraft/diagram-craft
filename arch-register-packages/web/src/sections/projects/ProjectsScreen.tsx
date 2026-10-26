@@ -2,7 +2,7 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { TbFolders, TbPlus } from 'react-icons/tb';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { EmptyState } from '../../components/EmptyState';
-import styles from './ProjectDetailScreen.module.css';
+import styles from './ProjectsScreen.module.css';
 
 export const ProjectsScreen = () => {
   const { projects, openAddProjectDialog, permissions } = useWorkspaceContext();

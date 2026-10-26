@@ -13,7 +13,8 @@ import { EmptyState } from '../EmptyState';
 import { FilterDropdown } from '../FilterDropdown';
 import { SearchInput } from '../SearchInput';
 import toolbarStyles from './DiagramBrowserToolbar.module.css';
-import styles from '../../sections/projects/ProjectDetailScreen.module.css';
+import styles from './DiagramBrowserView.module.css';
+import cardStyles from '../diagram-card-shared.module.css';
 
 export type DiagramViewMode = 'grid' | 'list';
 
@@ -58,7 +59,7 @@ const DiagramBrowserEmptyState = ({
 const AddDiagramCard = ({ onClick }: { onClick: () => void }) => (
   <button
     type="button"
-    className={`${styles.diagramCard} ${styles.diagramCardAdd}`}
+    className={`${cardStyles.diagramCard} ${styles.diagramCardAdd}`}
     onClick={onClick}
   >
     <TbPlus size={16} />

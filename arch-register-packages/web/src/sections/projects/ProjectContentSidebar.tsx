@@ -58,7 +58,7 @@ import type { ProjectSearchParams } from '../../routes/searchParams';
 import styles from '../../shell/SidePanel.module.css';
 import { toSavedViewSearch } from '../entities/components/entityBrowserState';
 import { AddMarkdownDialog } from '../markdown/AddMarkdownDialog';
-import { AddDiagramDialog } from './AddDiagramDialog';
+import { AddDiagramDialog } from './content/AddDiagramDialog';
 import { downloadUrl } from '../../lib/browserDownload';
 import { BaselineSidebarSection } from '../baselines/BaselineSidebarSection';
 
@@ -86,7 +86,7 @@ export const ProjectContentSidebar = ({
   );
   const { data: assessments = [] } = useProjectAssessments(workspaceSlug, projectId);
   const { data: changeCases = [] } = useChangeCasesByProject(workspaceSlug, projectId);
-  // Distinct planned change cases, matching the count on the Plan screen's Future changes tab.
+  // Distinct planned change cases, matching the count on the Plan screen's Planned changes tab.
   const futureChangeCount = new Set(
     [...flattenChangeCaseMembers(changeCases), ...flattenRelationChangeCaseMembers(changeCases)]
       .filter(entry => entry.changeCase.status === 'planned')
