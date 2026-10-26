@@ -28,12 +28,17 @@ export const useTableSort = <T, K extends string>(
   rows: readonly T[],
   comparators: Record<K, (a: T, b: T) => number>,
   initial?: SortState<K>
-): { sorted: T[]; sort: SortState<K> | null; toggleSort: (key: K) => void } => {
+): {
+  sorted: T[];
+  sort: SortState<K> | null;
+  toggleSort: (key: K) => void;
+  setSort: (sort: SortState<K> | null) => void;
+} => {
   const [sort, setSort] = useState<SortState<K> | null>(initial ?? null);
 
   const sorted = useMemo(() => sortRows(rows, sort, comparators), [rows, sort, comparators]);
 
   const toggleSort = (key: K) => setSort(prev => nextSortState(prev, key));
 
-  return { sorted, sort, toggleSort };
+  return { sorted, sort, toggleSort, setSort };
 };

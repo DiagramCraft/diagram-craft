@@ -1,0 +1,5 @@
+@import "../entities/ImportScreen.module.css";
+
+.inputPhase {
+  max-width: none;
+}

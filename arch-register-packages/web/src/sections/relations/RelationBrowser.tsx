@@ -242,7 +242,10 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
     comparators[fieldId] = (a, b) =>
       compareFieldValues(getFieldValue(a, fieldId), getFieldValue(b, fieldId));
   }
-  const { sorted, sort, toggleSort } = useTableSort(relations, comparators);
+  const { sorted, sort, toggleSort, setSort } = useTableSort(relations, comparators);
+  const sortValue = sort?.key ?? 'none';
+  const handleSortChange = (value: string) =>
+    setSort(value === 'none' ? null : { key: value, dir: 'asc' });
   const selectedRelation = relations.find(relation => relation._uid === selectedRelationId);
 
   const handleSaveView = async (
@@ -365,7 +368,20 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
           owners={owners}
           lifecycleStates={lifecycleStates}
         />
-        <div style={{ marginLeft: 'auto' }}>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+          {view === 'table' && (
+            <FilterDropdown
+              label="Sort"
+              value={sortValue}
+              onChange={handleSortChange}
+              options={[
+                { value: 'none', label: 'Default' },
+                { value: '_in', label: 'In' },
+                { value: '_out', label: 'Out' },
+                { value: '_schema', label: 'Type' }
+              ]}
+            />
+          )}
           <FilterDropdown
             label="View"
             value={view}
