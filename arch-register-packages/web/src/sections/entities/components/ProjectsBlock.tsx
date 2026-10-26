@@ -8,20 +8,14 @@ type EntityProjectAssoc = { project: Project; entity_type: ProjectEntity['entity
 export const ProjectsBlock = ({ entityProjects }: { entityProjects: EntityProjectAssoc[] }) =>
   entityProjects.length === 0 ? (
     <div className={styles.metaPropRow}>
-      <span className={styles.metaPropValue} style={{ color: 'var(--base-fg-more-dim)' }}>
-        Not in any project
-      </span>
+      <span className={`${styles.metaPropValue} ${styles.metaPropMuted}`}>Not in any project</span>
     </div>
   ) : (
     entityProjects.map(({ project, entity_type }) => (
       <div key={project.id} className={styles.metaPropRow}>
         <span className={styles.metaPropLabel}>{project.name}</span>
         <span className={styles.metaPropValue}>
-          {entity_type ? (
-            entity_type.name
-          ) : (
-            <span style={{ color: 'var(--base-fg-more-dim)' }}>—</span>
-          )}
+          {entity_type ? entity_type.name : <span className={styles.metaPropMuted}>—</span>}
         </span>
       </div>
     ))

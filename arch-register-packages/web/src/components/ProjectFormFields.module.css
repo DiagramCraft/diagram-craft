@@ -1,0 +1,9 @@
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 70vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-width: 0;
+}

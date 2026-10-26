@@ -3,19 +3,19 @@
   flex-direction: column;
   gap: 4px;
   padding: 10px 12px;
-  border: 1px solid var(--cmp-border-primary);
+  border: 1px solid var(--cmp-border);
   border-radius: 6px;
-  background: var(--cmp-bg-secondary);
+  background: var(--cmp-bg);
 }
 
 .scopeLabel {
-  color: var(--cmp-fg-primary);
+  color: var(--base-fg);
   font-size: 13px;
   font-weight: 600;
 }
 
 .scopeDetail {
-  color: var(--cmp-fg-secondary);
+  color: var(--base-fg-dim);
   font-size: 12px;
   line-height: 1.4;
 }

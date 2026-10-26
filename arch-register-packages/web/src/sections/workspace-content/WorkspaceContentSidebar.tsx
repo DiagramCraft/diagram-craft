@@ -41,9 +41,9 @@ import {
 import type { WorkspaceContentSearchParams } from '../../routes/searchParams';
 import styles from '../../shell/SidePanel.module.css';
 import { AddMarkdownDialog } from '../markdown/AddMarkdownDialog';
-import { AddDiagramDialog } from '../projects/AddDiagramDialog';
+import { AddDiagramDialog } from '../../dialogs/AddDiagramDialog';
 import { downloadUrl } from '../../lib/browserDownload';
-import { ApiError } from '../../lib/http';
+import { getErrorMessage } from '../../lib/http';
 
 export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: string }) => {
   const scope: ContentScope = { kind: 'workspace', workspaceId: workspaceSlug };
@@ -99,9 +99,7 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
         navigateHome();
       }
     } catch (caught) {
-      setMountActionError(
-        caught instanceof ApiError ? caught.message : 'Unable to remove content mount'
-      );
+      setMountActionError(getErrorMessage(caught, 'Unable to remove content mount'));
     } finally {
       setDeleteMount(null);
     }
@@ -286,9 +284,7 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
             onClick={() => {
               if (selectedMount) {
                 void externalOperations.sync.mutateAsync(selectedMount.id).catch(caught => {
-                  setMountActionError(
-                    caught instanceof ApiError ? caught.message : 'Unable to refresh content mount'
-                  );
+                  setMountActionError(getErrorMessage(caught, 'Unable to refresh content mount'));
                 });
               }
               setMountMenu(null);

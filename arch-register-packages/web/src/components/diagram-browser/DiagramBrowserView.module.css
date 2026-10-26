@@ -1,0 +1,64 @@
+/* Diagram grid */
+.diagramGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.diagramCardAdd {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 188px;
+  color: var(--base-fg-more-dim);
+  border-style: dashed;
+  background: transparent;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.diagramCardAdd:hover {
+  background: var(--cmp-bg);
+  color: var(--base-fg);
+}
+
+/* Diagram list */
+.diagramListPanel {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  overflow: hidden;
+  background: var(--panel-bg);
+}
+
+.diagramListHead {
+  display: grid;
+  grid-template-columns: 1fr 90px;
+  padding: 8px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--cmp-fg-disabled);
+  border-bottom: 1px solid var(--cmp-border);
+  background: var(--base-bg);
+}
+
+.diagramListHeadWithFolder,
+.diagramRowWithFolder {
+  grid-template-columns: 1fr 120px 90px;
+}
+
+.sectionLabel {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--cmp-fg-disabled);
+  margin: 16px 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}

@@ -1,3 +1,4 @@
+import { savedViewIcon } from '../../lib/savedViewIcon';
 import { useState, useMemo, type ReactNode } from 'react';
 import { useNavigate, useParams, useSearch, useLocation } from '@tanstack/react-router';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
@@ -9,15 +10,6 @@ import {
   TbUsers,
   TbPencil,
   TbTrash,
-  TbList,
-  TbLayoutGrid,
-  TbBinaryTree2,
-  TbChartRadar,
-  TbCalendarWeek,
-  TbTable,
-  TbColumns3,
-  TbMap,
-  TbVectorTriangle,
   TbPinned,
   TbBookmark,
   TbLayoutSidebarLeftCollapse,
@@ -271,31 +263,6 @@ export const EntitiesSidebar = ({
     });
   };
 
-  const getViewIcon = (mode: string) => {
-    switch (mode) {
-      case 'table':
-        return <TbList size={12} />;
-      case 'cards':
-        return <TbLayoutGrid size={12} />;
-      case 'tree':
-        return <TbBinaryTree2 size={12} />;
-      case 'radar':
-        return <TbChartRadar size={12} />;
-      case 'timeline':
-        return <TbCalendarWeek size={12} />;
-      case 'explore':
-        return <TbColumns3 size={12} />;
-      case 'map':
-        return <TbMap size={12} />;
-      case 'graph':
-        return <TbVectorTriangle size={12} />;
-      case 'traceability':
-        return <TbArrowsRightLeft size={12} />;
-      default:
-        return <TbTable size={12} />;
-    }
-  };
-
   return (
     <>
       <div className={`${styles.header} ${styles.tabHeader}`}>
@@ -444,13 +411,13 @@ export const EntitiesSidebar = ({
           <>
             {savedViews.filter(v => v.isAdminView).length > 0 && (
               <>
-                <SidebarGroupLabel>Workspace views</SidebarGroupLabel>
+                <SidebarGroupLabel>Pinned views</SidebarGroupLabel>
                 {savedViews
                   .filter(v => v.isAdminView)
                   .map(view => (
                     <TreeRow
                       key={view.id}
-                      icon={getViewIcon(view.viewMode)}
+                      icon={savedViewIcon(view.viewMode)}
                       label={view.name}
                       active={search.viewId === view.id}
                       onClick={() => applySavedView(view)}
@@ -464,7 +431,7 @@ export const EntitiesSidebar = ({
                   ))}
               </>
             )}
-            <SidebarGroupLabel>Saved views</SidebarGroupLabel>
+            <SidebarGroupLabel>Views</SidebarGroupLabel>
             {savedViews.filter(v => !v.isAdminView).length === 0 && (
               <div className={`${styles.emptyState} dim`}>No saved views yet.</div>
             )}
@@ -473,7 +440,7 @@ export const EntitiesSidebar = ({
               .map(view => (
                 <TreeRow
                   key={view.id}
-                  icon={getViewIcon(view.viewMode)}
+                  icon={savedViewIcon(view.viewMode)}
                   label={view.name}
                   active={search.viewId === view.id}
                   onClick={() => applySavedView(view)}

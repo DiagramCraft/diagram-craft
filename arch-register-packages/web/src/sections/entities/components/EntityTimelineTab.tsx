@@ -17,6 +17,7 @@ import {
   type TimelineColumnWidths,
   type TimelineZoom
 } from '../../../components/timeline/timelineUtils';
+import { SnapshotChangeList } from './SnapshotChangeList';
 import styles from '../EntityDetailScreen.module.css';
 import { detectConflicts, diffSnapshotState, type SnapshotState } from './entityTimelineHelpers';
 import { EmptyState } from '../../../components/EmptyState';
@@ -510,21 +511,14 @@ const SnapDetail = ({
         {changes.length > 0 && (
           <div className={styles.etlDetailChanges}>
             <div className={styles.etlDetailSectionLabel}>Changes</div>
-            {changes.map(change => (
-              <div key={change.label} className={styles.etlChgRow}>
-                <span className={styles.etlChgField}>{change.label}</span>
-                <span className={styles.etlChgFrom}>{change.from}</span>
-                <span className={styles.etlChgArrow}>→</span>
-                <span className={styles.etlChgTo}>{change.to}</span>
-              </div>
-            ))}
+            <SnapshotChangeList changes={changes} />
           </div>
         )}
 
         {changes.length === 0 && snapshot.source === 'project' && (
           <div className={styles.etlDetailChanges}>
             <div className={styles.etlDetailSectionLabel}>Changes</div>
-            <div className={styles.etlChgRow}>Restricted changes</div>
+            <SnapshotChangeList changes={[]} emptyText="Restricted changes" />
           </div>
         )}
 

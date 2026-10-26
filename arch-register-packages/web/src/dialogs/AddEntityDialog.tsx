@@ -38,7 +38,7 @@ const getRelationFieldValue = (value: unknown): string[] =>
 type AddEntityDialogProps = {
   open: boolean;
   onClose: () => void;
-  onCreated: (entity: EntityApiResponse) => void;
+  onCreated?: (entity: EntityApiResponse) => void;
   onDraftCreated?: (state: Record<string, unknown>) => void;
   draftMode?: boolean;
   referenceOptionsExtra?: Record<string, EntitySummary[]>;
@@ -305,7 +305,7 @@ export const AddEntityDialog = ({
         params: { workspace: workspaceId },
         body
       });
-      onCreated(entity);
+      onCreated?.(entity);
       onClose();
     } catch (err) {
       if (err instanceof ApiError) {

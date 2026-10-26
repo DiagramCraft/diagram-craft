@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
+import { relationLabel } from '../../lib/relationLabel';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import {
   TbDots,
@@ -480,7 +481,7 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
                                     relationId: relation._uid,
                                     inEntityId: relation._in.id,
                                     outEntityId: relation._out.id,
-                                    label: `${relation._in.name} → ${relation._out.name}`
+                                    label: relationLabel(relation)
                                   })
                               }
                             ]

@@ -9,7 +9,8 @@ import {
 } from 'react-icons/tb';
 import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 import { getFileNodeIcon } from '../lib/contentNode';
-import styles from '../sections/projects/ProjectDetailScreen.module.css';
+import styles from './DiagramCard.module.css';
+import sharedStyles from './diagram-card-shared.module.css';
 import { DiagramMetadataPopover } from './DiagramMetadataPopover';
 import { formatDate } from '../utils/dateFormat';
 
@@ -89,7 +90,7 @@ export const DiagramCard = ({
   >
     <button
       type="button"
-      className={styles.diagramCard}
+      className={sharedStyles.diagramCard}
       onClick={onOpen}
       onContextMenu={onContextMenu}
     >
@@ -245,7 +246,7 @@ export const FolderCard = ({
   folder: DiagramBrowserFolderItem;
   onOpen: () => void;
 }) => (
-  <button type="button" className={styles.diagramCard} onClick={onOpen}>
+  <button type="button" className={sharedStyles.diagramCard} onClick={onOpen}>
     <div className={styles.diagramThumb}>
       <div className={styles.diagramThumbNodes}>
         <div className={styles.diagramThumbIcon} style={thumbIconStyle}>

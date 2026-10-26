@@ -987,10 +987,15 @@ export const workspaceEntityContract = oc.tag('Entities').router({
         inputStructure: 'detailed',
         summary: 'Clone entity',
         description:
-          'Creates a copy of an existing entity with a new identifier. Relationships are not cloned.',
+          'Creates a copy of an existing entity with a new identifier. Relationships are not cloned. When project_id is given, the copy is scoped to that project.',
         tags: ['Entities']
       })
-      .input(z.object({ params: wsAndId }))
+      .input(
+        z.object({
+          params: wsAndId,
+          body: z.object({ project_id: z.string().nullable().optional() }).optional()
+        })
+      )
       .output(entityRecordSchema),
     remove: oc
       .route({

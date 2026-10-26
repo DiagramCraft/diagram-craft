@@ -426,10 +426,9 @@ export const diffEntityLandscapes = async (
       return { entity: toApi(entry.entity, authCtx, toSchemas, true), diff };
     });
 
-  // Relations aren't project-scoped themselves (only their planned changes are), so the
-  // "current" scenario-comparison enrichment entities get above isn't attempted here — that's a
-  // deliberately narrower relation feature set than entities have, not an omission: relations
-  // only diff added/removed/changed between the two states directly.
+  // Relations aren't project-scoped themselves (only their planned changes are). In a scenario
+  // comparison, changed relations are enriched with the live value the same way entities are, so
+  // callers can tell which side actually changed a field.
   const relationSchemas = await db.relation.listRelationSchemas(workspace);
   const [fromRelationSchemas, toRelationSchemas] = await Promise.all([
     resolveRelationSchemaCatalogAt(db, workspace, relationSchemas, parseStateDate(from)),
@@ -439,6 +438,22 @@ export const diffEntityLandscapes = async (
     reconstructRelationState(db, workspace, authCtx, from, scopes[0]?.projectId, now, fromSchemas),
     reconstructRelationState(db, workspace, authCtx, to, scopes[1]?.projectId, now, toSchemas)
   ]);
+  const currentRelationSchemas = isScenarioComparison
+    ? await resolveRelationSchemaCatalogAt(db, workspace, relationSchemas, now)
+    : null;
+  const currentRelations =
+    isScenarioComparison && currentRelationSchemas
+      ? await reconstructRelationState(
+          db,
+          workspace,
+          authCtx,
+          { asOf: now.toISOString(), includePlannedChanges: false, includeOverdueChanges: false },
+          undefined,
+          now,
+          availableSchemaCatalog(currentSchemas)
+        )
+      : [];
+  const currentRelationById = new Map(currentRelations.map(relation => [relation.id, relation]));
   const fromRelationById = new Map(fromRelations.map(relation => [relation.id, relation]));
   const toRelationById = new Map(toRelations.map(relation => [relation.id, relation]));
 
@@ -469,12 +484,31 @@ export const diffEntityLandscapes = async (
     .sort((a, b) => a.relation.id.localeCompare(b.relation.id))
     .map(entry => {
       const fromRelation = fromRelationById.get(entry.relation.id)!;
-      const diff = redactKnownDataDiff(
+      const redactedDiff = redactKnownDataDiff(
         entry.diff,
         authCtx,
         relationSchemaFor(fromRelation, fromRelationSchemas),
         relationSchemaFor(entry.relation, toRelationSchemas)
       );
+      const currentRelation = currentRelationById.get(entry.relation.id) ?? entry.relation;
+      const diff = isScenarioComparison
+        ? Object.fromEntries(
+            Object.entries(redactedDiff).map(([key, fieldDiff]) => {
+              if (key !== 'data') {
+                return [
+                  key,
+                  { ...fieldDiff, current: relationState(currentRelation)[key] ?? null }
+                ];
+              }
+              const current = filterKnownRestrictedFieldGroups(
+                authCtx,
+                relationSchemaFor(currentRelation, currentRelationSchemas ?? new Map()),
+                (relationState(currentRelation)[key] ?? {}) as Record<string, unknown>
+              );
+              return [key, { ...fieldDiff, current }];
+            })
+          )
+        : redactedDiff;
       return {
         relation: toRedactedApiRelation(
           entry.relation,

@@ -1106,7 +1106,8 @@
           display modes, and joined data such as assessment fields. Saved views may also use relationship-aware
           structured queries with projected fields. Schema templates (full or cross-cutting) can seed initial saved
           views into a workspace at creation time, so users see a populated view list for template-provided schemas
-          without configuring one themselves.
+          without configuring one themselves. Saved views are shared with everyone who can see the workspace or project;
+          admins can pin a view so that only admins can change it, and pinned views are listed separately.
 
         - @id:ar.entity-views.technology-lifecycle Users can use saved table, radar, and timeline views to review
           technology release lifecycles, radar governance status, and end-of-life planning dates.
@@ -1166,7 +1167,9 @@
         - @id:ar.projects.lifecycle Users can create, edit, view, and delete projects and manage their project-level
           metadata, including optional start and target dates shown on the project home screen. Entities can be linked
           to one or more projects, making the project's milestones, assessments, and planned changes available as
-          project context for that entity.
+          project context for that entity. Within a project's entity list, users can add entities, mark each as done or
+          not done for the project, clone an entity into the project as a project-scoped copy, and remove it from the
+          project.
 
         - @id:ar.projects.dashboard The project home screen shows a composable dashboard of widgets scoped to that
           project, built from the same widget catalog as the workspace dashboard (stat metrics, saved-view embeds,
@@ -1196,6 +1199,7 @@
 
         - @id:ar.projects.milestones Users can manage project milestones with target dates and status, and associate
           planned entity changes with milestones.
+          A project's Plan section groups its timeline, planned changes, project diff, and milestones as tabs.
 
         - @id:ar.projects.planned-changes Users can record named, coordinated change cases for one or more entities
           within or outside a project without changing the current live entity state, including planning the
@@ -1218,13 +1222,15 @@
               reachable from a selected subject before and after one planned-change case, with traversal limits and
               the caller's existing project and record visibility enforced.
 
-            - @id:ar.projects.planned-changes.whats-changed Users can view a summary of what changes across a
+            - @id:ar.projects.planned-changes.project-diff Users can view a Project Diff in the Plan section, a summary of what changes across a
               project's connected entities once all of its planned changes are applied, compared to the current
               live state — entities added, removed, or changed, with a field-level diff on drill-down for changed
               entities. The comparison date is fixed to the latest effective date among the project's planned
               changes, falling back to the project's target date when no planned change has a date. From this view,
-              users can compare the project's reconstructed future state with another project's future state, showing
-              entities present in only one scenario and field-level differences between both proposals. As with the
+              users can compare the project's reconstructed future state with another project's future state against
+              the live state, attributing each entity and relation to the project that changes it or flagging a conflict
+              when both change the same field differently, with field-level values from the live state and both
+              proposals. As with the
               workspace-wide diff, restricted field-group values are scrubbed per viewer, with a "Restricted changes"
               indicator standing in when redaction would otherwise leave a changed entity's diff empty.
 

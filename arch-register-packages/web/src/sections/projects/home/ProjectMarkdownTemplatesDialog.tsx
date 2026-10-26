@@ -1,0 +1,231 @@
+import { useState } from 'react';
+import { TbPlus } from 'react-icons/tb';
+import { Dialog } from '@diagram-craft/app-components/Dialog';
+import { Button } from '@diagram-craft/app-components/Button';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
+import { Select } from '@diagram-craft/app-components/Select';
+import { TextArea } from '@diagram-craft/app-components/TextArea';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { Banner } from '../../../components/Banner';
+import { ApiError } from '../../../lib/http';
+import {
+  useArchiveDocumentTemplate,
+  useCreateDocumentTemplate,
+  useDocumentTemplates,
+  useDocumentTypes,
+  useUpdateDocumentTemplate
+} from '../../../hooks/useDocuments';
+import type { DocumentMetadata } from '@arch-register/api-types/documentContract';
+import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectCrudContract';
+import styles from './ProjectMarkdownTemplatesDialog.module.css';
+
+type Props = {
+  open: boolean;
+  project: ProjectDetailData;
+  workspaceId: string;
+  onClose: () => void;
+};
+
+export const ProjectMarkdownTemplatesDialog = ({ open, project, workspaceId, onClose }: Props) => {
+  const [templateName, setTemplateName] = useState('');
+  const [templateBody, setTemplateBody] = useState('# {{title}}\n');
+  const [templateDefaults, setTemplateDefaults] = useState('{}');
+  const [templateTypeId, setTemplateTypeId] = useState('');
+  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
+  // The editor stays hidden until a template is selected or "New template" is clicked.
+  const [isCreating, setIsCreating] = useState(false);
+  const [templateError, setTemplateError] = useState('');
+
+  const { data: projectTemplates = [] } = useDocumentTemplates(workspaceId, project.id, true);
+  const { data: documentTypes = [] } = useDocumentTypes(workspaceId, true);
+  const createTemplate = useCreateDocumentTemplate(workspaceId);
+  const updateTemplate = useUpdateDocumentTemplate(workspaceId);
+  const archiveTemplate = useArchiveDocumentTemplate(workspaceId);
+  const selectedTemplateType = documentTypes.find(type => type.id === templateTypeId);
+
+  const showEditor = isCreating || editingTemplateId != null;
+  const editingTemplate = projectTemplates.find(template => template.id === editingTemplateId);
+
+  const selectTemplate = (template: (typeof projectTemplates)[number]) => {
+    setEditingTemplateId(template.id);
+    setTemplateName(template.name);
+    setTemplateBody(template.body);
+    setTemplateTypeId(template.document_type_id);
+    setTemplateDefaults(JSON.stringify(template.metadata_defaults, null, 2));
+    setTemplateError('');
+  };
+
+  const resetTemplateForm = () => {
+    setTemplateName('');
+    setTemplateBody('# {{title}}\n');
+    setTemplateDefaults('{}');
+    setTemplateTypeId('');
+    setEditingTemplateId(null);
+    setIsCreating(false);
+    setTemplateError('');
+  };
+
+  const startNewTemplate = () => {
+    resetTemplateForm();
+    setIsCreating(true);
+  };
+
+  const handleClose = () => {
+    resetTemplateForm();
+    onClose();
+  };
+
+  const saveTemplate = async () => {
+    if (!templateName.trim() || !selectedTemplateType) return;
+    setTemplateError('');
+    try {
+      const parsedDefaults: unknown = JSON.parse(templateDefaults);
+      if (
+        parsedDefaults === null ||
+        typeof parsedDefaults !== 'object' ||
+        Array.isArray(parsedDefaults)
+      ) {
+        throw new Error('Metadata defaults must be a JSON object');
+      }
+      const body = {
+        name: templateName.trim(),
+        body: templateBody,
+        document_type_id: selectedTemplateType.id,
+        metadata_defaults: parsedDefaults as DocumentMetadata,
+        project_id: project.id
+      };
+      if (editingTemplateId) await updateTemplate.mutateAsync({ id: editingTemplateId, body });
+      else await createTemplate.mutateAsync(body);
+      resetTemplateForm();
+    } catch (cause) {
+      setTemplateError(
+        cause instanceof ApiError || cause instanceof Error
+          ? cause.message
+          : 'Unable to save project template'
+      );
+    }
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      title="Edit Markdown Templates"
+      width={820}
+      buttons={[{ label: 'Close', type: 'cancel', onClick: handleClose }]}
+    >
+      <div className={styles.layout}>
+        <div className={styles.listPane}>
+          <div className={styles.list}>
+            {projectTemplates.length === 0 ? (
+              <div className={styles.emptyList}>No project templates yet.</div>
+            ) : (
+              projectTemplates.map(template => (
+                <button
+                  key={template.id}
+                  type="button"
+                  className={`${styles.listRow} ${editingTemplateId === template.id ? styles.listRowActive : ''}`}
+                  onClick={() => selectTemplate(template)}
+                >
+                  <span
+                    className={`${styles.listRowName} ${template.archived ? styles.listRowNameArchived : ''}`}
+                  >
+                    {template.name}
+                  </span>
+                  <span className={styles.listRowSub}>
+                    {documentTypes.find(type => type.id === template.document_type_id)?.name ??
+                      'Unknown type'}
+                    {template.archived ? ' · archived' : ''}
+                  </span>
+                </button>
+              ))
+            )}
+          </div>
+          <div className={styles.listFooter}>
+            <button type="button" className={styles.newButton} onClick={startNewTemplate}>
+              <TbPlus size={13} />
+              New template
+            </button>
+          </div>
+        </div>
+        <div className={styles.editorPane}>
+          {showEditor ? (
+            <>
+              <div className={styles.editorFields}>
+                <FormElement label="Template name" required>
+                  <TextInput
+                    value={templateName}
+                    onChange={value => setTemplateName(value ?? '')}
+                    placeholder="e.g. Architecture decision record"
+                  />
+                </FormElement>
+                <FormElement label="Document type" required>
+                  <Select.Root
+                    value={templateTypeId || undefined}
+                    onChange={value => setTemplateTypeId(value ?? '')}
+                    placeholder="Select a document type"
+                  >
+                    {documentTypes
+                      .filter(type => !type.archived || type.id === templateTypeId)
+                      .map(type => (
+                        <Select.Item key={type.id} value={type.id}>
+                          {type.name}
+                          {type.archived ? ' (archived)' : ''}
+                        </Select.Item>
+                      ))}
+                  </Select.Root>
+                </FormElement>
+                <FormElement label="Body" required>
+                  <TextArea
+                    rows={5}
+                    value={templateBody}
+                    onChange={value => setTemplateBody(value ?? '')}
+                  />
+                </FormElement>
+                <FormElement label="Metadata defaults (JSON)" required={false}>
+                  <TextArea
+                    rows={4}
+                    value={templateDefaults}
+                    onChange={value => setTemplateDefaults(value ?? '')}
+                    placeholder="{}"
+                  />
+                </FormElement>
+                {templateError && <Banner variant="error">{templateError}</Banner>}
+              </div>
+              <div className={styles.editorActions}>
+                {editingTemplate && (
+                  <Button
+                    onClick={() =>
+                      void archiveTemplate.mutateAsync({
+                        id: editingTemplate.id,
+                        archived: !editingTemplate.archived
+                      })
+                    }
+                  >
+                    {editingTemplate.archived ? 'Unarchive' : 'Archive'}
+                  </Button>
+                )}
+                <Button
+                  variant="primary"
+                  onClick={() => void saveTemplate()}
+                  disabled={
+                    !templateName.trim() ||
+                    !selectedTemplateType ||
+                    createTemplate.isPending ||
+                    updateTemplate.isPending
+                  }
+                >
+                  {editingTemplateId ? 'Save template' : 'Add template'}
+                </Button>
+              </div>
+            </>
+          ) : (
+            <div className={styles.editorEmpty}>
+              Select a template to edit it, or click New template to add one.
+            </div>
+          )}
+        </div>
+      </div>
+    </Dialog>
+  );
+};

@@ -52,7 +52,7 @@ export const useEntityJson = (workspaceId: string, entityId: string, enabled = t
   useQuery(entityJsonQuery(workspaceId, entityId, enabled));
 
 // Hook for fetching an entity-landscape diff between two reconstructed states — powers both the
-// project page's "What's changed" tab (from = now, to = project's end state) and the workspace
+// project page's "Project Diff" tab (from = now, to = project's end state) and the workspace
 // entities section's "Diff" view (from = now, to = a chosen future date, both scoped to the
 // currently active entity-browser filters).
 export const useEntityLandscapeDiff = (
@@ -62,19 +62,19 @@ export const useEntityLandscapeDiff = (
   enabled = true
 ) => useQuery(entityLandscapeDiffQuery(workspaceId, from, to, enabled));
 
-// Builds the `from`/`to` states for a project's "what's changed by end of project" diff: now
+// Builds the `from`/`to` states for a project's "project diff by end of project" diff: now
 // (no planned changes) vs. the project's connected entities with its planned changes applied.
 export const buildProjectLandscapeDiffStates = (
   projectId: string,
-  targetDate: string,
-  includeOverdueChanges = false
+  targetDate: string
 ): { from: EntityLandscapeDiffState; to: EntityLandscapeDiffState } => ({
   from: {
     asOf: new Date().toISOString(),
     includePlannedChanges: false,
     includeOverdueChanges: false
   },
-  to: { asOf: targetDate, projectId, includePlannedChanges: true, includeOverdueChanges }
+  // Overdue changes stay in: a change that is late is still planned for the project.
+  to: { asOf: targetDate, projectId, includePlannedChanges: true, includeOverdueChanges: true }
 });
 
 // Hook for fetching entity facets (for filters)
@@ -147,8 +147,11 @@ export const useCloneEntity = (workspaceId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (entityId: string) =>
-      orpcClient.entities.clone({ params: { workspace: workspaceId, id: entityId } }),
+    mutationFn: ({ entityId, projectId }: { entityId: string; projectId?: string }) =>
+      orpcClient.entities.clone({
+        params: { workspace: workspaceId, id: entityId },
+        body: projectId ? { project_id: projectId } : undefined
+      }),
     onSuccess: async () => {
       await invalidateEntityQueries(queryClient, workspaceId);
     }

@@ -34,7 +34,7 @@ export const TextArea = React.forwardRef<HTMLTextAreaElement, Props>((props, ref
           ref={ref}
           {...PropsUtils.filterDomProperties(props)}
           className={props.className ? `${props.className} ${styles.eTextArea}` : styles.eTextArea}
-          placeholder={props.isIndeterminate ? '···' : undefined}
+          placeholder={props.isIndeterminate ? '···' : props.placeholder}
           disabled={props.disabled}
           onFocus={e => {
             hasFocus.current = true;

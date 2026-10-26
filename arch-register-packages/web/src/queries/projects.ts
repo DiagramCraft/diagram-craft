@@ -4,15 +4,8 @@ import type { ProjectEntity } from '@arch-register/api-types/projectEntityContra
 import { invalidateAuditQueries } from './audit';
 import { projectFileKeys } from './content';
 import { invalidateEntityQueries } from './entities';
-import {
-  projectEntityKeys as projectEntityKeysFromQueries,
-  projectKeys as projectKeysFromQueries
-} from './projectKeys';
+import { projectEntityKeys, projectKeys } from './projectKeys';
 import { orpcClient } from '../lib/orpcClient';
-import { fetchEntityProjects } from '../lib/projectOperations';
-
-export const projectKeys = projectKeysFromQueries;
-export const projectEntityKeys = projectEntityKeysFromQueries;
 
 export const projectsQuery = (workspaceId: string) =>
   queryOptions({
@@ -39,7 +32,8 @@ export const projectEntitiesQuery = (workspaceId: string, projectId: string) =>
 export const entityProjectsQuery = (workspaceId: string, entityId: string) =>
   queryOptions({
     queryKey: projectEntityKeys.entityProjects(workspaceId, entityId),
-    queryFn: () => fetchEntityProjects(workspaceId, entityId),
+    queryFn: () =>
+      orpcClient.projects.listEntityProjects({ params: { workspace: workspaceId, entityId } }),
     enabled: !!workspaceId && !!entityId
   });
 

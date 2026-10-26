@@ -358,6 +358,14 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     return Number(row?.count ?? 0);
   }
 
+  async listEntitySlugs(workspace: string, schemaId: string, namespace: string) {
+    const rows = (await this.sql`
+      SELECT slug FROM catalog_record
+      WHERE workspace = ${workspace} AND schema_id = ${schemaId} AND namespace = ${namespace}
+    `) as DatabaseRow[];
+    return rows.map(row => String(row['slug']));
+  }
+
   async listEntities(workspace: string) {
     const rows = await this.sql.unsafe<DatabaseRow[]>(
       `${ENTITY_SELECT_SQL} WHERE e.workspace = $1 AND e.deleted_at IS NULL ORDER BY e.name, e.id`,

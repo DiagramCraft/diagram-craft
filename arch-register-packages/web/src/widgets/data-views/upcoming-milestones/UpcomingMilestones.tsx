@@ -48,7 +48,8 @@ export const UpcomingMilestonesWidget = () => {
   const goToMilestones = () =>
     navigate(
       projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), {
-        section: 'milestones' as const
+        section: 'plan' as const,
+        planTab: 'milestones' as const
       })
     );
 

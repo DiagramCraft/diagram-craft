@@ -888,36 +888,6 @@
   padding: 2px 0;
 }
 
-.etlChgRow {
-  display: flex;
-  align-items: baseline;
-  gap: 5px;
-  flex-wrap: wrap;
-  font-size: 11px;
-  padding: 4px 6px;
-  border-radius: 3px;
-  background: var(--cmp-bg);
-}
-
-.etlChgField {
-  font-weight: 500;
-  color: var(--base-fg-more-dim);
-}
-
-.etlChgFrom {
-  font-size: 10.5px;
-  color: var(--cmp-fg-disabled);
-}
-
-.etlChgArrow {
-  color: var(--cmp-fg-disabled);
-}
-
-.etlChgTo {
-  font-weight: 500;
-  color: var(--base-fg);
-}
-
 .etlDetailMeta {
   display: flex;
   gap: 5px;

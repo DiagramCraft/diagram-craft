@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Assessment } from '@arch-register/api-types/assessmentContract';
 import {
+  buildAssessmentJoinOptions,
   getAssessmentProjectIds,
   isJoinableAssessment,
   resolveJoinAssessmentId,
@@ -36,5 +37,38 @@ describe('useJoinedAssessment helpers', () => {
     ['archived', false]
   ] as const)('allows only open and closed assessments (%s)', (status, expected) => {
     expect(isJoinableAssessment({ status })).toBe(expected);
+  });
+});
+
+describe('buildAssessmentJoinOptions', () => {
+  const projects = [
+    { id: 'project-1', name: 'Project 1' },
+    { id: 'project-2', name: 'Project 2' }
+  ];
+  const assessment = (id: string, project_id: string, status: Assessment['status']) =>
+    ({ id, project_id, status }) as Assessment;
+  const assessments = [
+    assessment('open-1', 'project-1', 'open'),
+    assessment('closed-1', 'project-1', 'closed'),
+    assessment('draft-1', 'project-1', 'draft'),
+    assessment('open-2', 'project-2', 'open')
+  ];
+
+  it('lists open and closed assessments from every project in workspace context', () => {
+    const result = buildAssessmentJoinOptions(assessments, projects);
+    expect(result.map(o => o.assessment.id)).toEqual(['open-1', 'closed-1', 'open-2']);
+    expect(result.map(o => o.projectName)).toEqual(['Project 1', 'Project 1', 'Project 2']);
+  });
+
+  it('narrows to the project given by its internal id in project context', () => {
+    // Regression: the project browser passes the internal id, which used to be compared against
+    // the public id, leaving the Assessment picker permanently empty and disabled.
+    expect(
+      buildAssessmentJoinOptions(assessments, projects, 'project-1').map(o => o.assessment.id)
+    ).toEqual(['open-1', 'closed-1']);
+  });
+
+  it('is empty for a project without joinable assessments', () => {
+    expect(buildAssessmentJoinOptions(assessments, projects, 'project-3')).toEqual([]);
   });
 });

@@ -23,11 +23,14 @@ type Operations = ReturnType<typeof useContentScopeOperations>;
 export const useContentFileContextMenu = ({
   folders,
   operations,
-  onDownload
+  onDownload,
+  extraItems
 }: {
   folders: ContentFolder[];
   operations: Operations;
   onDownload: (file: ProjectFile) => void;
+  /** Scope-specific menu items for a file; `closeMenu` dismisses the menu. */
+  extraItems?: (file: ProjectFile, closeMenu: () => void) => ReactNode;
 }): { open: (event: React.MouseEvent, file: ProjectFile) => void; element: ReactNode } => {
   const [menu, setMenu] = useState<{ x: number; y: number; file: ProjectFile } | null>(null);
   const [renameFile, setRenameFile] = useState<ProjectFile | null>(null);
@@ -54,6 +57,7 @@ export const useContentFileContextMenu = ({
             }}
             onRename={() => setRenameFile(menu.file)}
             onDelete={() => setDeleteFile(menu.file)}
+            extraItems={extraItems?.(menu.file, () => setMenu(null))}
           />
         </ContextMenu.Imperative>
       )}

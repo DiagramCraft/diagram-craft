@@ -14,6 +14,7 @@ import {
 } from '../../shared/data/assessmentSummaryLogic';
 import { useSchemaAssessmentSummaries } from '../../shared/data/useSchemaAssessmentSummaries';
 import { useWidgetFramed } from '../../shared/dashboard/WidgetFramed';
+import { ProgressBar } from '../../../components/ProgressBar';
 import styles from './AssessmentProgressTable.module.css';
 import { AssessmentProgressTableConfig } from './types';
 
@@ -96,18 +97,16 @@ export const AssessmentProgressTableWidget = ({
                 </Table.Cell>
                 <Table.Cell>
                   <span className={styles.progress}>
-                    <span className={styles.progressTrack}>
-                      <span
-                        className={styles.progressFill}
-                        style={{
-                          width: `${Math.round(summary.percent * 100)}%`,
-                          background:
-                            summary.status === 'overdue'
-                              ? ASSESSMENT_STATUS_TONE.overdue
-                              : undefined
-                        }}
-                      />
-                    </span>
+                    <ProgressBar
+                      className={styles.progressBar}
+                      percent={summary.percent * 100}
+                      trackColor="var(--panel-border)"
+                      fillColor={
+                        summary.status === 'overdue'
+                          ? ASSESSMENT_STATUS_TONE.overdue
+                          : 'var(--cmp-fg-accent, #3b82f6)'
+                      }
+                    />
                     <span className="dim mono">{Math.round(summary.percent * 100)}%</span>
                   </span>
                 </Table.Cell>

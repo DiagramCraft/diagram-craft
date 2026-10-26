@@ -6,7 +6,8 @@ import {
   flattenRelationChangeCaseMembers,
   getProjectScenarioDate,
   getSnapshotDateLabel,
-  getSnapshotEffectiveDate
+  getSnapshotEffectiveDate,
+  isChangeOverdue
 } from './snapshotDisplay';
 
 const changeCase = (overrides: Partial<ChangeCase>): ChangeCase =>
@@ -87,5 +88,20 @@ describe('snapshotDisplay', () => {
 
     expect(flattenChangeCaseMembers(cases).map(e => e.member.id)).toEqual(['m1']);
     expect(flattenRelationChangeCaseMembers(cases).map(e => e.member.id)).toEqual(['m2']);
+  });
+});
+
+describe('isChangeOverdue', () => {
+  const now = new Date(2026, 9, 26, 15, 30);
+
+  it('is overdue only when the date is before today', () => {
+    expect(isChangeOverdue('2026-10-25', now)).toBe(true);
+    expect(isChangeOverdue('2026-10-26', now)).toBe(false);
+    expect(isChangeOverdue('2026-10-27', now)).toBe(false);
+  });
+
+  it('ignores a time part and missing dates', () => {
+    expect(isChangeOverdue('2026-10-25T23:59:00Z', now)).toBe(true);
+    expect(isChangeOverdue(null, now)).toBe(false);
   });
 });

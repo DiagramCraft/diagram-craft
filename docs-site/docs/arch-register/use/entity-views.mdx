@@ -85,8 +85,15 @@ matching records for a different task:
 
 Members with saved-view management permission can open the entity browser actions menu and choose **Save View As...**
 to name the current view. A saved view retains its query, sorting, display fields, selected display mode, and that
-mode's configuration; joined assessment data is retained as well. When working in a project, choose the available
-workspace or project scope. Workspace views can be pinned for other members when the permission is available.
+mode's configuration; joined assessment data is retained as well. When working in a project, the view is saved to that
+project.
+
+Saved views are shared: every member who can see the workspace or project sees them in the sidebar under **Views**.
+Members with the admin-views permission can select **Pin as shared view (managed by admins)** when saving. Pinned views
+are listed under **Pinned views** and can only be renamed, updated, or removed by those admins.
+
+In a project's **Entities** section, **Save View As...** is available whenever you can edit the project, while **Save
+View** updates the open project view and stays disabled until one is selected.
 
 Select a saved view in the sidebar to restore its filters and configuration. When the active saved view changes, use
 **Save View** to update it; use the view menu to rename or remove saved views. Saved views can also be embedded in

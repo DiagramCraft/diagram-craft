@@ -47,6 +47,14 @@ export const getSnapshotEffectiveDate = (
     ? (milestonesById.get(changeCase.milestone_id)?.target_date ?? null)
     : null);
 
+/** True when a planned change's effective date (yyyy-mm-dd, optionally with a time part) is before today. */
+export const isChangeOverdue = (effectiveDate: string | null, now: Date = new Date()): boolean => {
+  if (!effectiveDate) return false;
+  const pad = (value: number) => String(value).padStart(2, '0');
+  const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  return effectiveDate.slice(0, 10) < today;
+};
+
 export const getProjectScenarioDate = (
   projectTargetDate: string | null | undefined,
   changeCases: ChangeCase[],

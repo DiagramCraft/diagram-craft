@@ -2,12 +2,12 @@ import { useMemo, useRef, useState } from 'react';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { TbFileText, TbFolderOpen, TbPlus, TbUpload } from 'react-icons/tb';
-import styles from '../projects/ProjectDetailScreen.module.css';
+import styles from './EntityContentView.module.css';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Title } from '../../components/Title';
-import { AddDiagramDialog } from '../projects/AddDiagramDialog';
+import { AddDiagramDialog } from '../../dialogs/AddDiagramDialog';
 import { AddMarkdownDialog } from '../markdown/AddMarkdownDialog';
-import { AddEntityFolderDialog } from './AddEntityFolderDialog';
+import { AddContentFolderDialog } from '../../components/AddContentFolderDialog';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import {
   DiagramBrowserToolbar,
@@ -233,13 +233,13 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
         isPending={contentOperations.createMarkdown.isPending}
       />
 
-      <AddEntityFolderDialog
+      <AddContentFolderDialog
+        scope={scope}
         open={addFolderOpen}
         onClose={() => setAddFolderOpen(false)}
         onCreated={() => setAddFolderOpen(false)}
-        workspaceSlug={workspaceSlug}
-        entityId={entityId}
         parentFolder={folder}
+        placeholder="e.g. Architecture diagrams"
       />
     </div>
   );

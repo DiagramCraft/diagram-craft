@@ -6,15 +6,15 @@ import {
 } from '../queries/projectDashboard';
 import { orpcClient } from '../lib/orpcClient';
 
-export const useProjectDashboard = (workspaceSlug: string, projectId: string) =>
-  useQuery(projectDashboardQuery(workspaceSlug, projectId));
+export const useProjectDashboard = (workspaceId: string, projectId: string) =>
+  useQuery(projectDashboardQuery(workspaceId, projectId));
 
-export const useUpdateProjectDashboard = (workspaceSlug: string, projectId: string) => {
+export const useUpdateProjectDashboard = (workspaceId: string, projectId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (body: UpdateProjectDashboardRequest) =>
-      orpcClient.projectDashboard.update({ params: { workspace: workspaceSlug, projectId }, body }),
-    onSuccess: () => invalidateProjectDashboardQueries(queryClient, workspaceSlug, projectId)
+      orpcClient.projectDashboard.update({ params: { workspace: workspaceId, projectId }, body }),
+    onSuccess: () => invalidateProjectDashboardQueries(queryClient, workspaceId, projectId)
   });
 };

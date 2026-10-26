@@ -51639,7 +51639,7 @@
       "post": {
         "operationId": "entities.clone",
         "summary": "Clone entity",
-        "description": "Creates a copy of an existing entity with a new identifier. Relationships are not cloned.",
+        "description": "Creates a copy of an existing entity with a new identifier. Relationships are not cloned. When project_id is given, the copy is scoped to that project.",
         "tags": [
           "Entities",
           "Entities"
@@ -51662,6 +51662,28 @@
             }
           }
         ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "project_id": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK",

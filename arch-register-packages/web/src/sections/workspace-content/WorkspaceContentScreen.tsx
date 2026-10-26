@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { TbFileText, TbFolderOpen, TbPlus, TbUpload } from 'react-icons/tb';
-import styles from '../projects/ProjectDetailScreen.module.css';
+import styles from './WorkspaceContentScreen.module.css';
 import { parentPath } from '../../lib/contentPath';
 import { useContentFileContextMenu } from '../../components/useContentFileContextMenu';
 import { Title } from '../../components/Title';
@@ -13,9 +13,9 @@ import {
 } from '../../hooks/useContentScope';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { Button } from '@diagram-craft/app-components/Button';
-import { AddDiagramDialog } from '../projects/AddDiagramDialog';
+import { AddDiagramDialog } from '../../dialogs/AddDiagramDialog';
 import { AddMarkdownDialog } from '../markdown/AddMarkdownDialog';
-import { ContentFolderDialog } from '../../components/ContentFolderDialog';
+import { AddContentFolderDialog } from '../../components/AddContentFolderDialog';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import {
@@ -305,12 +305,11 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
         isPending={contentOperations.createMarkdown.isPending}
       />
 
-      <ContentFolderDialog
+      <AddContentFolderDialog
+        scope={scope}
         open={addFolderOpen}
         onClose={() => setAddFolderOpen(false)}
         onCreated={() => setAddFolderOpen(false)}
-        onSubmit={path => contentOperations.createFolder.mutateAsync(path)}
-        isPending={contentOperations.createFolder.isPending}
         parentFolder={folder ?? undefined}
         placeholder="e.g. Architecture"
       />

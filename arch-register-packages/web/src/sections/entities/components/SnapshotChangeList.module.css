@@ -1,0 +1,66 @@
+.cardRow {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  padding: 4px 6px;
+  border-radius: 3px;
+  background: var(--cmp-bg);
+}
+
+.cardRow .field {
+  font-weight: 500;
+  color: var(--base-fg-more-dim);
+}
+
+.cardRow .from {
+  font-size: 10.5px;
+  color: var(--cmp-fg-disabled);
+}
+
+.cardRow .arrow {
+  color: var(--cmp-fg-disabled);
+}
+
+.cardRow .to {
+  font-weight: 500;
+  color: var(--base-fg);
+}
+
+.gridRow {
+  display: grid;
+  grid-template-columns: minmax(100px, 0.7fr) minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: baseline;
+  font-size: 11px;
+}
+
+.gridRow .field {
+  color: var(--base-fg-dim);
+}
+
+.gridRow .from,
+.gridRow .to {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gridRow .from {
+  color: var(--base-fg-more-dim);
+}
+
+.gridRow .arrow {
+  color: var(--base-fg-more-dim);
+}
+
+.gridRow .to {
+  color: var(--base-fg);
+}
+
+.gridEmpty {
+  font-size: 11px;
+  color: var(--base-fg-more-dim);
+}

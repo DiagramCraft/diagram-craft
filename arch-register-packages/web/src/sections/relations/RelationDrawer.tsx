@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { relationLabel } from '../../lib/relationLabel';
 import { useQueryClient } from '@tanstack/react-query';
 import { FieldDescriptionIcon } from '../../components/FieldDescriptionIcon';
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
@@ -80,7 +81,7 @@ export const RelationDrawer = ({
     <Drawer
       onClose={onClose}
       eyebrow={<span className="dim mono">{relationSchema?.name ?? 'Relation'}</span>}
-      title={`${relation._in.name} → ${relation._out.name}`}
+      title={relationLabel(relation)}
       badges={
         relation._lifecycle ? <Chip tone="ghost">{relation._lifecycle.name}</Chip> : undefined
       }

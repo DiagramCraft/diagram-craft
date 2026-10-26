@@ -263,6 +263,34 @@ export const getEntityFilterFieldDefs = ({
   return [...builtIn, ...schemaFields, ...assessmentFields];
 };
 
+/** The operator a condition starts with when its field is chosen. */
+export const defaultOpForField = (field: FieldDef): FilterCondition['op'] => {
+  if (field.type === 'date') return 'on';
+  if (field.type === 'select' || field.type === 'number' || field.type === 'duration') {
+    return 'equals';
+  }
+  if (field.type === 'rating') return 'gte';
+  if (field.type === 'presence') return 'not_empty';
+  return 'contains';
+};
+
+/** Applies `updates` to a condition, resetting its operator and value when the field changes. */
+export const applyConditionUpdate = (
+  condition: FilterCondition,
+  updates: Partial<FilterCondition>,
+  fields: FieldDef[]
+): FilterCondition => {
+  const updated = { ...condition, ...updates };
+  if (updates.fieldId) {
+    const field = fields.find(f => f.id === updates.fieldId);
+    if (field) {
+      updated.op = defaultOpForField(field);
+      updated.value = '';
+    }
+  }
+  return updated;
+};
+
 type Props = {
   conditions: FilterCondition[];
   onChange: (conditions: FilterCondition[]) => void;
@@ -342,23 +370,7 @@ export const FilterBuilder = ({
 
   const updateCondition = (index: number, updates: Partial<FilterCondition>) => {
     const next = [...conditions];
-    const updated = { ...next[index]!, ...updates };
-
-    // Reset op/value if field changed
-    if (updates.fieldId) {
-      const field = fields.find(f => f.id === updates.fieldId);
-      if (field) {
-        if (field.type === 'date') updated.op = 'on';
-        else if (field.type === 'select' || field.type === 'number' || field.type === 'duration')
-          updated.op = 'equals';
-        else if (field.type === 'rating') updated.op = 'gte';
-        else if (field.type === 'presence') updated.op = 'not_empty';
-        else updated.op = 'contains';
-        updated.value = '';
-      }
-    }
-
-    next[index] = updated;
+    next[index] = applyConditionUpdate(next[index]!, updates, fields);
     onChange(next);
   };
 

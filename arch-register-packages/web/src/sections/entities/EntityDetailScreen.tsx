@@ -332,9 +332,12 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   });
 
   const handleClone = () => {
-    cloneEntity.mutate(entityId, {
-      onSuccess: cloned => navigateToEntity(cloned._publicId)
-    });
+    cloneEntity.mutate(
+      { entityId },
+      {
+        onSuccess: cloned => navigateToEntity(cloned._publicId)
+      }
+    );
   };
 
   if (loading) {
