@@ -51,7 +51,7 @@
 
 /* Tabs.Content's own class is a hashed CSS-module name, so :global(.eContent) can never match it;
    select the panel by role instead. */
-.tabs :global(.cTabs) > [role='tabpanel'] {
+.tabs :global(.cTabs) > [role="tabpanel"] {
   display: flex;
   flex: 1;
   flex-direction: column;

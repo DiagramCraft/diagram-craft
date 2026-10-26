@@ -146,9 +146,7 @@ export const baselineContract = oc.tag('Baselines').router({
         description: 'Lists named architecture baselines visible in the workspace.',
         tags: ['Baselines']
       })
-      .input(
-        z.object({ params: ws, query: z.object({ includeDeleted: booleanQuerySchema }) })
-      )
+      .input(z.object({ params: ws, query: z.object({ includeDeleted: booleanQuerySchema }) }))
       .output(z.array(baselineSummarySchema)),
     create: oc
       .route({

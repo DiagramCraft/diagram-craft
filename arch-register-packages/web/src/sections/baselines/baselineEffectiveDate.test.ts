@@ -13,7 +13,9 @@ describe('baseline effective date', () => {
   });
 
   it('uses the end of the local day for any other day', () => {
-    expect(toEffectiveAt('2026-10-20', now)).toBe(new Date(2026, 9, 20, 23, 59, 59, 999).toISOString());
+    expect(toEffectiveAt('2026-10-20', now)).toBe(
+      new Date(2026, 9, 20, 23, 59, 59, 999).toISOString()
+    );
   });
 
   it('returns null for an empty or invalid date', () => {

@@ -150,73 +150,73 @@ export const ProjectMarkdownTemplatesDialog = ({ open, project, workspaceId, onC
         <div className={styles.editorPane}>
           {showEditor ? (
             <>
-          <div className={styles.editorFields}>
-        <FormElement label="Template name" required>
-          <TextInput
-            value={templateName}
-            onChange={value => setTemplateName(value ?? '')}
-            placeholder="e.g. Architecture decision record"
-          />
-        </FormElement>
-        <FormElement label="Document type" required>
-          <Select.Root
-            value={templateTypeId || undefined}
-            onChange={value => setTemplateTypeId(value ?? '')}
-            placeholder="Select a document type"
-          >
-            {documentTypes
-              .filter(type => !type.archived || type.id === templateTypeId)
-              .map(type => (
-                <Select.Item key={type.id} value={type.id}>
-                  {type.name}
-                  {type.archived ? ' (archived)' : ''}
-                </Select.Item>
-              ))}
-          </Select.Root>
-        </FormElement>
-        <FormElement label="Body" required>
-          <TextArea
-            rows={5}
-            value={templateBody}
-            onChange={value => setTemplateBody(value ?? '')}
-          />
-        </FormElement>
-        <FormElement label="Metadata defaults (JSON)" required={false}>
-          <TextArea
-            rows={4}
-            value={templateDefaults}
-            onChange={value => setTemplateDefaults(value ?? '')}
-            placeholder="{}"
-          />
-        </FormElement>
-        {templateError && <div className={styles.error}>{templateError}</div>}
-          </div>
-          <div className={styles.editorActions}>
-            {editingTemplate && (
-              <Button
-                onClick={() =>
-                  void archiveTemplate.mutateAsync({
-                    id: editingTemplate.id,
-                    archived: !editingTemplate.archived
-                  })
-                }
-              >
-                {editingTemplate.archived ? 'Unarchive' : 'Archive'}
-              </Button>
-            )}
-            <Button
-              variant="primary"
-              onClick={() => void saveTemplate()}
-              disabled={
-                !templateName.trim() ||
-                !selectedTemplateType ||
-                createTemplate.isPending ||
-                updateTemplate.isPending
-              }
-            >
-              {editingTemplateId ? 'Save template' : 'Add template'}
-            </Button>
-          </div>
+              <div className={styles.editorFields}>
+                <FormElement label="Template name" required>
+                  <TextInput
+                    value={templateName}
+                    onChange={value => setTemplateName(value ?? '')}
+                    placeholder="e.g. Architecture decision record"
+                  />
+                </FormElement>
+                <FormElement label="Document type" required>
+                  <Select.Root
+                    value={templateTypeId || undefined}
+                    onChange={value => setTemplateTypeId(value ?? '')}
+                    placeholder="Select a document type"
+                  >
+                    {documentTypes
+                      .filter(type => !type.archived || type.id === templateTypeId)
+                      .map(type => (
+                        <Select.Item key={type.id} value={type.id}>
+                          {type.name}
+                          {type.archived ? ' (archived)' : ''}
+                        </Select.Item>
+                      ))}
+                  </Select.Root>
+                </FormElement>
+                <FormElement label="Body" required>
+                  <TextArea
+                    rows={5}
+                    value={templateBody}
+                    onChange={value => setTemplateBody(value ?? '')}
+                  />
+                </FormElement>
+                <FormElement label="Metadata defaults (JSON)" required={false}>
+                  <TextArea
+                    rows={4}
+                    value={templateDefaults}
+                    onChange={value => setTemplateDefaults(value ?? '')}
+                    placeholder="{}"
+                  />
+                </FormElement>
+                {templateError && <div className={styles.error}>{templateError}</div>}
+              </div>
+              <div className={styles.editorActions}>
+                {editingTemplate && (
+                  <Button
+                    onClick={() =>
+                      void archiveTemplate.mutateAsync({
+                        id: editingTemplate.id,
+                        archived: !editingTemplate.archived
+                      })
+                    }
+                  >
+                    {editingTemplate.archived ? 'Unarchive' : 'Archive'}
+                  </Button>
+                )}
+                <Button
+                  variant="primary"
+                  onClick={() => void saveTemplate()}
+                  disabled={
+                    !templateName.trim() ||
+                    !selectedTemplateType ||
+                    createTemplate.isPending ||
+                    updateTemplate.isPending
+                  }
+                >
+                  {editingTemplateId ? 'Save template' : 'Add template'}
+                </Button>
+              </div>
             </>
           ) : (
             <div className={styles.editorEmpty}>
