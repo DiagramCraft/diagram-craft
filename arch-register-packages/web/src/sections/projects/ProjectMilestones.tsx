@@ -4,13 +4,12 @@ import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Select } from '@diagram-craft/app-components/Select';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
-import { TbPlus, TbTrash, TbFlag, TbCalendarWeek, TbDots, TbPencil } from 'react-icons/tb';
+import { TbPlus, TbTrash, TbFlag, TbPencil } from 'react-icons/tb';
 import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectCrudContract';
 import type { Milestone, CreateMilestoneRequest } from '@arch-register/api-types/milestoneContract';
 import { getRouteApi } from '@tanstack/react-router';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { ProjectScreenLayout } from './ProjectScreenLayout';
-import sharedStyles from './ProjectDetailScreen.module.css';
 import styles from './ProjectMilestones.module.css';
 import { DropdownMenu } from '../../components/DropdownMenu';
 import {
@@ -20,6 +19,9 @@ import {
   useDeleteMilestone
 } from '../../hooks/useMilestones';
 import { EmptyState } from '../../components/EmptyState';
+import { Table } from '../../components/table/Table';
+import { useTableSort } from '../../components/table/useTableSort';
+import { ToolbarFilterBar, ToolbarFilterSelect } from '../../components/ToolbarFilter';
 
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/projects/$projectId');
 
@@ -112,25 +114,19 @@ export const ProjectMilestones = ({
           ) : undefined
         }
         toolbar={
-          <div className={sharedStyles.entityTabNav}>
-            {(
-              [
-                ['default', `Planned / Active (${counts.default})`],
-                ['complete', `Complete (${counts.complete})`],
-                ['cancelled', `Cancelled (${counts.cancelled})`],
-                ['all', `All (${counts.all})`]
-              ] as [StatusFilter, string][]
-            ).map(([key, label]) => (
-              <button
-                key={key}
-                type="button"
-                className={`${sharedStyles.entityTabBtn} ${statusFilter === key ? sharedStyles.entityTabBtnActive : ''}`}
-                onClick={() => setStatusFilter(key)}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+          <ToolbarFilterBar>
+            <ToolbarFilterSelect
+              label="Status"
+              value={statusFilter}
+              onChange={value => setStatusFilter(value as StatusFilter)}
+              options={[
+                { value: 'default', label: `Planned / Active (${counts.default})` },
+                { value: 'complete', label: `Complete (${counts.complete})` },
+                { value: 'cancelled', label: `Cancelled (${counts.cancelled})` },
+                { value: 'all', label: `All (${counts.all})` }
+              ]}
+            />
+          </ToolbarFilterBar>
         }
       >
         {filtered.length === 0 ? (
@@ -163,17 +159,12 @@ export const ProjectMilestones = ({
             />
           </div>
         ) : (
-          <div className={styles.list}>
-            {filtered.map(milestone => (
-              <MilestoneCard
-                key={milestone.id}
-                milestone={milestone}
-                canEdit={project.canEdit}
-                onEdit={() => setEditing(milestone)}
-                onDelete={() => setDeleteTarget(milestone)}
-              />
-            ))}
-          </div>
+          <MilestoneTable
+            milestones={filtered}
+            canEdit={project.canEdit}
+            onEdit={setEditing}
+            onDelete={setDeleteTarget}
+          />
         )}
       </ProjectScreenLayout>
 
@@ -208,60 +199,91 @@ export const ProjectMilestones = ({
   );
 };
 
-const MilestoneCard = ({
-  milestone,
+type SortKey = 'name' | 'target_date' | 'status';
+
+const STATUS_ORDER: Record<Milestone['status'], number> = {
+  planned: 0,
+  active: 1,
+  complete: 2,
+  cancelled: 3
+};
+
+const COMPARATORS: Record<SortKey, (a: Milestone, b: Milestone) => number> = {
+  name: (a, b) => a.name.localeCompare(b.name),
+  target_date: (a, b) => a.target_date.localeCompare(b.target_date),
+  status: (a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status]
+};
+
+const MilestoneTable = ({
+  milestones,
   canEdit,
   onEdit,
   onDelete
 }: {
-  milestone: Milestone;
+  milestones: Milestone[];
   canEdit: boolean;
-  onEdit: () => void;
-  onDelete: () => void;
+  onEdit: (milestone: Milestone) => void;
+  onDelete: (milestone: Milestone) => void;
 }) => {
-  const isCancelled = milestone.status === 'cancelled';
+  const { sorted, sort, toggleSort } = useTableSort<Milestone, SortKey>(milestones, COMPARATORS, {
+    key: 'target_date',
+    dir: 'asc'
+  });
 
   return (
-    <div className={`${styles.card} ${isCancelled ? styles.cardCancelled : ''}`}>
-      <div className={styles.cardBody}>
-        <div className={styles.cardHead}>
-          <div className={styles.cardName}>{milestone.name}</div>
-          <span className={`${styles.status} ${STATUS_BADGE_CLASS[milestone.status]}`}>
-            {STATUS_LABEL[milestone.status]}
-          </span>
-        </div>
-        <div className={styles.cardMeta}>
-          <span className={styles.metaItem}>
-            <TbCalendarWeek size={11} />
-            {milestone.target_date}
-          </span>
-        </div>
-      </div>
-      {canEdit && (
-        <div className={styles.cardActions}>
-          <DropdownMenu
-            trigger={
-              <Button
-                size="sm"
-                variant="icon-only"
-                aria-label="Milestone actions"
-                title="Milestone actions"
-                icon={<TbDots size={14} />}
-              />
-            }
-            items={[
-              { label: 'Edit', icon: <TbPencil size={14} />, onClick: onEdit },
-              {
-                label: 'Remove',
-                icon: <TbTrash size={14} />,
-                danger: true,
-                onClick: onDelete
-              }
-            ]}
-          />
-        </div>
-      )}
-    </div>
+    <Table.Root>
+      <Table.Head>
+        <Table.Row>
+          <Table.SortableHeaderCell sortKey="name" sort={sort} onSort={toggleSort}>
+            Name
+          </Table.SortableHeaderCell>
+          <Table.SortableHeaderCell sortKey="target_date" sort={sort} onSort={toggleSort}>
+            Target date
+          </Table.SortableHeaderCell>
+          <Table.SortableHeaderCell sortKey="status" sort={sort} onSort={toggleSort}>
+            Status
+          </Table.SortableHeaderCell>
+          {canEdit && <Table.HeaderCell width={40} />}
+        </Table.Row>
+      </Table.Head>
+      <Table.Body>
+        {sorted.map(milestone => (
+          <Table.Row
+            key={milestone.id}
+            muted={milestone.status === 'cancelled'}
+            onClick={canEdit ? () => onEdit(milestone) : undefined}
+          >
+            <Table.NameCell
+              icon={<TbFlag size={14} />}
+              title={milestone.name}
+              titleMuted={milestone.status === 'cancelled'}
+            />
+            <Table.Cell>{milestone.target_date}</Table.Cell>
+            <Table.Cell>
+              <span className={`${styles.status} ${STATUS_BADGE_CLASS[milestone.status]}`}>
+                {STATUS_LABEL[milestone.status]}
+              </span>
+            </Table.Cell>
+            {canEdit && (
+              <Table.ActionsCell>
+                <DropdownMenu
+                  trigger={<Table.DotsButton aria-label={`Actions for ${milestone.name}`} />}
+                  items={[
+                    { label: 'Edit', icon: <TbPencil size={14} />, onClick: () => onEdit(milestone) },
+                    {
+                      label: 'Remove',
+                      icon: <TbTrash size={14} />,
+                      danger: true,
+                      onClick: () => onDelete(milestone)
+                    }
+                  ]}
+                />
+              </Table.ActionsCell>
+            )}
+          </Table.Row>
+        ))}
+      </Table.Body>
+    </Table.Root>
   );
 };
 
