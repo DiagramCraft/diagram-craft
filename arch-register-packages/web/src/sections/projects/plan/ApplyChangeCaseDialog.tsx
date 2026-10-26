@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type Dispatch, type SetStateAction } from 'react';
+import { relationLabel } from '../../../lib/relationLabel';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { useEntity } from '../../../hooks/useEntities';
 import { useRelation } from '../../../hooks/useRelations';
@@ -37,14 +38,37 @@ type MemberStepProps = {
   onResolved: (memberId: string, resolvedEntityData: Record<string, unknown>) => void;
 };
 
+type ConflictChoices = Record<string, 'proposed' | 'current'>;
+
+// Holds the user's per-field choices for one member and reports the resolved entity/relation data
+// (recomputed whenever `inputs` or the choices change) to the dialog.
+const useMemberResolution = ({
+  memberId,
+  inputs,
+  resolve,
+  onResolved
+}: {
+  memberId: string;
+  inputs: unknown[];
+  resolve: (choices: ConflictChoices) => Record<string, unknown> | null;
+  onResolved: (memberId: string, resolvedEntityData: Record<string, unknown>) => void;
+}) => {
+  const [choices, setChoices] = useState<ConflictChoices>({});
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: resolve/onResolved are fresh callbacks each render; including them would create a render loop
+  useEffect(() => {
+    const resolved = resolve(choices);
+    if (resolved) onResolved(memberId, resolved);
+  }, [...inputs, choices, memberId]);
+
+  return [choices, setChoices] as const;
+};
+
 const formatVal = (v: unknown) => {
   if (v == null || v === '') return '—';
   if (Array.isArray(v)) return v.join(', ');
   return String(v);
 };
-
-const relationLabel = (relation: { _in: { name: string }; _out: { name: string } }) =>
-  `${relation._in.name} → ${relation._out.name}`;
 
 const MemberName = ({ workspaceId, member }: { workspaceId: string; member: ChangeCaseMember }) => {
   const { data: relation } = useRelation(
@@ -67,25 +91,21 @@ type ConflictListProps = {
   memberId: string;
   name: string;
   conflicts: SnapshotConflict[];
-  choices: Record<string, 'proposed' | 'current'>;
-  setChoices: (
-    updater: (
-      prev: Record<string, 'proposed' | 'current'>
-    ) => Record<string, 'proposed' | 'current'>
-  ) => void;
+  choices: ConflictChoices;
+  setChoices: Dispatch<SetStateAction<ConflictChoices>>;
 };
 
 const ConflictList = ({ memberId, name, conflicts, choices, setChoices }: ConflictListProps) => {
   if (conflicts.length === 0) {
     return (
-      <p style={{ margin: 0 }}>
+      <p className={styles.memberMessage}>
         <strong>{name}</strong> — no conflicts. The planned changes will be applied as-is.
       </p>
     );
   }
   return (
     <>
-      <p style={{ margin: '0 0 12px 0' }}>
+      <p className={styles.conflictIntro}>
         <strong>{name}</strong> changed since this case was planned. Choose which value to keep for
         each conflicting field.
       </p>
@@ -123,20 +143,18 @@ const ConflictList = ({ memberId, name, conflicts, choices, setChoices }: Confli
 const EntityMemberStep = ({ workspaceId, member, schemas, stale, onResolved }: MemberStepProps) => {
   const { data: entity } = useEntity(workspaceId, member.entity_id);
   const schema = entity ? (schemas.find(s => s.id === entity._schema.id) ?? null) : null;
-  const [conflictChoices, setConflictChoices] = useState<Record<string, 'proposed' | 'current'>>(
-    {}
-  );
-
   const proposed = member.proposed_state;
   const base = member.base_state;
   const conflicts = stale ? findSnapshotConflicts(entity, schema, proposed, base) : [];
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: onResolved is a fresh callback each render; including it would create a render loop
-  useEffect(() => {
-    if (!entity) return;
-    const resolved = resolveSnapshotEntityData({ entity, schema, proposed, base, conflictChoices });
-    onResolved(member.id, resolved);
-  }, [entity, schema, conflictChoices, member.id]);
+  const [conflictChoices, setConflictChoices] = useMemberResolution({
+    memberId: member.id,
+    inputs: [entity, schema],
+    resolve: choices =>
+      entity
+        ? resolveSnapshotEntityData({ entity, schema, proposed, base, conflictChoices: choices })
+        : null,
+    onResolved
+  });
 
   if (!entity) return <LoadingState text="Loading entity..." size="sm" />;
 
@@ -156,28 +174,26 @@ const RelationMemberStep = ({ workspaceId, member, stale, onResolved }: MemberSt
   const { data: relationSchemas } = useRelationSchemas(workspaceId);
   const schemaId = relation?._schema.id ?? (member.base_state['schema_id'] as string | undefined);
   const schema = relationSchemas?.find(s => s.id === schemaId) ?? null;
-  const [conflictChoices, setConflictChoices] = useState<Record<string, 'proposed' | 'current'>>(
-    {}
-  );
-
   const proposed = member.proposed_state;
   const base = member.base_state;
   const conflicts = stale ? findRelationSnapshotConflicts(relation, schema, proposed, base) : [];
+  const [conflictChoices, setConflictChoices] = useMemberResolution({
+    memberId: member.id,
+    inputs: [relation, relationSchemas, schema],
+    resolve: choices =>
+      relation && relationSchemas
+        ? resolveSnapshotRelationData({
+            relation,
+            schema,
+            proposed,
+            base,
+            conflictChoices: choices
+          })
+        : null,
+    onResolved
+  });
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: onResolved is a fresh callback each render; including it would create a render loop
-  useEffect(() => {
-    if (!relation || !relationSchemas) return;
-    const resolved = resolveSnapshotRelationData({
-      relation,
-      schema,
-      proposed,
-      base,
-      conflictChoices
-    });
-    onResolved(member.id, resolved);
-  }, [relation, relationSchemas, schema, conflictChoices, member.id]);
-
-  if (isError) return <p style={{ margin: 0 }}>This relation could not be loaded.</p>;
+  if (isError) return <p className={styles.memberMessage}>This relation could not be loaded.</p>;
   if (!relation || !relationSchemas) return <LoadingState text="Loading relation..." size="sm" />;
 
   return (
@@ -227,22 +243,7 @@ export const ApplyChangeCaseDialog = ({
   const members = changeCase?.members ?? [];
   const staleByMemberId = new Set(conflicts.filter(c => c.stale).map(c => c.memberId));
 
-  if (!open) return null;
-
-  if (!changeCase || members.length === 0) {
-    return (
-      <Dialog
-        open={open}
-        onClose={onClose}
-        title="Apply planned change"
-        buttons={[{ label: 'Cancel', type: 'cancel', onClick: onClose }]}
-      >
-        <LoadingState text="Loading..." size="sm" />
-      </Dialog>
-    );
-  }
-
-  const currentMember = members[stepIndex]!;
+  const currentMember = members[stepIndex];
   const isLastStep = stepIndex === members.length - 1;
   const allResolved = members.every(m => resolutions[m.id] !== undefined);
 
@@ -258,6 +259,19 @@ export const ApplyChangeCaseDialog = ({
       { onSuccess: onClose }
     );
   };
+
+  if (!changeCase || !currentMember) {
+    return (
+      <Dialog
+        open={open}
+        onClose={onClose}
+        title="Apply planned change"
+        buttons={[{ label: 'Cancel', type: 'cancel', onClick: onClose }]}
+      >
+        <LoadingState text="Loading..." size="sm" />
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog

@@ -13,7 +13,7 @@ import { TypeBadge } from '../../../components/TypeBadge';
 import { GroupDialog } from '../../../components/GroupsEditor';
 import { UserGroupPicker } from '../../../components/UserGroupPicker';
 import { AssessmentScopeFilterBuilder } from './AssessmentScopeFilterBuilder';
-import { PickedTeams } from './PickedTeams';
+import { PickedTeamChips } from '../../../components/PickedTeamChips';
 import { AssessmentFieldRow, FIELD_TYPE_OPTIONS } from './AssessmentFieldRow';
 import type { AssessmentEditorController } from './assessmentEditorState';
 import { FieldConfigList } from '../../../components/FieldConfigList';
@@ -133,9 +133,9 @@ export const AssessmentAssignmentTab = ({ editor }: { editor: AssessmentEditorCo
             ? 'Assigned teams get a governance inbox task to acknowledge this assessment once it opens.'
             : 'Assigned teams and the due date are locked once an assessment is open. Close and reopen it as draft to change them.'}
         </div>
-        <PickedTeams
+        <PickedTeamChips
           ids={draft.assignedTeamIds}
-          labels={teamLabels}
+          getLabel={id => teamLabels.get(id)}
           onRemove={actions.removeTeam}
         />
         {draft.status === 'draft' && (

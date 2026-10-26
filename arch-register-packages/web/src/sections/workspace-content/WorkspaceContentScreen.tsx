@@ -13,9 +13,9 @@ import {
 } from '../../hooks/useContentScope';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { Button } from '@diagram-craft/app-components/Button';
-import { AddDiagramDialog } from '../projects/content/AddDiagramDialog';
+import { AddDiagramDialog } from '../../dialogs/AddDiagramDialog';
 import { AddMarkdownDialog } from '../markdown/AddMarkdownDialog';
-import { ContentFolderDialog } from '../../components/ContentFolderDialog';
+import { AddContentFolderDialog } from '../../components/AddContentFolderDialog';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import {
@@ -305,12 +305,11 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
         isPending={contentOperations.createMarkdown.isPending}
       />
 
-      <ContentFolderDialog
+      <AddContentFolderDialog
+        scope={scope}
         open={addFolderOpen}
         onClose={() => setAddFolderOpen(false)}
         onCreated={() => setAddFolderOpen(false)}
-        onSubmit={path => contentOperations.createFolder.mutateAsync(path)}
-        isPending={contentOperations.createFolder.isPending}
         parentFolder={folder ?? undefined}
         placeholder="e.g. Architecture"
       />

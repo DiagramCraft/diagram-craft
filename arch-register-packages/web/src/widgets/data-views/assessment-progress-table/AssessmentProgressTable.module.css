@@ -5,18 +5,8 @@
   min-width: 120px;
 }
 
-.progressTrack {
+.progressBar {
   flex: 1;
-  height: 4px;
-  border-radius: 2px;
-  background: var(--panel-border);
-  overflow: hidden;
-}
-
-.progressFill {
-  display: block;
-  height: 100%;
-  background: var(--cmp-fg-accent, #3b82f6);
 }
 
 .message {

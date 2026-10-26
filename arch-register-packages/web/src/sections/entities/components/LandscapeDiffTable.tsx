@@ -1,4 +1,5 @@
 import { Fragment, useMemo, useState } from 'react';
+import { relationLabel } from '../../../lib/relationLabel';
 import { TbChevronDown, TbChevronRight } from 'react-icons/tb';
 import type { EntityLandscapeDiff } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
@@ -122,7 +123,7 @@ export const LandscapeDiffTable = ({
         schemaId: relation._schema.id,
         schemaName: relation._schema.name,
         isRelation: true,
-        name: `${relation._in.name} → ${relation._out.name}`,
+        name: relationLabel(relation),
         changes,
         owner: ownerOf(kind, changes)
       };

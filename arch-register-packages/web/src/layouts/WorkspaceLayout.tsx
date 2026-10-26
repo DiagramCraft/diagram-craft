@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
+import { isArchivedProject } from '../lib/projectStatus';
 import { Outlet, getRouteApi, useNavigate, useMatches, useRouter } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { DndProvider } from 'react-dnd';
@@ -501,10 +502,7 @@ export const WorkspaceLayout = () => {
                 void invalidateProjectList(queryClient, workspaceSlug);
                 navigate(
                   projectDetailRoute(workspaceSlug, asProjectPublicId(project.public_id), {
-                    tab:
-                      project.status === 'complete' || project.status === 'cancelled'
-                        ? 'archive'
-                        : 'projects',
+                    tab: isArchivedProject(project) ? 'archive' : 'projects',
                     section: 'home'
                   })
                 );

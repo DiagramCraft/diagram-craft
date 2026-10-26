@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { TbCopy, TbDownload, TbFolder, TbFolderOpen, TbPencil, TbTrash } from 'react-icons/tb';
@@ -51,7 +52,8 @@ export const ContentFileMenuItems = ({
   operations,
   onDownload,
   onRename,
-  onDelete
+  onDelete,
+  extraItems
 }: {
   file: ProjectFile;
   tree: ContentFolderNode[];
@@ -59,6 +61,8 @@ export const ContentFileMenuItems = ({
   onDownload: (file: ProjectFile) => void;
   onRename: () => void;
   onDelete: () => void;
+  /** Scope-specific items (e.g. template toggles), rendered after "Move to…". */
+  extraItems?: ReactNode;
 }) => {
   const current = parentPath(file.path);
   return (
@@ -92,6 +96,7 @@ export const ContentFileMenuItems = ({
         </Menu.Item>
         <MoveNodes file={file} nodes={tree} current={current} operations={operations} />
       </Menu.SubMenu>
+      {extraItems}
       <Menu.Item leftSlot={<TbPencil size={13} />} onClick={onRename}>
         Rename
       </Menu.Item>

@@ -1,11 +1,11 @@
 import { useState, useMemo } from 'react';
+import { groupBy } from '@diagram-craft/utils/array';
 import { TbChevronDown, TbChevronRight, TbPencil, TbTrash, TbX } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectCrudContract';
 import type { ProjectEntity } from '@arch-register/api-types/projectEntityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { Milestone } from '@arch-register/api-types/milestoneContract';
-import type { ChangeCase } from '@arch-register/api-types/changeCaseContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import {
@@ -23,9 +23,10 @@ import { diffSnapshotState } from '../../entities/components/entityTimelineHelpe
 import {
   getSnapshotDateLabel,
   getSnapshotEffectiveDate,
-  flattenChangeCaseMembers,
   type ChangeCaseMemberEntry
 } from '../../entities/components/snapshotDisplay';
+import { SnapshotChangeList } from '../../entities/components/SnapshotChangeList';
+import { usePlanContext } from './usePlanContext';
 import styles from './ProjectPlanTimeline.module.css';
 
 type SchemaInfo = { color: string; icon: string | null };
@@ -37,12 +38,8 @@ const COL_W: TimelineColumnWidths = { month: 72, quarter: 100, year: 136 };
 export const ProjectPlanTimeline = ({
   project,
   projectEntities,
-  changeCases,
-  schemaMap,
+  entityEntries,
   entityTypeColorMap,
-  schemas,
-  lifecycleStates,
-  teams,
   milestonesById,
   canEdit,
   onApplySnapshot,
@@ -51,23 +48,21 @@ export const ProjectPlanTimeline = ({
 }: {
   project: ProjectDetailData;
   projectEntities: ProjectEntity[];
-  changeCases: ChangeCase[];
-  schemaMap: Map<string, SchemaInfo>;
+  // Change case members of entities (not relations), see usePlanChanges
+  entityEntries: ChangeCaseMemberEntry[];
   entityTypeColorMap: Map<string, string>;
-  schemas: EntitySchema[];
-  lifecycleStates: WorkspaceLifecycleState[];
-  teams: WorkspaceTeam[];
   milestonesById: Map<string, Milestone>;
   canEdit: boolean;
   onApplySnapshot: (entry: ChangeCaseMemberEntry) => void;
   onEditSnapshot: (entry: ChangeCaseMemberEntry) => void;
   onDeleteSnapshot: (entry: ChangeCaseMemberEntry) => void;
 }) => {
+  const { schemas, lifecycleStates, teams, schemaMap } = usePlanContext();
   const [zoom, setZoom] = useState<TimelineZoom>('quarter');
   const [groupByRole, setGroupByRole] = useState(false);
   const [selectedSnap, setSelectedSnap] = useState<ChangeCaseMemberEntry | null>(null);
-  const TODAY = useMemo(() => new Date(), []);
-  const projectEntries = useMemo(() => flattenChangeCaseMembers(changeCases), [changeCases]);
+  const today = useMemo(() => new Date(), []);
+  const projectEntries = entityEntries;
   const plannedSnapshots = useMemo(
     () => projectEntries.filter(entry => entry.changeCase.status === 'planned'),
     [projectEntries]
@@ -92,15 +87,10 @@ export const ProjectPlanTimeline = ({
 
   // Entries per entity — every entity change gets its own row and marker; change cases are
   // never collapsed into a single lane here (see the Future Changes tab for case-level grouping).
-  const snapsByEntity = useMemo(() => {
-    const m = new Map<string, ChangeCaseMemberEntry[]>();
-    for (const entry of projectEntries) {
-      const list = m.get(entry.member.entity_id);
-      if (list) list.push(entry);
-      else m.set(entry.member.entity_id, [entry]);
-    }
-    return m;
-  }, [projectEntries]);
+  const snapsByEntity = useMemo(
+    () => groupBy(projectEntries, entry => entry.member.entity_id),
+    [projectEntries]
+  );
 
   // Entities that appear on the timeline (have at least one dated entry)
   const datedEntityIds = useMemo(
@@ -146,7 +136,7 @@ export const ProjectPlanTimeline = ({
     zoom,
     columnWidths: COL_W,
     milestones: milestonesById,
-    today: TODAY
+    today
   });
 
   const handleSelect = (entry: ChangeCaseMemberEntry | null) => {
@@ -500,21 +490,14 @@ const SnapDetail = ({
         {changes.length > 0 && (
           <div className={styles.ptlDetailChanges}>
             <div className={styles.ptlDetailSectionLabel}>Changes</div>
-            {changes.map(change => (
-              <div key={change.label} className={styles.ptlChgRow}>
-                <span className={styles.ptlChgField}>{change.label}</span>
-                <span className={styles.ptlChgFrom}>{change.from}</span>
-                <span className={styles.ptlChgArrow}>→</span>
-                <span className={styles.ptlChgTo}>{change.to}</span>
-              </div>
-            ))}
+            <SnapshotChangeList changes={changes} />
           </div>
         )}
 
         {changes.length === 0 && (
           <div className={styles.ptlDetailChanges}>
             <div className={styles.ptlDetailSectionLabel}>Changes</div>
-            <div className={styles.ptlChgRow}>Restricted changes</div>
+            <SnapshotChangeList changes={[]} emptyText="Restricted changes" />
           </div>
         )}
 
@@ -573,14 +556,7 @@ const SnapDetail = ({
                         </span>
                       </div>
                       {siblingChanges.length > 0 ? (
-                        siblingChanges.map(change => (
-                          <div key={change.label} className={styles.ptlChgRow}>
-                            <span className={styles.ptlChgField}>{change.label}</span>
-                            <span className={styles.ptlChgFrom}>{change.from}</span>
-                            <span className={styles.ptlChgArrow}>→</span>
-                            <span className={styles.ptlChgTo}>{change.to}</span>
-                          </div>
-                        ))
+                        <SnapshotChangeList changes={siblingChanges} />
                       ) : (
                         <span className={styles.ptlDetailSiblingNoChanges}>Restricted changes</span>
                       )}

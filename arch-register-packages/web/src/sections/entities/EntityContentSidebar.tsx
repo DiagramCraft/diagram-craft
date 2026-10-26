@@ -50,7 +50,7 @@ import {
 import type { EntityDetailSearchParams } from '../../routes/searchParams';
 import styles from '../../shell/SidePanel.module.css';
 import { AddMarkdownDialog } from '../markdown/AddMarkdownDialog';
-import { AddDiagramDialog } from '../projects/content/AddDiagramDialog';
+import { AddDiagramDialog } from '../../dialogs/AddDiagramDialog';
 import localStyles from './EntityContentSidebar.module.css';
 import { downloadUrl } from '../../lib/browserDownload';
 import { buildDefaultLayout } from '../../lib/detailLayoutDefaults';

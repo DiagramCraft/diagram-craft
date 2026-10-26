@@ -544,36 +544,6 @@
   padding: 2px 0;
 }
 
-.ptlChgRow {
-  display: flex;
-  align-items: baseline;
-  gap: 5px;
-  flex-wrap: wrap;
-  font-size: 11px;
-  padding: 4px 6px;
-  border-radius: 3px;
-  background: var(--cmp-bg);
-}
-
-.ptlChgField {
-  font-weight: 500;
-  color: var(--base-fg-more-dim);
-}
-
-.ptlChgFrom {
-  font-size: 10.5px;
-  color: var(--cmp-fg-disabled);
-}
-
-.ptlChgArrow {
-  color: var(--cmp-fg-disabled);
-}
-
-.ptlChgTo {
-  font-weight: 500;
-  color: var(--base-fg);
-}
-
 .ptlDetailMeta {
   display: flex;
   gap: 5px;

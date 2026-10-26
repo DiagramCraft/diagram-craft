@@ -7,8 +7,7 @@ import { AssessmentEditorTabs } from './AssessmentEditorTabs';
 import { AssessmentTemplateControls } from './AssessmentTemplateControls';
 import { buildAssessmentFormData, useAssessmentEditorController } from './assessmentEditorState';
 import type { AssessmentFormData } from './assessmentEditorState';
-import styles from './AssessmentEditorDialog.module.css';
-import sharedStyles from './assessment-editor-shared.module.css';
+import styles from './assessment-editor-shared.module.css';
 
 export type { AssessmentFormData } from './assessmentEditorState';
 
@@ -44,7 +43,7 @@ export const AssessmentEditorDialog = ({
       ]}
     >
       <div className={styles.editorTopSection}>
-        <div className={sharedStyles.editorTopRow}>
+        <div className={styles.editorTopRow}>
           <FormElement label="Name" required>
             <TextInput
               value={editor.draft.name}

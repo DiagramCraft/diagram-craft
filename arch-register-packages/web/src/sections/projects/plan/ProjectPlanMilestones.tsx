@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
+import { DateInput } from '@diagram-craft/app-components/DateInput';
 import { Select } from '@diagram-craft/app-components/Select';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
@@ -25,6 +26,9 @@ import { ToolbarFilterBar, ToolbarFilterSelect } from '../../../components/Toolb
 type StatusFilter = 'default' | 'complete' | 'cancelled' | 'all';
 type MilestoneFormData = Omit<CreateMilestoneRequest, 'project_id'>;
 
+// In display (and sort) order
+const MILESTONE_STATUSES: Milestone['status'][] = ['planned', 'active', 'complete', 'cancelled'];
+
 const STATUS_LABEL: Record<Milestone['status'], string> = {
   planned: 'Planned',
   active: 'Active',
@@ -39,14 +43,21 @@ const STATUS_BADGE_CLASS: Record<Milestone['status'], string> = {
   cancelled: styles.statusCancelled ?? ''
 };
 
+const matchesStatusFilter = (milestone: Milestone, filter: StatusFilter) => {
+  if (filter === 'all') return true;
+  if (filter === 'default') return milestone.status === 'planned' || milestone.status === 'active';
+  return milestone.status === filter;
+};
+
 export const ProjectPlanMilestones = ({
   project,
-  creating,
-  onCreatingChange
+  editorTarget,
+  onEditorTargetChange
 }: {
   project: ProjectDetailData;
-  creating: boolean;
-  onCreatingChange: (creating: boolean) => void;
+  // The milestone being edited, 'new' for the create dialog, or null when no dialog is open
+  editorTarget: Milestone | 'new' | null;
+  onEditorTargetChange: (target: Milestone | 'new' | null) => void;
 }) => {
   const { workspaceSlug } = useWorkspaceContext();
 
@@ -56,31 +67,18 @@ export const ProjectPlanMilestones = ({
   const deleteMutation = useDeleteMilestone(workspaceSlug, project.id);
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('default');
-  const [editing, setEditing] = useState<Milestone | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Milestone | null>(null);
 
-  const counts = {
-    default: milestones.filter(m => m.status === 'planned' || m.status === 'active').length,
-    complete: milestones.filter(m => m.status === 'complete').length,
-    cancelled: milestones.filter(m => m.status === 'cancelled').length,
-    all: milestones.length
-  };
+  const count = (filter: StatusFilter) =>
+    milestones.filter(m => matchesStatusFilter(m, filter)).length;
+  const filtered = milestones.filter(m => matchesStatusFilter(m, statusFilter));
 
-  const filtered = milestones.filter(m => {
-    if (statusFilter === 'all') return true;
-    if (statusFilter === 'default') return m.status === 'planned' || m.status === 'active';
-    return m.status === statusFilter;
-  });
-
-  const handleCreate = async (data: MilestoneFormData) => {
-    await createMutation.mutateAsync(data);
-    onCreatingChange(false);
-  };
-
-  const handleUpdate = async (data: MilestoneFormData) => {
-    if (!editing) return;
-    await updateMutation.mutateAsync({ milestoneId: editing.id, data });
-    setEditing(null);
+  const handleSave = async (data: MilestoneFormData) => {
+    if (editorTarget === 'new') await createMutation.mutateAsync(data);
+    else if (editorTarget) {
+      await updateMutation.mutateAsync({ milestoneId: editorTarget.id, data });
+    }
+    onEditorTargetChange(null);
   };
 
   const handleConfirmDelete = async () => {
@@ -98,10 +96,10 @@ export const ProjectPlanMilestones = ({
             value={statusFilter}
             onChange={value => setStatusFilter(value as StatusFilter)}
             options={[
-              { value: 'default', label: `Planned / Active (${counts.default})` },
-              { value: 'complete', label: `Complete (${counts.complete})` },
-              { value: 'cancelled', label: `Cancelled (${counts.cancelled})` },
-              { value: 'all', label: `All (${counts.all})` }
+              { value: 'default', label: `Planned / Active (${count('default')})` },
+              { value: 'complete', label: `Complete (${count('complete')})` },
+              { value: 'cancelled', label: `Cancelled (${count('cancelled')})` },
+              { value: 'all', label: `All (${count('all')})` }
             ]}
           />
         </ToolbarFilterBar>
@@ -127,7 +125,7 @@ export const ProjectPlanMilestones = ({
                 <Button
                   variant="primary"
                   icon={<TbPlus size={12} />}
-                  onClick={() => onCreatingChange(true)}
+                  onClick={() => onEditorTargetChange('new')}
                 >
                   New milestone
                 </Button>
@@ -139,26 +137,17 @@ export const ProjectPlanMilestones = ({
         <MilestoneTable
           milestones={filtered}
           canEdit={project.canEdit}
-          onEdit={setEditing}
+          onEdit={onEditorTargetChange}
           onDelete={setDeleteTarget}
         />
       )}
 
-      {creating && (
+      {editorTarget && (
         <MilestoneEditorDialog
-          milestone={null}
-          isSaving={createMutation.isPending}
-          onSave={handleCreate}
-          onCancel={() => onCreatingChange(false)}
-        />
-      )}
-
-      {editing && (
-        <MilestoneEditorDialog
-          milestone={editing}
-          isSaving={updateMutation.isPending}
-          onSave={handleUpdate}
-          onCancel={() => setEditing(null)}
+          milestone={editorTarget === 'new' ? null : editorTarget}
+          isSaving={createMutation.isPending || updateMutation.isPending}
+          onSave={handleSave}
+          onCancel={() => onEditorTargetChange(null)}
         />
       )}
 
@@ -177,17 +166,10 @@ export const ProjectPlanMilestones = ({
 
 type SortKey = 'name' | 'target_date' | 'status';
 
-const STATUS_ORDER: Record<Milestone['status'], number> = {
-  planned: 0,
-  active: 1,
-  complete: 2,
-  cancelled: 3
-};
-
 const COMPARATORS: Record<SortKey, (a: Milestone, b: Milestone) => number> = {
   name: (a, b) => a.name.localeCompare(b.name),
   target_date: (a, b) => a.target_date.localeCompare(b.target_date),
-  status: (a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status]
+  status: (a, b) => MILESTONE_STATUSES.indexOf(a.status) - MILESTONE_STATUSES.indexOf(b.status)
 };
 
 const MilestoneTable = ({
@@ -267,7 +249,7 @@ const MilestoneTable = ({
   );
 };
 
-export const MilestoneEditorDialog = ({
+const MilestoneEditorDialog = ({
   milestone,
   isSaving,
   onSave,
@@ -318,12 +300,7 @@ export const MilestoneEditorDialog = ({
           />
         </FormElement>
         <FormElement label="Target date" required>
-          <input
-            className={styles.dateInput}
-            type="date"
-            value={targetDate}
-            onChange={e => setTargetDate(e.target.value)}
-          />
+          <DateInput value={targetDate} onChange={v => setTargetDate(v ?? '')} />
         </FormElement>
         {!isNew && (
           <FormElement label="Status" required>
@@ -331,7 +308,7 @@ export const MilestoneEditorDialog = ({
               value={status}
               onChange={v => setStatus((v ?? 'planned') as Milestone['status'])}
             >
-              {(Object.keys(STATUS_LABEL) as Milestone['status'][]).map(s => (
+              {MILESTONE_STATUSES.map(s => (
                 <Select.Item key={s} value={s}>
                   {STATUS_LABEL[s]}
                 </Select.Item>

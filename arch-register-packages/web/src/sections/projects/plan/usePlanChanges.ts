@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { relationLabel } from '../../../lib/relationLabel';
 import type { ChangeCase } from '@arch-register/api-types/changeCaseContract';
 import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectCrudContract';
 import type { ProjectEntity } from '@arch-register/api-types/projectEntityContract';
@@ -17,23 +18,21 @@ import {
  * members, milestone and relation lookups, the Project Diff target date, and the planned count.
  */
 export const usePlanChanges = ({
-  workspaceSlug,
+  workspaceId,
   project,
   projectEntities,
   changeCases
 }: {
-  workspaceSlug: string;
+  workspaceId: string;
   project: ProjectDetailData;
   projectEntities: ProjectEntity[];
   changeCases: ChangeCase[];
 }) => {
+  const entityEntries = useMemo(() => flattenChangeCaseMembers(changeCases), [changeCases]);
   // Entity and relation members are listed together; relations resolve names/schemas separately.
   const changeEntries = useMemo(
-    () => [
-      ...flattenChangeCaseMembers(changeCases),
-      ...flattenRelationChangeCaseMembers(changeCases)
-    ],
-    [changeCases]
+    () => [...entityEntries, ...flattenRelationChangeCaseMembers(changeCases)],
+    [entityEntries, changeCases]
   );
 
   // Distinct planned change cases, not entity rows — a multi-entity case counts once.
@@ -47,7 +46,7 @@ export const usePlanChanges = ({
     [changeEntries]
   );
 
-  const { data: milestones = [] } = useMilestones(workspaceSlug, project.id);
+  const { data: milestones = [] } = useMilestones(workspaceId, project.id);
   const milestonesById = useMemo(() => toMilestonesById(milestones), [milestones]);
 
   // Project Diff target date — the latest effective date across this project's planned changes,
@@ -58,10 +57,10 @@ export const usePlanChanges = ({
   );
 
   const hasRelationMembers = changeEntries.some(entry => entry.member.kind === 'relation');
-  const { data: relations = [] } = useRelations(workspaceSlug, {}, { enabled: hasRelationMembers });
-  const { data: relationSchemas = [] } = useRelationSchemas(workspaceSlug, hasRelationMembers);
+  const { data: relations = [] } = useRelations(workspaceId, {}, { enabled: hasRelationMembers });
+  const { data: relationSchemas = [] } = useRelationSchemas(workspaceId, hasRelationMembers);
   const relationNameById = useMemo(
-    () => new Map(relations.map(r => [r._uid, `${r._in.name} → ${r._out.name}`])),
+    () => new Map(relations.map(r => [r._uid, relationLabel(r)])),
     [relations]
   );
   const relationSchemaById = useMemo(
@@ -82,6 +81,7 @@ export const usePlanChanges = ({
   );
 
   return {
+    entityEntries,
     changeEntries,
     plannedCount,
     milestonesById,

@@ -11,7 +11,12 @@ import {
   useUpdateAssessmentStatus
 } from '../../../hooks/useAssessments';
 import { ProjectScreenLayout } from '../shared/ProjectScreenLayout';
-import { AssessmentTable, type StatusFilter } from './AssessmentTable';
+import { AssessmentTable } from './AssessmentTable';
+import {
+  matchesAssessmentListFilter,
+  type AssessmentListFilter
+} from '../../../lib/assessmentStatus';
+import { LoadingState } from '../../../components/LoadingState';
 import { ToolbarFilterBar, ToolbarFilterSelect } from '../../../components/ToolbarFilter';
 import { AssessmentEditorDialog } from './AssessmentEditorDialog';
 import type { AssessmentFormData } from './assessmentEditorState';
@@ -20,33 +25,23 @@ const routeApi = getRouteApi('/authenticated/$workspaceSlug/projects/$projectId'
 
 export const ProjectAssessments = ({
   project,
-  projectId,
-  onNavigateHome,
-  onNavigateProject
+  projectId
 }: {
   project: ProjectDetailData;
   // The raw project route param (may be the public id) remains distinct from project.id so the
   // query key stays aligned with ProjectContentSidebar.
   projectId: string;
-  onNavigateHome: () => void;
-  onNavigateProject: () => void;
 }) => {
   const navigate = routeApi.useNavigate();
   const { workspaceSlug, schemas } = useWorkspaceContext();
-  const { data: assessments = [] } = useProjectAssessments(workspaceSlug, projectId);
+  const { data: assessments = [], isLoading } = useProjectAssessments(workspaceSlug, projectId);
   const createMutation = useCreateAssessment(workspaceSlug, projectId);
   const statusMutation = useUpdateAssessmentStatus(workspaceSlug, projectId);
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('default');
+  const [statusFilter, setStatusFilter] = useState<AssessmentListFilter>('default');
   const [creating, setCreating] = useState(false);
 
-  const counts: Record<StatusFilter, number> = {
-    default: assessments.filter(
-      assessment => assessment.status === 'open' || assessment.status === 'closed'
-    ).length,
-    draft: assessments.filter(assessment => assessment.status === 'draft').length,
-    archived: assessments.filter(assessment => assessment.status === 'archived').length,
-    all: assessments.length
-  };
+  const count = (filter: AssessmentListFilter) =>
+    assessments.filter(assessment => matchesAssessmentListFilter(assessment, filter)).length;
 
   const handleSave = async (data: AssessmentFormData, status: Assessment['status']) => {
     const created = await createMutation.mutateAsync(data);
@@ -59,14 +54,7 @@ export const ProjectAssessments = ({
   return (
     <>
       <ProjectScreenLayout
-        breadcrumbs={[
-          {
-            label: 'Home',
-            onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
-          },
-          { label: 'Projects', onClick: onNavigateHome },
-          { label: project.name, onClick: onNavigateProject }
-        ]}
+        projectName={project.name}
         title="Assessments"
         actions={
           project.canEdit ? (
@@ -80,32 +68,36 @@ export const ProjectAssessments = ({
             <ToolbarFilterSelect
               label="Status"
               value={statusFilter}
-              onChange={value => setStatusFilter(value as StatusFilter)}
+              onChange={value => setStatusFilter(value as AssessmentListFilter)}
               options={[
-                { value: 'default', label: `Open / Closed (${counts.default})` },
-                { value: 'draft', label: `Draft (${counts.draft})` },
-                { value: 'archived', label: `Archived (${counts.archived})` },
-                { value: 'all', label: `All (${counts.all})` }
+                { value: 'default', label: `Open / Closed (${count('default')})` },
+                { value: 'draft', label: `Draft (${count('draft')})` },
+                { value: 'archived', label: `Archived (${count('archived')})` },
+                { value: 'all', label: `All (${count('all')})` }
               ]}
             />
           </ToolbarFilterBar>
         }
       >
-        <AssessmentTable
-          assessments={assessments}
-          statusFilter={statusFilter}
-          schemas={schemas}
-          canEdit={project.canEdit}
-          onCreate={() => setCreating(true)}
-          onOpen={assessmentId =>
-            navigate({
-              search: previous => ({
-                ...previous,
-                assessmentId
+        {isLoading ? (
+          <LoadingState text="Loading assessments…" />
+        ) : (
+          <AssessmentTable
+            assessments={assessments}
+            statusFilter={statusFilter}
+            schemas={schemas}
+            canEdit={project.canEdit}
+            onCreate={() => setCreating(true)}
+            onOpen={assessmentId =>
+              navigate({
+                search: previous => ({
+                  ...previous,
+                  assessmentId
+                })
               })
-            })
-          }
-        />
+            }
+          />
+        )}
       </ProjectScreenLayout>
 
       {creating && (

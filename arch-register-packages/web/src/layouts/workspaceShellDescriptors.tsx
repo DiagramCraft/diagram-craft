@@ -1,4 +1,5 @@
 import { TbDatabase, TbFiles, TbFolders, TbSearch, TbSettings } from 'react-icons/tb';
+import { isArchivedProject } from '../lib/projectStatus';
 import type {
   AppDefinition,
   AppId,
@@ -69,11 +70,10 @@ export type WorkspaceShellDescriptor =
     };
 
 export const getDefaultProject = (projects: Project[]): Project | undefined =>
-  projects.find(project => project.status !== 'complete' && project.status !== 'cancelled') ??
-  projects[0];
+  projects.find(project => !isArchivedProject(project)) ?? projects[0];
 
 export const getProjectSidebarTab = (project: Project | undefined): 'projects' | 'archive' =>
-  project?.status === 'complete' || project?.status === 'cancelled' ? 'archive' : 'projects';
+  isArchivedProject(project) ? 'archive' : 'projects';
 
 export const getAllParams = (matches: MatchLike[]) =>
   Object.assign({}, ...matches.map(match => match.params)) as Record<string, string>;

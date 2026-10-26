@@ -14,7 +14,7 @@ import {
   AssessmentDerivedExpressionDialog,
   AssessmentInlineEnumDialog
 } from './AssessmentFieldDialogs';
-import styles from './AssessmentFieldRow.module.css';
+import styles from './assessment-editor-shared.module.css';
 
 export const FIELD_TYPE_OPTIONS: [AssessmentField['type'], string][] = [
   ['rating', 'Rating'],

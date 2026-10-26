@@ -15,10 +15,9 @@ import { Banner } from '../components/Banner';
 import { useRelation, useUpdateRelation } from '../hooks/useRelations';
 import { useRelationSchemas } from '../hooks/useRelationSchemas';
 import { useTeams, useLifecycleStates } from '../hooks/useWorkspaceConfig';
-import { RelationFieldInput, isMultiValuedRelationSelectField } from './RelationFieldInput';
+import { isMultiValuedRelationSelectField } from './RelationFieldInput';
+import { RelationFieldsForm } from './RelationFieldsForm';
 import { relationIds } from '../lib/entityEditState';
-import { groupRelationFields } from '../lib/relationFieldGroups';
-import { RelationFieldGroupSection } from '../components/RelationFieldGroupSection';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 
 type Props = {
@@ -260,33 +259,13 @@ export const RelationEditDialog = ({ open, onClose, workspaceId, relationId }: P
           {activeFields.length === 0 ? (
             <div className="dim">This relation type has no other editable fields.</div>
           ) : (
-            groupRelationFields(activeFields, relationSchema?.groups).map(segment => {
-              const inputs = segment.fields.map(field => (
-                <RelationFieldInput
-                  key={field.id}
-                  workspaceId={workspaceId}
-                  field={field}
-                  value={
-                    values[field.id] ??
-                    (field.type === 'entityRelation' || isMultiValuedRelationSelectField(field)
-                      ? []
-                      : '')
-                  }
-                  onChange={value => setValues(v => ({ ...v, [field.id]: value }))}
-                />
-              ));
-              return segment.group ? (
-                <RelationFieldGroupSection
-                  key={segment.group.id}
-                  name={segment.group.name}
-                  description={segment.group.description}
-                >
-                  {inputs}
-                </RelationFieldGroupSection>
-              ) : (
-                inputs
-              );
-            })
+            <RelationFieldsForm
+              workspaceId={workspaceId}
+              fields={activeFields}
+              groups={relationSchema?.groups}
+              values={values}
+              onChange={(fieldId, value) => setValues(v => ({ ...v, [fieldId]: value }))}
+            />
           )}
           {approvalRequired && (
             <FormElement label={canBypass ? 'Note / bypass reason' : 'Note'}>

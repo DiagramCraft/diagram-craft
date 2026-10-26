@@ -1,3 +1,4 @@
+import { useState, type ReactNode } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectCrudContract';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
@@ -35,4 +36,24 @@ export const CreateProjectBaselineDialog = ({
       }
     />
   );
+};
+
+/**
+ * Opens the create-baseline dialog from a menu item: call `open()` and render `element` once.
+ * Renders nothing unless the user can edit the project.
+ */
+export const useCreateProjectBaseline = (
+  project: (Pick<ProjectDetailData, 'id' | 'owner'> & { canEdit: boolean }) | undefined
+): { open: () => void; element: ReactNode } => {
+  const [isOpen, setIsOpen] = useState(false);
+  return {
+    open: () => setIsOpen(true),
+    element: project?.canEdit ? (
+      <CreateProjectBaselineDialog
+        project={project}
+        open={isOpen}
+        onClose={() => setIsOpen(false)}
+      />
+    ) : null
+  };
 };

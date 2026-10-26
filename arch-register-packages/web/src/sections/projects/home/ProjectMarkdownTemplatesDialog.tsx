@@ -6,6 +6,7 @@ import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { Banner } from '../../../components/Banner';
 import { ApiError } from '../../../lib/http';
 import {
   useArchiveDocumentTemplate,
@@ -189,7 +190,7 @@ export const ProjectMarkdownTemplatesDialog = ({ open, project, workspaceId, onC
                     placeholder="{}"
                   />
                 </FormElement>
-                {templateError && <div className={styles.error}>{templateError}</div>}
+                {templateError && <Banner variant="error">{templateError}</Banner>}
               </div>
               <div className={styles.editorActions}>
                 {editingTemplate && (

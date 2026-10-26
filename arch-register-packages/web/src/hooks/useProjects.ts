@@ -14,6 +14,9 @@ import {
 } from '../queries/projects';
 import { orpcClient } from '../lib/orpcClient';
 
+type ProjectCreateBody = Parameters<typeof orpcClient.projects.create>[0]['body'];
+type ProjectUpdateBody = Parameters<typeof orpcClient.projects.update>[0]['body'];
+
 // Hook for fetching project list
 export const useProjects = (workspaceId: string) => {
   return useQuery(projectsQuery(workspaceId));
@@ -33,15 +36,8 @@ export const useCreateProject = (workspaceId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (body: {
-      name: string;
-      description?: string;
-      owner?: string | null;
-      status?: 'draft' | 'active' | 'complete' | 'cancelled';
-      color?: string | null;
-      start_date?: string | null;
-      target_date?: string | null;
-    }) => orpcClient.projects.create({ params: { workspace: workspaceId }, body }),
+    mutationFn: (body: ProjectCreateBody) =>
+      orpcClient.projects.create({ params: { workspace: workspaceId }, body }),
     onSuccess: async newProject => {
       appendProjectToListCache(queryClient, workspaceId, newProject);
       await invalidateProjectUpdateQueries(queryClient, workspaceId);
@@ -54,22 +50,7 @@ export const useUpdateProject = (workspaceId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      projectId,
-      data
-    }: {
-      projectId: string;
-      data: {
-        name: string;
-        description?: string;
-        owner?: string | null;
-        status?: 'draft' | 'active' | 'complete' | 'cancelled';
-        color?: string | null;
-        start_date?: string | null;
-        target_date?: string | null;
-        pinned?: boolean;
-      };
-    }) =>
+    mutationFn: ({ projectId, data }: { projectId: string; data: ProjectUpdateBody }) =>
       orpcClient.projects.update({ params: { workspace: workspaceId, id: projectId }, body: data }),
     onSuccess: async (updatedProject, variables) => {
       updateProjectCaches(queryClient, workspaceId, variables.projectId, updatedProject);

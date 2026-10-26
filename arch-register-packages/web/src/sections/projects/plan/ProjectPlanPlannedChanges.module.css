@@ -116,43 +116,6 @@
   letter-spacing: 0.04em;
 }
 
-.plannedRowChange {
-  display: grid;
-  grid-template-columns: minmax(100px, 0.7fr) minmax(0, 1fr) auto minmax(0, 1fr);
-  gap: 8px;
-  align-items: baseline;
-  font-size: 11px;
-}
-
-.plannedRowChangeField {
-  color: var(--base-fg-dim);
-}
-
-.plannedRowChangeFrom,
-.plannedRowChangeTo {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.plannedRowChangeFrom {
-  color: var(--base-fg-more-dim);
-}
-
-.plannedRowChangeArrow {
-  color: var(--base-fg-more-dim);
-}
-
-.plannedRowChangeTo {
-  color: var(--base-fg);
-}
-
-.plannedRowNoChanges {
-  font-size: 11px;
-  color: var(--base-fg-more-dim);
-}
-
 .plannedRowAlsoIncludes {
   display: flex;
   align-items: center;

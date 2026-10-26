@@ -1,8 +1,8 @@
 import { TbArrowLeft } from 'react-icons/tb';
 import { EmbeddableEditor } from '@diagram-craft/main/EmbeddableEditor';
 import type { DiagramDocument } from '@diagram-craft/model/diagramDocument';
-import { LoadingState } from '../../../components/LoadingState';
-import { initializeDiagramCraft } from '../../../diagramcraft-initial-config';
+import { LoadingState } from '../../components/LoadingState';
+import { initializeDiagramCraft } from '../../diagramcraft-initial-config';
 import styles from './DiagramScreen.module.css';
 
 export const DiagramScreenView = ({

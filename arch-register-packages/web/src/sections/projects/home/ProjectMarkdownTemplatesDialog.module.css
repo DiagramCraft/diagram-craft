@@ -125,11 +125,6 @@
   gap: 8px;
 }
 
-.error {
-  font-size: 12px;
-  color: var(--error-fg);
-}
-
 .editorEmpty {
   flex: 1;
   display: flex;

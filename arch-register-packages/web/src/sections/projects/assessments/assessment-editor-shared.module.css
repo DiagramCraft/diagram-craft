@@ -3,3 +3,29 @@
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 12px;
 }
+
+.editorTopSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 0;
+}
+
+.fieldHint {
+  font-size: 11px;
+  font-family: var(--font-mono, monospace);
+  color: var(--cmp-fg-disabled);
+}
+
+.inlineEnumDialogOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.inlineEnumDialogOption {
+  display: grid;
+  grid-template-columns: minmax(80px, 1fr) minmax(100px, 1.5fr) auto;
+  gap: 6px;
+  align-items: center;
+}

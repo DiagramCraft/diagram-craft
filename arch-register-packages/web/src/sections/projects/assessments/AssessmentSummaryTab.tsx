@@ -4,6 +4,7 @@ import type { AssessmentResponse } from '@arch-register/api-types/assessmentResp
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import styles from './AssessmentSummaryTab.module.css';
 import { EmptyState } from '../../../components/EmptyState';
+import { ProgressBar } from '../../../components/ProgressBar';
 
 type Props = {
   assessment: Assessment;
@@ -11,12 +12,6 @@ type Props = {
   entityCount: number;
   enums: WorkspaceEnum[];
 };
-
-const ProgressBar = ({ pct }: { pct: number }) => (
-  <div className={styles.progressTrack}>
-    <div className={styles.progressFill} style={{ width: `${Math.min(100, Math.max(0, pct))}%` }} />
-  </div>
-);
 
 const teamStatusLabel: Record<Assessment['team_acknowledge_status'][number]['status'], string> = {
   open: 'Pending',
@@ -42,7 +37,7 @@ export const AssessmentSummaryTab = ({ assessment, responses, entityCount, enums
           <div className={styles.statBig}>
             {total} / {entityCount}
           </div>
-          <ProgressBar pct={pctAssessed} />
+          <ProgressBar className={styles.progress} height={5} percent={pctAssessed} />
           <div className={styles.statSub}>
             {pctAssessed}% of in-scope entities have a recorded response
           </div>
@@ -83,7 +78,13 @@ export const AssessmentSummaryTab = ({ assessment, responses, entityCount, enums
                   <div className={styles.statBig}>
                     {avg !== null ? avg.toFixed(1) : '—'} / {max}
                   </div>
-                  {avg !== null && <ProgressBar pct={(avg / max) * 100} />}
+                  {avg !== null && (
+                    <ProgressBar
+                      className={styles.progress}
+                      height={5}
+                      percent={(avg / max) * 100}
+                    />
+                  )}
                   <div className={styles.statSub}>
                     {values.length} of {total} answered
                   </div>
@@ -134,7 +135,7 @@ export const AssessmentSummaryTab = ({ assessment, responses, entityCount, enums
               <div key={field.id} className={styles.card}>
                 <div className={styles.cardTitle}>{field.label}</div>
                 <div className={styles.statBig}>{pct}%</div>
-                <ProgressBar pct={pct} />
+                <ProgressBar className={styles.progress} height={5} percent={pct} />
                 <div className={styles.statSub}>
                   {answered} of {total} filled in
                 </div>

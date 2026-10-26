@@ -2,10 +2,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Select } from '@diagram-craft/app-components/Select';
+import { Banner } from '../../../components/Banner';
 import { useEntities } from '../../../hooks/useEntities';
 import { useAddProjectEntity } from '../../../hooks/useProjects';
 import { useAutoFocus } from '../../../hooks/useAutoFocus';
-import { ApiError } from '../../../lib/http';
+import { getErrorMessage } from '../../../lib/http';
 import styles from './AddEntityToProjectDialog.module.css';
 
 type Props = {
@@ -67,11 +68,11 @@ export const AddEntityToProjectDialog = ({
     try {
       await addEntityMutation.mutateAsync({
         entity_id: selectedId,
-        entity_type: entityType ?? null
+        entity_type: entityType || null
       });
       onClose();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Something went wrong');
+      setError(getErrorMessage(err));
     }
   }, [selectedId, addEntityMutation, onClose, entityType]);
 
@@ -167,7 +168,7 @@ export const AddEntityToProjectDialog = ({
           </Select.Root>
         </div>
 
-        {error && <div style={{ fontSize: 12, color: 'var(--error-fg)' }}>{error}</div>}
+        {error && <Banner variant="error">{error}</Banner>}
       </div>
     </Dialog>
   );

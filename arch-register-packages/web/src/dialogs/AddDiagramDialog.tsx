@@ -3,11 +3,11 @@ import { TbCheck } from 'react-icons/tb';
 import { Dialog, KbdHints } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
-import { ApiError } from '../../../lib/http';
-import { useContentScopeOperations, type ContentScope } from '../../../hooks/useContentScope';
-import { useProjectTemplates, useWorkspaceOnlyTemplates } from '../../../hooks/useTemplates';
+import { getErrorMessage } from '../lib/http';
+import { useContentScopeOperations, type ContentScope } from '../hooks/useContentScope';
+import { useProjectTemplates, useWorkspaceOnlyTemplates } from '../hooks/useTemplates';
 import styles from './AddDiagramDialog.module.css';
-import { useAutoFocus } from '../../../hooks/useAutoFocus';
+import { useAutoFocus } from '../hooks/useAutoFocus';
 import { ProjectFile } from '@arch-register/api-types/projectContentContract';
 
 type AddDiagramDialogProps = {
@@ -164,9 +164,7 @@ export const AddDiagramDialog = (props: AddDiagramDialogProps) => {
   });
 
   const handleSubmit = async () => {
-    const trimmed = name.trim();
-    const fallbackName = selected === 'blank' ? 'Untitled diagram' : selected.name;
-    const finalName = trimmed ?? fallbackName;
+    const finalName = name.trim() || (selected === 'blank' ? 'Untitled diagram' : selected.name);
 
     if (finalName.includes('/')) {
       setError('Name cannot contain /');
@@ -175,38 +173,18 @@ export const AddDiagramDialog = (props: AddDiagramDialogProps) => {
     setError('');
 
     try {
-      let file: ProjectFile;
-      if (props.context === 'project') {
-        if (selected !== 'blank') {
-          file = await contentOperations.createDiagramFromTemplate.mutateAsync({
-            name: finalName,
-            templateFile: selected,
-            folder
-          });
-        } else {
-          file = await contentOperations.createDiagram.mutateAsync({ name: finalName, folder });
-        }
-      } else if (props.context === 'workspace') {
-        file = await contentOperations.createDiagram.mutateAsync({ name: finalName, folder });
-      } else {
-        if (selected !== 'blank') {
-          file = await contentOperations.createDiagramFromTemplate.mutateAsync({
-            name: finalName,
-            templateFile: selected,
-            folder
-          });
-        } else {
-          file = await contentOperations.createDiagram.mutateAsync({ name: finalName, folder });
-        }
-      }
+      const file =
+        selected === 'blank'
+          ? await contentOperations.createDiagram.mutateAsync({ name: finalName, folder })
+          : await contentOperations.createDiagramFromTemplate.mutateAsync({
+              name: finalName,
+              templateFile: selected,
+              folder
+            });
       onCreated(file);
       onClose();
     } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.message);
-      } else {
-        setError('Something went wrong');
-      }
+      setError(getErrorMessage(err));
     }
   };
 

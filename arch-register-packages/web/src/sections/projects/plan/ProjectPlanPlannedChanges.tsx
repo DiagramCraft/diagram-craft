@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { groupBy as groupEntries } from '@diagram-craft/utils/array';
 import { Button } from '@diagram-craft/app-components/Button';
 import {
   TbCalendarEvent,
@@ -31,6 +32,8 @@ import {
   diffRelationSnapshotState,
   diffSnapshotState
 } from '../../entities/components/entityTimelineHelpers';
+import { SnapshotChangeList } from '../../entities/components/SnapshotChangeList';
+import { usePlanContext } from './usePlanContext';
 import styles from './ProjectPlanPlannedChanges.module.css';
 
 type GroupBy = 'entity' | 'date';
@@ -43,10 +46,6 @@ export const ProjectPlanPlannedChanges = ({
   relationSchemaById,
   relationSchemaIdByRelationId,
   projectEntities,
-  schemaMap,
-  schemas,
-  lifecycleStates,
-  teams,
   milestonesById,
   onApplySnapshot,
   onEditSnapshot,
@@ -58,15 +57,12 @@ export const ProjectPlanPlannedChanges = ({
   relationSchemaById: Map<string, RelationSchema>;
   relationSchemaIdByRelationId: Map<string, string>;
   projectEntities: ProjectEntity[];
-  schemaMap: Map<string, { color: string; icon: string | null }>;
-  schemas: EntitySchema[];
-  lifecycleStates: WorkspaceLifecycleState[];
-  teams: WorkspaceTeam[];
   milestonesById: Map<string, Milestone>;
   onApplySnapshot: (entry: ChangeCaseMemberEntry) => void;
   onEditSnapshot: (entry: ChangeCaseMemberEntry) => void;
   onDeleteSnapshot: (entry: ChangeCaseMemberEntry) => void;
 }) => {
+  const { schemas, lifecycleStates, teams, schemaMap } = usePlanContext();
   const [show, setShow] = useState<ShowFilter>('planned');
   const [groupBy, setGroupBy] = useState<GroupBy>('date');
 
@@ -162,21 +158,10 @@ export const ProjectPlanPlannedChanges = ({
 
   // Entities sharing a change case with each other — drives the "also includes" note in the
   // group-by-entity view and the nested case panels in the group-by-date view.
-  const caseMembersMap = new Map<string, ChangeCaseMemberEntry[]>();
-  for (const entry of visibleEntries) {
-    const list = caseMembersMap.get(entry.changeCase.id);
-    if (list) list.push(entry);
-    else caseMembersMap.set(entry.changeCase.id, [entry]);
-  }
+  const caseMembersMap = groupEntries(visibleEntries, entry => entry.changeCase.id);
 
   if (groupBy === 'entity') {
-    // Group by entity_id
-    const groups = new Map<string, ChangeCaseMemberEntry[]>();
-    for (const entry of visibleEntries) {
-      const list = groups.get(entry.member.entity_id);
-      if (list) list.push(entry);
-      else groups.set(entry.member.entity_id, [entry]);
-    }
+    const groups = groupEntries(visibleEntries, entry => entry.member.entity_id);
 
     return (
       <div className={styles.entityTab}>
@@ -202,8 +187,7 @@ export const ProjectPlanPlannedChanges = ({
                     <FutureSnapshotRow
                       key={entry.member.id}
                       entry={entry}
-                      showEntity={false}
-                      showMilestone
+                      variant="entity-group"
                       entitySchema={getEntitySchema(pe)}
                       entitySchemaInfo={getEntitySchemaInfo(pe)}
                       relationSchema={getRelationSchema(entry)}
@@ -229,13 +213,10 @@ export const ProjectPlanPlannedChanges = ({
   // Group by (effective) date — a milestone-backed snapshot has no target_date of its own, so
   // fall back to the milestone's target_date, grouping it alongside any raw-dated snapshots
   // targeting the same day.
-  const groups = new Map<string, ChangeCaseMemberEntry[]>();
-  for (const entry of visibleEntries) {
-    const key = getSnapshotEffectiveDate(entry.changeCase, milestonesById) ?? '__no-date__';
-    const list = groups.get(key);
-    if (list) list.push(entry);
-    else groups.set(key, [entry]);
-  }
+  const groups = groupEntries(
+    visibleEntries,
+    entry => getSnapshotEffectiveDate(entry.changeCase, milestonesById) ?? '__no-date__'
+  );
 
   // Sort: dated groups first (ascending), then no-date
   const sortedKeys = [...groups.keys()].sort((a, b) => {
@@ -270,15 +251,7 @@ export const ProjectPlanPlannedChanges = ({
 
           // Sub-group this date's entries by change case, so a case renders as one nested panel
           // (with its name/description) rather than as separate flat rows.
-          const caseGroups = new Map<string, ChangeCaseMemberEntry[]>();
-          const orderedCaseKeys: string[] = [];
-          for (const entry of snaps) {
-            const caseKey = entry.changeCase.id;
-            if (!caseGroups.has(caseKey)) orderedCaseKeys.push(caseKey);
-            const list = caseGroups.get(caseKey);
-            if (list) list.push(entry);
-            else caseGroups.set(caseKey, [entry]);
-          }
+          const caseGroups = groupEntries(snaps, entry => entry.changeCase.id);
 
           return (
             <div key={key} className={styles.plannedGroup}>
@@ -301,8 +274,7 @@ export const ProjectPlanPlannedChanges = ({
                   </Chip>
                 ))}
               </div>
-              {orderedCaseKeys.map(caseKey => {
-                const caseEntries = caseGroups.get(caseKey)!;
+              {[...caseGroups.entries()].map(([caseKey, caseEntries]) => {
                 const changeCase = caseEntries[0]!.changeCase;
                 const fallbackTitle =
                   caseEntries.length === 1
@@ -322,34 +294,12 @@ export const ProjectPlanPlannedChanges = ({
                         <div style={{ flex: 1 }} />
                         {changeCase.status === 'applied' && <Chip tone="ghost">Applied</Chip>}
                         {project.canEdit && changeCase.status === 'planned' && (
-                          <DropdownMenu
-                            trigger={
-                              <Button
-                                size="sm"
-                                variant="icon-only"
-                                aria-label="Change case actions"
-                                title="Change case actions"
-                                icon={<TbDots size={14} />}
-                              />
-                            }
-                            items={[
-                              {
-                                label: 'Apply',
-                                icon: <TbCheck size={14} />,
-                                onClick: () => onApplySnapshot(representativeEntry)
-                              },
-                              {
-                                label: 'Edit',
-                                icon: <TbPencil size={14} />,
-                                onClick: () => onEditSnapshot(representativeEntry)
-                              },
-                              {
-                                label: 'Remove',
-                                icon: <TbTrash size={14} />,
-                                danger: true,
-                                onClick: () => onDeleteSnapshot(representativeEntry)
-                              }
-                            ]}
+                          <ChangeCaseActionsMenu
+                            label="Change case actions"
+                            entry={representativeEntry}
+                            onApply={onApplySnapshot}
+                            onEdit={onEditSnapshot}
+                            onDelete={onDeleteSnapshot}
                           />
                         )}
                       </div>
@@ -366,11 +316,7 @@ export const ProjectPlanPlannedChanges = ({
                           <FutureSnapshotRow
                             key={entry.member.id}
                             entry={entry}
-                            showEntity={true}
-                            showOverdue={false}
-                            showMilestone={false}
-                            showActions={false}
-                            showNote={false}
+                            variant="case-panel"
                             entityName={nameOf(entry.member.entity_id)}
                             entitySchema={getEntitySchema(pe)}
                             entitySchemaInfo={getEntitySchemaInfo(pe)}
@@ -399,8 +345,7 @@ export const ProjectPlanPlannedChanges = ({
 
 const FutureSnapshotRow = ({
   entry,
-  showEntity,
-  showMilestone,
+  variant,
   entityName,
   entitySchema,
   entitySchemaInfo,
@@ -409,17 +354,15 @@ const FutureSnapshotRow = ({
   lifecycleStates,
   teams,
   canEdit,
-  showActions = true,
-  showNote = true,
-  showOverdue = true,
   otherEntityNames = [],
   onApply,
   onEdit,
   onDelete
 }: {
   entry: ChangeCaseMemberEntry;
-  showEntity: boolean;
-  showMilestone: boolean;
+  // `entity-group`: row under an entity heading, with its own date, milestone, note and actions.
+  // `case-panel`: row nested in a change case panel, which carries the date/note/actions itself.
+  variant: 'entity-group' | 'case-panel';
   entityName?: string;
   entitySchema: EntitySchema | null;
   entitySchemaInfo?: { color: string; icon: string | null };
@@ -428,15 +371,13 @@ const FutureSnapshotRow = ({
   lifecycleStates: WorkspaceLifecycleState[];
   teams: WorkspaceTeam[];
   canEdit: boolean;
-  showActions?: boolean;
-  showNote?: boolean;
-  showOverdue?: boolean;
   otherEntityNames?: string[];
   onApply: (entry: ChangeCaseMemberEntry) => void;
   onEdit: (entry: ChangeCaseMemberEntry) => void;
   onDelete: (entry: ChangeCaseMemberEntry) => void;
 }) => {
   const { changeCase, member } = entry;
+  const inCasePanel = variant === 'case-panel';
   const milestone = changeCase.milestone_id
     ? milestonesById.get(changeCase.milestone_id)
     : undefined;
@@ -455,7 +396,7 @@ const FutureSnapshotRow = ({
 
   return (
     <div className={styles.plannedRow}>
-      {showEntity && (
+      {inCasePanel && (
         <div className={styles.plannedRowEntity}>
           {entitySchemaInfo && (
             <TypeBadge color={entitySchemaInfo.color} icon={entitySchemaInfo.icon} size={14} />
@@ -474,69 +415,72 @@ const FutureSnapshotRow = ({
         <div className={styles.plannedRowMeta}>
           {dateLabel && <span className={styles.plannedRowDate}>{dateLabel}</span>}
           {changeCase.status === 'applied' && <Chip tone="ghost">Applied</Chip>}
-          {showOverdue && changeCase.status === 'planned' && isChangeOverdue(date) && (
+          {!inCasePanel && changeCase.status === 'planned' && isChangeOverdue(date) && (
             <Chip color="var(--warning-fg)" title="The target date has passed">
               Overdue
             </Chip>
           )}
-          {showMilestone && milestone && (
+          {!inCasePanel && milestone && (
             <Chip tone="accent" icon={<TbFlag size={12} style={{ color: 'var(--accent-fg)' }} />}>
               {milestone.name}
             </Chip>
           )}
-          {showNote && changeCase.commit_message && (
+          {!inCasePanel && changeCase.commit_message && (
             <span className={styles.plannedRowNote}>{changeCase.commit_message}</span>
           )}
         </div>
-        {canEdit && showActions && changeCase.status === 'planned' && (
+        {canEdit && !inCasePanel && changeCase.status === 'planned' && (
           <div className={styles.plannedRowActions}>
-            <DropdownMenu
-              trigger={
-                <Button
-                  size="sm"
-                  variant="icon-only"
-                  aria-label="Planned change actions"
-                  title="Planned change actions"
-                  icon={<TbDots size={14} />}
-                />
-              }
-              items={[
-                {
-                  label: 'Apply',
-                  icon: <TbCheck size={14} />,
-                  onClick: () => onApply(entry)
-                },
-                {
-                  label: 'Edit',
-                  icon: <TbPencil size={14} />,
-                  onClick: () => onEdit(entry)
-                },
-                {
-                  label: 'Remove',
-                  icon: <TbTrash size={14} />,
-                  danger: true,
-                  onClick: () => onDelete(entry)
-                }
-              ]}
+            <ChangeCaseActionsMenu
+              label="Planned change actions"
+              entry={entry}
+              onApply={onApply}
+              onEdit={onEdit}
+              onDelete={onDelete}
             />
           </div>
         )}
       </div>
       <div className={styles.plannedRowChanges}>
         <div className={styles.plannedRowChangesTitle}>Changes</div>
-        {changes.length > 0 ? (
-          changes.map(change => (
-            <div key={change.label} className={styles.plannedRowChange}>
-              <span className={styles.plannedRowChangeField}>{change.label}</span>
-              <span className={styles.plannedRowChangeFrom}>{change.from}</span>
-              <span className={styles.plannedRowChangeArrow}>→</span>
-              <span className={styles.plannedRowChangeTo}>{change.to}</span>
-            </div>
-          ))
-        ) : (
-          <span className={styles.plannedRowNoChanges}>Restricted changes</span>
-        )}
+        <SnapshotChangeList changes={changes} variant="grid" emptyText="Restricted changes" />
       </div>
     </div>
   );
 };
+
+const ChangeCaseActionsMenu = ({
+  label,
+  entry,
+  onApply,
+  onEdit,
+  onDelete
+}: {
+  label: string;
+  entry: ChangeCaseMemberEntry;
+  onApply: (entry: ChangeCaseMemberEntry) => void;
+  onEdit: (entry: ChangeCaseMemberEntry) => void;
+  onDelete: (entry: ChangeCaseMemberEntry) => void;
+}) => (
+  <DropdownMenu
+    trigger={
+      <Button
+        size="sm"
+        variant="icon-only"
+        aria-label={label}
+        title={label}
+        icon={<TbDots size={14} />}
+      />
+    }
+    items={[
+      { label: 'Apply', icon: <TbCheck size={14} />, onClick: () => onApply(entry) },
+      { label: 'Edit', icon: <TbPencil size={14} />, onClick: () => onEdit(entry) },
+      {
+        label: 'Remove',
+        icon: <TbTrash size={14} />,
+        danger: true,
+        onClick: () => onDelete(entry)
+      }
+    ]}
+  />
+);

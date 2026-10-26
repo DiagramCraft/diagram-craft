@@ -7,66 +7,68 @@ import { TbBookmark, TbDots, TbFileText, TbPencil, TbStar } from 'react-icons/tb
 import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectCrudContract';
 import { ProjectMetaItem, ProjectScreenLayout } from '../shared/ProjectScreenLayout';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
-import { CreateProjectBaselineDialog } from '../shared/CreateProjectBaselineDialog';
+import { useCreateProjectBaseline } from '../shared/CreateProjectBaselineDialog';
 import { MdxContext } from '../../markdown/MdxContext';
 import { DashboardGrid } from '../../dashboard/DashboardGrid';
 import { useProjectDashboard, useUpdateProjectDashboard } from '../../../hooks/useProjectDashboard';
+import { useUpdateProject } from '../../../hooks/useProjects';
+import { getErrorMessage } from '../../../lib/http';
 import { formatDate } from '../../../utils/dateFormat';
+import { ProjectSettingsForm } from './ProjectSettingsForm';
+import { ProjectMarkdownTemplatesDialog } from './ProjectMarkdownTemplatesDialog';
 import styles from './ProjectHome.module.css';
 
 type Props = {
   project: ProjectDetailData;
   allFilesCount: number;
   folderCount: number;
-  pinError: string;
-  isUpdatingProject: boolean;
-  onNavigateHome: () => void;
-  onNavigateProject: () => void;
-  onTogglePinned: () => void;
-  onEdit: () => void;
-  onEditMarkdownTemplates: () => void;
 };
 
-export const ProjectHome = ({
-  project,
-  allFilesCount,
-  folderCount,
-  pinError,
-  isUpdatingProject,
-  onNavigateHome,
-  onNavigateProject,
-  onTogglePinned,
-  onEdit,
-  onEditMarkdownTemplates
-}: Props) => {
+export const ProjectHome = ({ project, allFilesCount, folderCount }: Props) => {
   const navigate = useNavigate();
-  const { workspaceSlug } = useWorkspaceContext();
+  const { workspaceSlug, teams } = useWorkspaceContext();
+  // Dashboard edit mode
   const [isEditing, setIsEditing] = useState(false);
-  const [isCreatingBaseline, setIsCreatingBaseline] = useState(false);
+  const [isEditingSettings, setIsEditingSettings] = useState(false);
+  const [markdownTemplatesOpen, setMarkdownTemplatesOpen] = useState(false);
+  const [pinError, setPinError] = useState('');
+  const updateProject = useUpdateProject(workspaceSlug);
+  const baseline = useCreateProjectBaseline(project);
 
   const { data: dashboard, isLoading } = useProjectDashboard(workspaceSlug, project.id);
   const updateDashboard = useUpdateProjectDashboard(workspaceSlug, project.id);
 
   const widgets = dashboard?.widgets ?? [];
 
+  const handleTogglePinned = () => {
+    setPinError('');
+    updateProject.mutate(
+      {
+        projectId: project.public_id,
+        data: {
+          name: project.name,
+          description: project.description,
+          owner: project.owner?.id ?? null,
+          pinned: !project.pinned
+        }
+      },
+      {
+        onError: err => setPinError(getErrorMessage(err, 'Could not update project status'))
+      }
+    );
+  };
+
   return (
     <ProjectScreenLayout
-      breadcrumbs={[
-        {
-          label: 'Home',
-          onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
-        },
-        { label: 'Projects', onClick: onNavigateHome },
-        { label: project.name, onClick: onNavigateProject }
-      ]}
+      projectName={project.name}
       title={project.name}
       titleSuffix={
         project.canEdit ? (
           <button
             type="button"
             className={`${styles.pinBtn} ${project.pinned ? styles.pinBtnActive : ''}`}
-            onClick={onTogglePinned}
-            disabled={isUpdatingProject}
+            onClick={handleTogglePinned}
+            disabled={updateProject.isPending}
             title={project.pinned ? 'Unpin project' : 'Pin project'}
             aria-label={project.pinned ? 'Unpin project' : 'Pin project'}
           >
@@ -94,16 +96,19 @@ export const ProjectHome = ({
               }
             />
             <MenuButton.Menu align="end">
-              <Menu.Item leftSlot={<TbFileText size={13} />} onClick={onEditMarkdownTemplates}>
+              <Menu.Item
+                leftSlot={<TbFileText size={13} />}
+                onClick={() => setMarkdownTemplatesOpen(true)}
+              >
                 Edit Markdown Templates
               </Menu.Item>
-              <Menu.Item
-                leftSlot={<TbBookmark size={13} />}
-                onClick={() => setIsCreatingBaseline(true)}
-              >
+              <Menu.Item leftSlot={<TbBookmark size={13} />} onClick={baseline.open}>
                 Create project baseline
               </Menu.Item>
-              <Menu.Item leftSlot={<TbPencil size={13} />} onClick={onEdit}>
+              <Menu.Item
+                leftSlot={<TbPencil size={13} />}
+                onClick={() => setIsEditingSettings(true)}
+              >
                 Edit project
               </Menu.Item>
             </MenuButton.Menu>
@@ -143,11 +148,25 @@ export const ProjectHome = ({
           surface="project"
         />
       </MdxContext.Provider>
-      <CreateProjectBaselineDialog
-        project={project}
-        open={isCreatingBaseline}
-        onClose={() => setIsCreatingBaseline(false)}
-      />
+      {isEditingSettings && project.canEdit && (
+        <ProjectSettingsForm
+          project={project}
+          workspaceId={workspaceSlug}
+          teams={teams}
+          onSaved={() => setIsEditingSettings(false)}
+          onClose={() => setIsEditingSettings(false)}
+          onDelete={() => navigate({ to: '/$workspaceSlug/projects', params: { workspaceSlug } })}
+        />
+      )}
+      {project.canEdit && (
+        <ProjectMarkdownTemplatesDialog
+          open={markdownTemplatesOpen}
+          project={project}
+          workspaceId={workspaceSlug}
+          onClose={() => setMarkdownTemplatesOpen(false)}
+        />
+      )}
+      {baseline.element}
     </ProjectScreenLayout>
   );
 };

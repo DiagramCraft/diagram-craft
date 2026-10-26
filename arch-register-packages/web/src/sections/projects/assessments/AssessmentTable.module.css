@@ -62,17 +62,6 @@
 .completionBar {
   flex: 1;
   max-width: 120px;
-  height: 3px;
-  background: var(--cmp-bg);
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.completionFill {
-  height: 100%;
-  background: var(--green);
-  border-radius: 2px;
-  transition: width 300ms;
 }
 
 .completionPct {

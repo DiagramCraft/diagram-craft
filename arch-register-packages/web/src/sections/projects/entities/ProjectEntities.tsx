@@ -28,7 +28,7 @@ import {
   flattenRelationChangeCaseMembers,
   toMilestonesById
 } from '../../entities/components/snapshotDisplay';
-import { buildTimelineMarkers } from '../shared/changeCaseTimelineMarkers';
+import { buildTimelineMarkers } from './changeCaseTimelineMarkers';
 import { ProjectScreenLayout } from '../shared/ProjectScreenLayout';
 import styles from './ProjectEntities.module.css';
 
@@ -39,8 +39,6 @@ export const ProjectEntities = ({
   projectEntities,
   changeCases,
   entityTypeColorMap,
-  onNavigateHome,
-  onNavigateProject,
   onAddEntity,
   onToggleDone,
   onRemoveEntity,
@@ -51,8 +49,6 @@ export const ProjectEntities = ({
   projectEntities: ProjectEntity[];
   changeCases: ChangeCase[];
   entityTypeColorMap: Map<string, string>;
-  onNavigateHome: () => void;
-  onNavigateProject: () => void;
   onAddEntity: () => void;
   onToggleDone: (entityId: string, isDone: boolean) => void;
   onRemoveEntity: (entityId: string) => void;
@@ -236,14 +232,7 @@ export const ProjectEntities = ({
 
   return (
     <ProjectScreenLayout
-      breadcrumbs={[
-        {
-          label: 'Home',
-          onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
-        },
-        { label: 'Projects', onClick: onNavigateHome },
-        { label: project.name, onClick: onNavigateProject }
-      ]}
+      projectName={project.name}
       title={activeSavedView?.name ?? 'Project Entities'}
       description={activeSavedView?.description || undefined}
       actions={

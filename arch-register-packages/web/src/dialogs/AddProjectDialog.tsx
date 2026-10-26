@@ -1,25 +1,17 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
-import { DateInput } from '@diagram-craft/app-components/DateInput';
-import { FormElement } from '@diagram-craft/app-components/FormElement';
-import { Select } from '@diagram-craft/app-components/Select';
-import { TextArea } from '@diagram-craft/app-components/TextArea';
-import { TextInput } from '@diagram-craft/app-components/TextInput';
-import { ApiError } from '../lib/http';
+import { getErrorMessage } from '../lib/http';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import { useWorkspaceAuthorization } from '../auth/WorkspaceAuthorizationContext';
-import { ColorPicker } from '../components/ColorPicker';
+import {
+  EMPTY_PROJECT_FORM_VALUES,
+  ProjectFormFields,
+  toProjectRequestBody,
+  type ProjectFormValues
+} from '../components/ProjectFormFields';
 import { useCreateProject } from '../hooks/useProjects';
-import styles from './AddEntityDialog.module.css';
 import { Project } from '@arch-register/api-types/projectCrudContract';
 import { useAutoFocus } from '../hooks/useAutoFocus';
-
-const PROJECT_STATUSES = [
-  { value: 'draft', label: 'Draft' },
-  { value: 'active', label: 'Active' },
-  { value: 'complete', label: 'Complete' },
-  { value: 'cancelled', label: 'Cancelled' }
-] as const;
 
 type AddProjectDialogProps = {
   open: boolean;
@@ -38,13 +30,7 @@ export const AddProjectDialog = ({
 }: AddProjectDialogProps) => {
   const { canCreateProject } = useWorkspaceAuthorization(workspaceId);
   const createProjectMutation = useCreateProject(workspaceId);
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [owner, setOwner] = useState('');
-  const [status, setStatus] = useState<'draft' | 'active' | 'complete' | 'cancelled'>('active');
-  const [color, setColor] = useState<string | null>(null);
-  const [startDate, setStartDate] = useState('');
-  const [targetDate, setTargetDate] = useState('');
+  const [values, setValues] = useState<ProjectFormValues>(EMPTY_PROJECT_FORM_VALUES);
   const [error, setError] = useState('');
   const nameRef = useRef<HTMLInputElement>(null);
   useAutoFocus(nameRef, { enabled: open });
@@ -56,42 +42,26 @@ export const AddProjectDialog = ({
 
   useEffect(() => {
     if (open) {
-      setName('');
-      setDescription('');
-      setOwner(canCreateWithoutOwner ? '' : (creatableTeams[0]?.id ?? ''));
-      setStatus('active');
-      setColor(null);
-      setStartDate('');
-      setTargetDate('');
+      setValues({
+        ...EMPTY_PROJECT_FORM_VALUES,
+        owner: canCreateWithoutOwner ? '' : (creatableTeams[0]?.id ?? '')
+      });
       setError('');
     }
   }, [canCreateWithoutOwner, creatableTeams, open]);
 
   const handleSubmit = async () => {
-    const trimmed = name.trim();
-    if (!trimmed) {
+    if (!values.name.trim()) {
       setError('Name is required');
       return;
     }
     setError('');
     try {
-      const project = await createProjectMutation.mutateAsync({
-        name: trimmed,
-        description: description.trim(),
-        owner: owner ?? null,
-        status,
-        color,
-        start_date: startDate || null,
-        target_date: targetDate || null
-      });
+      const project = await createProjectMutation.mutateAsync(toProjectRequestBody(values));
       onCreated(project);
       onClose();
     } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.message);
-      } else {
-        setError('Something went wrong');
-      }
+      setError(getErrorMessage(err));
     }
   };
 
@@ -112,84 +82,15 @@ export const AddProjectDialog = ({
         }
       ]}
     >
-      <form
-        className={styles.form}
-        onSubmit={e => {
-          e.preventDefault();
-          void handleSubmit();
-        }}
-      >
-        <button type="submit" hidden />
-        <FormElement label="Name" required>
-          <TextInput
-            ref={nameRef}
-            value={name}
-            onChange={value => setName(value ?? '')}
-            placeholder="e.g. Checkout Modernization"
-            style={{ width: '100%' }}
-          />
-        </FormElement>
-        <FormElement label="Description" required={false}>
-          <TextArea
-            value={description}
-            onChange={value => setDescription(value ?? '')}
-            placeholder="What is this project about?"
-            rows={3}
-            style={{ width: '100%' }}
-          />
-        </FormElement>
-        <FormElement label="Status" required>
-          <Select.Root
-            value={status}
-            onChange={value =>
-              setStatus(
-                (value as 'draft' | 'active' | 'complete' | 'cancelled' | undefined) ?? 'active'
-              )
-            }
-            style={{ width: '100%' }}
-          >
-            {PROJECT_STATUSES.map(option => (
-              <Select.Item key={option.value} value={option.value}>
-                {option.label}
-              </Select.Item>
-            ))}
-          </Select.Root>
-        </FormElement>
-        <FormElement label="Owner" required={false}>
-          <Select.Root
-            value={owner ?? undefined}
-            onChange={value => setOwner(value ?? '')}
-            placeholder={canCreateWithoutOwner ? 'No owner' : 'Select owner'}
-            style={{ width: '100%' }}
-          >
-            {creatableTeams.map(team => (
-              <Select.Item key={team.id} value={team.id}>
-                {team.name}
-              </Select.Item>
-            ))}
-          </Select.Root>
-        </FormElement>
-        <FormElement label="Color" required={false}>
-          <ColorPicker value={color} onChange={setColor} size="small" />
-        </FormElement>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <FormElement label="Start date" required={false} style={{ flex: 1 }}>
-            <DateInput
-              value={startDate}
-              onChange={value => setStartDate(value ?? '')}
-              style={{ width: '100%' }}
-            />
-          </FormElement>
-          <FormElement label="Target date" required={false} style={{ flex: 1 }}>
-            <DateInput
-              value={targetDate}
-              onChange={value => setTargetDate(value ?? '')}
-              style={{ width: '100%' }}
-            />
-          </FormElement>
-        </div>
-        {error && <div className={styles.error}>{error}</div>}
-      </form>
+      <ProjectFormFields
+        values={values}
+        onChange={setValues}
+        onSubmit={() => void handleSubmit()}
+        error={error}
+        owners={creatableTeams}
+        allowNoOwner={canCreateWithoutOwner}
+        nameRef={nameRef}
+      />
     </Dialog>
   );
 };

@@ -1,20 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useRelation } from '../../../hooks/useRelations';
 import { useRelationSchemas } from '../../../hooks/useRelationSchemas';
-import {
-  RelationFieldInput,
-  isMultiValuedRelationSelectField
-} from '../../../dialogs/RelationFieldInput';
+import { RelationFieldsForm, emptyRelationFieldValue } from '../../../dialogs/RelationFieldsForm';
 import {
   activeFieldsOf,
   fieldValueChanged,
   initialFieldValue,
   toFieldValue
 } from '../../../dialogs/RelationEditDialog';
-import { groupRelationFields } from '../../../lib/relationFieldGroups';
-import { RelationFieldGroupSection } from '../../../components/RelationFieldGroupSection';
 import { LoadingState } from '../../../components/LoadingState';
-import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import styles from './plan-change-dialog-shared.module.css';
 
 type Props = {
@@ -26,9 +20,6 @@ type Props = {
   onProposedStateChange: (memberKey: string, proposedState: Record<string, unknown>) => void;
   onChangedLabelsChange: (memberKey: string, labels: string[]) => void;
 };
-
-const emptyValue = (field: RelationSchema['fields'][number]) =>
-  field.type === 'entityRelation' || isMultiValuedRelationSelectField(field) ? [] : '';
 
 // Edits the planned field values of one relation member of a change case. Relation endpoints and
 // schema are immutable and owner/lifecycle are not part of a relation proposal, so only field data
@@ -65,7 +56,7 @@ export const RelationMemberEditor = ({
     const data: Record<string, unknown> = {};
     const labels: string[] = [];
     for (const field of fields) {
-      const raw = values[field.id] ?? emptyValue(field);
+      const raw = values[field.id] ?? emptyRelationFieldValue(field);
       const next = toFieldValue(field, raw);
       if (fieldValueChanged(field, raw, record)) {
         labels.push(field.name);
@@ -87,29 +78,14 @@ export const RelationMemberEditor = ({
           {fields.length === 0 ? (
             <div className="dim">This relation type has no editable fields.</div>
           ) : (
-            groupRelationFields(fields, schema.groups).map(segment => {
-              const inputs = segment.fields.map(field => (
-                <RelationFieldInput
-                  key={field.id}
-                  workspaceId={workspaceId}
-                  field={field}
-                  value={values[field.id] ?? emptyValue(field)}
-                  disabled={!record.canEdit}
-                  onChange={value => setValues(v => ({ ...(v ?? {}), [field.id]: value }))}
-                />
-              ));
-              return segment.group ? (
-                <RelationFieldGroupSection
-                  key={segment.group.id}
-                  name={segment.group.name}
-                  description={segment.group.description}
-                >
-                  {inputs}
-                </RelationFieldGroupSection>
-              ) : (
-                inputs
-              );
-            })
+            <RelationFieldsForm
+              workspaceId={workspaceId}
+              fields={fields}
+              groups={schema.groups}
+              values={values}
+              disabled={!record.canEdit}
+              onChange={(fieldId, value) => setValues(v => ({ ...(v ?? {}), [fieldId]: value }))}
+            />
           )}
         </div>
       )}

@@ -1,8 +1,5 @@
 import { useMemo, useState } from 'react';
 import type { Project } from '@arch-register/api-types/projectCrudContract';
-import type { EntitySchema } from '@arch-register/api-types/schemaContract';
-import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
-import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import { Select } from '@diagram-craft/app-components/Select';
 import { EmptyState } from '../../../components/EmptyState';
 import { useChangeCasesByProject } from '../../../hooks/useChangeCases';
@@ -18,30 +15,23 @@ import {
   toMilestonesById
 } from '../../entities/components/snapshotDisplay';
 import { formatDate } from '../../../utils/dateFormat';
+import { usePlanContext } from './usePlanContext';
 import styles from './ProjectPlanDiff.module.css';
 
-type SchemaInfo = { color: string; icon: string | null };
 const NO_COMPARISON_PROJECT = '__no-comparison-project__';
 
 export const ProjectPlanDiff = ({
   workspaceId,
   project,
   projects,
-  targetDate,
-  schemaMap,
-  schemas,
-  lifecycleStates,
-  teams
+  targetDate
 }: {
   workspaceId: string;
   project: Project;
   projects: Project[];
   targetDate: string | null;
-  schemaMap: Map<string, SchemaInfo>;
-  schemas: EntitySchema[];
-  lifecycleStates: WorkspaceLifecycleState[];
-  teams: WorkspaceTeam[];
 }) => {
+  const { schemas, lifecycleStates, teams, schemaMap } = usePlanContext();
   const diffStates = useMemo(
     () => (targetDate ? buildProjectLandscapeDiffStates(project.id, targetDate) : null),
     [project.id, targetDate]

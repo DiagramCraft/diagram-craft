@@ -1,4 +1,10 @@
 import { useMemo } from 'react';
+import { ProgressBar } from '../../../components/ProgressBar';
+import {
+  ASSESSMENT_STATUS_LABEL,
+  matchesAssessmentListFilter,
+  type AssessmentListFilter
+} from '../../../lib/assessmentStatus';
 import { TbClipboardList, TbPlus } from 'react-icons/tb';
 import type { Assessment } from '@arch-register/api-types/assessmentContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
@@ -12,16 +18,7 @@ import { Table } from '../../../components/table/Table';
 import { useTableSort } from '../../../components/table/useTableSort';
 import styles from './AssessmentTable.module.css';
 
-export type StatusFilter = 'default' | 'draft' | 'archived' | 'all';
-
-const STATUS_LABEL: Record<Assessment['status'], string> = {
-  draft: 'Draft',
-  open: 'Open',
-  closed: 'Closed',
-  archived: 'Archived'
-};
-
-const emptyStateTitle: Record<StatusFilter, string> = {
+const emptyStateTitle: Record<AssessmentListFilter, string> = {
   default: 'No open or closed assessments',
   draft: 'No draft assessments',
   archived: 'No archived assessments',
@@ -37,18 +34,15 @@ export const AssessmentTable = ({
   onOpen
 }: {
   assessments: Assessment[];
-  statusFilter: StatusFilter;
+  statusFilter: AssessmentListFilter;
   schemas: EntitySchema[];
   canEdit: boolean;
   onCreate: () => void;
   onOpen: (assessmentId: string) => void;
 }) => {
-  const filtered = assessments.filter(assessment => {
-    if (statusFilter === 'all') return true;
-    if (statusFilter === 'default')
-      return assessment.status === 'open' || assessment.status === 'closed';
-    return assessment.status === statusFilter;
-  });
+  const filtered = assessments.filter(assessment =>
+    matchesAssessmentListFilter(assessment, statusFilter)
+  );
 
   const schemaColorMap = useMemo(() => {
     const map = new Map<string, { color: string; icon: string | null }>();
@@ -204,7 +198,9 @@ const AssessmentRow = ({
         titleMuted={assessment.status === 'archived'}
       />
       <Table.Cell>
-        <span className={`${styles.status} ${badgeClass}`}>{STATUS_LABEL[assessment.status]}</span>
+        <span className={`${styles.status} ${badgeClass}`}>
+          {ASSESSMENT_STATUS_LABEL[assessment.status]}
+        </span>
       </Table.Cell>
       <Table.Cell>
         <span className={styles.metaScope}>
@@ -227,9 +223,12 @@ const AssessmentRow = ({
             <span className={styles.completionLabel}>
               {assessment.completed_entity_count} / {inScopeCount}
             </span>
-            <div className={styles.completionBar}>
-              <div className={styles.completionFill} style={{ width: `${pct}%` }} />
-            </div>
+            <ProgressBar
+              className={styles.completionBar}
+              height={3}
+              percent={pct}
+              fillColor="var(--green)"
+            />
             <span className={styles.completionPct}>{pct}%</span>
           </div>
         )}

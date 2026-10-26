@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { relationLabel } from '../lib/relationLabel';
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
 import { Autocomplete } from '@diagram-craft/app-components/Autocomplete';
 import { useWorkspaceContext } from '../layouts/WorkspaceContext';
@@ -41,9 +42,7 @@ export const RelationPicker = ({
     <>
       {selectedRelationId && selectedRelation && !query && (
         <div className={styles.selectedChip}>
-          <span className={styles.pickerName}>
-            {selectedRelation._in.name} → {selectedRelation._out.name}
-          </span>
+          <span className={styles.pickerName}>{relationLabel(selectedRelation)}</span>
           <span className={styles.pickerSchema}>{selectedRelation._schema.name}</span>
           <button type="button" className={styles.chipClear} onClick={onClearRelation}>
             ×
@@ -59,7 +58,7 @@ export const RelationPicker = ({
           setQuery('');
         }}
         getItemKey={relation => relation._uid}
-        getItemLabel={relation => `${relation._in.name} → ${relation._out.name}`}
+        getItemLabel={relation => relationLabel(relation)}
         placeholder={selectedRelationId ? 'Search to change relation…' : 'Search for a relation…'}
         ariaLabel={selectedRelationId ? 'Search to change relation' : 'Search for a relation'}
         emptyMessage={relations.length === 0 ? 'No relations found' : 'No matching relations found'}
@@ -69,9 +68,7 @@ export const RelationPicker = ({
         inputClassName={styles.pickerInput}
         renderItem={relation => (
           <>
-            <span className={styles.pickerName}>
-              {relation._in.name} → {relation._out.name}
-            </span>
+            <span className={styles.pickerName}>{relationLabel(relation)}</span>
             <span className={styles.pickerSchema}>{relation._schema.name}</span>
           </>
         )}

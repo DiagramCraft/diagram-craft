@@ -1,14 +1,13 @@
 import { useCallback, useState } from 'react';
 import { getRouteApi } from '@tanstack/react-router';
 import { Button } from '@diagram-craft/app-components/Button';
+import { Tabs } from '@diagram-craft/app-components/Tabs';
+import type { Milestone } from '@arch-register/api-types/milestoneContract';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { TbCalendarEvent, TbDots, TbFlag } from 'react-icons/tb';
 import type { ChangeCase } from '@arch-register/api-types/changeCaseContract';
 import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectCrudContract';
 import type { ProjectEntity } from '@arch-register/api-types/projectEntityContract';
-import type { EntitySchema } from '@arch-register/api-types/schemaContract';
-import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
-import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import { DropdownMenu, type MenuItem } from '../../../components/DropdownMenu';
 import { useWithdrawChangeCase } from '../../../hooks/useChangeCases';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
@@ -29,13 +28,7 @@ export const ProjectPlan = ({
   project,
   projectEntities,
   changeCases,
-  schemaMap,
   entityTypeColorMap,
-  schemas,
-  lifecycleStates,
-  teams,
-  onNavigateHome,
-  onNavigateProject,
   onPlanChange,
   onApplySnapshot,
   onEditSnapshot
@@ -43,13 +36,7 @@ export const ProjectPlan = ({
   project: ProjectDetailData;
   projectEntities: ProjectEntity[];
   changeCases: ChangeCase[];
-  schemaMap: Map<string, { color: string; icon: string | null }>;
   entityTypeColorMap: Map<string, string>;
-  schemas: EntitySchema[];
-  lifecycleStates: WorkspaceLifecycleState[];
-  teams: WorkspaceTeam[];
-  onNavigateHome: () => void;
-  onNavigateProject: () => void;
   onPlanChange: () => void;
   onApplySnapshot: (entry: ChangeCaseMemberEntry) => void;
   onEditSnapshot: (entry: ChangeCaseMemberEntry) => void;
@@ -58,10 +45,13 @@ export const ProjectPlan = ({
   const search = routeApi.useSearch();
   const { workspaceSlug, projects } = useWorkspaceContext();
   const withdrawChangeCaseMutation = useWithdrawChangeCase(workspaceSlug, project.id);
-  const [isCreatingMilestone, setIsCreatingMilestone] = useState(false);
+  const [milestoneEditorTarget, setMilestoneEditorTarget] = useState<Milestone | 'new' | null>(
+    null
+  );
   const [deleteTarget, setDeleteTarget] = useState<ChangeCaseMemberEntry | null>(null);
 
   const {
+    entityEntries,
     changeEntries,
     plannedCount,
     milestonesById,
@@ -70,7 +60,7 @@ export const ProjectPlan = ({
     relationSchemaById,
     relationSchemaIdByRelationId,
     entityNameById
-  } = usePlanChanges({ workspaceSlug, project, projectEntities, changeCases });
+  } = usePlanChanges({ workspaceId: workspaceSlug, project, projectEntities, changeCases });
 
   // Project Diff needs a target date; fall back to the default tab when there is none.
   const requestedTab: PlanTab = search.planTab ?? 'timeline';
@@ -102,32 +92,15 @@ export const ProjectPlan = ({
           icon: <TbFlag size={14} />,
           onClick: () => {
             setActiveTab('milestones');
-            setIsCreatingMilestone(true);
+            setMilestoneEditorTarget('new');
           }
         }
       ]
     : [];
 
-  const tabButton = (tab: PlanTab, label: string) => (
-    <button
-      type="button"
-      className={`${styles.tabBtn} ${activeTab === tab ? styles.tabBtnActive : ''}`}
-      onClick={() => setActiveTab(tab)}
-    >
-      {label}
-    </button>
-  );
-
   return (
     <ProjectScreenLayout
-      breadcrumbs={[
-        {
-          label: 'Home',
-          onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
-        },
-        { label: 'Projects', onClick: onNavigateHome },
-        { label: project.name, onClick: onNavigateProject }
-      ]}
+      projectName={project.name}
       title="Plan"
       actions={
         project.canEdit ? (
@@ -146,15 +119,18 @@ export const ProjectPlan = ({
       }
       toolbar={
         <div className={styles.tabBar}>
-          <div className={styles.tabNav}>
-            {tabButton('timeline', 'Timeline')}
-            {tabButton(
-              'planned-changes',
-              `Planned changes${plannedCount > 0 ? ` (${plannedCount})` : ''}`
-            )}
-            {diffTargetDate != null && tabButton('project-diff', 'Project Diff')}
-            {tabButton('milestones', 'Milestones')}
-          </div>
+          <Tabs.Root value={activeTab} onValueChange={value => setActiveTab(value as PlanTab)}>
+            <Tabs.List>
+              <Tabs.Trigger value="timeline">Timeline</Tabs.Trigger>
+              <Tabs.Trigger value="planned-changes">
+                {`Planned changes${plannedCount > 0 ? ` (${plannedCount})` : ''}`}
+              </Tabs.Trigger>
+              {diffTargetDate != null && (
+                <Tabs.Trigger value="project-diff">Project Diff</Tabs.Trigger>
+              )}
+              <Tabs.Trigger value="milestones">Milestones</Tabs.Trigger>
+            </Tabs.List>
+          </Tabs.Root>
         </div>
       }
     >
@@ -163,12 +139,8 @@ export const ProjectPlan = ({
           <ProjectPlanTimeline
             project={project}
             projectEntities={projectEntities}
-            changeCases={changeCases}
-            schemaMap={schemaMap}
+            entityEntries={entityEntries}
             entityTypeColorMap={entityTypeColorMap}
-            schemas={schemas}
-            lifecycleStates={lifecycleStates}
-            teams={teams}
             milestonesById={milestonesById}
             canEdit={project.canEdit}
             onApplySnapshot={onApplySnapshot}
@@ -184,10 +156,6 @@ export const ProjectPlan = ({
           relationSchemaById={relationSchemaById}
           relationSchemaIdByRelationId={relationSchemaIdByRelationId}
           projectEntities={projectEntities}
-          schemaMap={schemaMap}
-          schemas={schemas}
-          lifecycleStates={lifecycleStates}
-          teams={teams}
           milestonesById={milestonesById}
           onApplySnapshot={onApplySnapshot}
           onEditSnapshot={onEditSnapshot}
@@ -196,8 +164,8 @@ export const ProjectPlan = ({
       ) : activeTab === 'milestones' ? (
         <ProjectPlanMilestones
           project={project}
-          creating={isCreatingMilestone}
-          onCreatingChange={setIsCreatingMilestone}
+          editorTarget={milestoneEditorTarget}
+          onEditorTargetChange={setMilestoneEditorTarget}
         />
       ) : (
         <div className={styles.tab}>
@@ -206,10 +174,6 @@ export const ProjectPlan = ({
             project={project}
             projects={projects}
             targetDate={diffTargetDate}
-            schemaMap={schemaMap}
-            schemas={schemas}
-            lifecycleStates={lifecycleStates}
-            teams={teams}
           />
         </div>
       )}

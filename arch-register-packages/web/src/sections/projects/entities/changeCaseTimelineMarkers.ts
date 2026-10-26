@@ -13,16 +13,15 @@ export const buildTimelineMarkers = (
   entries: ChangeCaseMemberEntry[],
   milestonesById: Map<string, Milestone>
 ): AsOfMarker[] => {
-  const counts = new Map<string, number>();
+  const markers = new Map<string, AsOfMarker>();
   for (const entry of entries) {
-    const effectiveDate = getSnapshotEffectiveDate(entry.changeCase, milestonesById);
-    if (!effectiveDate) continue;
-    const status = entry.changeCase.status === 'applied' ? 'applied' : 'future_update';
-    const key = `${effectiveDate}|${status}`;
-    counts.set(key, (counts.get(key) ?? 0) + 1);
+    const date = getSnapshotEffectiveDate(entry.changeCase, milestonesById);
+    if (!date) continue;
+    const type = entry.changeCase.status === 'applied' ? 'applied' : 'future_update';
+    const key = `${date}|${type}`;
+    const marker = markers.get(key);
+    if (marker) marker.count += 1;
+    else markers.set(key, { date, type, count: 1 });
   }
-  return [...counts.entries()].map(([key, count]) => {
-    const [date, type] = key.split('|') as [string, 'future_update' | 'applied'];
-    return { date, type, count };
-  });
+  return [...markers.values()];
 };

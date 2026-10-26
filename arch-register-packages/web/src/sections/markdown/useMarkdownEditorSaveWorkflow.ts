@@ -11,7 +11,7 @@ import type { useMarkdownEditorDocumentState } from './useMarkdownEditorDocument
 import type { useMarkdownEditorTransitions } from './useMarkdownEditorTransitions';
 import type { useMarkdownCloseFlow } from './useMarkdownCloseFlow';
 import type { MarkdownSaveIntent } from './MarkdownChangeImpactDialog';
-import { ApiError } from '../../lib/http';
+import { getErrorMessage } from '../../lib/http';
 
 type MarkdownEditorDocument = ReturnType<typeof useMarkdownEditorDocumentState>;
 type MarkdownEditorTransitions = ReturnType<typeof useMarkdownEditorTransitions>;
@@ -198,7 +198,7 @@ export const useMarkdownEditorSaveWorkflow = ({
         metadata: document.metadata
       });
     } catch (cause) {
-      setDraftSaveError(cause instanceof ApiError ? cause.message : 'Unable to save document');
+      setDraftSaveError(getErrorMessage(cause, 'Unable to save document'));
       return null;
     }
   }, [context.draftFolder, document, saveNewMutation]);

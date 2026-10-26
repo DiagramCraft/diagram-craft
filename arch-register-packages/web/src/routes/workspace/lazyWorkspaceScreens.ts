@@ -9,7 +9,7 @@ export const LazyProjectDetailScreen = lazyRouteComponent(
   'ProjectDetailScreen'
 );
 export const LazyDiagramScreen = lazyRouteComponent(
-  () => import('../../sections/projects/content/DiagramScreen'),
+  () => import('../../sections/diagram/DiagramScreen'),
   'DiagramScreen'
 );
 export const LazyMarkdownEditorScreen = lazyRouteComponent(

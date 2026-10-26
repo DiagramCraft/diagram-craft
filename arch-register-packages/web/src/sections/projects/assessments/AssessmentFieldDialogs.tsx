@@ -8,7 +8,7 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { DerivedExpressionTestDialog } from '../../../components/DerivedExpressionTestDialog';
-import styles from './AssessmentFieldDialogs.module.css';
+import styles from './assessment-editor-shared.module.css';
 
 type InlineEnumField = Extract<AssessmentField, { type: 'enum'; options: AssessmentEnumOption[] }>;
 type DerivedField = Extract<AssessmentField, { type: 'derived' }>;

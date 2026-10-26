@@ -86,3 +86,11 @@
   letter-spacing: 0.03em;
   color: var(--error-fg);
 }
+
+.memberMessage {
+  margin: 0;
+}
+
+.conflictIntro {
+  margin: 0 0 12px 0;
+}

@@ -1,21 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
-import { Button } from '@diagram-craft/app-components/Button';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
-import { TbTrash } from 'react-icons/tb';
-import { ColorPicker } from '../../../components/ColorPicker';
+import {
+  ProjectFormFields,
+  toProjectRequestBody,
+  type ProjectFormValues
+} from '../../../components/ProjectFormFields';
 import { useUpdateProject, useDeleteProject } from '../../../hooks/useProjects';
-import { ApiError } from '../../../lib/http';
+import { getErrorMessage } from '../../../lib/http';
 import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectCrudContract';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
-import styles from './ProjectSettingsForm.module.css';
-
-const PROJECT_STATUSES = [
-  { value: 'draft', label: 'Draft' },
-  { value: 'active', label: 'Active' },
-  { value: 'complete', label: 'Complete' },
-  { value: 'cancelled', label: 'Cancelled' }
-] as const;
 
 type Props = {
   project: ProjectDetailData;
@@ -26,6 +20,16 @@ type Props = {
   onDelete: () => void;
 };
 
+const toFormValues = (project: ProjectDetailData): ProjectFormValues => ({
+  name: project.name,
+  description: project.description,
+  owner: project.owner?.id ?? '',
+  status: project.status,
+  color: project.color ?? null,
+  startDate: project.start_date ?? '',
+  targetDate: project.target_date ?? ''
+});
+
 export const ProjectSettingsForm = ({
   project,
   workspaceId,
@@ -34,13 +38,7 @@ export const ProjectSettingsForm = ({
   onClose,
   onDelete
 }: Props) => {
-  const [name, setName] = useState(project.name);
-  const [description, setDescription] = useState(project.description);
-  const [owner, setOwner] = useState(project.owner?.id ?? '');
-  const [status, setStatus] = useState(project.status);
-  const [color, setColor] = useState<string | null>(project.color ?? null);
-  const [startDate, setStartDate] = useState(project.start_date ?? '');
-  const [targetDate, setTargetDate] = useState(project.target_date ?? '');
+  const [values, setValues] = useState(() => toFormValues(project));
   const [error, setError] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -48,47 +46,23 @@ export const ProjectSettingsForm = ({
   const deleteProject = useDeleteProject(workspaceId);
 
   useEffect(() => {
-    setName(project.name);
-    setDescription(project.description);
-    setOwner(project.owner?.id ?? '');
-    setStatus(project.status);
-    setColor(project.color ?? null);
-    setStartDate(project.start_date ?? '');
-    setTargetDate(project.target_date ?? '');
+    setValues(toFormValues(project));
     setError('');
   }, [project]);
 
-  const handleSave = async () => {
-    const trimmed = name.trim();
-    if (!trimmed) {
+  const handleSave = () => {
+    if (!values.name.trim()) {
       setError('Name is required');
       return;
     }
     setError('');
     updateProject.mutate(
-      {
-        projectId: project.public_id,
-        data: {
-          name: trimmed,
-          description: description.trim(),
-          owner: owner ?? null,
-          status,
-          color,
-          start_date: startDate ?? null,
-          target_date: targetDate ?? null
-        }
-      },
+      { projectId: project.public_id, data: toProjectRequestBody(values) },
       {
         onSuccess: () => onSaved(),
-        onError: err => {
-          setError(err instanceof ApiError ? err.message : 'Something went wrong');
-        }
+        onError: err => setError(getErrorMessage(err))
       }
     );
-  };
-
-  const handleDelete = () => {
-    setConfirmDelete(true);
   };
 
   const doDelete = () => {
@@ -98,86 +72,38 @@ export const ProjectSettingsForm = ({
         onDelete();
         onSaved();
       },
-      onError: err => {
-        setError(err instanceof ApiError ? err.message : 'Something went wrong');
-      }
+      onError: err => setError(getErrorMessage(err))
     });
   };
 
   return (
-    <Dialog open={true} onClose={onClose} title="Edit project">
-      <div className={styles.formRow}>
-        <label className={styles.formLabel}>Name</label>
-        <input className={styles.formInput} value={name} onChange={e => setName(e.target.value)} />
-      </div>
-      <div className={styles.formRow}>
-        <label className={styles.formLabel}>Description (optional)</label>
-        <textarea
-          className={`${styles.formInput} ${styles.formTextarea}`}
-          value={description}
-          onChange={e => setDescription(e.target.value)}
-        />
-      </div>
-      <div className={styles.formRow}>
-        <label className={styles.formLabel}>Status</label>
-        <select
-          className={styles.formInput}
-          value={status}
-          onChange={e => setStatus(e.target.value as 'draft' | 'active' | 'complete' | 'cancelled')}
-        >
-          {PROJECT_STATUSES.map(option => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className={styles.formRow}>
-        <label className={styles.formLabel}>Owner (optional)</label>
-        <select className={styles.formInput} value={owner} onChange={e => setOwner(e.target.value)}>
-          <option value="">No owner</option>
-          {teams.map(team => (
-            <option key={team.id} value={team.id}>
-              {team.name}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className={styles.formRow}>
-        <label className={styles.formLabel}>Color (optional)</label>
-        <ColorPicker value={color} onChange={setColor} size="small" />
-      </div>
-      <div className={styles.formRowSplit}>
-        <div className={styles.formRow}>
-          <label className={styles.formLabel}>Start date (optional)</label>
-          <input
-            className={styles.formInput}
-            type="date"
-            value={startDate}
-            onChange={e => setStartDate(e.target.value)}
-          />
-        </div>
-        <div className={styles.formRow}>
-          <label className={styles.formLabel}>Target date (optional)</label>
-          <input
-            className={styles.formInput}
-            type="date"
-            value={targetDate}
-            onChange={e => setTargetDate(e.target.value)}
-          />
-        </div>
-      </div>
-      {error && <div style={{ fontSize: 12, color: 'var(--error-fg)' }}>{error}</div>}
-      <div className={styles.formActions}>
-        <Button variant="danger" icon={<TbTrash size={12} />} onClick={handleDelete}>
-          Delete project
-        </Button>
-        <div className={styles.formSpacer} />
-        <Button onClick={onClose}>Cancel</Button>
-        <Button variant="primary" onClick={handleSave} disabled={updateProject.isPending}>
-          {updateProject.isPending ? 'Saving...' : 'Save'}
-        </Button>
-      </div>
+    <Dialog
+      open={true}
+      onClose={onClose}
+      title="Edit project"
+      buttons={[
+        {
+          label: 'Delete project',
+          type: 'danger',
+          onClick: () => setConfirmDelete(true)
+        },
+        { label: 'Cancel', type: 'cancel', onClick: onClose },
+        {
+          label: updateProject.isPending ? 'Saving...' : 'Save',
+          type: 'default',
+          disabled: updateProject.isPending,
+          onClick: handleSave
+        }
+      ]}
+    >
+      <ProjectFormFields
+        values={values}
+        onChange={setValues}
+        onSubmit={handleSave}
+        error={error}
+        owners={teams}
+        allowNoOwner
+      />
 
       <DeleteConfirmationDialog
         open={confirmDelete}

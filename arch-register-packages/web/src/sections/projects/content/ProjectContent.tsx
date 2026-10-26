@@ -1,72 +1,113 @@
-import { useNavigate } from '@tanstack/react-router';
+import { useMemo, useRef, useState } from 'react';
+import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbFileText, TbFolderOpen, TbPlus, TbUpload } from 'react-icons/tb';
 import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectCrudContract';
 import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 import styles from './ProjectContent.module.css';
 import { DiagramBrowserToolbar } from '../../../components/diagram-browser/DiagramBrowserView';
-import { ProjectDiagramsView, type ProjectMenuTarget } from './ProjectDiagramsView';
+import { ProjectDiagramsView } from './ProjectDiagramsView';
+import { ProjectFileTemplateMenuItems } from './ProjectFileTemplateMenuItems';
+import { AddContentFolderDialog } from '../../../components/AddContentFolderDialog';
+import { AddDiagramDialog } from '../../../dialogs/AddDiagramDialog';
+import { AddMarkdownDialog } from '../../markdown/AddMarkdownDialog';
 import { ProjectMetaItem, ProjectScreenLayout } from '../shared/ProjectScreenLayout';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
+import { useContentScopeOperations, type ContentScope } from '../../../hooks/useContentScope';
+import { useContentFileContextMenu } from '../../../components/useContentFileContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
+import { applicationWorkspacePath } from '../../../lib/applicationApi';
+import { downloadUrl } from '../../../lib/browserDownload';
+import {
+  asProjectPublicId,
+  projectContentFolderRoute,
+  projectDiagramRoute,
+  projectMarkdownDraftRoute,
+  projectMarkdownRoute
+} from '../../../routes/publicObjectRoutes';
+import type { ProjectSearchParams } from '../../../routes/searchParams';
 import { formatDate } from '../../../utils/dateFormat';
+
+type ContentDialog = 'folder' | 'diagram' | 'markdown';
 
 export const ProjectContent = ({
   project,
   folderPath,
   visibleFiles,
   allFilesCount,
-  folderCount,
-  filter,
-  viewMode,
-  onNavigateHome,
-  onNavigateProject,
-  onSetFilter,
-  onSetViewMode,
-  onOpenDiagram,
-  onOpenMarkdown,
-  onDownloadFile,
-  onAddFolder,
-  onAddDiagram,
-  onAddMarkdown,
-  onUploadFile,
-  onContextMenu
+  folderCount
 }: {
   project: ProjectDetailData;
   folderPath: string;
   visibleFiles: ProjectFile[];
   allFilesCount: number;
   folderCount: number;
-  filter: string;
-  viewMode: 'grid' | 'list';
-  onNavigateHome: () => void;
-  onNavigateProject: () => void;
-  onSetFilter: (value: string) => void;
-  onSetViewMode: (value: 'grid' | 'list') => void;
-  onOpenDiagram: (diagramId: string) => void;
-  onOpenMarkdown?: (nodeId: string) => void;
-  onDownloadFile?: (file: ProjectFile) => void;
-  onAddFolder: () => void;
-  onAddDiagram: () => void;
-  onAddMarkdown?: () => void;
-  onUploadFile?: () => void;
-  onContextMenu?: (e: React.MouseEvent, target: ProjectMenuTarget) => void;
 }) => {
   const navigate = useNavigate();
   const { workspaceSlug } = useWorkspaceContext();
+  const projectId = useParams({ strict: false }).projectId!;
+  const search = useSearch({ strict: false }) as ProjectSearchParams;
+  const publicProjectId = asProjectPublicId(projectId);
+  const [dialog, setDialog] = useState<ContentDialog | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const filter = search.contentQuery ?? '';
+  const viewMode = search.contentView ?? 'grid';
+
+  const scope: ContentScope = useMemo(
+    () => ({ kind: 'project', workspaceId: workspaceSlug, projectId }),
+    [workspaceSlug, projectId]
+  );
+  const contentOperations = useContentScopeOperations(scope);
+
+  const triggerDownload = (file: ProjectFile) => {
+    downloadUrl(
+      applicationWorkspacePath(
+        workspaceSlug,
+        `/projects/${projectId}/files/download?path=${encodeURIComponent(file.path)}`
+      ),
+      file.original_filename ?? file.name
+    );
+  };
+
+  const fileMenu = useContentFileContextMenu({
+    folders: project.files.folders,
+    operations: contentOperations,
+    onDownload: triggerDownload,
+    extraItems: (file, closeMenu) =>
+      file.type === 'diagram' ? (
+        <ProjectFileTemplateMenuItems
+          workspaceId={workspaceSlug}
+          projectId={projectId}
+          file={file}
+          onDone={closeMenu}
+        />
+      ) : null
+  });
+
+  const contentRoute = () => projectContentFolderRoute(workspaceSlug, publicProjectId, folderPath);
+
+  const setFilter = (value: string) =>
+    navigate({
+      ...contentRoute(),
+      search: { ...search, contentQuery: value === '' ? undefined : value },
+      replace: true
+    });
+
+  const setViewMode = (value: 'grid' | 'list') =>
+    navigate({
+      ...contentRoute(),
+      search: { ...search, contentView: value === 'grid' ? undefined : value }
+    });
+
+  const openMarkdown = (nodeId: string, mode: 'edit' | 'preview' = 'preview') =>
+    navigate(projectMarkdownRoute(workspaceSlug, publicProjectId, nodeId, { mode }));
 
   return (
     <ProjectScreenLayout
-      breadcrumbs={[
-        {
-          label: 'Home',
-          onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
-        },
-        { label: 'Projects', onClick: onNavigateHome },
-        { label: project.name, onClick: onNavigateProject },
-        { label: folderPath }
-      ]}
+      projectName={project.name}
+      trailingBreadcrumbs={[{ label: folderPath }]}
       title={folderPath}
       actions={
         project.canManageFiles ? (
@@ -79,20 +120,21 @@ export const ProjectContent = ({
               }
             />
             <MenuButton.Menu align="end">
-              <Menu.Item leftSlot={<TbFolderOpen size={13} />} onClick={onAddFolder}>
+              <Menu.Item leftSlot={<TbFolderOpen size={13} />} onClick={() => setDialog('folder')}>
                 New folder
               </Menu.Item>
-              <Menu.Item leftSlot={<TbUpload size={13} />} onClick={() => onUploadFile?.()}>
+              <Menu.Item
+                leftSlot={<TbUpload size={13} />}
+                onClick={() => fileInputRef.current?.click()}
+              >
                 Upload file
               </Menu.Item>
-              <Menu.Item leftSlot={<TbPlus size={13} />} onClick={onAddDiagram}>
+              <Menu.Item leftSlot={<TbPlus size={13} />} onClick={() => setDialog('diagram')}>
                 New diagram
               </Menu.Item>
-              {onAddMarkdown && (
-                <Menu.Item leftSlot={<TbFileText size={13} />} onClick={onAddMarkdown}>
-                  New wiki page
-                </Menu.Item>
-              )}
+              <Menu.Item leftSlot={<TbFileText size={13} />} onClick={() => setDialog('markdown')}>
+                New wiki page
+              </Menu.Item>
             </MenuButton.Menu>
           </MenuButton.Root>
         ) : null
@@ -120,9 +162,9 @@ export const ProjectContent = ({
             >{`Content (${visibleFiles.length})`}</div>
           }
           filter={filter}
-          onFilterChange={onSetFilter}
+          onFilterChange={setFilter}
           viewMode={viewMode}
-          onViewModeChange={onSetViewMode}
+          onViewModeChange={setViewMode}
         />
       }
     >
@@ -132,11 +174,67 @@ export const ProjectContent = ({
         folderFilter={folderPath}
         filter={filter}
         viewMode={viewMode}
-        onOpenDiagram={onOpenDiagram}
-        onOpenMarkdown={onOpenMarkdown}
-        onDownloadFile={onDownloadFile}
-        onContextMenu={onContextMenu}
+        onOpenDiagram={diagramId =>
+          navigate(projectDiagramRoute(workspaceSlug, publicProjectId, diagramId))
+        }
+        onOpenMarkdown={nodeId => openMarkdown(nodeId)}
+        onDownloadFile={triggerDownload}
+        onContextMenu={project.canManageFiles ? fileMenu.open : undefined}
       />
+
+      {project.canManageFiles && (
+        <>
+          <AddContentFolderDialog
+            scope={scope}
+            open={dialog === 'folder'}
+            onClose={() => setDialog(null)}
+            onCreated={() => {}}
+            parentFolder={folderPath}
+          />
+          <AddDiagramDialog
+            open={dialog === 'diagram'}
+            onClose={() => setDialog(null)}
+            onCreated={() => {}}
+            workspaceId={workspaceSlug}
+            context="project"
+            projectId={projectId}
+            projectName={project.name}
+            folder={folderPath}
+          />
+          <AddMarkdownDialog
+            open={dialog === 'markdown'}
+            onClose={() => setDialog(null)}
+            workspaceSlug={workspaceSlug}
+            projectId={projectId}
+            onCreated={file => openMarkdown(file.id, 'edit')}
+            onOpenDraft={draft =>
+              navigate(
+                projectMarkdownDraftRoute(workspaceSlug, publicProjectId, {
+                  draftName: draft.name,
+                  draftFolder: folderPath,
+                  draftType: draft.documentTypeId ?? undefined,
+                  draftTemplate: draft.templateId ?? undefined
+                })
+              )
+            }
+            onCreate={name =>
+              contentOperations.createMarkdown.mutateAsync({ name, folder: folderPath })
+            }
+            isPending={contentOperations.createMarkdown.isPending}
+          />
+          <input
+            ref={fileInputRef}
+            type="file"
+            style={{ display: 'none' }}
+            onChange={e => {
+              const file = e.target.files?.[0];
+              if (file) contentOperations.upload.mutate({ file, folder: folderPath });
+              e.target.value = '';
+            }}
+          />
+        </>
+      )}
+      {fileMenu.element}
     </ProjectScreenLayout>
   );
 };
