@@ -67,7 +67,7 @@ export const ProjectPlanPlannedChanges = ({
   onEditSnapshot: (entry: ChangeCaseMemberEntry) => void;
   onDeleteSnapshot: (entry: ChangeCaseMemberEntry) => void;
 }) => {
-  const [show, setShow] = useState<ShowFilter>('all');
+  const [show, setShow] = useState<ShowFilter>('planned');
   const [groupBy, setGroupBy] = useState<GroupBy>('date');
 
   if (changeEntries.length === 0) {

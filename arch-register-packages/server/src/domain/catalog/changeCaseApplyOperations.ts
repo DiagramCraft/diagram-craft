@@ -64,6 +64,20 @@ const toEntityMutationPayload = (
 const toRelationMutationData = (state: Record<string, unknown>): Record<string, unknown> =>
   asRecord(state['data'] ?? state);
 
+/**
+ * Derived fields are recalculated on every save and rejected if written, but a proposed state is a
+ * snapshot of the whole record and so carries their materialized values along. Drop them here.
+ */
+export const withoutDerivedFields = (
+  schemaFields: { id: string; type: string }[],
+  payload: Record<string, unknown>
+): Record<string, unknown> => {
+  const derivedIds = new Set(schemaFields.filter(f => f.type === 'derived').map(f => f.id));
+  return derivedIds.size === 0
+    ? payload
+    : Object.fromEntries(Object.entries(payload).filter(([key]) => !derivedIds.has(key)));
+};
+
 const applyChangeCaseInTransaction = async (
   tx: DatabaseAdapter,
   workspace: string,
@@ -91,11 +105,16 @@ const applyChangeCaseInTransaction = async (
     const resolution = body.resolutions.find(candidate => candidate.memberId === member.id)!;
 
     if (subject.kind === 'entity') {
-      const resolvedEntityData = toEntityMutationPayload(
+      const proposedPayload = toEntityMutationPayload(
         subject.entity,
         resolution.resolvedEntityData,
         projectId
       );
+      const targetSchema = await tx.catalog.getSchema(
+        workspace,
+        String(proposedPayload['_schemaId'] ?? subject.entity.schema_id)
+      );
+      const resolvedEntityData = withoutDerivedFields(targetSchema?.fields ?? [], proposedPayload);
       await updateEntity(tx, workspace, member.entity_id, resolvedEntityData, authCtx, actor, {
         versionKind: 'case_applied',
         appliedCaseRevisionId: revision.id,

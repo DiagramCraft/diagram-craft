@@ -6,6 +6,7 @@ import {
   changeCasesByEntityQuery,
   changeCasesByProjectQuery,
   changeCasesByRelationQuery,
+  changeCaseKeys,
   invalidateChangeCaseQueries
 } from '../queries/changeCases';
 import { orpcClient } from '../lib/orpcClient';
@@ -211,6 +212,11 @@ export const useApplyChangeCase = (workspaceId: string, projectId: string) => {
         body: { resolutions: params.resolutions }
       }),
     onSuccess: (_, variables) => {
+      // The conflict check only makes sense for an unapplied case: drop it rather than refetch it
+      // (the apply dialog is still mounted and would otherwise get a 409 for the applied case).
+      queryClient.removeQueries({
+        queryKey: changeCaseKeys.applyConflicts(workspaceId, variables.caseId)
+      });
       invalidateChangeCaseQueries(queryClient, workspaceId, projectId, variables.caseId);
       invalidateEntityQueries(queryClient, workspaceId);
     }

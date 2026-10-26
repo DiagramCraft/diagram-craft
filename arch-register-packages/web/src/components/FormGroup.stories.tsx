@@ -13,7 +13,7 @@ const meta = {
   argTypes: {
     variant: {
       control: { type: 'inline-radio' },
-      options: ['border', 'section']
+      options: ['border', 'section', 'simple']
     }
   }
 } satisfies Meta<typeof FormGroup>;
