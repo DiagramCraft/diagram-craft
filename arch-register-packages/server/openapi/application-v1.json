@@ -102410,6 +102410,10 @@
                                   "showHorizonBands": {
                                     "type": "boolean",
                                     "description": "Whether Historical, Now, Next, and Later horizon bands are visible"
+                                  },
+                                  "includeUndated": {
+                                    "type": "boolean",
+                                    "description": "Whether entities without a date for the mapped fields are listed (default true)"
                                   }
                                 },
                                 "required": [
@@ -109545,6 +109549,10 @@
                               "showHorizonBands": {
                                 "type": "boolean",
                                 "description": "Whether Historical, Now, Next, and Later horizon bands are visible"
+                              },
+                              "includeUndated": {
+                                "type": "boolean",
+                                "description": "Whether entities without a date for the mapped fields are listed (default true)"
                               }
                             },
                             "required": [
@@ -116489,6 +116497,10 @@
                                 "showHorizonBands": {
                                   "type": "boolean",
                                   "description": "Whether Historical, Now, Next, and Later horizon bands are visible"
+                                },
+                                "includeUndated": {
+                                  "type": "boolean",
+                                  "description": "Whether entities without a date for the mapped fields are listed (default true)"
                                 }
                               },
                               "required": [
@@ -124546,6 +124558,10 @@
                               "showHorizonBands": {
                                 "type": "boolean",
                                 "description": "Whether Historical, Now, Next, and Later horizon bands are visible"
+                              },
+                              "includeUndated": {
+                                "type": "boolean",
+                                "description": "Whether entities without a date for the mapped fields are listed (default true)"
                               }
                             },
                             "required": [
@@ -131485,6 +131501,10 @@
                                 "showHorizonBands": {
                                   "type": "boolean",
                                   "description": "Whether Historical, Now, Next, and Later horizon bands are visible"
+                                },
+                                "includeUndated": {
+                                  "type": "boolean",
+                                  "description": "Whether entities without a date for the mapped fields are listed (default true)"
                                 }
                               },
                               "required": [
