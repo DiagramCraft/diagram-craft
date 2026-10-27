@@ -12,6 +12,7 @@ import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigCont
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useEntityDrawer } from '../entityDrawer/useEntityDrawer';
 import { BulkEditToolbar } from './BulkEditToolbar';
+import { CloneEntityDialog } from './CloneEntityDialog';
 import {
   buildEntityQueryFromBrowserFilters,
   hasFacetConditions,
@@ -410,6 +411,9 @@ export const EntityBrowser = ({
   );
 
   const {
+    cloneTarget,
+    confirmCloneEntity,
+    setCloneTarget,
     confirmDeleteEntity,
     deleteTarget: hookDeleteTarget,
     handleCloneEntity,
@@ -687,6 +691,12 @@ export const EntityBrowser = ({
           onNext={goToNextPage}
         />
       )}
+      <CloneEntityDialog
+        open={!!cloneTarget}
+        entityName={cloneTarget ? (cloneTarget._name ?? cloneTarget._slug) : ''}
+        onConfirm={confirmCloneEntity}
+        onCancel={() => setCloneTarget(null)}
+      />
       <DeleteConfirmationDialog
         open={!!hookDeleteTarget}
         title="Delete entity?"

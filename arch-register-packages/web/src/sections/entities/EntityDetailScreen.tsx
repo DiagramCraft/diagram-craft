@@ -1,3 +1,4 @@
+import { CloneEntityDialog } from './components/CloneEntityDialog';
 import { useMemo, useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import styles from './EntityDetailScreen.module.css';
@@ -162,6 +163,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   const [collectionPickerOpen, setCollectionPickerOpen] = useState(false);
   const [proposeDeprecationOpen, setProposeDeprecationOpen] = useState(false);
   const [mergeWizardOpen, setMergeWizardOpen] = useState(false);
+  const [cloneConfirmOpen, setCloneConfirmOpen] = useState(false);
   const [initiationFieldValues, setInitiationFieldValues] = useState<Record<string, unknown>>({});
 
   const schema = schemaEntry?.schema ?? null;
@@ -332,6 +334,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   });
 
   const handleClone = () => {
+    setCloneConfirmOpen(false);
     cloneEntity.mutate(
       { entityId },
       {
@@ -410,7 +413,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
           onViewJson={() => setViewJsonOpen(true)}
           onOpenCollections={() => setCollectionPickerOpen(true)}
           onProposeDeprecation={() => setProposeDeprecationOpen(true)}
-          onClone={handleClone}
+          onClone={() => setCloneConfirmOpen(true)}
           onMergeInto={() => setMergeWizardOpen(true)}
         />
       )}
@@ -628,6 +631,12 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
         entityInitiationFields={entityInitiationFields}
         initiationFieldValues={initiationFieldValues}
         setInitiationFieldValues={setInitiationFieldValues}
+      />
+      <CloneEntityDialog
+        open={cloneConfirmOpen}
+        entityName={entityName}
+        onConfirm={handleClone}
+        onCancel={() => setCloneConfirmOpen(false)}
       />
     </div>
   );
