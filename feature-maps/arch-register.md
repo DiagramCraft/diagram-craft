@@ -1409,13 +1409,12 @@
           entity to the workspace's designated deprecated lifecycle state.
 
         - @id:ar.collaboration.entity-merge Workspace administrators with merge permission can merge a duplicate
-          entity into a canonical one from a "Merge into…" action on the entity detail page or the entity browser
-          (single or multi-select), via a four-step wizard: pick a same-schema target entity, review every field,
+          entity into a canonical one from a "Merge…" action on the entity detail page or an entity browser row
+          menu, via a four-step wizard: pick a same-schema target entity, review every field,
           relation, and side-table conflict plus repointed dependents and any blockers, type the source entity's name
           to confirm, then view the merged result. Field-group-restricted conflicts are shown read-only with an
           explanation rather than left for the user to resolve, and acknowledgeable blockers require an explicit
-          checkbox before the merge can proceed; merging several selected entities into the same target runs the
-          wizard once per source in sequence. Source and target must share project scope: a cross-project pair is a
+          checkbox before the merge can proceed. Source and target must share project scope: a cross-project pair is a
           hard blocker, an open governance case on the source is a hard blocker, and a merge that would drop a source's
           project confinement or move the canonical record into a project proceeds only on an acknowledged warning.
           Under the hood the wizard drives the preview/execute API: the preview is

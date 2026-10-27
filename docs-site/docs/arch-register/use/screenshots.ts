@@ -150,7 +150,7 @@ export const screenshots: ArchRegisterScreenshotConfig[] = [
       await entitiesPage.goto();
       await entitiesPage.openEntity(authApiEntity.name);
       await entitiesPage.openEntityActions();
-      await entitiesPage.page.getByRole('menuitem', { name: 'Merge into…' }).click();
+      await entitiesPage.page.getByRole('menuitem', { name: 'Merge…' }).click();
       const mergeDialog = entitiesPage.page.getByRole('alertdialog', { name: 'Merge entity' });
       await mergeDialog.getByPlaceholder('Search for an entity…').fill(customerApiEntity.name);
       await entitiesPage.page.getByRole('option', { name: customerApiEntity.name }).click();

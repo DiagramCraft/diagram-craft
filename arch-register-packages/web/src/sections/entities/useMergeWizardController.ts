@@ -68,33 +68,19 @@ export const resolveExecuteOutcome = (
   return { phase: 'done', result: result.result };
 };
 
-// Splits the next queued source entity off the remaining queue, or null once it's empty.
-export const advanceQueueState = (
-  remainingQueue: readonly string[]
-): { next: string; rest: string[] } | null => {
-  const [next, ...rest] = remainingQueue;
-  return next ? { next, rest } : null;
-};
-
 export type UseMergeWizardControllerArgs = {
   workspaceId: string;
   sourceEntityId: string;
-  // Additional source entities queued to merge into the same target after this one succeeds
-  // (populated by the bulk "Merge into…" entry point; empty for a single-entity merge).
-  queuedSourceIds?: string[];
 };
 
 export const useMergeWizardController = ({
   workspaceId,
-  sourceEntityId,
-  queuedSourceIds = []
+  sourceEntityId
 }: UseMergeWizardControllerArgs) => {
   const previewMutation = useEntityMergePreview(workspaceId);
   const executeMutation = useExecuteEntityMerge(workspaceId);
 
   const [phase, setPhase] = useState<MergePhase>('pick-target');
-  const [currentSourceId, setCurrentSourceId] = useState(sourceEntityId);
-  const [remainingQueue, setRemainingQueue] = useState<string[]>(queuedSourceIds);
   const [targetEntityId, setTargetEntityId] = useState('');
   const [preview, setPreview] = useState<MergePreview | null>(null);
   const [resolutions, setResolutions] = useState<MergeResolutionMaps>({
@@ -118,7 +104,7 @@ export const useMergeWizardController = ({
       let outcome: ReturnType<typeof resolvePreviewOutcome>;
       try {
         const result = await previewMutation.mutateAsync({
-          sourceId: currentSourceId,
+          sourceId: sourceEntityId,
           targetId: resolvedTargetId
         });
         outcome = resolvePreviewOutcome({ ok: true, preview: result });
@@ -136,7 +122,7 @@ export const useMergeWizardController = ({
         setPhase('pick-target');
       }
     },
-    [currentSourceId, previewMutation, targetEntityId]
+    [sourceEntityId, previewMutation, targetEntityId]
   );
 
   const setFieldResolution = useCallback(
@@ -203,7 +189,7 @@ export const useMergeWizardController = ({
     const body = buildMergeExecuteBody(preview, resolutions, acknowledgedBlockers);
     let outcome: ReturnType<typeof resolveExecuteOutcome>;
     try {
-      const result = await executeMutation.mutateAsync({ sourceId: currentSourceId, body });
+      const result = await executeMutation.mutateAsync({ sourceId: sourceEntityId, body });
       outcome = resolveExecuteOutcome({ ok: true, result });
     } catch (error) {
       console.error('Failed to execute entity merge:', error);
@@ -216,7 +202,7 @@ export const useMergeWizardController = ({
       setExecuteError(outcome.error);
       setPhase('confirm');
     }
-  }, [acknowledgedBlockers, currentSourceId, executeMutation, preview, resolutions]);
+  }, [acknowledgedBlockers, sourceEntityId, executeMutation, preview, resolutions]);
 
   // A 409 on execute means the source/target/participants changed since preview — there is no
   // safe way to carry old per-row choices over to a possibly-reshaped conflict set, so this
@@ -226,25 +212,8 @@ export const useMergeWizardController = ({
     void runPreview(targetEntityId);
   }, [runPreview, targetEntityId]);
 
-  const advanceQueue = useCallback(() => {
-    const advance = advanceQueueState(remainingQueue);
-    if (!advance) return false;
-    setRemainingQueue(advance.rest);
-    setCurrentSourceId(advance.next);
-    setPreview(null);
-    setResolutions({ fieldResolutions: {}, relationResolutions: {}, sideTableResolutions: {} });
-    setAcknowledgedBlockers(new Set());
-    setConfirmText('');
-    setExecuteError(null);
-    setMergeResult(null);
-    void runPreview(targetEntityId);
-    return true;
-  }, [remainingQueue, runPreview, targetEntityId]);
-
   const reset = useCallback(() => {
     setPhase('pick-target');
-    setCurrentSourceId(sourceEntityId);
-    setRemainingQueue(queuedSourceIds);
     setTargetEntityId('');
     setPreview(null);
     setResolutions({ fieldResolutions: {}, relationResolutions: {}, sideTableResolutions: {} });
@@ -253,12 +222,10 @@ export const useMergeWizardController = ({
     setPreviewError(null);
     setExecuteError(null);
     setMergeResult(null);
-  }, [queuedSourceIds, sourceEntityId]);
+  }, []);
 
   return {
     phase,
-    currentSourceId,
-    remainingQueue,
     targetEntityId,
     setTargetEntityId,
     preview,
@@ -281,7 +248,6 @@ export const useMergeWizardController = ({
     backToReview: () => setPhase('review'),
     executeMerge,
     refreshAfterConflict,
-    advanceQueue,
     reset
   };
 };

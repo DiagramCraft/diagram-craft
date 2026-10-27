@@ -607,7 +607,6 @@ export const EntityBrowser = ({
               setStep={setStep}
               onClear={clearSelection}
               onConfirm={handleConfirm}
-              onNavigateToEntity={navigateToEntity}
             />
           )}
           <div className={view === 'graph' ? styles.graphView : undefined}>

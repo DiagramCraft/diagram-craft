@@ -3,11 +3,7 @@ import type {
   MergeExecuteResponse,
   MergePreview
 } from '@arch-register/api-types/entityMergeContract';
-import {
-  advanceQueueState,
-  resolveExecuteOutcome,
-  resolvePreviewOutcome
-} from './useMergeWizardController';
+import { resolveExecuteOutcome, resolvePreviewOutcome } from './useMergeWizardController';
 
 const basePreview: MergePreview = {
   sourceId: 'source-1',
@@ -100,18 +96,5 @@ describe('resolveExecuteOutcome', () => {
       phase: 'confirm',
       error: 'Failed to complete the merge. Please refresh and re-review.'
     });
-  });
-});
-
-describe('advanceQueueState', () => {
-  it('splits the next source off the remaining queue', () => {
-    expect(advanceQueueState(['source-2', 'source-3'])).toEqual({
-      next: 'source-2',
-      rest: ['source-3']
-    });
-  });
-
-  it('returns null once the queue is empty', () => {
-    expect(advanceQueueState([])).toBeNull();
   });
 });

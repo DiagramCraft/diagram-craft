@@ -52,9 +52,6 @@ type Props = {
   onClose: () => void;
   workspaceId: string;
   sourceEntityId: string;
-  // Additional source entities to merge into the same target after this one succeeds, for the
-  // bulk "Merge into…" entry point.
-  queuedSourceIds?: string[];
   onNavigateToEntity: (entityPublicId: string) => void;
 };
 
@@ -63,18 +60,13 @@ export const MergeWizardDialog = ({
   onClose,
   workspaceId,
   sourceEntityId,
-  queuedSourceIds = [],
   onNavigateToEntity
 }: Props) => {
   const controller = useMergeWizardController({
     workspaceId,
-    sourceEntityId,
-    queuedSourceIds
+    sourceEntityId
   });
-  const { data: sourceEntity, isLoading: sourceLoading } = useEntity(
-    workspaceId,
-    controller.currentSourceId
-  );
+  const { data: sourceEntity, isLoading: sourceLoading } = useEntity(workspaceId, sourceEntityId);
   const { data: targetEntity } = useEntity(workspaceId, controller.targetEntityId);
   const { schemas, teams, lifecycleStates } = useWorkspaceContext();
   const coreFieldLookups = useMemo(
@@ -159,7 +151,7 @@ export const MergeWizardDialog = ({
             {(controller.phase === 'pick-target' || controller.phase === 'loading-preview') && (
               <MergeTargetPicker
                 workspaceId={workspaceId}
-                sourceEntityId={controller.currentSourceId}
+                sourceEntityId={sourceEntityId}
                 sourceEntityName={sourceEntity?._name ?? sourceEntity?._slug ?? ''}
                 sourceSchemaId={sourceEntity?._schema.id ?? ''}
                 sourceSchemaName={sourceEntity?._schema.name ?? ''}
@@ -207,13 +199,10 @@ export const MergeWizardDialog = ({
             {controller.phase === 'done' && controller.mergeResult && (
               <MergeResultStep
                 result={controller.mergeResult}
-                remainingQueueCount={controller.remainingQueue.length}
-                totalQueueCount={queuedSourceIds.length}
                 onViewEntity={id => {
                   handleClose();
                   onNavigateToEntity(id);
                 }}
-                onMergeNext={controller.advanceQueue}
                 onClose={handleClose}
               />
             )}
