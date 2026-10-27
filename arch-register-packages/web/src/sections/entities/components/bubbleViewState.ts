@@ -39,10 +39,10 @@ export type Bubble = {
   colorDisplay: string | null;
 };
 
-export const MARGIN_LEFT = 64;
+export const MARGIN_LEFT = 34;
 export const MARGIN_RIGHT = 24;
 export const MARGIN_TOP = 24;
-export const MARGIN_BOTTOM = 48;
+export const MARGIN_BOTTOM = 37;
 export const PLOT_W = 760;
 export const PLOT_H = 480;
 export const VB_W = MARGIN_LEFT + PLOT_W + MARGIN_RIGHT;
@@ -129,6 +129,9 @@ type BuildBubblesOptions = {
   yCategories: FieldOption[] | null;
   colorCategories: FieldOption[];
   colorMap: Map<string, string>;
+  /** Plot area size in px; defaults to the nominal PLOT_W x PLOT_H. */
+  plotWidth?: number;
+  plotHeight?: number;
 };
 
 export const buildBubbles = ({
@@ -140,7 +143,9 @@ export const buildBubbles = ({
   xCategories,
   yCategories,
   colorCategories,
-  colorMap
+  colorMap,
+  plotWidth = PLOT_W,
+  plotHeight = PLOT_H
 }: BuildBubblesOptions): {
   bubbles: Bubble[];
   clusterBadges: { cx: number; cy: number; count: number }[];
@@ -155,7 +160,7 @@ export const buildBubbles = ({
         xRange,
         xCategories,
         MARGIN_LEFT,
-        MARGIN_LEFT + PLOT_W,
+        MARGIN_LEFT + plotWidth,
         false
       );
       const cy = positionOnBubbleAxis(
@@ -164,7 +169,7 @@ export const buildBubbles = ({
         yRange,
         yCategories,
         MARGIN_TOP,
-        MARGIN_TOP + PLOT_H,
+        MARGIN_TOP + plotHeight,
         true
       );
       if (cx == null || cy == null) return null;

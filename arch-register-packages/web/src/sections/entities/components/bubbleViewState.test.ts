@@ -70,7 +70,7 @@ describe('bubble view state', () => {
     expect(result.bubbles).toHaveLength(2);
     expect(result.bubbles.every(bubble => bubble.clusterCount === 2)).toBe(true);
     expect(result.clusterBadges).toHaveLength(1);
-    expect(result.clusterBadges[0]).toMatchObject({ cx: 444, count: 2 });
+    expect(result.clusterBadges[0]).toMatchObject({ cx: 414, count: 2 });
     expect(result.clusterBadges[0]!.cy).toBeCloseTo(240.34, 2);
   });
 
