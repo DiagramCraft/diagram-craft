@@ -7,7 +7,6 @@ import {
   stringDateToTimelinePx
 } from '../../../components/timeline/timelineUtils';
 import { resolveSchemaColor } from '../../../lib/schemaPresentation';
-import { StatusChip } from '../../../components/StatusChip';
 import { TypeBadge } from '../../../components/TypeBadge';
 import type { EntityRecord, TimelineViewData } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
@@ -140,8 +139,9 @@ export const TimelineContent = ({
       <div key={groupKey}>
         <div className={styles.groupRow}>
           <div className={`${styles.labelCol} ${styles.groupLabelCol}`}>
-            {groupKey}
-            <span className={styles.groupCount}>({entities.length})</span>
+            <span className={styles.groupName} title={groupKey}>
+              {groupKey}
+            </span>
           </div>
           <div className={styles.groupSpacer} style={{ width: totalWidth }}>
             {renderHorizonFills()}
@@ -250,8 +250,9 @@ export const TimelineContent = ({
             {/* Group header */}
             <div className={styles.groupRow}>
               <div className={`${styles.labelCol} ${styles.groupLabelCol}`}>
-                {groupKey}
-                <span className={styles.groupCount}>({entities.length})</span>
+                <span className={styles.groupName} title={groupKey}>
+                  {groupKey}
+                </span>
               </div>
               <div className={styles.groupSpacer} style={{ width: totalWidth }}>
                 {renderHorizonFills()}
@@ -314,9 +315,6 @@ export const TimelineContent = ({
                     >
                       {e._name ?? e._slug}
                     </span>
-                    {e._lifecycle && (
-                      <StatusChip value={e._lifecycle.id} lifecycleStates={lifecycleStates} />
-                    )}
                   </div>
 
                   {/* Bar track — click on bar/milestone opens detail panel */}
@@ -379,8 +377,9 @@ export const TimelineContent = ({
                   })}
               <div className={styles.groupRow}>
                 <div className={`${styles.labelCol} ${styles.groupLabelCol}`}>
-                  {project.name}
-                  <span className={styles.groupCount}>({entities.length})</span>
+                  <span className={styles.groupName} title={project.name}>
+                    {project.name}
+                  </span>
                 </div>
                 <div className={styles.groupSpacer} style={{ width: totalWidth }}>
                   {renderHorizonFills()}
@@ -428,8 +427,7 @@ export const TimelineContent = ({
             <div className={styles.undatedSection}>
               <div className={styles.undatedHeader}>
                 <div className={`${styles.labelCol} ${styles.groupLabelCol}`}>
-                  Undated
-                  <span className={styles.groupCount}>({undatedRows.length})</span>
+                  <span className={styles.groupName}>Undated</span>
                 </div>
                 <div className={styles.groupSpacer} style={{ width: totalWidth }}>
                   {renderHorizonFills()}

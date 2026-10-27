@@ -226,7 +226,7 @@ test.describe('entities section', () => {
     ).toHaveCount(0);
   });
 
-  test('persists the Capability + Entity + Project roadmap mode and horizon toggle', async ({
+  test('persists the Parent + Entity + Project roadmap mode and horizon toggle', async ({
     page
   }) => {
     const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);

@@ -87,7 +87,12 @@ export const TimelineView = ({
   linkedEntityIds,
   hideToolbar
 }: TimelineViewProps) => {
-  const dateFields = useDateFieldOptions(schemas);
+  // Date mapping only offers date fields of the types present in the current results.
+  const schemasInScope = useMemo(() => {
+    const idsInRows = new Set(rows.map(row => row._schema.id));
+    return schemas.filter(schema => idsInRows.has(schema.id));
+  }, [rows, schemas]);
+  const dateFields = useDateFieldOptions(schemasInScope);
   const TODAY = useMemo(() => new Date(), []);
   const { data: milestones = [] } = useMilestones(workspaceId);
   const milestonesById = useMemo(() => toMilestonesById(milestones), [milestones]);
@@ -123,9 +128,9 @@ export const TimelineView = ({
   onConfigChangeRef.current = onConfigChange;
 
   // Reset field ids if date field options change and current ids become invalid. Skipped until
-  // schemas have loaded: before that only the built-in date fields exist, so every saved
+  // the result schemas are known: before that only the built-in date fields exist, so every saved
   // schema field id (e.g. restored from the URL on reload) would be treated as invalid.
-  const schemasLoaded = schemas.length > 0;
+  const schemasLoaded = schemasInScope.length > 0;
   useEffect(() => {
     if (!schemasLoaded) return;
     const ids = dateFields.map(f => f.id);

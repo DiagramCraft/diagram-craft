@@ -59,7 +59,7 @@ export const TimelineConfigBar = ({
         { value: 'containment', label: 'By parent' },
         { value: 'project', label: 'Project + Entity' },
         { value: 'snapshot', label: 'Entity + Project' },
-        { value: 'capability', label: 'Capability + Entity + Project' }
+        { value: 'capability', label: 'Parent + Entity + Project' }
       ]}
     />
 

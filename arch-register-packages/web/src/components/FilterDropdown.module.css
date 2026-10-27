@@ -28,10 +28,6 @@
     }
   }
 
-  &:hover {
-    border-color: var(--cmp-border-hover);
-  }
-
   .eLabel {
     font-size: 11px;
     color: var(--base-fg-more-dim);

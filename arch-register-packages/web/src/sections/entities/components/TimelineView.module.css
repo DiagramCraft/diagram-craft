@@ -80,6 +80,8 @@
   overflow: auto;
   position: relative;
   min-height: 0;
+  /* Same dimmed look as the "N entities" count in the header label. */
+  --tl-header-label-color: color-mix(in oklch, var(--base-fg-more-dim) 60%, transparent);
 }
 
 /* Inner grid — wide enough to hold all columns */
@@ -107,6 +109,13 @@
   z-index: 3;
   background: var(--base-bg);
   border-bottom: 1px solid var(--panel-border);
+}
+
+/* The shared header label is a fixed 28px; here let it stretch to the row's content height so it
+   cannot overhang and cover the row's bottom border in the first column. */
+.horizonRow > .labelColHeader {
+  height: auto;
+  color: var(--tl-header-label-color);
 }
 
 .horizonTrack {
@@ -213,7 +222,6 @@
 
 .groupLabelCol {
   background: var(--panel-bg);
-  border-bottom: 1px solid var(--panel-border);
   font-size: 11px;
   font-weight: 600;
   color: var(--base-fg-dim);
@@ -221,11 +229,11 @@
   letter-spacing: 0.4px;
 }
 
-.groupCount {
-  font-family: var(--font-mono);
-  font-weight: 400;
-  color: var(--base-fg-more-dim);
-  margin-left: 4px;
+.groupName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .groupSpacer {
@@ -265,10 +273,6 @@
   background: color-mix(in oklch, var(--accent-fg) 10%, var(--base-bg));
 }
 
-.entityRow > .labelCol {
-  border-bottom: 1px solid var(--panel-border);
-}
-
 .entityName {
   font-size: 12px;
   color: var(--base-fg);
@@ -277,16 +281,6 @@
   white-space: nowrap;
   flex: 1;
   min-width: 0;
-}
-
-.entityOwner {
-  max-width: 86px;
-  flex-shrink: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--base-fg-more-dim);
-  font-size: 9px;
 }
 
 /* Bar track */
@@ -423,9 +417,11 @@
   padding: 0 10px;
   background: var(--base-bg);
   border-right: 1px solid var(--panel-border);
-  border-bottom: 1px solid var(--panel-border);
-  color: var(--base-fg-more-dim);
+  color: var(--tl-header-label-color);
   font-size: 10px;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
 }
 
 .milestoneLaneTrack {
@@ -649,8 +645,10 @@
   background: var(--cmp-bg);
 }
 
-.snapHeader > .labelCol {
-  border-bottom: 1px solid var(--panel-border);
+/* Entity row -> its project lanes: the same muted line as between lanes, across the whole grid
+   (the label column included). With no lanes below, the block's own bottom border closes the row. */
+.snapBlock > .snapHeader:not(:last-child) {
+  border-bottom: 1px solid color-mix(in oklch, var(--panel-border) 50%, transparent);
 }
 
 .snapLane {
@@ -659,8 +657,9 @@
   border-bottom: 1px solid color-mix(in oklch, var(--panel-border) 50%, transparent);
 }
 
-.snapLaneOwn {
-  /* no special background — own history appears first before project lanes */
+/* The block's own bottom border closes the last lane; keeping the lane's as well doubles the line. */
+.snapBlock > .snapLane:last-child {
+  border-bottom: 0;
 }
 
 .snapLaneLabel {
@@ -688,7 +687,8 @@
   left: 0;
   right: 0;
   height: 1px;
-  background: var(--panel-border);
+  /* Dashed, so it reads as the timeline rather than as another lane border. */
+  background: repeating-linear-gradient(to right, var(--panel-border) 0 4px, transparent 4px 8px);
   pointer-events: none;
 }
 
