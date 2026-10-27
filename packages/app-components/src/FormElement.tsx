@@ -53,7 +53,7 @@ export const FormElement = ({
       </Field.Label>
       <div>{wiredChild}</div>
       {hint && !error && (
-        <Field.Description id={hintId} className={styles.eHint}>
+        <Field.Description id={hintId} className={styles.eHint} render={<div />}>
           {hint}
         </Field.Description>
       )}
