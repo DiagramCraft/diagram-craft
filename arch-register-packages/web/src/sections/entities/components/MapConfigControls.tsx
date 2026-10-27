@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
@@ -144,10 +144,19 @@ const MapLevelHop = ({
   // A freshly added level auto-picks its first legal hop for display, but that choice isn't saved
   // until the user touches the control - persist it immediately so the level actually contributes
   // to the map right away instead of silently doing nothing until re-selected.
+  // Guarded so it persists a given auto-picked step only once: the save round-trips
+  // asynchronously (URL), and `stepContext`/`onChangeStep` change identity on every render, so
+  // without the guard the effect re-fires each render until the saved step comes back.
+  const persistedAutoStepRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!hasSavedStep && step) {
-      onChangeStep(step, stepContext.options.find(option => option.step === step)?.targetSchemaIds);
+    if (hasSavedStep || !step) {
+      persistedAutoStepRef.current = null;
+      return;
     }
+    const key = JSON.stringify(step);
+    if (persistedAutoStepRef.current === key) return;
+    persistedAutoStepRef.current = key;
+    onChangeStep(step, stepContext.options.find(option => option.step === step)?.targetSchemaIds);
   }, [hasSavedStep, step, stepContext, onChangeStep]);
   const candidateSchemaIds = useMemo(
     () => (step && isLastLevel ? targetSchemaIdsForStep(step, schemas, relationSchemas) : []),

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { TbChevronDown } from 'react-icons/tb';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { EmptyState } from '../../../components/EmptyState';
@@ -111,8 +111,16 @@ export const HeatmapView = ({
     [setConfig]
   );
 
+  // Seed a default config once; `setConfig` may write to the URL asynchronously, so without this
+  // guard the effect re-fires every render until the config round-trips (see BubbleView).
+  const seededDefaultRef = useRef(false);
   useEffect(() => {
-    if (config || axisFieldOptions.length === 0) return;
+    if (config) {
+      seededDefaultRef.current = false;
+      return;
+    }
+    if (axisFieldOptions.length === 0 || seededDefaultRef.current) return;
+    seededDefaultRef.current = true;
     applyConfig({
       likelihoodFieldId: axisFieldOptions[0]?.id ?? '',
       impactFieldId: axisFieldOptions[1]?.id ?? axisFieldOptions[0]?.id ?? '',

@@ -128,16 +128,26 @@ export const BubbleView = ({
     [numericFields]
   );
 
+  const setHoverOpen = hoverDisclosure.setOpen;
   const applyConfig = useCallback(
     (newConfig: BubbleConfig) => {
       setConfig(newConfig);
-      hoverDisclosure.setOpen(false);
+      setHoverOpen(false);
     },
-    [setConfig, hoverDisclosure]
+    [setConfig, setHoverOpen]
   );
 
+  // Seed a default config once. `setConfig` writes to the URL asynchronously, so without this
+  // guard the effect re-fires on every render until the config round-trips, and each re-fire
+  // starts a new navigation that can cancel the previous one - an endless render loop.
+  const seededDefaultRef = useRef(false);
   useEffect(() => {
-    if (config || axisFieldOptions.length === 0) return;
+    if (config) {
+      seededDefaultRef.current = false;
+      return;
+    }
+    if (axisFieldOptions.length === 0 || seededDefaultRef.current) return;
+    seededDefaultRef.current = true;
     applyConfig({
       xFieldId: axisFieldOptions[0]?.id ?? '',
       yFieldId: axisFieldOptions[1]?.id ?? axisFieldOptions[0]?.id ?? '',
