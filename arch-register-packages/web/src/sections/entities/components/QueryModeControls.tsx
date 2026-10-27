@@ -261,14 +261,7 @@ export const QueryModeControls = (props: QueryModeControlsProps) => {
         </Popover.Content>
       </Popover.Root>
 
-      <Popover.Root
-        open={advancedOpen}
-        onOpenChange={open => {
-          // Pin the derived query as the explicit one so edits made in the text editor round-trip.
-          if (open) setEntityQuery(canonical);
-          setAdvancedOpen(open);
-        }}
-      >
+      <Popover.Root open={advancedOpen} onOpenChange={setAdvancedOpen}>
         <Popover.Trigger
           element={
             <Button size="sm" variant="secondary" title="Edit the query as text">
