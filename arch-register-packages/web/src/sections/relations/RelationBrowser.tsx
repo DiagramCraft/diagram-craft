@@ -235,8 +235,7 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
     _out: (a, b) => a._out.name.localeCompare(b._out.name),
     _schema: (a, b) => a._schema.name.localeCompare(b._schema.name),
     _owner: (a, b) => compareFieldValues(a._owner?.name ?? null, b._owner?.name ?? null),
-    _lifecycle: (a, b) =>
-      compareFieldValues(a._lifecycle?.name ?? null, b._lifecycle?.name ?? null)
+    _lifecycle: (a, b) => compareFieldValues(a._lifecycle?.name ?? null, b._lifecycle?.name ?? null)
   };
   for (const fieldId of fieldIds) {
     comparators[fieldId] = (a, b) =>

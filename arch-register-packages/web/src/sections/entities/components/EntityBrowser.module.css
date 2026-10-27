@@ -196,3 +196,22 @@
   text-overflow: ellipsis;
   align-self: center;
 }
+
+.viewHelpPopover {
+  position: relative !important;
+  z-index: 1100 !important;
+  width: 280px;
+  padding: 12px !important;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--base-fg);
+}
+
+.viewHelpTitle {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.viewHelpText {
+  color: var(--base-fg-more-dim);
+}

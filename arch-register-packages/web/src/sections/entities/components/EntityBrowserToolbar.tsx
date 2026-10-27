@@ -17,9 +17,27 @@ import { FilterDropdown } from '../../../components/FilterDropdown';
 import styles from './EntityBrowser.module.css';
 import { ManageFieldsPopover } from './ManageFieldsPopover';
 import { AssessmentJoinPicker } from './AssessmentJoinPicker';
+import { ViewHelpPopover } from './ViewHelpPopover';
 import { QueryModeControls } from './QueryModeControls';
 import type { EntityDisplayField } from './entityDisplayFields';
 import type { AssessmentJoinOption } from './useJoinedAssessment';
+
+const ALL_VIEW_OPTIONS = [
+  { value: 'table', label: 'Table' },
+  { value: 'cards', label: 'Cards' },
+  { value: 'tree', label: 'Tree' },
+  { value: 'radar', label: 'Radar' },
+  { value: 'bubble', label: 'Bubble' },
+  { value: 'heatmap', label: 'Heat map' },
+  { value: 'timeline', label: 'Timeline' },
+  { value: 'matrix', label: 'Matrix' },
+  { value: 'explore', label: 'Explore' },
+  { value: 'map', label: 'Map' },
+  { value: 'diff', label: 'Diff' },
+  { value: 'graph', label: 'Graph' },
+  { value: 'traceability', label: 'Traceability' },
+  { value: 'path-walker', label: 'Path walker' }
+];
 
 type EntityBrowserToolbarProps = {
   workspaceId: string;
@@ -143,29 +161,23 @@ export const EntityBrowserToolbar = ({
       )}
       <div style={{ flex: 1 }} />
       <FilterDropdown label="Sort" value={sort} onChange={setSort} options={sortOptions} />
-      <FilterDropdown
-        label="View"
-        value={view}
-        onChange={v => setView(v as BrowserView)}
-        options={
-          allowedViews ?? [
-            { value: 'table', label: 'Table' },
-            { value: 'cards', label: 'Cards' },
-            { value: 'tree', label: 'Tree' },
-            { value: 'radar', label: 'Radar' },
-            { value: 'bubble', label: 'Bubble' },
-            { value: 'heatmap', label: 'Heat map' },
-            { value: 'timeline', label: 'Timeline' },
-            { value: 'matrix', label: 'Matrix' },
-            { value: 'explore', label: 'Explore' },
-            { value: 'map', label: 'Map' },
-            { value: 'diff', label: 'Diff' },
-            { value: 'graph', label: 'Graph' },
-            { value: 'traceability', label: 'Traceability' },
-            { value: 'path-walker', label: 'Path walker' }
-          ]
-        }
-      />
+      {(() => {
+        const viewOptions = allowedViews ?? ALL_VIEW_OPTIONS;
+        return (
+          <>
+            <FilterDropdown
+              label="View"
+              value={view}
+              onChange={v => setView(v as BrowserView)}
+              options={viewOptions}
+            />
+            <ViewHelpPopover
+              view={view}
+              label={viewOptions.find(o => o.value === view)?.label ?? view}
+            />
+          </>
+        );
+      })()}
       <ManageFieldsPopover
         fields={displayFields ?? []}
         selectedIds={selectedDisplayFieldIds ?? []}

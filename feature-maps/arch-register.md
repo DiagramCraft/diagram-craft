@@ -967,6 +967,9 @@
           not-evaluated entities; unresolved filtering matches active or acknowledged violations, and stale evaluation
           coverage is shown separately from the substantive status.
 
+        - @id:ar.entity-views.help Users can click a "?" icon beside the View dropdown to see a short description of how
+          the currently selected view works.
+
         - @id:ar.entity-views.cards Users can inspect entities as cards for quick scanning of record summaries.
 
         - @id:ar.entity-views.tree Users can inspect hierarchical entity structure in a tree-oriented view.
