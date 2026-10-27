@@ -35,10 +35,11 @@
   .eLabel {
     font-size: 11px;
     color: var(--base-fg-more-dim);
+    margin-right: 2px;
   }
 
   .eValue {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--base-fg);
     font-family: inherit;
     max-width: 160px;

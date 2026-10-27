@@ -81,7 +81,7 @@ export const BubbleView = ({
     const normalized = normalizeViewConfig(bubbleViewConfigSchema, configProp, EMPTY_BUBBLE_CONFIG);
     return normalized.xFieldId ? normalized : null;
   }, [configProp]);
-  const [config, setConfig] = usePersistedViewConfig({
+  const [rawConfig, setConfig] = usePersistedViewConfig({
     storageKey: `ar-bubble-config-${workspaceSlug}`,
     externalConfig: parsedConfig,
     onChange: onConfigChange
@@ -130,6 +130,33 @@ export const BubbleView = ({
     (fieldId: string) => numericFields.some(f => f.id === fieldId),
     [numericFields]
   );
+
+  // A stored or saved config can name fields that aren't options for the current results (another
+  // schema, a renamed field). The native selects would then show their first option while the
+  // chart is built from unknown field ids and comes out empty, so swap unknown fields for defaults
+  // in memory. Nothing is written back until the user changes a setting.
+  const config = useMemo((): BubbleConfig | null => {
+    if (!rawConfig || axisFieldOptions.length === 0) return rawConfig;
+    const axisIds = new Set(axisFieldOptions.map(f => f.id));
+    const xFieldId = axisIds.has(rawConfig.xFieldId) ? rawConfig.xFieldId : axisFieldOptions[0]!.id;
+    const yFieldId = axisIds.has(rawConfig.yFieldId)
+      ? rawConfig.yFieldId
+      : (axisFieldOptions.find(f => f.id !== xFieldId) ?? axisFieldOptions[0]!).id;
+    const sizeFieldId =
+      rawConfig.sizeFieldId && numericFields.some(f => f.id === rawConfig.sizeFieldId)
+        ? rawConfig.sizeFieldId
+        : null;
+    const colorFieldId =
+      rawConfig.colorFieldId && categoricalFields.some(f => f.id === rawConfig.colorFieldId)
+        ? rawConfig.colorFieldId
+        : null;
+    return xFieldId === rawConfig.xFieldId &&
+      yFieldId === rawConfig.yFieldId &&
+      sizeFieldId === rawConfig.sizeFieldId &&
+      colorFieldId === rawConfig.colorFieldId
+      ? rawConfig
+      : { ...rawConfig, xFieldId, yFieldId, sizeFieldId, colorFieldId };
+  }, [rawConfig, axisFieldOptions, numericFields, categoricalFields]);
 
   const setHoverOpen = hoverDisclosure.setOpen;
   const applyConfig = useCallback(
