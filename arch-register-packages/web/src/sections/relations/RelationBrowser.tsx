@@ -394,7 +394,7 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
       </div>
 
       {view === 'table' ? (
-        <Table.Root scroll stickyHeader>
+        <Table.Root scroll>
           <Table.Head>
             <Table.Row>
               <Table.SortableHeaderCell
