@@ -464,14 +464,23 @@ export const resetExploreRelationFilter = (
 
   const config = exploreConfig as {
     relationKeys?: unknown;
+    columnRelationKeys?: unknown;
     relationFieldNames?: unknown;
   };
   const hasRelationKeys = Array.isArray(config.relationKeys) && config.relationKeys.length > 0;
+  const hasColumnRelationKeys =
+    config.columnRelationKeys != null &&
+    typeof config.columnRelationKeys === 'object' &&
+    Object.keys(config.columnRelationKeys).length > 0;
   const hasRelationFieldNames =
     Array.isArray(config.relationFieldNames) && config.relationFieldNames.length > 0;
-  if (!hasRelationKeys && !hasRelationFieldNames) return viewConfigs;
+  if (!hasRelationKeys && !hasColumnRelationKeys && !hasRelationFieldNames) return viewConfigs;
 
-  const { relationKeys: _relationKeys, ...rest } = exploreConfig as Record<string, unknown>;
+  const {
+    relationKeys: _relationKeys,
+    columnRelationKeys: _columnRelationKeys,
+    ...rest
+  } = exploreConfig as Record<string, unknown>;
   return {
     ...viewConfigs,
     explore: { ...rest, relationFieldNames: [] }

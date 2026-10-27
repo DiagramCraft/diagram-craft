@@ -30,6 +30,12 @@ export type ExploreColumn = {
   hop: number;
   entities: ExploreEntity[];
   availableSchemaIds: string[];
+  /** Incoming relations of this column's entities, i.e. what the next column to the left could show
+   *  (before that column's own relation filter). Only meaningful for the center and left columns. */
+  relationsToLeft: ExploreRelationOption[];
+  /** Outgoing relations of this column's entities, i.e. what the next column to the right could
+   *  show (before that column's own relation filter). Only meaningful for the center and right columns. */
+  relationsToRight: ExploreRelationOption[];
 };
 
 export type ExploreConnector = {
@@ -85,13 +91,39 @@ export const normalizeExploreConfig = (
     )
   );
 
+  const leftDepth = Math.max(0, Math.trunc(config?.leftDepth ?? DEFAULT_EXPLORE_CONFIG.leftDepth));
+  const rightDepth = Math.max(
+    0,
+    Math.trunc(config?.rightDepth ?? DEFAULT_EXPLORE_CONFIG.rightDepth)
+  );
+
+  const columnRelationKeys: Record<string, string[]> = Object.fromEntries(
+    Object.entries(config?.columnRelationKeys ?? {})
+      .filter(([columnIndex]) => /^-?[1-9]\d*$/.test(columnIndex))
+      .map(([columnIndex, keys]) => [columnIndex, [...new Set(keys)]])
+  );
+  // A legacy global relation filter applies to every column that exists now.
+  const legacyKeys = [...new Set(config?.relationKeys ?? [])];
+  if (legacyKeys.length > 0) {
+    const columnIndexes = [
+      ...Array.from({ length: leftDepth }, (_, i) => String(-(i + 1))),
+      ...Array.from({ length: rightDepth }, (_, i) => String(i + 1))
+    ];
+    for (const columnIndex of columnIndexes) {
+      if (columnRelationKeys[columnIndex] === undefined) {
+        columnRelationKeys[columnIndex] = legacyKeys;
+      }
+    }
+  }
+
   return {
-    leftDepth: Math.max(0, Math.trunc(config?.leftDepth ?? DEFAULT_EXPLORE_CONFIG.leftDepth)),
-    rightDepth: Math.max(0, Math.trunc(config?.rightDepth ?? DEFAULT_EXPLORE_CONFIG.rightDepth)),
+    leftDepth,
+    rightDepth,
     relationFieldNames: [
       ...new Set(config?.relationFieldNames ?? DEFAULT_EXPLORE_CONFIG.relationFieldNames)
     ],
-    relationKeys: config?.relationKeys == null ? undefined : [...new Set(config.relationKeys)],
+    relationKeys: undefined,
+    columnRelationKeys: Object.keys(columnRelationKeys).length > 0 ? columnRelationKeys : undefined,
     columnSchemaIds: Object.keys(columnSchemaIds).length > 0 ? columnSchemaIds : undefined,
     fieldIds: config?.fieldIds
   };
@@ -231,6 +263,30 @@ const toExploreConnector = ({
   relationKey: buildRelationKey(sourceEntitySchemaId, targetEntitySchemaId, relation)
 });
 
+const collectRelationOption = (
+  options: Map<string, ExploreRelationOption>,
+  sourceEntitySchemaId: string,
+  targetEntitySchemaId: string,
+  relation: EntityRelation
+) => {
+  const relationKey = buildRelationKey(sourceEntitySchemaId, targetEntitySchemaId, relation);
+  if (options.has(relationKey)) return;
+  options.set(relationKey, {
+    relationKey,
+    sourceEntitySchemaId,
+    targetEntitySchemaId,
+    fieldLabel: getRelationDisplayLabel(relation),
+    kind: relation.kind
+  });
+};
+
+const sortRelationOptions = (options: Map<string, ExploreRelationOption>) =>
+  [...options.values()].sort((a, b) =>
+    `${a.sourceEntitySchemaId} ${a.fieldLabel} ${a.targetEntitySchemaId}`.localeCompare(
+      `${b.sourceEntitySchemaId} ${b.fieldLabel} ${b.targetEntitySchemaId}`
+    )
+  );
+
 export const buildExploreRelationOptions = (
   connectors: ExploreConnector[]
 ): ExploreRelationOption[] => {
@@ -275,7 +331,6 @@ export const buildExploreGraph = ({
 }): ExploreGraph => {
   const normalizedConfig = normalizeExploreConfig(config);
   const selectedFieldNames = new Set(normalizedConfig.relationFieldNames);
-  const selectedRelationKeys = new Set(normalizedConfig.relationKeys ?? []);
   const columns = new Map<number, ExploreColumn>();
   const connectors: ExploreConnector[] = [];
 
@@ -286,7 +341,9 @@ export const buildExploreGraph = ({
     entities: dedupeColumn(centerEntities.map(toCenterEntity)).filter(
       entity => !excludedEntityIds.has(entity.entityId)
     ),
-    availableSchemaIds: []
+    availableSchemaIds: [],
+    relationsToLeft: [],
+    relationsToRight: []
   };
   columns.set(0, centerColumn);
 
@@ -294,6 +351,7 @@ export const buildExploreGraph = ({
   for (let hop = 1; hop <= normalizedConfig.leftDepth; hop++) {
     const nextEntities: ExploreEntity[] = [];
     const availableSchemaIds = new Set<string>();
+    const selectedRelationKeys = new Set(normalizedConfig.columnRelationKeys?.[String(-hop)] ?? []);
     const selectedSchemaId = normalizedConfig.columnSchemaIds?.[String(-hop)];
 
     for (const entity of currentLeft) {
@@ -337,7 +395,9 @@ export const buildExploreGraph = ({
       direction: 'left',
       hop,
       entities,
-      availableSchemaIds: [...availableSchemaIds]
+      availableSchemaIds: [...availableSchemaIds],
+      relationsToLeft: [],
+      relationsToRight: []
     });
     currentLeft = entities;
   }
@@ -346,6 +406,7 @@ export const buildExploreGraph = ({
   for (let hop = 1; hop <= normalizedConfig.rightDepth; hop++) {
     const nextEntities: ExploreEntity[] = [];
     const availableSchemaIds = new Set<string>();
+    const selectedRelationKeys = new Set(normalizedConfig.columnRelationKeys?.[String(hop)] ?? []);
     const selectedSchemaId = normalizedConfig.columnSchemaIds?.[String(hop)];
 
     for (const entity of currentRight) {
@@ -389,9 +450,36 @@ export const buildExploreGraph = ({
       direction: 'right',
       hop,
       entities,
-      availableSchemaIds: [...availableSchemaIds]
+      availableSchemaIds: [...availableSchemaIds],
+      relationsToLeft: [],
+      relationsToRight: []
     });
     currentRight = entities;
+  }
+
+  // Which relations could lead out of each column: the options of that column's "Filter relations".
+  // Computed from the column's own entities, so they exist even beyond the last visible column.
+  for (const column of columns.values()) {
+    if (column.direction !== 'right') {
+      const options = new Map<string, ExploreRelationOption>();
+      for (const entity of column.entities) {
+        for (const relation of relationsMap.get(entity.entityId)?.incoming ?? []) {
+          if (excludedEntityIds.has(relation.entityId)) continue;
+          collectRelationOption(options, relation.entitySchemaId, entity.schemaId, relation);
+        }
+      }
+      column.relationsToLeft = sortRelationOptions(options);
+    }
+    if (column.direction !== 'left') {
+      const options = new Map<string, ExploreRelationOption>();
+      for (const entity of column.entities) {
+        for (const relation of relationsMap.get(entity.entityId)?.outgoing ?? []) {
+          if (excludedEntityIds.has(relation.entityId)) continue;
+          collectRelationOption(options, entity.schemaId, relation.entitySchemaId, relation);
+        }
+      }
+      column.relationsToRight = sortRelationOptions(options);
+    }
   }
 
   const orderedColumns = [...columns.values()].sort((a, b) => a.index - b.index);

@@ -735,3 +735,90 @@ describe('buildRelationFieldOptions', () => {
     );
   });
 });
+
+describe('per-column relation filters', () => {
+  const rel = (entityId: string, fieldName: string) => ({
+    entityId,
+    publicId: entityId.toUpperCase(),
+    entitySlug: entityId,
+    entityName: entityId,
+    entitySchemaId: 'service',
+    fieldName,
+    kind: 'reference' as const
+  });
+  const relations = relationMap({
+    a: { outgoing: [rel('keep', 'Depends On'), rel('drop', 'Consumes')] },
+    keep: { outgoing: [rel('keep-2', 'Depends On'), rel('drop-2', 'Consumes')] }
+  });
+  const dependsOnKey = buildRelationKey('application', 'service', {
+    fieldName: 'Depends On',
+    fieldPredicate: undefined
+  });
+
+  it('lists the relations leading out of each column, ignoring the next column filter', () => {
+    const graph = buildExploreGraph({
+      centerEntities: [entity('a', 'App A')],
+      relationsMap: relations,
+      config: {
+        leftDepth: 0,
+        rightDepth: 1,
+        relationFieldNames: [],
+        columnRelationKeys: { '1': [dependsOnKey] }
+      }
+    });
+
+    expect(graph.columns.find(c => c.index === 1)?.entities.map(e => e.entityId)).toEqual(['keep']);
+    // The center column offers both outgoing relations although column 1 is filtered...
+    expect(graph.columns.find(c => c.index === 0)?.relationsToRight.map(o => o.fieldLabel)).toEqual(
+      ['Consumes', 'Depends On']
+    );
+    // ...and the outermost column offers the relations that a further column would show.
+    expect(graph.columns.find(c => c.index === 1)?.relationsToRight.map(o => o.fieldLabel)).toEqual(
+      ['Consumes', 'Depends On']
+    );
+  });
+
+  it('filters each column independently', () => {
+    const consumesKey = buildRelationKey('service', 'service', {
+      fieldName: 'Consumes',
+      fieldPredicate: undefined
+    });
+    const graph = buildExploreGraph({
+      centerEntities: [entity('a', 'App A')],
+      relationsMap: relations,
+      config: {
+        leftDepth: 0,
+        rightDepth: 2,
+        relationFieldNames: [],
+        columnRelationKeys: { '1': [dependsOnKey], '2': [consumesKey] }
+      }
+    });
+
+    expect(graph.columns.find(c => c.index === 1)?.entities.map(e => e.entityId)).toEqual(['keep']);
+    expect(graph.columns.find(c => c.index === 2)?.entities.map(e => e.entityId)).toEqual([
+      'drop-2'
+    ]);
+  });
+
+  it('applies a legacy global relation filter to every existing column', () => {
+    const normalized = normalizeExploreConfig({
+      leftDepth: 1,
+      rightDepth: 2,
+      relationFieldNames: [],
+      relationKeys: ['k']
+    });
+    expect(normalized.relationKeys).toBeUndefined();
+    expect(normalized.columnRelationKeys).toEqual({ '-1': ['k'], '1': ['k'], '2': ['k'] });
+  });
+
+  it('keeps an explicit per-column entry over the legacy global filter', () => {
+    const normalized = normalizeExploreConfig({
+      leftDepth: 0,
+      rightDepth: 2,
+      relationFieldNames: [],
+      relationKeys: ['global'],
+      columnRelationKeys: { '1': ['own'] }
+    });
+    expect(normalized.columnRelationKeys).toEqual({ '1': ['own'], '2': ['global'] });
+  });
+});

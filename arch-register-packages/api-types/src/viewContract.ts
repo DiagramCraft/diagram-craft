@@ -364,7 +364,15 @@ export const exploreViewConfigSchema = z.object({
   relationKeys: z
     .array(z.string())
     .optional()
-    .describe('Specific relationship instances to include'),
+    .describe(
+      'Legacy global relationship filter; migrated to per-column columnRelationKeys when loaded'
+    ),
+  columnRelationKeys: z
+    .record(z.string(), z.array(z.string()))
+    .optional()
+    .describe(
+      'Relationship instances to include per column, keyed by column index (negative = left); a column without an entry shows all relations'
+    ),
   columnSchemaIds: z
     .record(z.string(), z.string())
     .optional()

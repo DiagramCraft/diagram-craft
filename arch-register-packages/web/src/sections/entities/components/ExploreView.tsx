@@ -15,15 +15,14 @@ import styles from './ExploreView.module.css';
 import { EmptyState } from '../../../components/EmptyState';
 import {
   buildExploreGraph,
-  buildExploreRelationOptions,
   DEFAULT_EXPLORE_CONFIG,
   normalizeExploreConfig,
-  type ExploreEntity
+  type ExploreEntity,
+  type ExploreRelationOption
 } from './ExploreView.helpers';
 import { connectorDistance, type ExploreConnectorLine } from './exploreGeometry';
 import { Button } from '@diagram-craft/app-components/Button';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
-import { Popover, type PopoverActions } from '@diagram-craft/app-components/Popover';
 import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
 import {
   findEntityDisplayField,
@@ -90,9 +89,13 @@ export const ExploreView = ({
   const selectedDisplayFields = getDisplayFieldIds('explore', normalizedConfig);
   const linkedEntityIdSet = useMemo(() => new Set(linkedEntityIds ?? []), [linkedEntityIds]);
   const [connectorTooltip, setConnectorTooltip] = useState<ConnectorTooltip>(null);
-  const [excludedEntityIds, setExcludedEntityIds] = useState<Set<string>>(new Set());
+  // Entity id -> index of the column it was excluded from. The exclusion applies everywhere; the
+  // column is remembered so that column's Reset can undo it.
+  const [excludedFromColumn, setExcludedFromColumn] = useState<Map<string, number>>(new Map());
+  const excludedEntityIds = useMemo(() => new Set(excludedFromColumn.keys()), [excludedFromColumn]);
   const [contextMenu, setContextMenu] = useState<{
     entity: ExploreEntity;
+    columnIndex: number;
     x: number;
     y: number;
   } | null>(null);
@@ -119,7 +122,7 @@ export const ExploreView = ({
   useEffect(() => {
     setFetchIds(previous => (previous.join('|') === centerIdKey ? previous : centerIds));
     if (previousCenterIdKey.current !== centerIdKey) {
-      setExcludedEntityIds(new Set());
+      setExcludedFromColumn(new Map());
       previousCenterIdKey.current = centerIdKey;
     }
   }, [centerIdKey, centerIds]);
@@ -136,44 +139,16 @@ export const ExploreView = ({
     [excludedEntityIds, normalizedConfig, relationsMap, rows]
   );
 
-  const relationOptionGraph = useMemo(
-    () =>
-      buildExploreGraph({
-        centerEntities: rows,
-        relationsMap,
-        config: { ...normalizedConfig, relationKeys: undefined }
-      }),
-    [rows, relationsMap, normalizedConfig]
-  );
-  const relationOptions = useMemo(
-    () => buildExploreRelationOptions(relationOptionGraph.connectors),
-    [relationOptionGraph.connectors]
-  );
-  const relationOptionGroups = useMemo(() => {
-    const groups = new Map<string, { name: string; options: typeof relationOptions }>();
-    for (const option of relationOptions) {
-      const schema = schemaMap.get(option.sourceEntitySchemaId);
-      const group = groups.get(option.sourceEntitySchemaId) ?? {
-        name: schema?.name ?? option.sourceEntitySchemaId,
-        options: []
-      };
-      group.options.push(option);
-      groups.set(option.sourceEntitySchemaId, group);
-    }
-    return [...groups.values()].sort((a, b) => a.name.localeCompare(b.name));
-  }, [relationOptions, schemaMap]);
-  const relationFilterActionsRef = useRef<PopoverActions | null>(null);
-  const selectedRelationKeys = normalizedConfig.relationKeys ?? [];
-  const hasRelationFilter = selectedRelationKeys.length > 0;
-
-  const toggleRelationKey = useCallback(
-    (relationKey: string) => {
-      const nextKeys = selectedRelationKeys.includes(relationKey)
-        ? selectedRelationKeys.filter(key => key !== relationKey)
-        : [...selectedRelationKeys, relationKey];
-      updateConfig({ relationKeys: nextKeys, relationFieldNames: [] });
+  const updateColumnRelations = useCallback(
+    (columnIndex: number, relationKeys: string[]) => {
+      const next = { ...(normalizedConfig.columnRelationKeys ?? {}) };
+      if (relationKeys.length === 0) delete next[String(columnIndex)];
+      else next[String(columnIndex)] = relationKeys;
+      updateConfig({
+        columnRelationKeys: Object.keys(next).length > 0 ? next : undefined
+      });
     },
-    [selectedRelationKeys, updateConfig]
+    [normalizedConfig.columnRelationKeys, updateConfig]
   );
 
   const updateColumnSchema = useCallback(
@@ -193,24 +168,26 @@ export const ExploreView = ({
   );
 
   const handleEntityContextMenu = useCallback(
-    (event: MouseEvent<HTMLButtonElement>, entity: ExploreEntity) => {
+    (event: MouseEvent<HTMLButtonElement>, entity: ExploreEntity, columnIndex: number) => {
       if (onFocusEntity == null) return;
       event.preventDefault();
       event.stopPropagation();
-      setContextMenu({ entity, x: event.clientX, y: event.clientY });
+      setContextMenu({ entity, columnIndex, x: event.clientX, y: event.clientY });
     },
     [onFocusEntity]
   );
 
   const excludeEntity = useCallback(() => {
     if (!contextMenu) return;
-    setExcludedEntityIds(previous => new Set([...previous, contextMenu.entity.entityId]));
+    setExcludedFromColumn(previous =>
+      new Map(previous).set(contextMenu.entity.entityId, contextMenu.columnIndex)
+    );
     setContextMenu(null);
   }, [contextMenu]);
 
   const focusEntity = useCallback(() => {
     if (!contextMenu || onFocusEntity == null) return;
-    setExcludedEntityIds(new Set());
+    setExcludedFromColumn(new Map());
     onFocusEntity(contextMenu.entity.entityId);
     setContextMenu(null);
   }, [contextMenu, onFocusEntity]);
@@ -372,91 +349,6 @@ export const ExploreView = ({
 
   return (
     <div className={styles.wrap}>
-      {!hideToolbar && (
-        <div className={styles.toolbar}>
-          <div>
-            <Popover.Root actionsRef={relationFilterActionsRef}>
-              <Popover.Trigger
-                element={
-                  <Button
-                    size="sm"
-                    className={styles.filterButton}
-                    variant={hasRelationFilter ? 'primary' : 'secondary'}
-                    icon={<TbFilter size={13} />}
-                    aria-label="Filter relations"
-                    title="Filter relations"
-                    disabled={relationOptions.length === 0 && !hasRelationFilter}
-                  >
-                    Filter relations
-                    {hasRelationFilter && (
-                      <span className={styles.filterCount}>{selectedRelationKeys.length}</span>
-                    )}
-                  </Button>
-                }
-              />
-              <Popover.Content
-                sideOffset={4}
-                align="start"
-                arrow={false}
-                closeButton={false}
-                className={styles.relationFilterPopover}
-              >
-                <div className={styles.relationFilterHeader}>
-                  <div>
-                    <div className={styles.relationFilterTitle}>Relations in scope</div>
-                    <div className={styles.relationFilterHint}>
-                      Choose the schema relationships to show.
-                    </div>
-                  </div>
-                  <Button
-                    size="xs"
-                    variant="ghost"
-                    disabled={!hasRelationFilter}
-                    onClick={() =>
-                      updateConfig({ relationKeys: undefined, relationFieldNames: [] })
-                    }
-                  >
-                    Show all
-                  </Button>
-                </div>
-                {relationOptionGroups.length === 0 ? (
-                  <div className={styles.relationFilterEmpty}>No relations are in scope.</div>
-                ) : (
-                  <div className={styles.relationFilterGroups}>
-                    {relationOptionGroups.map(group => (
-                      <div key={group.name} className={styles.relationFilterGroup}>
-                        <div className={styles.relationFilterGroupTitle}>{group.name}</div>
-                        {group.options.map(option => {
-                          const active = selectedRelationKeys.includes(option.relationKey);
-                          return (
-                            <label key={option.relationKey} className={styles.relationFilterOption}>
-                              <input
-                                type="checkbox"
-                                checked={active}
-                                onChange={() => toggleRelationKey(option.relationKey)}
-                              />
-                              <span>
-                                {schemaMap.get(option.sourceEntitySchemaId)?.name ??
-                                  option.sourceEntitySchemaId}{' '}
-                                <span className={styles.relationFilterPredicate}>
-                                  {option.fieldLabel}
-                                </span>{' '}
-                                {schemaMap.get(option.targetEntitySchemaId)?.name ??
-                                  option.targetEntitySchemaId}
-                              </span>
-                            </label>
-                          );
-                        })}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </Popover.Content>
-            </Popover.Root>
-          </div>
-        </div>
-      )}
-
       <div ref={scrollRef} className={styles.scroll}>
         <div
           ref={canvasRef}
@@ -571,31 +463,105 @@ export const ExploreView = ({
                   });
                 }
               } else if (column.direction === 'left') {
-                columnDepthActions.push({
-                  label: 'Add column',
-                  disabled: column.entities.length === 0,
-                  onClick: () => updateConfig({ leftDepth: normalizedConfig.leftDepth + 1 })
-                });
+                // Only the outermost column on this side can be extended or hidden.
                 if (column.hop === normalizedConfig.leftDepth) {
+                  columnDepthActions.push({
+                    label: 'Add column',
+                    disabled: column.entities.length === 0,
+                    onClick: () => updateConfig({ leftDepth: normalizedConfig.leftDepth + 1 })
+                  });
                   columnDepthActions.push({
                     label: 'Hide',
                     onClick: () => updateConfig({ leftDepth: normalizedConfig.leftDepth - 1 })
                   });
                 }
               } else {
-                columnDepthActions.push({
-                  label: 'Add column',
-                  disabled: column.entities.length === 0,
-                  onClick: () => updateConfig({ rightDepth: normalizedConfig.rightDepth + 1 })
-                });
+                // Only the outermost column on this side can be extended or hidden.
                 if (column.hop === normalizedConfig.rightDepth) {
+                  columnDepthActions.push({
+                    label: 'Add column',
+                    disabled: column.entities.length === 0,
+                    onClick: () => updateConfig({ rightDepth: normalizedConfig.rightDepth + 1 })
+                  });
                   columnDepthActions.push({
                     label: 'Hide',
                     onClick: () => updateConfig({ rightDepth: normalizedConfig.rightDepth - 1 })
                   });
                 }
               }
-              const columnMenuHasItems = showSchemaFilter || columnDepthActions.length > 0;
+              // The relation filter is always about this column's outgoing relations (its entities
+              // as the source). The selection is stored under the index of the column those
+              // relations populate: the next column outward for the center and right columns, the
+              // column itself for a left column (its outgoing relations point toward the center).
+              const innerNeighbor =
+                column.direction === 'left'
+                  ? graph.columns.find(other => other.index === column.index + 1)
+                  : undefined;
+              const outgoingOptions =
+                column.direction === 'left'
+                  ? (innerNeighbor?.relationsToLeft ?? [])
+                  : column.relationsToRight;
+              const relationKeyColumn =
+                column.direction === 'left' ? column.index : column.index + 1;
+              const selectedRelationKeys =
+                normalizedConfig.columnRelationKeys?.[String(relationKeyColumn)] ?? [];
+              const relationFilterOptions: Array<
+                ExploreRelationOption & { unavailable?: boolean }
+              > = [
+                ...outgoingOptions,
+                // Selected relations that are no longer offered stay visible so they can be unticked.
+                ...selectedRelationKeys
+                  .filter(key => !outgoingOptions.some(option => option.relationKey === key))
+                  .flatMap(key => {
+                    try {
+                      const [source, label, target] = JSON.parse(key) as [string, string, string];
+                      return [
+                        {
+                          relationKey: key,
+                          sourceEntitySchemaId: source,
+                          targetEntitySchemaId: target,
+                          fieldLabel: label,
+                          kind: 'reference' as const,
+                          unavailable: true
+                        }
+                      ];
+                    } catch {
+                      return [];
+                    }
+                  })
+              ];
+              const showRelationFilter = !hideToolbar && relationFilterOptions.length > 0;
+              const canResetColumn =
+                selectedSchemaId != null ||
+                selectedRelationKeys.length > 0 ||
+                [...excludedFromColumn.values()].includes(column.index);
+              const activeFilterSummary = [
+                selectedSchemaId != null ? 'schema filter' : null,
+                selectedRelationKeys.length > 0 ? 'relation filter' : null,
+                [...excludedFromColumn.values()].includes(column.index) ? 'excluded entities' : null
+              ]
+                .filter((part): part is string => part != null)
+                .join(', ');
+              const resetColumn = () => {
+                const columnSchemaIds = { ...(normalizedConfig.columnSchemaIds ?? {}) };
+                delete columnSchemaIds[String(column.index)];
+                const columnRelationKeys = { ...(normalizedConfig.columnRelationKeys ?? {}) };
+                delete columnRelationKeys[String(relationKeyColumn)];
+                updateConfig({
+                  columnSchemaIds:
+                    Object.keys(columnSchemaIds).length > 0 ? columnSchemaIds : undefined,
+                  columnRelationKeys:
+                    Object.keys(columnRelationKeys).length > 0 ? columnRelationKeys : undefined
+                });
+                setExcludedFromColumn(previous => {
+                  const next = new Map(previous);
+                  for (const [entityId, columnIndex] of previous) {
+                    if (columnIndex === column.index) next.delete(entityId);
+                  }
+                  return next;
+                });
+              };
+              const columnMenuHasItems = true;
 
               return (
                 <section
@@ -614,6 +580,17 @@ export const ExploreView = ({
 
                     {columnMenuHasItems && (
                       <div className={styles.columnActions}>
+                        {canResetColumn && (
+                          <span
+                            className={styles.columnFilterIndicator}
+                            title={`Active: ${activeFilterSummary}`}
+                            role="img"
+                            aria-label={`Active: ${activeFilterSummary}`}
+                            data-testid={`explore-column-filter-indicator-${column.index}`}
+                          >
+                            <TbFilter size={13} />
+                          </span>
+                        )}
                         <MenuButton.Root>
                           <MenuButton.Trigger
                             element={
@@ -655,9 +632,35 @@ export const ExploreView = ({
                                 </Menu.RadioGroup>
                               </Menu.SubMenu>
                             )}
-                            {showSchemaFilter && columnDepthActions.length > 0 && (
-                              <Menu.Separator />
+                            {showRelationFilter && (
+                              <Menu.SubMenu label="Filter outgoing relations">
+                                {relationFilterOptions.map(option => (
+                                  <Menu.CheckboxItem
+                                    key={option.relationKey}
+                                    checked={selectedRelationKeys.includes(option.relationKey)}
+                                    onCheckedChange={checked =>
+                                      updateColumnRelations(
+                                        relationKeyColumn,
+                                        checked
+                                          ? [...selectedRelationKeys, option.relationKey]
+                                          : selectedRelationKeys.filter(
+                                              key => key !== option.relationKey
+                                            )
+                                      )
+                                    }
+                                  >
+                                    {schemaMap.get(option.sourceEntitySchemaId)?.name ??
+                                      option.sourceEntitySchemaId}{' '}
+                                    {option.fieldLabel}{' '}
+                                    {schemaMap.get(option.targetEntitySchemaId)?.name ??
+                                      option.targetEntitySchemaId}
+                                    {option.unavailable ? ' (unavailable)' : ''}
+                                  </Menu.CheckboxItem>
+                                ))}
+                              </Menu.SubMenu>
                             )}
+                            {(showSchemaFilter || showRelationFilter) &&
+                              columnDepthActions.length > 0 && <Menu.Separator />}
                             {columnDepthActions.map(action => (
                               <Menu.Item
                                 key={action.label}
@@ -667,6 +670,10 @@ export const ExploreView = ({
                                 {action.label}
                               </Menu.Item>
                             ))}
+                            <Menu.Separator />
+                            <Menu.Item disabled={!canResetColumn} onClick={resetColumn}>
+                              Reset
+                            </Menu.Item>
                           </MenuButton.Menu>
                         </MenuButton.Root>
                       </div>
@@ -689,7 +696,9 @@ export const ExploreView = ({
                             type="button"
                             className={styles.entityCard}
                             onClick={() => onEntityClick(entity.publicId)}
-                            onContextMenu={event => handleEntityContextMenu(event, entity)}
+                            onContextMenu={event =>
+                              handleEntityContextMenu(event, entity, column.index)
+                            }
                           >
                             <div className={styles.entityTop}>
                               <div className={styles.entityIdentity}>

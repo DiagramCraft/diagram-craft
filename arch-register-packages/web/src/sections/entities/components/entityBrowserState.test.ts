@@ -180,6 +180,7 @@ describe('entity browser view field persistence', () => {
         leftDepth: 2,
         rightDepth: 3,
         relationKeys: ['service->api'],
+        columnRelationKeys: { '1': ['service->api'] },
         relationFieldNames: ['depends on']
       },
       table: { fieldIds: ['_owner'] }
