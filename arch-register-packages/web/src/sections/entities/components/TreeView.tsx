@@ -44,6 +44,8 @@ export type TreeViewProps = {
   onEntityClick: (entityId: string) => void;
   onDelete: (entity: EntityRecord) => void;
   onClone: (entity: EntityRecord) => void;
+  onManageCollections?: (entity: EntityRecord) => void;
+  onMerge?: (entity: EntityRecord) => void;
   lifecycleStates: WorkspaceLifecycleState[];
   projectContext?: ProjectBrowserContext;
   readOnly?: boolean;
@@ -77,6 +79,8 @@ export const TreeView = ({
   onEntityClick,
   onDelete,
   onClone,
+  onManageCollections,
+  onMerge,
   lifecycleStates,
   projectContext,
   readOnly,
@@ -186,6 +190,8 @@ export const TreeView = ({
             onEntityClick={onEntityClick}
             onDelete={onDelete}
             onClone={onClone}
+            onManageCollections={onManageCollections}
+            onMerge={onMerge}
             lifecycleStates={lifecycleStates}
             projectContext={projectContext}
             readOnly={readOnly}
@@ -205,6 +211,8 @@ const TreeNodeRow = ({
   onEntityClick,
   onDelete,
   onClone,
+  onManageCollections,
+  onMerge,
   lifecycleStates,
   projectContext,
   readOnly,
@@ -217,6 +225,8 @@ const TreeNodeRow = ({
   onEntityClick: (entityId: string) => void;
   onDelete: (entity: EntityRecord) => void;
   onClone: (entity: EntityRecord) => void;
+  onManageCollections?: (entity: EntityRecord) => void;
+  onMerge?: (entity: EntityRecord) => void;
   lifecycleStates: WorkspaceLifecycleState[];
   projectContext?: ProjectBrowserContext;
   readOnly?: boolean;
@@ -230,7 +240,13 @@ const TreeNodeRow = ({
   const menuItems = readOnly
     ? []
     : [
-        ...entityMenuItems(item as unknown as EntityRecord, onClone, onDelete),
+        ...entityMenuItems(
+          item as unknown as EntityRecord,
+          onClone,
+          onDelete,
+          onManageCollections,
+          onMerge
+        ),
         ...projectEntityMenuItems(item, projectContext)
       ];
 
@@ -305,6 +321,8 @@ const TreeNodeRow = ({
             onEntityClick={onEntityClick}
             onDelete={onDelete}
             onClone={onClone}
+            onManageCollections={onManageCollections}
+            onMerge={onMerge}
             lifecycleStates={lifecycleStates}
             projectContext={projectContext}
             readOnly={readOnly}
