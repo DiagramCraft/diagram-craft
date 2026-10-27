@@ -118,7 +118,11 @@ export const timelineViewConfigSchema = z.object({
   showHorizonBands: z
     .boolean()
     .optional()
-    .describe('Whether Historical, Now, Next, and Later horizon bands are visible')
+    .describe('Whether Historical, Now, Next, and Later horizon bands are visible'),
+  includeUndated: z
+    .boolean()
+    .optional()
+    .describe('Whether entities without a date for the mapped fields are listed (default true)')
 });
 
 export const matrixViewConfigSchema = z.object({

@@ -992,7 +992,9 @@
           condensed Entity + Project timeline, grouping rows by owner, type, or containment parent, with configurable
           project lanes, milestone guides, autosave snapshot visibility, and continuous Historical, Now, Next, and
           Later horizon bands. The Parent + Entity + Project strategic roadmap mode aggregates accessible
-          project-linked workspace entities, keeps owners visible, and places undated entities in a separate section.
+          project-linked workspace entities and keeps owners visible. Entities without a date for the mapped fields
+          are listed among the dated ones (without a bar) in every grouping, and a toggle next to the date mapping
+          hides them.
           When grouped by Project + Entity, a project with both a start and target date set shows a gantt bar spanning
           that range in its group header.
 

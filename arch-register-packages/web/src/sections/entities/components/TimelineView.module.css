@@ -469,17 +469,6 @@
   z-index: 5;
 }
 
-.undatedSection {
-  border-top: 1px solid var(--panel-border);
-}
-
-.undatedHeader {
-  display: flex;
-  height: 28px;
-  background: var(--panel-bg);
-  border-bottom: 1px solid var(--panel-border);
-}
-
 /* Milestone line */
 .milestoneLine {
   position: absolute;

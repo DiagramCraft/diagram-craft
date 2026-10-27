@@ -11,8 +11,7 @@ import {
   getDatedTimelineRows,
   getOwnTimelineVersions,
   groupTimelineRows,
-  groupChangeCaseEntriesByProject,
-  getUndatedTimelineRows
+  groupChangeCaseEntriesByProject
 } from './timelineViewState';
 
 const entity = (id: string, start?: Date, end?: Date, owner?: string): EntityRecord =>
@@ -95,12 +94,12 @@ describe('timeline view state', () => {
     ]);
   });
 
-  it('separates undated rows without duplicating dated rows', () => {
+  it('keeps only rows with a start or end date', () => {
     const rows = [entity('dated', new Date('2024-01-01')), entity('undated')];
     const datedRows = getDatedTimelineRows(rows, 'start', 'end', (row, fieldId) =>
       fieldId && row[fieldId] instanceof Date ? (row[fieldId] as Date) : null
     );
-    expect(getUndatedTimelineRows(rows, datedRows).map(row => row._uid)).toEqual(['undated']);
+    expect(datedRows.map(row => row._uid)).toEqual(['dated']);
   });
 
   it('uses containment parents for capability grouping', () => {

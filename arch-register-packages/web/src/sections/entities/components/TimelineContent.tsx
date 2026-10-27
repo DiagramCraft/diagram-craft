@@ -30,10 +30,7 @@ export type TimelineProjectEntityGroup = {
 type TimelineContentProps = {
   cfg: TimelineConfig;
   rows: EntityRecord[];
-  datedRows: EntityRecord[];
   groups: [string, EntityRecord[]][];
-  undatedRows: EntityRecord[];
-  undatedGroups: [string, EntityRecord[]][];
   projectEntityGroups: TimelineProjectEntityGroup[];
   timelineData: Record<string, TimelineViewData>;
   projects: Project[];
@@ -64,10 +61,7 @@ type TimelineContentProps = {
 export const TimelineContent = ({
   cfg,
   rows,
-  datedRows,
   groups,
-  undatedRows,
-  undatedGroups,
   projectEntityGroups,
   timelineData,
   projects,
@@ -164,7 +158,7 @@ export const TimelineContent = ({
           <div className={styles.headerRow}>
             <div className={`${styles.labelCol} ${styles.labelColHeader}`}>
               <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', opacity: 0.6 }}>
-                {isEventMode ? `${rows.length} entities` : `${datedRows.length} entities`}
+                {`${rows.length} entities`}
               </span>
             </div>
             <div className={styles.cols}>
@@ -418,26 +412,9 @@ export const TimelineContent = ({
           ))
         : cfg.groupBy === 'snapshot' && rows.map(entity => renderSnapBlock(entity))}
 
-      {/* Capability mode: dated rows are grouped by containment parent, while undated rows stay
-          visible in their own section rather than disappearing from the strategic view. */}
-      {isCapabilityMode && (
-        <>
-          {renderCapabilityGroups(groups)}
-          {undatedRows.length > 0 && (
-            <div className={styles.undatedSection}>
-              <div className={styles.undatedHeader}>
-                <div className={`${styles.labelCol} ${styles.groupLabelCol}`}>
-                  <span className={styles.groupName}>Undated</span>
-                </div>
-                <div className={styles.groupSpacer} style={{ width: totalWidth }}>
-                  {renderHorizonFills()}
-                </div>
-              </div>
-              {renderCapabilityGroups(undatedGroups)}
-            </div>
-          )}
-        </>
-      )}
+      {/* Parent + Entity + Project: entities grouped by containment parent; undated ones are listed
+          among the dated ones. */}
+      {isCapabilityMode && renderCapabilityGroups(groups)}
     </TimelineScaffold>
   );
 };

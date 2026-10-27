@@ -1,4 +1,4 @@
-import { TbBriefcase2, TbCalendarWeek, TbFlag, TbGitCommit } from 'react-icons/tb';
+import { TbBriefcase2, TbCalendarOff, TbCalendarWeek, TbFlag, TbGitCommit } from 'react-icons/tb';
 import styles from './TimelineView.module.css';
 import { FilterDropdown } from '../../../components/FilterDropdown';
 import { Button } from '@diagram-craft/app-components/Button';
@@ -11,19 +11,15 @@ export const TimelineConfigBar = ({
   cfg,
   onChange,
   dateFields,
-  totalDated,
-  totalRows,
   isEventMode
 }: {
   cfg: TimelineConfig;
   onChange: (update: Partial<TimelineConfig>) => void;
   dateFields: FieldOption[];
-  totalDated: number;
-  totalRows: number;
   isEventMode: boolean;
 }) => (
   <div className={styles.configBar}>
-    <span className={styles.configMeta}>Date mapping</span>
+    <span className={styles.configMeta}>Date</span>
 
     <FilterDropdown
       label="Start"
@@ -45,6 +41,18 @@ export const TimelineConfigBar = ({
         { value: '', label: '— none —' },
         ...dateFields.map(f => ({ value: f.id, label: f.label }))
       ]}
+    />
+
+    <Button
+      size="sm"
+      variant={cfg.includeUndated ? 'primary' : 'secondary'}
+      icon={<TbCalendarOff size={13} />}
+      title={cfg.includeUndated ? 'Hide entities without dates' : 'Show entities without dates'}
+      aria-label={
+        cfg.includeUndated ? 'Hide entities without dates' : 'Show entities without dates'
+      }
+      aria-pressed={cfg.includeUndated}
+      onClick={() => onChange({ includeUndated: !cfg.includeUndated })}
     />
 
     <div className={styles.configSep} />
@@ -124,11 +132,5 @@ export const TimelineConfigBar = ({
       aria-pressed={cfg.showHorizonBands}
       onClick={() => onChange({ showHorizonBands: !cfg.showHorizonBands })}
     />
-
-    <div style={{ flex: 1 }} />
-
-    <span className={styles.configMeta}>
-      {totalDated} <span style={{ opacity: 0.6 }}>of {totalRows}</span>
-    </span>
   </div>
 );

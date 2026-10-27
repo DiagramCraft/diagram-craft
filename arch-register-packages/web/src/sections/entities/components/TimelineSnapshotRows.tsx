@@ -172,7 +172,7 @@ export const SnapBlock = ({
   // lanes are off (with lanes on they get their own lanes, and a project filter draws them in the
   // header bar).
   const showProjectDotsOnRow = !showProjectLanes && projectFilterId == null;
-  const rowDots = (ownDots.length > 0 || showProjectDotsOnRow) && (
+  const rowDots = (
     <>
       {projectFilterId == null && <div className={styles.snapBaseline} />}
       {[...(showProjectDotsOnRow ? projectSnapshots : []), ...ownDots].map(snap => {
