@@ -47,8 +47,25 @@ export class EntitiesPage extends WorkspacePage {
   };
 
   exploreColumn = (index: number) => this.page.getByTestId(`explore-column-${index}`);
-  exploreColumnSchemaFilter = (index: number) =>
-    this.page.getByTestId(`explore-column-schema-filter-${index}`);
+  exploreColumnMenu = (index: number) => this.page.getByTestId(`explore-column-menu-${index}`);
+
+  /** Picks a schema in an Explore column's "Filter by schema" submenu ("All schemas" clears it). */
+  selectExploreColumnSchema = async (index: number, schemaName: string) => {
+    await this.exploreColumnMenu(index).click();
+    await this.page.getByRole('menuitem', { name: 'Filter by schema' }).click();
+    await this.page.getByRole('menuitemradio', { name: schemaName, exact: true }).click();
+  };
+
+  /** Whether the given schema is the checked entry of an Explore column's schema submenu. */
+  expectExploreColumnSchema = async (index: number, schemaName: string) => {
+    await this.exploreColumnMenu(index).click();
+    await this.page.getByRole('menuitem', { name: 'Filter by schema' }).click();
+    await expect(
+      this.page.getByRole('menuitemradio', { name: schemaName, exact: true })
+    ).toBeChecked();
+    await this.page.keyboard.press('Escape');
+    await this.page.keyboard.press('Escape');
+  };
 
   graphNodes = () => this.page.locator('[data-node]');
   graphRootNodes = () => this.page.locator('[data-node] rect[data-selected]');

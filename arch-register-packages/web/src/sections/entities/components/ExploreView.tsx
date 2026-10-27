@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
-import { TbEyeOff, TbFilter, TbFocus2, TbMinus, TbPlus } from 'react-icons/tb';
+import { TbDots, TbEyeOff, TbFilter, TbFocus2 } from 'react-icons/tb';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { TypeBadge } from '../../../components/TypeBadge';
@@ -22,6 +22,7 @@ import {
 } from './ExploreView.helpers';
 import { connectorDistance, type ExploreConnectorLine } from './exploreGeometry';
 import { Button } from '@diagram-craft/app-components/Button';
+import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { Popover, type PopoverActions } from '@diagram-craft/app-components/Popover';
 import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
 import {
@@ -361,9 +362,7 @@ export const ExploreView = ({
       <div className={styles.wrap}>
         {!hideToolbar && (
           <div className={styles.toolbar}>
-            <span className={`${styles.emptyToggle} ${styles.toolbarActions}`}>
-              No relations available
-            </span>
+            <span className={styles.emptyToggle}>No relations available</span>
           </div>
         )}
         <EmptyState title="No entities found" subtitle="Try adjusting your search or filters." />
@@ -375,12 +374,13 @@ export const ExploreView = ({
     <div className={styles.wrap}>
       {!hideToolbar && (
         <div className={styles.toolbar}>
-          <div className={styles.toolbarActions}>
+          <div>
             <Popover.Root actionsRef={relationFilterActionsRef}>
               <Popover.Trigger
                 element={
                   <Button
                     size="sm"
+                    className={styles.filterButton}
                     variant={hasRelationFilter ? 'primary' : 'secondary'}
                     icon={<TbFilter size={13} />}
                     aria-label="Filter relations"
@@ -529,8 +529,8 @@ export const ExploreView = ({
                 column.direction === 'center'
                   ? 'Filtered entities'
                   : column.direction === 'left'
-                    ? `Incoming hop ${column.hop}`
-                    : `Outgoing hop ${column.hop}`;
+                    ? `In ${column.hop}`
+                    : `Out ${column.hop}`;
               const selectedSchemaId = normalizedConfig.columnSchemaIds?.[String(column.index)];
               const availableSchemaIds = new Set(column.availableSchemaIds);
               const schemaOptions = column.availableSchemaIds
@@ -550,6 +550,53 @@ export const ExploreView = ({
                 )
                 .sort((a, b) => a.name.localeCompare(b.name));
 
+              const showSchemaFilter =
+                !hideToolbar && column.direction !== 'center' && schemaOptions.length > 0;
+              const columnDepthActions: Array<{
+                label: string;
+                disabled?: boolean;
+                onClick: () => void;
+              }> = [];
+              if (column.direction === 'center') {
+                if (normalizedConfig.leftDepth === 0) {
+                  columnDepthActions.push({
+                    label: 'Add left',
+                    onClick: () => updateConfig({ leftDepth: 1 })
+                  });
+                }
+                if (normalizedConfig.rightDepth === 0) {
+                  columnDepthActions.push({
+                    label: 'Add right',
+                    onClick: () => updateConfig({ rightDepth: 1 })
+                  });
+                }
+              } else if (column.direction === 'left') {
+                columnDepthActions.push({
+                  label: 'Add column',
+                  disabled: column.entities.length === 0,
+                  onClick: () => updateConfig({ leftDepth: normalizedConfig.leftDepth + 1 })
+                });
+                if (column.hop === normalizedConfig.leftDepth) {
+                  columnDepthActions.push({
+                    label: 'Hide',
+                    onClick: () => updateConfig({ leftDepth: normalizedConfig.leftDepth - 1 })
+                  });
+                }
+              } else {
+                columnDepthActions.push({
+                  label: 'Add column',
+                  disabled: column.entities.length === 0,
+                  onClick: () => updateConfig({ rightDepth: normalizedConfig.rightDepth + 1 })
+                });
+                if (column.hop === normalizedConfig.rightDepth) {
+                  columnDepthActions.push({
+                    label: 'Hide',
+                    onClick: () => updateConfig({ rightDepth: normalizedConfig.rightDepth - 1 })
+                  });
+                }
+              }
+              const columnMenuHasItems = showSchemaFilter || columnDepthActions.length > 0;
+
               return (
                 <section
                   key={column.index}
@@ -565,111 +612,65 @@ export const ExploreView = ({
                       </div>
                     </div>
 
-                    <div className={styles.columnActions}>
-                      {!hideToolbar &&
-                        column.direction !== 'center' &&
-                        schemaOptions.length > 0 && (
-                          <label className={styles.columnSchemaFilter}>
-                            <span className={styles.columnSchemaFilterLabel}>Schema</span>
-                            <select
-                              className={styles.columnSchemaSelect}
-                              value={selectedSchemaId ?? ''}
-                              aria-label={`Filter ${columnLabel} by schema`}
-                              data-testid={`explore-column-schema-filter-${column.index}`}
-                              onChange={event =>
-                                updateColumnSchema(column.index, event.target.value)
-                              }
-                            >
-                              <option value="">All schemas</option>
-                              {schemaOptions.map(option => (
-                                <option key={option.schemaId} value={option.schemaId}>
-                                  {option.name}
-                                  {option.schemaId === selectedSchemaId &&
-                                  !availableSchemaIds.has(option.schemaId)
-                                    ? ' (unavailable)'
-                                    : ''}
-                                </option>
-                              ))}
-                            </select>
-                          </label>
-                        )}
-                      {column.direction === 'center' && normalizedConfig.leftDepth === 0 && (
-                        <Button
-                          size={'xs'}
-                          onClick={() => updateConfig({ leftDepth: 1 })}
-                          aria-label="Show left column"
-                          title="Show left column"
-                        >
-                          <TbPlus size={12} />
-                        </Button>
-                      )}
-
-                      {column.direction === 'left' && column.hop === normalizedConfig.leftDepth && (
-                        <Button
-                          size={'xs'}
-                          onClick={() =>
-                            updateConfig({ leftDepth: normalizedConfig.leftDepth - 1 })
-                          }
-                          aria-label="Hide left column"
-                          title="Hide left column"
-                        >
-                          <TbMinus size={12} />
-                        </Button>
-                      )}
-
-                      {column.direction === 'left' ? (
-                        <Button
-                          size={'xs'}
-                          onClick={() =>
-                            updateConfig({ leftDepth: normalizedConfig.leftDepth + 1 })
-                          }
-                          disabled={column.entities.length === 0}
-                          aria-label="Add left column"
-                          title="Add left column"
-                        >
-                          <TbPlus size={12} />
-                        </Button>
-                      ) : null}
-
-                      {column.direction === 'right' &&
-                        column.hop === normalizedConfig.rightDepth && (
-                          <Button
-                            size={'xs'}
-                            onClick={() =>
-                              updateConfig({ rightDepth: normalizedConfig.rightDepth - 1 })
+                    {columnMenuHasItems && (
+                      <div className={styles.columnActions}>
+                        <MenuButton.Root>
+                          <MenuButton.Trigger
+                            element={
+                              <Button
+                                size="xs"
+                                variant="ghost"
+                                icon={<TbDots size={14} />}
+                                aria-label={`${columnLabel} actions`}
+                                title="Column actions"
+                                data-testid={`explore-column-menu-${column.index}`}
+                              />
                             }
-                            aria-label="Hide right column"
-                            title="Hide right column"
-                          >
-                            <TbMinus size={12} />
-                          </Button>
-                        )}
-
-                      {column.direction === 'right' ? (
-                        <Button
-                          size={'xs'}
-                          onClick={() =>
-                            updateConfig({ rightDepth: normalizedConfig.rightDepth + 1 })
-                          }
-                          disabled={column.entities.length === 0}
-                          aria-label="Add right column"
-                          title="Add right column"
-                        >
-                          <TbPlus size={12} />
-                        </Button>
-                      ) : null}
-
-                      {column.direction === 'center' && normalizedConfig.rightDepth === 0 && (
-                        <Button
-                          size={'xs'}
-                          onClick={() => updateConfig({ rightDepth: 1 })}
-                          aria-label="Show right column"
-                          title="Show right column"
-                        >
-                          <TbPlus size={12} />
-                        </Button>
-                      )}
-                    </div>
+                          />
+                          <MenuButton.Menu align="end">
+                            {showSchemaFilter && (
+                              <Menu.SubMenu label="Filter by schema">
+                                <Menu.RadioGroup value={selectedSchemaId ?? ''}>
+                                  <Menu.RadioItem
+                                    value=""
+                                    onClick={() => updateColumnSchema(column.index, '')}
+                                  >
+                                    All schemas
+                                  </Menu.RadioItem>
+                                  {schemaOptions.map(option => (
+                                    <Menu.RadioItem
+                                      key={option.schemaId}
+                                      value={option.schemaId}
+                                      onClick={() =>
+                                        updateColumnSchema(column.index, option.schemaId)
+                                      }
+                                    >
+                                      {option.name}
+                                      {option.schemaId === selectedSchemaId &&
+                                      !availableSchemaIds.has(option.schemaId)
+                                        ? ' (unavailable)'
+                                        : ''}
+                                    </Menu.RadioItem>
+                                  ))}
+                                </Menu.RadioGroup>
+                              </Menu.SubMenu>
+                            )}
+                            {showSchemaFilter && columnDepthActions.length > 0 && (
+                              <Menu.Separator />
+                            )}
+                            {columnDepthActions.map(action => (
+                              <Menu.Item
+                                key={action.label}
+                                disabled={action.disabled}
+                                onClick={action.onClick}
+                              >
+                                {action.label}
+                              </Menu.Item>
+                            ))}
+                          </MenuButton.Menu>
+                        </MenuButton.Root>
+                      </div>
+                    )}
                   </header>
 
                   <div className={styles.columnBody}>

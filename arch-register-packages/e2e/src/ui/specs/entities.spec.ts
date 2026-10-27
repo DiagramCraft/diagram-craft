@@ -198,9 +198,8 @@ test.describe('entities section', () => {
     await expect(page).toHaveURL(/viewMode=explore/);
 
     const outgoingColumn = entitiesPage.exploreColumn(1);
-    const schemaFilter = entitiesPage.exploreColumnSchemaFilter(1);
-    await expect(schemaFilter).toBeVisible();
-    await schemaFilter.selectOption(apiSchema.id);
+    await expect(entitiesPage.exploreColumnMenu(1)).toBeVisible();
+    await entitiesPage.selectExploreColumnSchema(1, apiSchema.name);
     await expect(outgoingColumn).toContainText(apiSchema.name);
     await expect(outgoingColumn.getByText('Auth Service', { exact: true })).toHaveCount(0);
     await expect
@@ -220,7 +219,7 @@ test.describe('entities section', () => {
     });
 
     await page.reload();
-    await expect(entitiesPage.exploreColumnSchemaFilter(1)).toHaveValue(apiSchema.id);
+    await entitiesPage.expectExploreColumnSchema(1, apiSchema.name);
     await expect(
       entitiesPage.exploreColumn(1).getByText('Auth Service', { exact: true })
     ).toHaveCount(0);
