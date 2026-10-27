@@ -292,10 +292,6 @@ export const EntityBrowserScreen = () => {
       onClick: handleExport
     });
 
-    if (devConfig?.enabled) {
-      items.push({ label: 'Dump View Config', onClick: handleDumpViewConfig });
-    }
-
     if (permissions.canCreateEntities && !readOnly) {
       items.push({
         label: 'Import CSV',
@@ -307,6 +303,10 @@ export const EntityBrowserScreen = () => {
             search: typeFilter ? { type: typeFilter } : undefined
           })
       });
+    }
+
+    if (devConfig?.enabled) {
+      items.push({ label: 'Dump View Config', onClick: handleDumpViewConfig });
     }
 
     return items;

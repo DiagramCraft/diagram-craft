@@ -85,6 +85,24 @@
   margin-bottom: 4px;
 }
 
+/* Foldable section header in the column picker; same look as .fieldsGroupLabel. */
+.fieldsGroupToggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  color: var(--base-fg-dim);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
 .fieldsRow {
   display: flex;
   align-items: center;

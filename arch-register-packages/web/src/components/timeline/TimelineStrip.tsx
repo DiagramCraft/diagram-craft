@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { TbHistory, TbGitBranch, TbX } from 'react-icons/tb';
+import { TbX } from 'react-icons/tb';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { formatTimelineDate } from './timelineUtils';
 import styles from './TimelineStrip.module.css';
@@ -185,14 +185,6 @@ export const TimelineStrip = ({
               <span>Overdue changes</span>
             </label>
           )}
-          {displayDate && (
-            <span
-              className={`${styles.modeChip} ${isFuture ? styles.modeChipFuture : styles.modeChipPast}`}
-            >
-              {isFuture ? <TbGitBranch size={10} /> : <TbHistory size={10} />}
-              {isFuture ? 'Projection' : 'Snapshot'} · {displayDate}
-            </span>
-          )}
           <input
             type="date"
             className={styles.dateInput}
@@ -203,8 +195,14 @@ export const TimelineStrip = ({
             onChange={e => (e.target.value ? onSelect(e.target.value) : onClear())}
           />
           {selectedDate ? (
-            <Button size="xs" onClick={onClear}>
-              &nbsp;Exit snapshot&nbsp;
+            <Button
+              size="xs"
+              onClick={() => {
+                onClear();
+                onClose();
+              }}
+            >
+              &nbsp;Reset&nbsp;
             </Button>
           ) : null}
           <button
