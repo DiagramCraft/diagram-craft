@@ -102567,7 +102567,20 @@
                                     "items": {
                                       "type": "string"
                                     },
-                                    "description": "Specific relationship instances to include"
+                                    "description": "Legacy global relationship filter; migrated to per-column columnRelationKeys when loaded"
+                                  },
+                                  "columnRelationKeys": {
+                                    "type": "object",
+                                    "propertyNames": {
+                                      "type": "string"
+                                    },
+                                    "additionalProperties": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "description": "Relationship instances to include per column, keyed by column index (negative = left); a column without an entry shows all relations"
                                   },
                                   "columnSchemaIds": {
                                     "type": "object",
@@ -104356,6 +104369,21 @@
                                   "hideMissingMetricData": {
                                     "type": "boolean",
                                     "description": "Whether to hide boxes with no usable aggregate or metric source data"
+                                  },
+                                  "colorScheme": {
+                                    "enum": [
+                                      "blue",
+                                      "green",
+                                      "red",
+                                      "red-amber-green",
+                                      "grayscale"
+                                    ],
+                                    "type": "string",
+                                    "description": "Color scheme for the numeric metric gradient (default blue)"
+                                  },
+                                  "reverseColors": {
+                                    "type": "boolean",
+                                    "description": "Whether the numeric metric gradient runs from its high end to its low end"
                                   },
                                   "metricConfig": {
                                     "anyOf": [
@@ -109706,7 +109734,20 @@
                                 "items": {
                                   "type": "string"
                                 },
-                                "description": "Specific relationship instances to include"
+                                "description": "Legacy global relationship filter; migrated to per-column columnRelationKeys when loaded"
+                              },
+                              "columnRelationKeys": {
+                                "type": "object",
+                                "propertyNames": {
+                                  "type": "string"
+                                },
+                                "additionalProperties": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                },
+                                "description": "Relationship instances to include per column, keyed by column index (negative = left); a column without an entry shows all relations"
                               },
                               "columnSchemaIds": {
                                 "type": "object",
@@ -111201,6 +111242,21 @@
                               "hideMissingMetricData": {
                                 "type": "boolean",
                                 "description": "Whether to hide boxes with no usable aggregate or metric source data"
+                              },
+                              "colorScheme": {
+                                "enum": [
+                                  "blue",
+                                  "green",
+                                  "red",
+                                  "red-amber-green",
+                                  "grayscale"
+                                ],
+                                "type": "string",
+                                "description": "Color scheme for the numeric metric gradient (default blue)"
+                              },
+                              "reverseColors": {
+                                "type": "boolean",
+                                "description": "Whether the numeric metric gradient runs from its high end to its low end"
                               },
                               "metricConfig": {
                                 "anyOf": [
@@ -116654,7 +116710,20 @@
                                   "items": {
                                     "type": "string"
                                   },
-                                  "description": "Specific relationship instances to include"
+                                  "description": "Legacy global relationship filter; migrated to per-column columnRelationKeys when loaded"
+                                },
+                                "columnRelationKeys": {
+                                  "type": "object",
+                                  "propertyNames": {
+                                    "type": "string"
+                                  },
+                                  "additionalProperties": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "description": "Relationship instances to include per column, keyed by column index (negative = left); a column without an entry shows all relations"
                                 },
                                 "columnSchemaIds": {
                                   "type": "object",
@@ -118443,6 +118512,21 @@
                                 "hideMissingMetricData": {
                                   "type": "boolean",
                                   "description": "Whether to hide boxes with no usable aggregate or metric source data"
+                                },
+                                "colorScheme": {
+                                  "enum": [
+                                    "blue",
+                                    "green",
+                                    "red",
+                                    "red-amber-green",
+                                    "grayscale"
+                                  ],
+                                  "type": "string",
+                                  "description": "Color scheme for the numeric metric gradient (default blue)"
+                                },
+                                "reverseColors": {
+                                  "type": "boolean",
+                                  "description": "Whether the numeric metric gradient runs from its high end to its low end"
                                 },
                                 "metricConfig": {
                                   "anyOf": [
@@ -124715,7 +124799,20 @@
                                 "items": {
                                   "type": "string"
                                 },
-                                "description": "Specific relationship instances to include"
+                                "description": "Legacy global relationship filter; migrated to per-column columnRelationKeys when loaded"
+                              },
+                              "columnRelationKeys": {
+                                "type": "object",
+                                "propertyNames": {
+                                  "type": "string"
+                                },
+                                "additionalProperties": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                },
+                                "description": "Relationship instances to include per column, keyed by column index (negative = left); a column without an entry shows all relations"
                               },
                               "columnSchemaIds": {
                                 "type": "object",
@@ -126210,6 +126307,21 @@
                               "hideMissingMetricData": {
                                 "type": "boolean",
                                 "description": "Whether to hide boxes with no usable aggregate or metric source data"
+                              },
+                              "colorScheme": {
+                                "enum": [
+                                  "blue",
+                                  "green",
+                                  "red",
+                                  "red-amber-green",
+                                  "grayscale"
+                                ],
+                                "type": "string",
+                                "description": "Color scheme for the numeric metric gradient (default blue)"
+                              },
+                              "reverseColors": {
+                                "type": "boolean",
+                                "description": "Whether the numeric metric gradient runs from its high end to its low end"
                               },
                               "metricConfig": {
                                 "anyOf": [
@@ -131658,7 +131770,20 @@
                                   "items": {
                                     "type": "string"
                                   },
-                                  "description": "Specific relationship instances to include"
+                                  "description": "Legacy global relationship filter; migrated to per-column columnRelationKeys when loaded"
+                                },
+                                "columnRelationKeys": {
+                                  "type": "object",
+                                  "propertyNames": {
+                                    "type": "string"
+                                  },
+                                  "additionalProperties": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "description": "Relationship instances to include per column, keyed by column index (negative = left); a column without an entry shows all relations"
                                 },
                                 "columnSchemaIds": {
                                   "type": "object",
@@ -133447,6 +133572,21 @@
                                 "hideMissingMetricData": {
                                   "type": "boolean",
                                   "description": "Whether to hide boxes with no usable aggregate or metric source data"
+                                },
+                                "colorScheme": {
+                                  "enum": [
+                                    "blue",
+                                    "green",
+                                    "red",
+                                    "red-amber-green",
+                                    "grayscale"
+                                  ],
+                                  "type": "string",
+                                  "description": "Color scheme for the numeric metric gradient (default blue)"
+                                },
+                                "reverseColors": {
+                                  "type": "boolean",
+                                  "description": "Whether the numeric metric gradient runs from its high end to its low end"
                                 },
                                 "metricConfig": {
                                   "anyOf": [
