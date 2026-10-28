@@ -1,0 +1,21 @@
+/* Shared by the entity browser views: the bar of FilterDropdowns above a view, and the bordered frame around it. */
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--panel-border);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  min-height: 42px;
+}
+
+.frame {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  min-height: 0;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+}

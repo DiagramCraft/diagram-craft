@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback } from 'react';
 import styles from './RelationMatrixView.module.css';
 import { TbColumnRemove, TbHelp, TbRowRemove } from 'react-icons/tb';
 import { Popover } from '@diagram-craft/app-components/Popover';
-import { Button } from '@diagram-craft/app-components/Button';
+import { ToolbarButton } from '../../../components/ToolbarButton';
 import { FilterDropdown } from '../../../components/FilterDropdown';
 import { TypeBadge } from '../../../components/TypeBadge';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
@@ -473,7 +473,7 @@ export const RelationMatrixView = ({
 
               {colorFields.length > 0 && (
                 <FilterDropdown
-                  label="Color by"
+                  label="Color"
                   value={effColorField?.key ?? 'none'}
                   onChange={value => {
                     const field = colorFields.find(f => f.key === value) ?? null;
@@ -498,9 +498,7 @@ export const RelationMatrixView = ({
                 <Popover.Root>
                   <Popover.Trigger
                     element={
-                      <Button
-                        size="sm"
-                        className={styles.toggleButton}
+                      <ToolbarButton
                         icon={<TbHelp size={13} />}
                         title="Show color legend"
                         aria-label="Show color legend"
@@ -547,9 +545,7 @@ export const RelationMatrixView = ({
             <span className={styles.noRel}>No attributes available</span>
           )}
 
-          <Button
-            size="sm"
-            className={styles.toggleButton}
+          <ToolbarButton
             variant={hideEmptyRows ? 'primary' : 'secondary'}
             icon={<TbRowRemove size={13} />}
             title={hideEmptyRows ? 'Show empty rows' : 'Hide empty rows'}
@@ -561,9 +557,7 @@ export const RelationMatrixView = ({
               notifyConfigChange({ hideEmptyRows: next });
             }}
           />
-          <Button
-            size="sm"
-            className={styles.toggleButton}
+          <ToolbarButton
             variant={hideEmptyCols ? 'primary' : 'secondary'}
             icon={<TbColumnRemove size={13} />}
             title={hideEmptyCols ? 'Show empty columns' : 'Hide empty columns'}

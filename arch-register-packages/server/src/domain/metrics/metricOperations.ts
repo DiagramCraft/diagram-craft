@@ -42,14 +42,10 @@ type MetricSourceSchema = SchemaDbResult | RelationSchemaDbResult;
 const isEnumSourceKind = (kind: MetricConfig['source']['kind']) =>
   kind === 'enum' || kind === 'assessmentEnum';
 
-// A lifecycle source is an ordered set of states, so the choice-style aggregations treat it like a
-// select field (most common / best / worst state). The numeric ones (sum, average, minimum,
-// maximum) still run over the states' sort order so existing saved metrics keep working.
-export const isLifecycleChoiceMetric = (metric: Pick<MetricConfig, 'source' | 'aggregation'>) =>
-  metric.source.kind === 'lifecycle' &&
-  (metric.aggregation === 'count' ||
-    metric.aggregation === 'best' ||
-    metric.aggregation === 'worst');
+// A lifecycle source is an ordered set of states, so it is always treated like a select field
+// (most common / best / worst state).
+export const isLifecycleChoiceMetric = (metric: Pick<MetricConfig, 'source'>) =>
+  metric.source.kind === 'lifecycle';
 
 const isMetricSourceAvailable = (
   metric: MetricConfig,
@@ -121,18 +117,12 @@ const isMetricSourceAvailable = (
 const extractValue = (
   entity: EntityDbResult | RelationDbResult,
   source: MetricConfig['source'],
-  lifecycleSortOrder: Map<string, number>,
   responsesByEntity: Map<string, Record<string, string | number | boolean>> | null,
   sourceSchema: MetricSourceSchema | undefined,
   authCtx: AuthorizationContext | null
 ): MetricValue | null => {
-  if (source.kind === 'lifecycle') {
-    if (entity.lifecycle == null) return null;
-    const sortOrder = lifecycleSortOrder.get(entity.lifecycle);
-    return sortOrder == null
-      ? null
-      : { value: sortOrder, lifecycleId: entity.lifecycle, currencyCode: null };
-  }
+  // Lifecycle is a choice source and never reaches the numeric roll-up.
+  if (source.kind === 'lifecycle') return null;
 
   if (
     source.kind !== 'assessmentRating' &&
@@ -361,7 +351,6 @@ export const computeBoxMetrics = (
   traversalResults?: Map<string, MetricTraversalResult>
 ): MetricRollupResponse => {
   const entityById = new Map(entities.map(e => [e.id, e]));
-  const lifecycleSortOrder = new Map(lifecycleStates.map(s => [s.id, s.sort_order]));
   const worstDirection = metric.worstDirection ?? 'high';
   const lifecycleChoice = isLifecycleChoiceMetric(metric);
   const lifecycleOptions: EnumOption[] = [...lifecycleStates]
@@ -503,7 +492,6 @@ export const computeBoxMetrics = (
         extractValue(
           terminal.kind === 'entity' ? terminal.entity : terminal.relation,
           metric.source,
-          lifecycleSortOrder,
           responsesByEntity,
           terminal.kind === 'entity' ? sourceSchema : terminal.schema,
           authCtx

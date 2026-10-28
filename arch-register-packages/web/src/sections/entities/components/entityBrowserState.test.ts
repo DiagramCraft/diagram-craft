@@ -67,13 +67,11 @@ describe('entity browser view field persistence', () => {
 
   it('saves a map configuration, including levels/columns and metricConfig', () => {
     const mapConfig = {
-      levels: 3,
-      level1SchemaId: 's-domain',
-      level1Columns: 3,
-      level2SchemaId: 's-capability',
-      level2Columns: 2,
-      level3SchemaId: 's-service',
-      level3Columns: 4,
+      levelConfigs: [
+        { schemaId: 's-domain', columns: 3 },
+        { schemaId: 's-capability', columns: 2 },
+        { schemaId: 's-service', columns: 4 }
+      ],
       metricConfig: {
         sourceSchemaId: 's-service',
         source: { kind: 'field', fieldId: 'score' },
@@ -183,9 +181,7 @@ describe('entity browser view field persistence', () => {
       'relation-columns': {
         leftDepth: 2,
         rightDepth: 3,
-        relationKeys: ['service->api'],
-        columnRelationKeys: { '1': ['service->api'] },
-        relationFieldNames: ['depends on']
+        columnRelationKeys: { '1': ['service->api'] }
       },
       table: { fieldIds: ['_owner'] }
     };
@@ -193,8 +189,7 @@ describe('entity browser view field persistence', () => {
     expect(resetExploreRelationFilter(configs)).toEqual({
       'relation-columns': {
         leftDepth: 2,
-        rightDepth: 3,
-        relationFieldNames: []
+        rightDepth: 3
       },
       table: { fieldIds: ['_owner'] }
     });
@@ -260,13 +255,7 @@ describe('pruneAssessmentReferences', () => {
   it('clears an assessment-sourced map metricConfig entirely', () => {
     const { viewConfigs } = pruneAssessmentReferences([], {
       'nested-map': {
-        levels: 2,
-        level1SchemaId: 's1',
-        level1Columns: 3,
-        level2SchemaId: null,
-        level2Columns: 3,
-        level3SchemaId: null,
-        level3Columns: 3,
+        levelConfigs: [{ schemaId: 's1', columns: 3 }],
         metricConfig: {
           sourceSchemaId: 's1',
           source: { kind: 'assessmentRating', fieldId: 'rating1' },
@@ -274,19 +263,13 @@ describe('pruneAssessmentReferences', () => {
         }
       }
     });
-    expect(viewConfigs['nested-map']).toMatchObject({ level1SchemaId: 's1', metricConfig: null });
+    expect(viewConfigs['nested-map']).toMatchObject({ metricConfig: null });
   });
 
   it('leaves a non-assessment-sourced map metricConfig untouched', () => {
     const configs = {
       'nested-map': {
-        levels: 2,
-        level1SchemaId: 's1',
-        level1Columns: 3,
-        level2SchemaId: null,
-        level2Columns: 3,
-        level3SchemaId: null,
-        level3Columns: 3,
+        levelConfigs: [{ schemaId: 's1', columns: 3 }],
         metricConfig: {
           sourceSchemaId: 's1',
           source: { kind: 'lifecycle' },

@@ -2,15 +2,11 @@ import { describe, expect, it } from 'vitest';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntityRelationData } from '../../../hooks/useEntities';
 import {
-  buildExploreRelationOptions,
-  buildDefaultRelationFieldNames,
   buildExploreGraph,
   buildRelationKey,
-  buildRelationFieldOptions,
   normalizeExploreConfig,
   parseExploreConfigValue
 } from './RelationColumnsView.helpers';
-import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 
 const entity = (
   id: string,
@@ -61,7 +57,7 @@ describe('buildExploreGraph', () => {
     const graph = buildExploreGraph({
       centerEntities,
       relationsMap: relationMap({}),
-      config: { leftDepth: 1, rightDepth: 1, relationFieldNames: [] }
+      config: { leftDepth: 1, rightDepth: 1 }
     });
 
     expect(
@@ -87,7 +83,7 @@ describe('buildExploreGraph', () => {
           ]
         }
       }),
-      config: { leftDepth: 0, rightDepth: 1, relationFieldNames: [] },
+      config: { leftDepth: 0, rightDepth: 1 },
       excludedEntityIds: new Set(['a', 'related'])
     });
 
@@ -127,7 +123,7 @@ describe('buildExploreGraph', () => {
           ]
         }
       }),
-      config: { leftDepth: 1, rightDepth: 1, relationFieldNames: [] }
+      config: { leftDepth: 1, rightDepth: 1 }
     });
 
     expect(
@@ -175,19 +171,10 @@ describe('buildExploreGraph', () => {
     const defaultGraph = buildExploreGraph({
       centerEntities: [entity('a', 'App A')],
       relationsMap,
-      config: { leftDepth: 0, rightDepth: 1, relationFieldNames: [] }
+      config: { leftDepth: 0, rightDepth: 1 }
     });
     expect(
       defaultGraph.columns.find(column => column.index === 1)?.entities.map(e => e.entityId)
-    ).toEqual(['right-1']);
-
-    const explicitGraph = buildExploreGraph({
-      centerEntities: [entity('a', 'App A')],
-      relationsMap,
-      config: { leftDepth: 0, rightDepth: 1, relationFieldNames: ['Data Flow'] }
-    });
-    expect(
-      explicitGraph.columns.find(column => column.index === 1)?.entities.map(e => e.entityId)
     ).toEqual(['right-1']);
   });
 
@@ -224,53 +211,13 @@ describe('buildExploreGraph', () => {
           outgoing: []
         }
       }),
-      config: { leftDepth: 2, rightDepth: 1, relationFieldNames: [] }
+      config: { leftDepth: 2, rightDepth: 1 }
     });
 
     expect(
       graph.columns.find(column => column.index === -2)?.entities.map(entity => entity.entityId)
     ).toEqual(['left-2']);
     expect(graph.columns.find(column => column.index === 2)).toBeUndefined();
-  });
-
-  it('filters traversal and connectors by relation field name', () => {
-    const graph = buildExploreGraph({
-      centerEntities: [entity('a', 'App A')],
-      relationsMap: relationMap({
-        a: {
-          incoming: [],
-          outgoing: [
-            {
-              entityId: 'keep-me',
-              publicId: 'KEEP1',
-              entitySlug: 'keep-me',
-              entityName: 'Keep Me',
-              entitySchemaId: 'service',
-              fieldName: 'Depends On',
-              kind: 'reference'
-            },
-            {
-              entityId: 'drop-me',
-              publicId: 'DROP1',
-              entitySlug: 'drop-me',
-              entityName: 'Drop Me',
-              entitySchemaId: 'service',
-              fieldName: 'Consumes',
-              kind: 'reference'
-            }
-          ]
-        }
-      }),
-      config: { leftDepth: 1, rightDepth: 1, relationFieldNames: ['Depends On'] }
-    });
-
-    expect(
-      graph.columns.find(column => column.index === 1)?.entities.map(entity => entity.entityId)
-    ).toEqual(['keep-me']);
-    expect(graph.connectors).toHaveLength(1);
-    expect(graph.connectors[0]).toEqual(
-      expect.objectContaining({ fieldName: 'Depends On', toEntityId: 'keep-me' })
-    );
   });
 
   it('filters traversal by schema-level relation', () => {
@@ -296,8 +243,7 @@ describe('buildExploreGraph', () => {
       config: {
         leftDepth: 0,
         rightDepth: 1,
-        relationFieldNames: [],
-        relationKeys: [buildRelationKey('application', 'service', keep)]
+        columnRelationKeys: { '1': [buildRelationKey('application', 'service', keep)] }
       }
     });
 
@@ -357,7 +303,6 @@ describe('buildExploreGraph', () => {
       config: {
         leftDepth: 1,
         rightDepth: 1,
-        relationFieldNames: [],
         columnSchemaIds: { '-1': 'service', '1': 'database' }
       }
     });
@@ -431,7 +376,6 @@ describe('buildExploreGraph', () => {
       config: {
         leftDepth: 0,
         rightDepth: 2,
-        relationFieldNames: [],
         columnSchemaIds: { '1': 'service' }
       }
     });
@@ -468,7 +412,6 @@ describe('buildExploreGraph', () => {
       config: {
         leftDepth: 0,
         rightDepth: 1,
-        relationFieldNames: [],
         columnSchemaIds: { '1': 'database' }
       }
     });
@@ -507,7 +450,7 @@ describe('buildExploreGraph', () => {
           ]
         }
       }),
-      config: { leftDepth: 1, rightDepth: 1, relationFieldNames: [] }
+      config: { leftDepth: 1, rightDepth: 1 }
     });
 
     expect(
@@ -541,7 +484,7 @@ describe('buildExploreGraph', () => {
           ]
         }
       }),
-      config: { leftDepth: 1, rightDepth: 1, relationFieldNames: [] }
+      config: { leftDepth: 1, rightDepth: 1 }
     });
 
     expect(graph.columns.find(column => column.index === -1)?.entities).toEqual([
@@ -586,51 +529,10 @@ describe('buildExploreGraph', () => {
           ]
         }
       }),
-      config: { leftDepth: 1, rightDepth: 1, relationFieldNames: [] }
+      config: { leftDepth: 1, rightDepth: 1 }
     });
 
     expect(graph.duplicateIds.has('dup')).toBe(true);
-  });
-});
-
-describe('buildExploreRelationOptions', () => {
-  it('deduplicates schema relationships and keeps the full relation wording', () => {
-    const relationKey = buildRelationKey('system-schema', 'api-schema', {
-      fieldName: 'dependsOn',
-      fieldPredicate: 'depends on'
-    });
-    const connector = {
-      fromColumn: 0,
-      fromEntityId: 'system',
-      fromEntityName: 'System',
-      fromEntitySchemaId: 'system-schema',
-      toColumn: 1,
-      toEntityId: 'api',
-      toEntityName: 'API',
-      toEntitySchemaId: 'api-schema',
-      fieldName: 'dependsOn',
-      fieldLabel: 'depends on',
-      kind: 'reference' as const,
-      relationKey
-    };
-    const duplicateWithDifferentFieldName = {
-      ...connector,
-      fieldName: 'consumesApi',
-      relationKey: buildRelationKey('system-schema', 'api-schema', {
-        fieldName: 'consumesApi',
-        fieldPredicate: 'depends on'
-      })
-    };
-
-    expect(buildExploreRelationOptions([connector, duplicateWithDifferentFieldName])).toEqual([
-      {
-        relationKey,
-        sourceEntitySchemaId: 'system-schema',
-        targetEntitySchemaId: 'api-schema',
-        fieldLabel: 'depends on',
-        kind: 'reference'
-      }
-    ]);
   });
 });
 
@@ -645,16 +547,8 @@ describe('normalizeExploreConfig', () => {
   it('uses defaults and clamps depth values to non-negative integers', () => {
     expect(normalizeExploreConfig({ leftDepth: -2, rightDepth: 2.9 })).toMatchObject({
       leftDepth: 0,
-      rightDepth: 2,
-      relationFieldNames: []
+      rightDepth: 2
     });
-  });
-
-  it('deduplicates selected relation fields while preserving their order', () => {
-    expect(
-      normalizeExploreConfig({ relationFieldNames: ['dependsOn', 'ownedBy', 'dependsOn'] })
-        .relationFieldNames
-    ).toEqual(['dependsOn', 'ownedBy']);
   });
 
   it('keeps valid per-column schema selections and drops the center column', () => {
@@ -663,76 +557,6 @@ describe('normalizeExploreConfig', () => {
         columnSchemaIds: { '-1': 'service', '0': 'application', '1': 'database', bad: 'ignored' }
       }).columnSchemaIds
     ).toEqual({ '-1': 'service', '1': 'database' });
-  });
-});
-
-const schemasWithTypedRelation = [
-  {
-    id: 'application',
-    workspace: 'ws',
-    name: 'Application',
-    description: '',
-    key_prefix: 'APP',
-    fields: [
-      {
-        id: 'dependsOn',
-        name: 'Depends On',
-        type: 'reference',
-        schemaId: 'service',
-        minCount: 0,
-        maxCount: -1,
-        requirementLevel: null
-      },
-      {
-        id: 'parent',
-        name: 'Parent',
-        type: 'containment',
-        schemaId: 'application',
-        minCount: 0,
-        maxCount: 1,
-        requirementLevel: null
-      },
-      {
-        id: 'dataFlow',
-        name: 'Data Flow',
-        type: 'typedRelation',
-        relationSchemaId: 'rel-data-flow',
-        direction: 'out',
-        minCount: 0,
-        maxCount: -1,
-        requirementLevel: null
-      }
-    ],
-    color: null,
-    icon: null,
-    entity_count: 0,
-    created_at: '',
-    updated_at: ''
-  }
-] as EntitySchema[];
-
-describe('buildDefaultRelationFieldNames', () => {
-  it('includes reference, containment, and typed-relation fields', () => {
-    expect(buildDefaultRelationFieldNames(schemasWithTypedRelation)).toEqual([
-      'Data Flow',
-      'Depends On',
-      'Parent'
-    ]);
-  });
-});
-
-describe('buildRelationFieldOptions', () => {
-  it('includes typed-relation fields alongside reference/containment fields', () => {
-    const options = buildRelationFieldOptions(schemasWithTypedRelation);
-    expect(options).toContainEqual({
-      value: 'Data Flow',
-      label: 'Data Flow',
-      kind: 'typed',
-      relationSchemaId: 'rel-data-flow'
-    });
-    expect(options.map(o => o.value)).toEqual(
-      expect.arrayContaining(['Depends On', 'Parent', 'Data Flow'])
-    );
   });
 });
 
@@ -762,7 +586,6 @@ describe('per-column relation filters', () => {
       config: {
         leftDepth: 0,
         rightDepth: 1,
-        relationFieldNames: [],
         columnRelationKeys: { '1': [dependsOnKey] }
       }
     });
@@ -789,7 +612,6 @@ describe('per-column relation filters', () => {
       config: {
         leftDepth: 0,
         rightDepth: 2,
-        relationFieldNames: [],
         columnRelationKeys: { '1': [dependsOnKey], '2': [consumesKey] }
       }
     });
@@ -798,27 +620,5 @@ describe('per-column relation filters', () => {
     expect(graph.columns.find(c => c.index === 2)?.entities.map(e => e.entityId)).toEqual([
       'drop-2'
     ]);
-  });
-
-  it('applies a legacy global relation filter to every existing column', () => {
-    const normalized = normalizeExploreConfig({
-      leftDepth: 1,
-      rightDepth: 2,
-      relationFieldNames: [],
-      relationKeys: ['k']
-    });
-    expect(normalized.relationKeys).toBeUndefined();
-    expect(normalized.columnRelationKeys).toEqual({ '-1': ['k'], '1': ['k'], '2': ['k'] });
-  });
-
-  it('keeps an explicit per-column entry over the legacy global filter', () => {
-    const normalized = normalizeExploreConfig({
-      leftDepth: 0,
-      rightDepth: 2,
-      relationFieldNames: [],
-      relationKeys: ['global'],
-      columnRelationKeys: { '1': ['own'] }
-    });
-    expect(normalized.columnRelationKeys).toEqual({ '1': ['own'], '2': ['global'] });
   });
 });

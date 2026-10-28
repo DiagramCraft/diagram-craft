@@ -1,6 +1,6 @@
 import type { Dispatch, ReactNode, SetStateAction } from 'react';
 import { TbSettings } from 'react-icons/tb';
-import { Button } from '@diagram-craft/app-components/Button';
+import { ToolbarButton } from '../../../components/ToolbarButton';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { FilterDropdown } from '../../../components/FilterDropdown';
@@ -41,9 +41,7 @@ export const GraphLayoutToolbar = ({
       <Popover.Root>
         <Popover.Trigger
           element={
-            <Button
-              size="sm"
-              className={styles.eToolbarButton}
+            <ToolbarButton
               icon={<TbSettings size={13} />}
               title="Advanced layout settings"
               aria-label="Advanced layout settings"

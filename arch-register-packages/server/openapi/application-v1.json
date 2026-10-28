@@ -102554,21 +102554,6 @@
                                     "default": 1,
                                     "description": "Depth of relationships to explore on the right"
                                   },
-                                  "relationFieldNames": {
-                                    "type": "array",
-                                    "items": {
-                                      "type": "string"
-                                    },
-                                    "default": [],
-                                    "description": "Relationship field names to include"
-                                  },
-                                  "relationKeys": {
-                                    "type": "array",
-                                    "items": {
-                                      "type": "string"
-                                    },
-                                    "description": "Legacy global relationship filter; migrated to per-column columnRelationKeys when loaded"
-                                  },
                                   "columnRelationKeys": {
                                     "type": "object",
                                     "propertyNames": {
@@ -104305,66 +104290,6 @@
                                       ]
                                     },
                                     "description": "Ordered map levels; later levels may be hidden from the rendered map"
-                                  },
-                                  "levels": {
-                                    "type": "integer",
-                                    "minimum": 1,
-                                    "maximum": 3,
-                                    "default": 2,
-                                    "description": "Number of map levels (1-3)"
-                                  },
-                                  "level1SchemaId": {
-                                    "anyOf": [
-                                      {
-                                        "type": "string"
-                                      },
-                                      {
-                                        "type": "null"
-                                      }
-                                    ],
-                                    "default": null,
-                                    "description": "Schema identifier for level 1"
-                                  },
-                                  "level1Columns": {
-                                    "type": "integer",
-                                    "minimum": 1,
-                                    "maximum": 4,
-                                    "default": 3,
-                                    "description": "Number of columns for level 1 (1-4)"
-                                  },
-                                  "level2SchemaId": {
-                                    "anyOf": [
-                                      {
-                                        "type": "string"
-                                      },
-                                      {
-                                        "type": "null"
-                                      }
-                                    ],
-                                    "description": "Schema identifier for level 2"
-                                  },
-                                  "level2Columns": {
-                                    "type": "integer",
-                                    "minimum": 1,
-                                    "maximum": 4,
-                                    "description": "Number of columns for level 2 (1-4)"
-                                  },
-                                  "level3SchemaId": {
-                                    "anyOf": [
-                                      {
-                                        "type": "string"
-                                      },
-                                      {
-                                        "type": "null"
-                                      }
-                                    ],
-                                    "description": "Schema identifier for level 3"
-                                  },
-                                  "level3Columns": {
-                                    "type": "integer",
-                                    "minimum": 1,
-                                    "maximum": 4,
-                                    "description": "Number of columns for level 3 (1-4)"
                                   },
                                   "hideMissingMetricData": {
                                     "type": "boolean",
@@ -109721,21 +109646,6 @@
                                 "default": 1,
                                 "description": "Depth of relationships to explore on the right"
                               },
-                              "relationFieldNames": {
-                                "type": "array",
-                                "items": {
-                                  "type": "string"
-                                },
-                                "default": [],
-                                "description": "Relationship field names to include"
-                              },
-                              "relationKeys": {
-                                "type": "array",
-                                "items": {
-                                  "type": "string"
-                                },
-                                "description": "Legacy global relationship filter; migrated to per-column columnRelationKeys when loaded"
-                              },
                               "columnRelationKeys": {
                                 "type": "object",
                                 "propertyNames": {
@@ -111178,66 +111088,6 @@
                                   ]
                                 },
                                 "description": "Ordered map levels; later levels may be hidden from the rendered map"
-                              },
-                              "levels": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "maximum": 3,
-                                "default": 2,
-                                "description": "Number of map levels (1-3)"
-                              },
-                              "level1SchemaId": {
-                                "anyOf": [
-                                  {
-                                    "type": "string"
-                                  },
-                                  {
-                                    "type": "null"
-                                  }
-                                ],
-                                "default": null,
-                                "description": "Schema identifier for level 1"
-                              },
-                              "level1Columns": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "maximum": 4,
-                                "default": 3,
-                                "description": "Number of columns for level 1 (1-4)"
-                              },
-                              "level2SchemaId": {
-                                "anyOf": [
-                                  {
-                                    "type": "string"
-                                  },
-                                  {
-                                    "type": "null"
-                                  }
-                                ],
-                                "description": "Schema identifier for level 2"
-                              },
-                              "level2Columns": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "maximum": 4,
-                                "description": "Number of columns for level 2 (1-4)"
-                              },
-                              "level3SchemaId": {
-                                "anyOf": [
-                                  {
-                                    "type": "string"
-                                  },
-                                  {
-                                    "type": "null"
-                                  }
-                                ],
-                                "description": "Schema identifier for level 3"
-                              },
-                              "level3Columns": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "maximum": 4,
-                                "description": "Number of columns for level 3 (1-4)"
                               },
                               "hideMissingMetricData": {
                                 "type": "boolean",
@@ -116697,21 +116547,6 @@
                                   "default": 1,
                                   "description": "Depth of relationships to explore on the right"
                                 },
-                                "relationFieldNames": {
-                                  "type": "array",
-                                  "items": {
-                                    "type": "string"
-                                  },
-                                  "default": [],
-                                  "description": "Relationship field names to include"
-                                },
-                                "relationKeys": {
-                                  "type": "array",
-                                  "items": {
-                                    "type": "string"
-                                  },
-                                  "description": "Legacy global relationship filter; migrated to per-column columnRelationKeys when loaded"
-                                },
                                 "columnRelationKeys": {
                                   "type": "object",
                                   "propertyNames": {
@@ -118448,66 +118283,6 @@
                                     ]
                                   },
                                   "description": "Ordered map levels; later levels may be hidden from the rendered map"
-                                },
-                                "levels": {
-                                  "type": "integer",
-                                  "minimum": 1,
-                                  "maximum": 3,
-                                  "default": 2,
-                                  "description": "Number of map levels (1-3)"
-                                },
-                                "level1SchemaId": {
-                                  "anyOf": [
-                                    {
-                                      "type": "string"
-                                    },
-                                    {
-                                      "type": "null"
-                                    }
-                                  ],
-                                  "default": null,
-                                  "description": "Schema identifier for level 1"
-                                },
-                                "level1Columns": {
-                                  "type": "integer",
-                                  "minimum": 1,
-                                  "maximum": 4,
-                                  "default": 3,
-                                  "description": "Number of columns for level 1 (1-4)"
-                                },
-                                "level2SchemaId": {
-                                  "anyOf": [
-                                    {
-                                      "type": "string"
-                                    },
-                                    {
-                                      "type": "null"
-                                    }
-                                  ],
-                                  "description": "Schema identifier for level 2"
-                                },
-                                "level2Columns": {
-                                  "type": "integer",
-                                  "minimum": 1,
-                                  "maximum": 4,
-                                  "description": "Number of columns for level 2 (1-4)"
-                                },
-                                "level3SchemaId": {
-                                  "anyOf": [
-                                    {
-                                      "type": "string"
-                                    },
-                                    {
-                                      "type": "null"
-                                    }
-                                  ],
-                                  "description": "Schema identifier for level 3"
-                                },
-                                "level3Columns": {
-                                  "type": "integer",
-                                  "minimum": 1,
-                                  "maximum": 4,
-                                  "description": "Number of columns for level 3 (1-4)"
                                 },
                                 "hideMissingMetricData": {
                                   "type": "boolean",
@@ -124786,21 +124561,6 @@
                                 "default": 1,
                                 "description": "Depth of relationships to explore on the right"
                               },
-                              "relationFieldNames": {
-                                "type": "array",
-                                "items": {
-                                  "type": "string"
-                                },
-                                "default": [],
-                                "description": "Relationship field names to include"
-                              },
-                              "relationKeys": {
-                                "type": "array",
-                                "items": {
-                                  "type": "string"
-                                },
-                                "description": "Legacy global relationship filter; migrated to per-column columnRelationKeys when loaded"
-                              },
                               "columnRelationKeys": {
                                 "type": "object",
                                 "propertyNames": {
@@ -126243,66 +126003,6 @@
                                   ]
                                 },
                                 "description": "Ordered map levels; later levels may be hidden from the rendered map"
-                              },
-                              "levels": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "maximum": 3,
-                                "default": 2,
-                                "description": "Number of map levels (1-3)"
-                              },
-                              "level1SchemaId": {
-                                "anyOf": [
-                                  {
-                                    "type": "string"
-                                  },
-                                  {
-                                    "type": "null"
-                                  }
-                                ],
-                                "default": null,
-                                "description": "Schema identifier for level 1"
-                              },
-                              "level1Columns": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "maximum": 4,
-                                "default": 3,
-                                "description": "Number of columns for level 1 (1-4)"
-                              },
-                              "level2SchemaId": {
-                                "anyOf": [
-                                  {
-                                    "type": "string"
-                                  },
-                                  {
-                                    "type": "null"
-                                  }
-                                ],
-                                "description": "Schema identifier for level 2"
-                              },
-                              "level2Columns": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "maximum": 4,
-                                "description": "Number of columns for level 2 (1-4)"
-                              },
-                              "level3SchemaId": {
-                                "anyOf": [
-                                  {
-                                    "type": "string"
-                                  },
-                                  {
-                                    "type": "null"
-                                  }
-                                ],
-                                "description": "Schema identifier for level 3"
-                              },
-                              "level3Columns": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "maximum": 4,
-                                "description": "Number of columns for level 3 (1-4)"
                               },
                               "hideMissingMetricData": {
                                 "type": "boolean",
@@ -131757,21 +131457,6 @@
                                   "default": 1,
                                   "description": "Depth of relationships to explore on the right"
                                 },
-                                "relationFieldNames": {
-                                  "type": "array",
-                                  "items": {
-                                    "type": "string"
-                                  },
-                                  "default": [],
-                                  "description": "Relationship field names to include"
-                                },
-                                "relationKeys": {
-                                  "type": "array",
-                                  "items": {
-                                    "type": "string"
-                                  },
-                                  "description": "Legacy global relationship filter; migrated to per-column columnRelationKeys when loaded"
-                                },
                                 "columnRelationKeys": {
                                   "type": "object",
                                   "propertyNames": {
@@ -133508,66 +133193,6 @@
                                     ]
                                   },
                                   "description": "Ordered map levels; later levels may be hidden from the rendered map"
-                                },
-                                "levels": {
-                                  "type": "integer",
-                                  "minimum": 1,
-                                  "maximum": 3,
-                                  "default": 2,
-                                  "description": "Number of map levels (1-3)"
-                                },
-                                "level1SchemaId": {
-                                  "anyOf": [
-                                    {
-                                      "type": "string"
-                                    },
-                                    {
-                                      "type": "null"
-                                    }
-                                  ],
-                                  "default": null,
-                                  "description": "Schema identifier for level 1"
-                                },
-                                "level1Columns": {
-                                  "type": "integer",
-                                  "minimum": 1,
-                                  "maximum": 4,
-                                  "default": 3,
-                                  "description": "Number of columns for level 1 (1-4)"
-                                },
-                                "level2SchemaId": {
-                                  "anyOf": [
-                                    {
-                                      "type": "string"
-                                    },
-                                    {
-                                      "type": "null"
-                                    }
-                                  ],
-                                  "description": "Schema identifier for level 2"
-                                },
-                                "level2Columns": {
-                                  "type": "integer",
-                                  "minimum": 1,
-                                  "maximum": 4,
-                                  "description": "Number of columns for level 2 (1-4)"
-                                },
-                                "level3SchemaId": {
-                                  "anyOf": [
-                                    {
-                                      "type": "string"
-                                    },
-                                    {
-                                      "type": "null"
-                                    }
-                                  ],
-                                  "description": "Schema identifier for level 3"
-                                },
-                                "level3Columns": {
-                                  "type": "integer",
-                                  "minimum": 1,
-                                  "maximum": 4,
-                                  "description": "Number of columns for level 3 (1-4)"
                                 },
                                 "hideMissingMetricData": {
                                   "type": "boolean",

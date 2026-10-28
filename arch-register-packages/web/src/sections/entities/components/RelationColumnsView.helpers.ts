@@ -1,9 +1,4 @@
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
-import type { EntitySchema } from '@arch-register/api-types/schemaContract';
-import {
-  isReferenceOrContainmentField,
-  isTypedRelationField
-} from '@arch-register/api-types/schemaContract';
 import {
   exploreViewConfigSchema,
   type ExploreViewConfig
@@ -61,13 +56,6 @@ export type ExploreRelationOption = {
   kind: EntityRelation['kind'];
 };
 
-export type ExploreRelationFieldOption = {
-  label: string;
-  value: string;
-  kind: 'typed' | 'reference' | 'containment';
-  relationSchemaId?: string;
-};
-
 export type ExploreGraph = {
   columns: ExploreColumn[];
   connectors: ExploreConnector[];
@@ -78,7 +66,6 @@ export type ExploreGraph = {
 export const DEFAULT_EXPLORE_CONFIG: ExploreViewConfig = {
   leftDepth: 1,
   rightDepth: 1,
-  relationFieldNames: [],
   fieldIds: undefined
 };
 
@@ -102,27 +89,10 @@ export const normalizeExploreConfig = (
       .filter(([columnIndex]) => /^-?[1-9]\d*$/.test(columnIndex))
       .map(([columnIndex, keys]) => [columnIndex, [...new Set(keys)]])
   );
-  // A legacy global relation filter applies to every column that exists now.
-  const legacyKeys = [...new Set(config?.relationKeys ?? [])];
-  if (legacyKeys.length > 0) {
-    const columnIndexes = [
-      ...Array.from({ length: leftDepth }, (_, i) => String(-(i + 1))),
-      ...Array.from({ length: rightDepth }, (_, i) => String(i + 1))
-    ];
-    for (const columnIndex of columnIndexes) {
-      if (columnRelationKeys[columnIndex] === undefined) {
-        columnRelationKeys[columnIndex] = legacyKeys;
-      }
-    }
-  }
 
   return {
     leftDepth,
     rightDepth,
-    relationFieldNames: [
-      ...new Set(config?.relationFieldNames ?? DEFAULT_EXPLORE_CONFIG.relationFieldNames)
-    ],
-    relationKeys: undefined,
     columnRelationKeys: Object.keys(columnRelationKeys).length > 0 ? columnRelationKeys : undefined,
     columnSchemaIds: Object.keys(columnSchemaIds).length > 0 ? columnSchemaIds : undefined,
     fieldIds: config?.fieldIds
@@ -139,51 +109,6 @@ export const parseExploreConfigValue = (raw: string | undefined): ExploreViewCon
   } catch {
     return null;
   }
-};
-
-export const buildRelationFieldOptions = (
-  schemas: EntitySchema[]
-): ExploreRelationFieldOption[] => {
-  const options = new Map<string, ExploreRelationFieldOption>();
-
-  for (const schema of schemas) {
-    for (const field of schema.fields) {
-      if (isReferenceOrContainmentField(field)) {
-        options.set(field.name, {
-          value: field.name,
-          label: field.predicate ?? field.name,
-          kind: field.type
-        });
-      } else if (isTypedRelationField(field)) {
-        options.set(field.name, {
-          value: field.name,
-          label: field.name,
-          kind: 'typed',
-          relationSchemaId: field.relationSchemaId
-        });
-      }
-    }
-  }
-
-  return [...options.values()].sort((a, b) => a.label.localeCompare(b.label));
-};
-
-export const buildDefaultRelationFieldNames = (schemas: EntitySchema[]): string[] => {
-  const names = new Set<string>();
-
-  for (const schema of schemas) {
-    for (const field of schema.fields) {
-      if (
-        field.type === 'reference' ||
-        field.type === 'containment' ||
-        isTypedRelationField(field)
-      ) {
-        names.add(field.name);
-      }
-    }
-  }
-
-  return [...names].sort((a, b) => a.localeCompare(b));
 };
 
 const toCenterEntity = (entity: EntityRecord): ExploreEntity => ({
@@ -214,7 +139,6 @@ export const buildRelationKey = (
   JSON.stringify([sourceEntitySchemaId, getRelationDisplayLabel(relation), targetEntitySchemaId]);
 
 const shouldIncludeRelation = (
-  selectedFieldNames: Set<string>,
   selectedRelationKeys: Set<string>,
   sourceEntitySchemaId: string,
   targetEntitySchemaId: string,
@@ -225,7 +149,7 @@ const shouldIncludeRelation = (
       buildRelationKey(sourceEntitySchemaId, targetEntitySchemaId, relation)
     );
   }
-  return selectedFieldNames.size === 0 || selectedFieldNames.has(relation.fieldName);
+  return true;
 };
 
 const toExploreConnector = ({
@@ -287,28 +211,6 @@ const sortRelationOptions = (options: Map<string, ExploreRelationOption>) =>
     )
   );
 
-export const buildExploreRelationOptions = (
-  connectors: ExploreConnector[]
-): ExploreRelationOption[] => {
-  const options = new Map<string, ExploreRelationOption>();
-
-  for (const connector of connectors) {
-    options.set(connector.relationKey, {
-      relationKey: connector.relationKey,
-      sourceEntitySchemaId: connector.fromEntitySchemaId,
-      targetEntitySchemaId: connector.toEntitySchemaId,
-      fieldLabel: connector.fieldLabel,
-      kind: connector.kind
-    });
-  }
-
-  return [...options.values()].sort((a, b) =>
-    `${a.sourceEntitySchemaId} ${a.fieldLabel} ${a.targetEntitySchemaId}`.localeCompare(
-      `${b.sourceEntitySchemaId} ${b.fieldLabel} ${b.targetEntitySchemaId}`
-    )
-  );
-};
-
 const dedupeColumn = (entities: ExploreEntity[]) => {
   const seen = new Set<string>();
   return entities.filter(entity => {
@@ -330,7 +232,6 @@ export const buildExploreGraph = ({
   excludedEntityIds?: ReadonlySet<string>;
 }): ExploreGraph => {
   const normalizedConfig = normalizeExploreConfig(config);
-  const selectedFieldNames = new Set(normalizedConfig.relationFieldNames);
   const columns = new Map<number, ExploreColumn>();
   const connectors: ExploreConnector[] = [];
 
@@ -362,7 +263,6 @@ export const buildExploreGraph = ({
         if (excludedEntityIds.has(relation.entityId)) continue;
         if (
           !shouldIncludeRelation(
-            selectedFieldNames,
             selectedRelationKeys,
             relation.entitySchemaId,
             entity.schemaId,
@@ -417,7 +317,6 @@ export const buildExploreGraph = ({
         if (excludedEntityIds.has(relation.entityId)) continue;
         if (
           !shouldIncludeRelation(
-            selectedFieldNames,
             selectedRelationKeys,
             entity.schemaId,
             relation.entitySchemaId,

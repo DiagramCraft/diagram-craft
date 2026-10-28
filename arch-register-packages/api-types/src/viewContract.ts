@@ -15,23 +15,25 @@ import {
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
+export const BROWSER_VIEWS = [
+  'table',
+  'cards',
+  'tree',
+  'radar',
+  'timeline',
+  'relation-matrix',
+  'relation-columns',
+  'bubble-chart',
+  'heatmap',
+  'nested-map',
+  'compare-dates',
+  'graph',
+  'traceability',
+  'trail'
+] as const;
+
 export const browserViewSchema = z
-  .enum([
-    'table',
-    'cards',
-    'tree',
-    'radar',
-    'timeline',
-    'relation-matrix',
-    'relation-columns',
-    'bubble-chart',
-    'heatmap',
-    'nested-map',
-    'compare-dates',
-    'graph',
-    'traceability',
-    'trail'
-  ])
+  .enum(BROWSER_VIEWS)
   .describe('Available view modes for displaying entities');
 
 const filterConditionFields = {
@@ -305,33 +307,6 @@ export const mapViewConfigSchema = z.object({
     .min(1)
     .optional()
     .describe('Ordered map levels; later levels may be hidden from the rendered map'),
-  // Legacy fixed-depth fields are retained so existing saved views remain valid. The web view
-  // migrates them to levelConfigs when it loads the configuration.
-  levels: z.number().int().min(1).max(3).default(2).describe('Number of map levels (1-3)'),
-  level1SchemaId: z.string().nullable().default(null).describe('Schema identifier for level 1'),
-  level1Columns: z
-    .number()
-    .int()
-    .min(1)
-    .max(4)
-    .default(3)
-    .describe('Number of columns for level 1 (1-4)'),
-  level2SchemaId: z.string().nullable().optional().describe('Schema identifier for level 2'),
-  level2Columns: z
-    .number()
-    .int()
-    .min(1)
-    .max(4)
-    .optional()
-    .describe('Number of columns for level 2 (1-4)'),
-  level3SchemaId: z.string().nullable().optional().describe('Schema identifier for level 3'),
-  level3Columns: z
-    .number()
-    .int()
-    .min(1)
-    .max(4)
-    .optional()
-    .describe('Number of columns for level 3 (1-4)'),
   hideMissingMetricData: z
     .boolean()
     .optional()
@@ -365,16 +340,6 @@ export const exploreViewConfigSchema = z.object({
     .min(0)
     .default(1)
     .describe('Depth of relationships to explore on the right'),
-  relationFieldNames: z
-    .array(z.string())
-    .default([])
-    .describe('Relationship field names to include'),
-  relationKeys: z
-    .array(z.string())
-    .optional()
-    .describe(
-      'Legacy global relationship filter; migrated to per-column columnRelationKeys when loaded'
-    ),
   columnRelationKeys: z
     .record(z.string(), z.array(z.string()))
     .optional()
@@ -680,6 +645,8 @@ export const workspaceViewContract = oc.tag('Views').router({
 });
 
 export type BrowserView = z.infer<typeof browserViewSchema>;
+
+export type SavedViewConfig = z.infer<typeof viewConfigSchema>;
 
 export type FilterCondition = z.infer<typeof filterConditionSchema>;
 

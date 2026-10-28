@@ -12,32 +12,7 @@
 /* ── Config bar ──────────────────────────────────────────────── */
 
 .config {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  border-bottom: 1px solid var(--panel-border);
-  flex-shrink: 0;
-  flex-wrap: wrap;
-  min-height: 42px;
-}
-
-.cross {
-  font-size: 15px;
-  color: var(--base-fg-more-dim);
-  font-weight: 300;
-  padding: 0 2px;
-  flex-shrink: 0;
-}
-
-.toggleButton[data-size="sm"] {
-  height: 24px;
-}
-
-/* Match the FilterDropdowns next to them (26px tall in total, panel border). */
-.toggleButton[data-size="sm"][data-variant="secondary"] {
-  border-color: var(--panel-border);
-  background: var(--cmp-bg);
+  composes: bar from "../../../components/ViewConfigBar.module.css";
 }
 
 .noRel {

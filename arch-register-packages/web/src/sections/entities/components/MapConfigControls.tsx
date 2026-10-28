@@ -16,6 +16,7 @@ import styles from './NestedMapView.module.css';
 import type { PopoverActions } from '@diagram-craft/app-components/Popover';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { Button } from '@diagram-craft/app-components/Button';
+import { ToolbarButton } from '../../../components/ToolbarButton';
 import { FilterBuilder } from '../../../components/FilterBuilder';
 import {
   AGGREGATION_OPTIONS,
@@ -543,10 +544,7 @@ export const MapConfigControls = ({
                         o.value === 'none' ||
                         o.value === 'count' ||
                         o.value === 'best' ||
-                        o.value === 'worst' ||
-                        // A saved numeric aggregation of a lifecycle metric stays selectable.
-                        (metricConfig.source.kind === 'lifecycle' &&
-                          o.value === metricConfig.aggregation)
+                        o.value === 'worst'
                     )
                   : AGGREGATION_OPTIONS
                 ).map(o => ({
@@ -647,9 +645,7 @@ export const MapConfigControls = ({
                 options={MAP_COLOR_SCHEME_OPTIONS}
               />
 
-              <Button
-                size="sm"
-                className={styles.metricButton}
+              <ToolbarButton
                 variant={cfg.reverseColors ? 'primary' : undefined}
                 icon={<TbArrowsExchange size={13} />}
                 title={cfg.reverseColors ? 'Use the normal color order' : 'Reverse the color order'}
@@ -660,9 +656,7 @@ export const MapConfigControls = ({
                 onClick={() => notify({ reverseColors: !cfg.reverseColors })}
               />
 
-              <Button
-                size="sm"
-                className={styles.metricButton}
+              <ToolbarButton
                 variant={cfg.hideMissingMetricData ? 'primary' : undefined}
                 icon={<TbEyeOff size={13} />}
                 title={

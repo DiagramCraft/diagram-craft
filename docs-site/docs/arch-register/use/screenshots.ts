@@ -237,11 +237,10 @@ export const screenshots: ArchRegisterScreenshotConfig[] = [
       const viewConfigs = JSON.stringify(
         JSON.stringify({
           'nested-map': {
-            levels: 2,
-            level1SchemaId: domainSchema.id,
-            level1Columns: 3,
-            level2SchemaId: systemSchema.id,
-            level2Columns: 3,
+            levelConfigs: [
+              { schemaId: domainSchema.id, columns: 3 },
+              { schemaId: systemSchema.id, columns: 3 }
+            ],
             metricConfig: {
               sourceSchemaId: componentSchema.id,
               source: { kind: 'lifecycle' },

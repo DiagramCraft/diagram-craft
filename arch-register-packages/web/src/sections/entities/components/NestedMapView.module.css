@@ -12,14 +12,8 @@
 /* ── Config bar ──────────────────────────────────────────────── */
 
 .config {
-  display: flex;
-  align-items: center;
+  composes: bar from "../../../components/ViewConfigBar.module.css";
   gap: 6px;
-  padding: 6px 10px;
-  border-bottom: 1px solid var(--panel-border);
-  flex-shrink: 0;
-  flex-wrap: wrap;
-  min-height: 42px;
 }
 
 .hierarchyConfig {
@@ -84,16 +78,6 @@
   white-space: nowrap;
   color: var(--base-fg);
   font-size: 11px;
-}
-
-.pathClear {
-  border: 0;
-  background: transparent;
-  color: var(--base-fg-more-dim);
-  cursor: pointer;
-  font: inherit;
-  font-size: 11px;
-  padding: 2px 4px;
 }
 
 .selectWrap {
@@ -167,16 +151,6 @@
 
 .levelHidden {
   color: var(--accent-fg);
-}
-
-.metricButton[data-size="sm"] {
-  height: 24px;
-}
-
-/* Match the dropdowns next to it (26px tall in total, panel border). */
-.metricButton[data-size="sm"][data-variant="default"] {
-  border-color: var(--panel-border);
-  background: var(--cmp-bg);
 }
 
 .levelAction:disabled {

@@ -462,29 +462,13 @@ export const resetExploreRelationFilter = (
   const exploreConfig = viewConfigs['relation-columns'];
   if (exploreConfig == null || typeof exploreConfig !== 'object') return viewConfigs;
 
-  const config = exploreConfig as {
-    relationKeys?: unknown;
-    columnRelationKeys?: unknown;
-    relationFieldNames?: unknown;
-  };
-  const hasRelationKeys = Array.isArray(config.relationKeys) && config.relationKeys.length > 0;
+  const { columnRelationKeys, ...rest } = exploreConfig as Record<string, unknown>;
   const hasColumnRelationKeys =
-    config.columnRelationKeys != null &&
-    typeof config.columnRelationKeys === 'object' &&
-    Object.keys(config.columnRelationKeys).length > 0;
-  const hasRelationFieldNames =
-    Array.isArray(config.relationFieldNames) && config.relationFieldNames.length > 0;
-  if (!hasRelationKeys && !hasColumnRelationKeys && !hasRelationFieldNames) return viewConfigs;
-
-  const {
-    relationKeys: _relationKeys,
-    columnRelationKeys: _columnRelationKeys,
-    ...rest
-  } = exploreConfig as Record<string, unknown>;
-  return {
-    ...viewConfigs,
-    'relation-columns': { ...rest, relationFieldNames: [] }
-  };
+    columnRelationKeys != null &&
+    typeof columnRelationKeys === 'object' &&
+    Object.keys(columnRelationKeys).length > 0;
+  if (!hasColumnRelationKeys) return viewConfigs;
+  return { ...viewConfigs, 'relation-columns': rest };
 };
 
 const isAssessmentFieldId = (value: unknown): value is string =>
@@ -667,21 +651,7 @@ export const toSavedViewConfig = (
   const config = viewConfigs[view];
   const result: Record<string, unknown> = {};
   if (sort && sort !== 'name') result.sort = sort;
-  if (config != null) {
-    if (view === 'radar') result.radar = config;
-    if (view === 'timeline') result.timeline = config;
-    if (view === 'relation-matrix') result['relation-matrix'] = config;
-    if (view === 'relation-columns') result['relation-columns'] = config;
-    if (view === 'bubble-chart') result['bubble-chart'] = config;
-    if (view === 'heatmap') result.heatmap = config;
-    if (view === 'nested-map') result['nested-map'] = config;
-    if (view === 'table') result.table = config;
-    if (view === 'cards') result.cards = config;
-    if (view === 'tree') result.tree = config;
-    if (view === 'graph') result.graph = config;
-    if (view === 'traceability') result.traceability = config;
-    if (view === 'trail') result.trail = config;
-  }
+  if (config != null) result[view] = config;
   return Object.keys(result).length > 0 ? (result as CreateSavedViewRequest['config']) : null;
 };
 

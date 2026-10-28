@@ -1,16 +1,7 @@
 import {
   BrowserView,
-  BubbleViewConfig,
-  CardsViewConfig,
-  ExploreViewConfig,
   FilterCondition,
-  GraphViewConfig,
-  MapViewConfig,
-  MatrixViewConfig,
-  RadarViewConfig,
-  TableViewConfig,
-  TimelineViewConfig,
-  TreeViewConfig
+  SavedViewConfig
 } from '@arch-register/api-types/viewContract';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import {
@@ -844,19 +835,7 @@ export type SavedViewDbResult = {
   is_admin_view: boolean;
   view_mode: BrowserView;
   filters: EntityQuery;
-  config: {
-    sort?: string;
-    table?: TableViewConfig;
-    cards?: CardsViewConfig;
-    tree?: TreeViewConfig;
-    radar?: RadarViewConfig;
-    timeline?: TimelineViewConfig;
-    'relation-matrix'?: MatrixViewConfig;
-    'relation-columns'?: ExploreViewConfig;
-    'bubble-chart'?: BubbleViewConfig;
-    'nested-map'?: MapViewConfig;
-    graph?: GraphViewConfig;
-  } | null;
+  config: SavedViewConfig | null;
   created_at: Date;
   updated_at: Date;
 };

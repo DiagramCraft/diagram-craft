@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
-import { Button } from '@diagram-craft/app-components/Button';
+import { ToolbarButton } from '../../../components/ToolbarButton';
 import type { MultiSelectItem } from '@diagram-craft/app-components/MultiSelect';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
@@ -188,9 +188,7 @@ export const EntityBrowserGraphView = ({
         <MenuButton.Root>
           <MenuButton.Trigger
             element={
-              <Button
-                size="sm"
-                className={styles.eToolbarButton}
+              <ToolbarButton
                 icon={<TbFilter size={13} />}
                 variant={relationSchemaFilter.size > 0 ? 'primary' : undefined}
                 aria-label="Filter relation types"
@@ -199,7 +197,7 @@ export const EntityBrowserGraphView = ({
                 {relationSchemaFilter.size === 0
                   ? 'All relation types'
                   : `${relationSchemaFilter.size} relation type${relationSchemaFilter.size === 1 ? '' : 's'}`}
-              </Button>
+              </ToolbarButton>
             }
           />
           <MenuButton.Menu align="start">
@@ -224,20 +222,19 @@ export const EntityBrowserGraphView = ({
 
         {isAnyLoading && <span className={styles.eLoadingText}>Loading…</span>}
 
-        <Button
-          className={`${styles.eResetButton} ${styles.eToolbarButton}`}
+        <ToolbarButton
+          className={styles.eResetButton}
           disabled={excludedIds.size === 0 && manuallyExpanded.size === 0}
-          size="sm"
           onClick={resetGraph}
         >
           Reset
-        </Button>
+        </ToolbarButton>
 
         {allowActions && (
-          <Button size="sm" className={styles.eToolbarButton} onClick={createDiagram}>
+          <ToolbarButton onClick={createDiagram}>
             <TbFileExport size={14} />
             Create diagram
-          </Button>
+          </ToolbarButton>
         )}
       </div>
 

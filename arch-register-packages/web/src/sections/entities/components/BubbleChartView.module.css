@@ -1,12 +1,6 @@
 /* Screen */
 .screen {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
-  min-height: 0;
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r-md);
+  composes: frame from "../../../components/ViewConfigBar.module.css";
 }
 
 /* Content */
@@ -21,37 +15,12 @@
 
 /* Config bar */
 .config {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  border-bottom: 1px solid var(--panel-border);
-  flex-shrink: 0;
-  flex-wrap: wrap;
-  min-height: 42px;
+  composes: bar from "../../../components/ViewConfigBar.module.css";
 }
 
 .noFields {
   font-size: 11px;
   color: var(--base-fg-more-dim);
-}
-
-.schemaWarning {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 11px;
-  color: var(--base-fg-more-dim);
-}
-
-.config .quadrantsButton[data-size="sm"] {
-  height: 24px;
-}
-
-/* Match the FilterDropdowns next to it (26px tall in total, panel border). */
-.config .quadrantsButton[data-size="sm"][data-variant="default"] {
-  border-color: var(--panel-border);
-  background: var(--cmp-bg);
 }
 
 .quadrantsPopover {

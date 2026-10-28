@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQueries } from '@tanstack/react-query';
 import { TbChevronDown, TbPlus, TbTrash, TbX } from 'react-icons/tb';
+import { FilterDropdown } from '../../../components/FilterDropdown';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import {
   MAX_PATH_HOPS,
@@ -483,42 +484,26 @@ export const TraceabilityView = ({
                       )}
                     </div>
 
-                    <span className={styles.pathTargetLabel} id={`trace-target-label-${path.id}`}>
-                      Target
-                    </span>
-                    <div className={styles.selectWrap}>
-                      <select
-                        className={styles.select}
-                        value={
-                          path.targetSchemaIds === 'any'
-                            ? 'any'
-                            : (path.targetSchemaIds[0] ?? 'any')
-                        }
-                        aria-labelledby={`trace-target-label-${path.id}`}
-                        onChange={event =>
-                          updateConfig({
-                            ...editorConfig,
-                            paths: editorConfig.paths.map(candidate =>
-                              candidate.id === path.id
-                                ? {
-                                    ...candidate,
-                                    targetSchemaIds:
-                                      event.target.value === 'any' ? 'any' : [event.target.value]
-                                  }
-                                : candidate
-                            )
-                          })
-                        }
-                      >
-                        <option value="any">Any</option>
-                        {schemas.map(schema => (
-                          <option key={schema.id} value={schema.id}>
-                            {schema.name}
-                          </option>
-                        ))}
-                      </select>
-                      <TbChevronDown size={11} />
-                    </div>
+                    <FilterDropdown
+                      label="Target"
+                      value={
+                        path.targetSchemaIds === 'any' ? 'any' : (path.targetSchemaIds[0] ?? 'any')
+                      }
+                      onChange={value =>
+                        updateConfig({
+                          ...editorConfig,
+                          paths: editorConfig.paths.map(candidate =>
+                            candidate.id === path.id
+                              ? { ...candidate, targetSchemaIds: value === 'any' ? 'any' : [value] }
+                              : candidate
+                          )
+                        })
+                      }
+                      options={[
+                        { value: 'any', label: 'Any' },
+                        ...schemas.map(schema => ({ value: schema.id, label: schema.name }))
+                      ]}
+                    />
                   </div>
                 );
               })}

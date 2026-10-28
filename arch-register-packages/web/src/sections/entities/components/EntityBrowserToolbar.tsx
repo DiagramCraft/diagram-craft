@@ -17,27 +17,11 @@ import { FilterDropdown } from '../../../components/FilterDropdown';
 import styles from './EntityBrowser.module.css';
 import { ManageFieldsPopover } from './ManageFieldsPopover';
 import { AssessmentJoinPicker } from './AssessmentJoinPicker';
+import { BROWSER_VIEW_OPTIONS } from './browserViewMeta';
 import { ViewHelpPopover } from './ViewHelpPopover';
 import { QueryModeControls } from './QueryModeControls';
 import type { EntityDisplayField } from './entityDisplayFields';
 import type { AssessmentJoinOption } from './useJoinedAssessment';
-
-const ALL_VIEW_OPTIONS = [
-  { value: 'table', label: 'Table' },
-  { value: 'cards', label: 'Cards' },
-  { value: 'tree', label: 'Tree' },
-  { value: 'radar', label: 'Radar' },
-  { value: 'bubble-chart', label: 'Bubble chart' },
-  { value: 'heatmap', label: 'Heat map' },
-  { value: 'timeline', label: 'Timeline' },
-  { value: 'relation-matrix', label: 'Relation matrix' },
-  { value: 'relation-columns', label: 'Relation columns' },
-  { value: 'nested-map', label: 'Nested map' },
-  { value: 'compare-dates', label: 'Compare dates' },
-  { value: 'graph', label: 'Graph' },
-  { value: 'traceability', label: 'Traceability' },
-  { value: 'trail', label: 'Trail' }
-];
 
 type EntityBrowserToolbarProps = {
   workspaceId: string;
@@ -162,7 +146,7 @@ export const EntityBrowserToolbar = ({
       <div style={{ flex: 1 }} />
       <FilterDropdown label="Sort" value={sort} onChange={setSort} options={sortOptions} />
       {(() => {
-        const viewOptions = allowedViews ?? ALL_VIEW_OPTIONS;
+        const viewOptions = allowedViews ?? BROWSER_VIEW_OPTIONS;
         return (
           <>
             <FilterDropdown

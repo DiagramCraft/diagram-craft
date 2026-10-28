@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import styles from './RadarView.module.css';
 import { TbArrowsSort, TbChevronUp, TbChevronDown } from 'react-icons/tb';
-import { Button } from '@diagram-craft/app-components/Button';
+import { ToolbarButton } from '../../../components/ToolbarButton';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { EmptyState } from '../../../components/EmptyState';
 import { FilterDropdown } from '../../../components/FilterDropdown';
@@ -346,9 +346,7 @@ export const RadarView = ({
           <Popover.Root open={ringOrderOpen} onOpenChange={setRingOrderOpen}>
             <Popover.Trigger
               element={
-                <Button
-                  size="sm"
-                  className={styles.ringOrderButton}
+                <ToolbarButton
                   disabled={!config}
                   icon={<TbArrowsSort size={12} />}
                   aria-label="Ring order"

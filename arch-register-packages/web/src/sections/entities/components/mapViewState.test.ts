@@ -271,10 +271,11 @@ describe('map view state', () => {
   it('collects the schema ids for the configured map levels', () => {
     expect(
       getMapSchemaIds({
-        levels: 3,
-        level1SchemaId: 'domain',
-        level2SchemaId: 'system',
-        level3SchemaId: 'component'
+        levelConfigs: [
+          { schemaId: 'domain', columns: 3 },
+          { schemaId: 'system', columns: 3 },
+          { schemaId: 'component', columns: 3 }
+        ]
       })
     ).toEqual(['domain', 'system', 'component']);
   });
@@ -305,24 +306,14 @@ describe('map view state', () => {
     ]);
   });
 
-  it('truncates to the number of active levels', () => {
-    expect(
-      getMapSchemaIds({
-        levels: 1,
-        level1SchemaId: 'domain',
-        level2SchemaId: 'system',
-        level3SchemaId: 'component'
-      })
-    ).toEqual(['domain']);
-  });
-
   it('filters out unset levels and dedupes repeated schema ids', () => {
     expect(
       getMapSchemaIds({
-        levels: 3,
-        level1SchemaId: 'domain',
-        level2SchemaId: null,
-        level3SchemaId: 'domain'
+        levelConfigs: [
+          { schemaId: 'domain', columns: 3 },
+          { schemaId: null, columns: 3 },
+          { schemaId: 'domain', columns: 3 }
+        ]
       })
     ).toEqual(['domain']);
   });
@@ -330,10 +321,11 @@ describe('map view state', () => {
   it('returns an empty list when the map is unconfigured', () => {
     expect(
       getMapSchemaIds({
-        levels: 2,
-        level1SchemaId: null,
-        level2SchemaId: null,
-        level3SchemaId: null
+        levelConfigs: [
+          { schemaId: null, columns: 3 },
+          { schemaId: null, columns: 3 },
+          { schemaId: null, columns: 3 }
+        ]
       })
     ).toEqual([]);
   });

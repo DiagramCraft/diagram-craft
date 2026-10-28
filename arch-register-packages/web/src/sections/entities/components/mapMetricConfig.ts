@@ -348,15 +348,10 @@ export const isChoiceSource = (source: MetricSource): boolean =>
 
 /**
  * Whether the roll-up of this metric is a dominant option (most common / best / worst) rather than
- * a number: select sources always, lifecycle for its choice-style aggregations. Lifecycle with
- * sum/average/minimum/maximum stays numeric (saved metrics keep working).
+ * a number: select and lifecycle sources always.
  */
-export const isChoiceMetric = (metric: Pick<MetricConfig, 'source' | 'aggregation'>): boolean =>
-  isEnumSource(metric.source) ||
-  (metric.source.kind === 'lifecycle' &&
-    (metric.aggregation === 'count' ||
-      metric.aggregation === 'best' ||
-      metric.aggregation === 'worst'));
+export const isChoiceMetric = (metric: Pick<MetricConfig, 'source'>): boolean =>
+  isChoiceSource(metric.source);
 
 export const isCurrencyMetric = (
   metric: MetricConfig,

@@ -614,14 +614,6 @@ describe('computeBoxMetrics', () => {
       // ...while "*" sees both schemas, so the two deprecated workers win.
       expect(run('*')).toMatchObject({ sourceCount: 3, dominantValue: 'deprecated' });
     });
-
-    it('keeps ranking by sort order for the numeric aggregations of saved metrics', () => {
-      expect(run(lifecycleMetric('maximum'))).toMatchObject({
-        value: 2,
-        lifecycleId: 'deprecated',
-        populatedCount: 3
-      });
-    });
   });
 
   it('assessment-rating source reads from the responses map and ignores unpopulated entities', () => {

@@ -64,7 +64,6 @@ describe('matrix view state', () => {
     expect(data.displayRows.map(row => row._uid)).toEqual(['r1']);
     expect(data.displayCols.map(column => column.id)).toEqual(['a']);
     expect(data.cellMatrix).toEqual([[true]]);
-    expect(data.totalFilled).toBe(1);
   });
 
   it('reads custom multi-select values from full rows', () => {

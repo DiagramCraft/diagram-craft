@@ -4972,11 +4972,6 @@ const resolveViewModeConfigSchemaIds = (
       };
     case 'nested-map': {
       const resolved: Record<string, unknown> = { ...config };
-      for (const key of ['level1SchemaId', 'level2SchemaId', 'level3SchemaId']) {
-        if (typeof config[key] === 'string') {
-          resolved[key] = idMap.get(config[key] as string) ?? config[key];
-        }
-      }
       if (Array.isArray(config.levelConfigs)) {
         resolved.levelConfigs = (config.levelConfigs as Array<Record<string, unknown>>).map(
           level =>

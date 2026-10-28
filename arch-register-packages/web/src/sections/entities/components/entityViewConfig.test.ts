@@ -79,22 +79,12 @@ describe('normalizeViewConfig', () => {
 
   it('passes through an optional field from the parsed config when defaults declares it as undefined', () => {
     const mapDefaults = {
-      levels: 2,
-      level1SchemaId: null as string | null,
-      level1Columns: 3,
-      level2SchemaId: null as string | null,
-      level2Columns: 3,
-      level3SchemaId: null as string | null,
-      level3Columns: 3,
       fieldIds: undefined as string[] | undefined,
       metricConfig: undefined as unknown
     };
-    const raw = { levels: 1, level1SchemaId: 'service', level1Columns: 2, fieldIds: ['_owner'] };
+    const raw = { fieldIds: ['_owner'] };
     expect(normalizeViewConfig(mapViewConfigSchema, raw, mapDefaults)).toEqual({
       ...mapDefaults,
-      levels: 1,
-      level1SchemaId: 'service',
-      level1Columns: 2,
       fieldIds: ['_owner']
     });
   });

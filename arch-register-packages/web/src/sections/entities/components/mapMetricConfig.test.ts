@@ -381,23 +381,14 @@ describe('aggregationOptionLabel', () => {
 
 describe('isChoiceMetric', () => {
   it('treats select sources as choices', () => {
-    expect(
-      isChoiceMetric({ source: { kind: 'enum', fieldId: 'tier' }, aggregation: 'count' })
-    ).toBe(true);
+    expect(isChoiceMetric({ source: { kind: 'enum', fieldId: 'tier' } })).toBe(true);
   });
 
-  it('treats lifecycle as a choice only for the choice-style aggregations', () => {
-    for (const aggregation of ['count', 'best', 'worst'] as const) {
-      expect(isChoiceMetric({ source: { kind: 'lifecycle' }, aggregation })).toBe(true);
-    }
-    for (const aggregation of ['sum', 'average', 'minimum', 'maximum'] as const) {
-      expect(isChoiceMetric({ source: { kind: 'lifecycle' }, aggregation })).toBe(false);
-    }
+  it('treats lifecycle as a choice', () => {
+    expect(isChoiceMetric({ source: { kind: 'lifecycle' } })).toBe(true);
   });
 
   it('does not treat numeric fields as choices', () => {
-    expect(
-      isChoiceMetric({ source: { kind: 'field', fieldId: 'cost' }, aggregation: 'count' })
-    ).toBe(false);
+    expect(isChoiceMetric({ source: { kind: 'field', fieldId: 'cost' } })).toBe(false);
   });
 });

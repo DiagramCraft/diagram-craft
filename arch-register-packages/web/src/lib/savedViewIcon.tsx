@@ -3,11 +3,16 @@ import {
   TbArrowsRightLeft,
   TbBinaryTree2,
   TbCalendarWeek,
+  TbChartBubble,
   TbChartRadar,
   TbColumns3,
+  TbGitCompare,
+  TbGrid3X3,
+  TbGridDots,
   TbLayoutGrid,
   TbList,
   TbMap,
+  TbRoute,
   TbTable,
   TbVectorTriangle
 } from 'react-icons/tb';
@@ -25,6 +30,16 @@ export const savedViewIcon = (mode: string, size = 12): ReactElement => {
       return <TbChartRadar size={size} />;
     case 'timeline':
       return <TbCalendarWeek size={size} />;
+    case 'bubble-chart':
+      return <TbChartBubble size={size} />;
+    case 'heatmap':
+      return <TbGridDots size={size} />;
+    case 'relation-matrix':
+      return <TbGrid3X3 size={size} />;
+    case 'compare-dates':
+      return <TbGitCompare size={size} />;
+    case 'trail':
+      return <TbRoute size={size} />;
     case 'relation-columns':
       return <TbColumns3 size={size} />;
     case 'nested-map':

@@ -1,22 +1,26 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import styles from './BubbleChartView.module.css';
-import { TbAlertTriangle, TbGrid3X3 } from 'react-icons/tb';
-import { Button } from '@diagram-craft/app-components/Button';
+import { TbGrid3X3 } from 'react-icons/tb';
+import { ToolbarButton } from '../../../components/ToolbarButton';
 import { Popover, type PopoverActions } from '@diagram-craft/app-components/Popover';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { EmptyState } from '../../../components/EmptyState';
+import { MixedSchemasWarning } from '../../../components/MixedSchemasWarning';
 import { FilterDropdown } from '../../../components/FilterDropdown';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { bubbleViewConfigSchema } from '@arch-register/api-types/viewContract';
 import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
 import {
-  getCategoricalFields,
-  getNumericFields,
   getCategoricalFieldValues,
   getNumericFieldRange,
-  type FieldOption,
   type JoinedAssessmentContext
 } from './entityFieldSources';
+import {
+  keepKnownFieldId,
+  repairAxisPair,
+  useAxisFieldOptions,
+  useSeedDefaultConfig
+} from './useAxisFieldOptions';
 import { normalizeViewConfig } from './entityViewConfig';
 import { TooltipChip, TooltipChips, TooltipRow } from '../../../components/HoverCardParts';
 import {
@@ -76,7 +80,7 @@ export const BubbleChartView = ({
   hideToolbar?: boolean;
   joinedAssessment?: JoinedAssessmentContext | null;
 }) => {
-  const { workspaceSlug, schemas, lifecycleStates, teams } = useWorkspaceContext();
+  const { workspaceSlug, lifecycleStates, teams } = useWorkspaceContext();
   const parsedConfig = useMemo(() => {
     const normalized = normalizeViewConfig(bubbleViewConfigSchema, configProp, EMPTY_BUBBLE_CONFIG);
     return normalized.xFieldId ? normalized : null;
@@ -103,53 +107,20 @@ export const BubbleChartView = ({
   const scheduleClose = hoverDisclosure.scheduleClose;
 
   // Rows arrive in 'summary' view; custom select/number fields need the full-view records.
-  // Fields are unioned across every schema present in the current rows (not schema-scoped),
-  // so fetch the full-view records per row schema, the same way RelationMatrixView's attribute mode does.
-  const rowSchemaIds = useMemo(() => [...new Set(rows.map(r => r._schema.id))], [rows]);
-  const schemasInScope = useMemo(
-    () => schemas.filter(s => rowSchemaIds.includes(s.id)),
-    [schemas, rowSchemaIds]
-  );
-
+  const { schemasInScope, categoricalFields, numericFields, axisFieldOptions, isNumericField } =
+    useAxisFieldOptions(rows, joinedAssessment);
+  const hasMixedSchemas = useMemo(() => new Set(rows.map(r => r._schema.id)).size > 1, [rows]);
   const entities = useHydratedEntityRows(workspaceSlug, rows);
 
-  const categoricalFields = useMemo(
-    () => getCategoricalFields(schemasInScope, lifecycleStates, teams, joinedAssessment),
-    [schemasInScope, lifecycleStates, teams, joinedAssessment]
-  );
-  const numericFields = useMemo(
-    () => getNumericFields(schemasInScope, joinedAssessment),
-    [schemasInScope, joinedAssessment]
-  );
-  const axisFieldOptions: FieldOption[] = useMemo(
-    () => [...numericFields, ...categoricalFields],
-    [numericFields, categoricalFields]
-  );
-
-  const isNumericField = useCallback(
-    (fieldId: string) => numericFields.some(f => f.id === fieldId),
-    [numericFields]
-  );
-
-  // A stored or saved config can name fields that aren't options for the current results (another
-  // schema, a renamed field). The native selects would then show their first option while the
-  // chart is built from unknown field ids and comes out empty, so swap unknown fields for defaults
-  // in memory. Nothing is written back until the user changes a setting.
   const config = useMemo((): BubbleConfig | null => {
     if (!rawConfig || axisFieldOptions.length === 0) return rawConfig;
-    const axisIds = new Set(axisFieldOptions.map(f => f.id));
-    const xFieldId = axisIds.has(rawConfig.xFieldId) ? rawConfig.xFieldId : axisFieldOptions[0]!.id;
-    const yFieldId = axisIds.has(rawConfig.yFieldId)
-      ? rawConfig.yFieldId
-      : (axisFieldOptions.find(f => f.id !== xFieldId) ?? axisFieldOptions[0]!).id;
-    const sizeFieldId =
-      rawConfig.sizeFieldId && numericFields.some(f => f.id === rawConfig.sizeFieldId)
-        ? rawConfig.sizeFieldId
-        : null;
-    const colorFieldId =
-      rawConfig.colorFieldId && categoricalFields.some(f => f.id === rawConfig.colorFieldId)
-        ? rawConfig.colorFieldId
-        : null;
+    const [xFieldId, yFieldId] = repairAxisPair(
+      axisFieldOptions,
+      rawConfig.xFieldId,
+      rawConfig.yFieldId
+    );
+    const sizeFieldId = keepKnownFieldId(numericFields, rawConfig.sizeFieldId);
+    const colorFieldId = keepKnownFieldId(categoricalFields, rawConfig.colorFieldId);
     return xFieldId === rawConfig.xFieldId &&
       yFieldId === rawConfig.yFieldId &&
       sizeFieldId === rawConfig.sizeFieldId &&
@@ -167,25 +138,15 @@ export const BubbleChartView = ({
     [setConfig, setHoverOpen]
   );
 
-  // Seed a default config once. `setConfig` writes to the URL asynchronously, so without this
-  // guard the effect re-fires on every render until the config round-trips, and each re-fire
-  // starts a new navigation that can cancel the previous one - an endless render loop.
-  const seededDefaultRef = useRef(false);
-  useEffect(() => {
-    if (config) {
-      seededDefaultRef.current = false;
-      return;
-    }
-    if (axisFieldOptions.length === 0 || seededDefaultRef.current) return;
-    seededDefaultRef.current = true;
+  useSeedDefaultConfig(config, axisFieldOptions.length > 0, () =>
     applyConfig({
       xFieldId: axisFieldOptions[0]?.id ?? '',
       yFieldId: axisFieldOptions[1]?.id ?? axisFieldOptions[0]?.id ?? '',
       sizeFieldId: null,
       colorFieldId: null,
       quadrants: DEFAULT_BUBBLE_QUADRANTS
-    });
-  }, [config, axisFieldOptions, applyConfig]);
+    })
+  );
 
   // ── Scales ──────────────────────────────────────────────────────────────────
 
@@ -375,27 +336,20 @@ export const BubbleChartView = ({
             ]}
           />
 
-          {rowSchemaIds.length > 1 && (
-            <span className={styles.schemaWarning}>
-              <TbAlertTriangle size={12} />
-              Mixed schemas - some entities may not show
-            </span>
-          )}
+          {hasMixedSchemas && <MixedSchemasWarning />}
 
           <div style={{ flex: 1 }} />
 
           <Popover.Root actionsRef={quadrantsActionsRef}>
             <Popover.Trigger
               element={
-                <Button
-                  size="sm"
-                  className={styles.quadrantsButton}
+                <ToolbarButton
                   variant={config?.quadrants.enabled ? 'primary' : undefined}
                   disabled={!config}
                   icon={<TbGrid3X3 size={12} />}
                 >
                   Quadrants
-                </Button>
+                </ToolbarButton>
               }
             />
             <Popover.Content
@@ -507,7 +461,7 @@ export const BubbleChartView = ({
         {!config ? (
           <EmptyState
             title="Bubble chart not configured"
-            subtitle="Map fields to the X, Y, size and colour axes above."
+            subtitle="Map fields to the X, Y, size and color axes above."
           />
         ) : (
           <div className={styles.body}>

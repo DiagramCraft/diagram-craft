@@ -1,0 +1,10 @@
+/* Button is content-box, so its 1px borders come on top of this height. */
+.toolbarButton[data-size="sm"] {
+  height: 24px;
+}
+
+.toolbarButton[data-size="sm"][data-variant="default"],
+.toolbarButton[data-size="sm"][data-variant="secondary"] {
+  border-color: var(--panel-border);
+  background: var(--cmp-bg);
+}

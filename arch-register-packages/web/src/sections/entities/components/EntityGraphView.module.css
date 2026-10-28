@@ -30,16 +30,6 @@
     overflow-y: hidden;
   }
 
-  /* Same height and border as the FilterDropdowns in the toolbar (26px in total). */
-  .eToolbarButton[data-size="sm"] {
-    height: 24px;
-  }
-
-  .eToolbarButton[data-size="sm"][data-variant="default"] {
-    border-color: var(--panel-border);
-    background: var(--cmp-bg);
-  }
-
   .eLoadingText {
     font-size: 11px;
     color: var(--base-fg-more-dim);

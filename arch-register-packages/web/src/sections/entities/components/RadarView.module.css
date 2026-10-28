@@ -1,12 +1,6 @@
 /* Screen */
 .screen {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
-  min-height: 0;
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r-md);
+  composes: frame from "../../../components/ViewConfigBar.module.css";
 }
 
 /* Content — everything below the config bar; carries the panel's inset padding */
@@ -48,22 +42,7 @@
 
 /* Config bar (data source controls) — flush at the top of the panel */
 .config {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  border-bottom: 1px solid var(--panel-border);
-  flex-shrink: 0;
-  flex-wrap: wrap;
-  min-height: 42px;
-}
-
-/* Match the FilterDropdowns next to it (26px tall in total, panel border). Button is
-   content-box, so its 1px borders come on top of this height. */
-.config .ringOrderButton[data-size="sm"] {
-  height: 24px;
-  border-color: var(--panel-border);
-  background: var(--cmp-bg);
+  composes: bar from "../../../components/ViewConfigBar.module.css";
 }
 
 .noFields {
@@ -401,14 +380,6 @@
 
 .ringOrderLabel {
   flex: 1;
-}
-
-.ringOrderIdx {
-  font-size: 10px;
-  color: var(--base-fg-more-dim);
-  font-family: var(--font-mono);
-  min-width: 60px;
-  text-align: right;
 }
 
 .ringOrderBtns {

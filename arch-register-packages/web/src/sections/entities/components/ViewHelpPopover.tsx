@@ -2,7 +2,7 @@ import { TbHelp } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import type { BrowserView } from '@arch-register/api-types/viewContract';
-import { BROWSER_VIEW_HELP } from './browserViewHelp';
+import { BROWSER_VIEW_META } from './browserViewMeta';
 import styles from './EntityBrowser.module.css';
 
 export const ViewHelpPopover = ({ view, label }: { view: BrowserView; label: string }) => (
@@ -20,7 +20,7 @@ export const ViewHelpPopover = ({ view, label }: { view: BrowserView; label: str
     />
     <Popover.Content sideOffset={4} align="end" arrow={false} className={styles.viewHelpPopover}>
       <div className={styles.viewHelpTitle}>{label}</div>
-      <div className={styles.viewHelpText}>{BROWSER_VIEW_HELP[view]}</div>
+      <div className={styles.viewHelpText}>{BROWSER_VIEW_META[view].help}</div>
     </Popover.Content>
   </Popover.Root>
 );

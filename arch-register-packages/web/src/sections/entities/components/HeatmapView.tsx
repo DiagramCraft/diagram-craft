@@ -1,18 +1,22 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { EmptyState } from '../../../components/EmptyState';
+import { MixedSchemasWarning } from '../../../components/MixedSchemasWarning';
 import { FilterDropdown } from '../../../components/FilterDropdown';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { heatmapViewConfigSchema } from '@arch-register/api-types/viewContract';
 import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
 import {
-  getCategoricalFields,
   getCategoricalFieldValues,
-  getNumericFields,
   getNumericFieldRange,
-  type FieldOption,
   type JoinedAssessmentContext
 } from './entityFieldSources';
+import {
+  keepKnownFieldId,
+  repairAxisPair,
+  useAxisFieldOptions,
+  useSeedDefaultConfig
+} from './useAxisFieldOptions';
 import { normalizeViewConfig } from './entityViewConfig';
 import {
   buildAxisBuckets,
@@ -53,7 +57,7 @@ export const HeatmapView = ({
   hideToolbar?: boolean;
   joinedAssessment?: JoinedAssessmentContext | null;
 }) => {
-  const { workspaceSlug, schemas, lifecycleStates, teams } = useWorkspaceContext();
+  const { workspaceSlug, lifecycleStates, teams } = useWorkspaceContext();
   const parsedConfig = useMemo(() => {
     const normalized = normalizeViewConfig(
       heatmapViewConfigSchema,
@@ -77,49 +81,19 @@ export const HeatmapView = ({
 
   const linkedEntityIdSet = useMemo(() => new Set(linkedEntityIds ?? []), [linkedEntityIds]);
 
-  const rowSchemaIds = useMemo(() => [...new Set(rows.map(r => r._schema.id))], [rows]);
-  const schemasInScope = useMemo(
-    () => schemas.filter(s => rowSchemaIds.includes(s.id)),
-    [schemas, rowSchemaIds]
-  );
+  const { schemasInScope, numericFields, axisFieldOptions, isNumericField, hasMixedSchemas } =
+    useAxisFieldOptions(rows, joinedAssessment);
 
   const entities = useHydratedEntityRows(workspaceSlug, rows);
 
-  const categoricalFields = useMemo(
-    () => getCategoricalFields(schemasInScope, lifecycleStates, teams, joinedAssessment),
-    [schemasInScope, lifecycleStates, teams, joinedAssessment]
-  );
-  const numericFields = useMemo(
-    () => getNumericFields(schemasInScope, joinedAssessment),
-    [schemasInScope, joinedAssessment]
-  );
-  const axisFieldOptions: FieldOption[] = useMemo(
-    () => [...numericFields, ...categoricalFields],
-    [numericFields, categoricalFields]
-  );
-
-  const isNumericField = useCallback(
-    (fieldId: string) => numericFields.some(f => f.id === fieldId),
-    [numericFields]
-  );
-
-  // A stored or saved config can name fields that aren't axis options for the current results
-  // (another schema, a renamed field). The native selects would then show their first option
-  // while the grid is built from unknown field ids and comes out empty, so swap unknown fields for
-  // defaults in memory. Nothing is written back until the user changes a setting.
   const config = useMemo((): HeatmapConfig | null => {
     if (!rawConfig || axisFieldOptions.length === 0) return rawConfig;
-    const axisIds = new Set(axisFieldOptions.map(f => f.id));
-    const likelihoodFieldId = axisIds.has(rawConfig.likelihoodFieldId)
-      ? rawConfig.likelihoodFieldId
-      : axisFieldOptions[0]!.id;
-    const impactFieldId = axisIds.has(rawConfig.impactFieldId)
-      ? rawConfig.impactFieldId
-      : (axisFieldOptions.find(f => f.id !== likelihoodFieldId) ?? axisFieldOptions[0]!).id;
-    const colorFieldId =
-      rawConfig.colorFieldId && numericFields.some(f => f.id === rawConfig.colorFieldId)
-        ? rawConfig.colorFieldId
-        : null;
+    const [likelihoodFieldId, impactFieldId] = repairAxisPair(
+      axisFieldOptions,
+      rawConfig.likelihoodFieldId,
+      rawConfig.impactFieldId
+    );
+    const colorFieldId = keepKnownFieldId(numericFields, rawConfig.colorFieldId);
     return likelihoodFieldId === rawConfig.likelihoodFieldId &&
       impactFieldId === rawConfig.impactFieldId &&
       colorFieldId === rawConfig.colorFieldId
@@ -135,23 +109,14 @@ export const HeatmapView = ({
     [setConfig]
   );
 
-  // Seed a default config once; `setConfig` may write to the URL asynchronously, so without this
-  // guard the effect re-fires every render until the config round-trips (see BubbleChartView).
-  const seededDefaultRef = useRef(false);
-  useEffect(() => {
-    if (config) {
-      seededDefaultRef.current = false;
-      return;
-    }
-    if (axisFieldOptions.length === 0 || seededDefaultRef.current) return;
-    seededDefaultRef.current = true;
+  useSeedDefaultConfig(config, axisFieldOptions.length > 0, () =>
     applyConfig({
       likelihoodFieldId: axisFieldOptions[0]?.id ?? '',
       impactFieldId: axisFieldOptions[1]?.id ?? axisFieldOptions[0]?.id ?? '',
       buckets: 5,
       colorFieldId: null
-    });
-  }, [config, axisFieldOptions, applyConfig]);
+    })
+  );
 
   const likelihoodCategories = useMemo(() => {
     if (!config || isNumericField(config.likelihoodFieldId)) return null;
@@ -279,7 +244,7 @@ export const HeatmapView = ({
           />
 
           <FilterDropdown
-            label="Cell colour"
+            label="Color"
             value={config?.colorFieldId ?? ''}
             onChange={value => config && applyConfig({ ...config, colorFieldId: value || null })}
             disabled={!config || numericFields.length === 0}
@@ -288,6 +253,8 @@ export const HeatmapView = ({
               ...numericFields.map(f => ({ value: f.id, label: f.label }))
             ]}
           />
+
+          {hasMixedSchemas && <MixedSchemasWarning />}
 
           {axisFieldOptions.length === 0 && (
             <span className={styles.noFields}>
@@ -383,7 +350,7 @@ export const HeatmapView = ({
             )}
 
             {config.colorFieldId && (
-              <div className={styles.legendNote}>Cell colour reflects average {colorLabel}.</div>
+              <div className={styles.legendNote}>Cell color reflects average {colorLabel}.</div>
             )}
           </div>
         )}

@@ -1,3 +1,4 @@
+import { BROWSER_VIEWS } from '@arch-register/api-types/viewContract';
 import {
   defineSearchParamSchema,
   enumCodec,
@@ -50,22 +51,7 @@ const sharedEntityBrowserSearchSchema = defineSearchParamSchema({
   owner: stringCodec,
   q: stringCodec,
   viewId: stringCodec,
-  viewMode: enumCodec([
-    'table',
-    'cards',
-    'tree',
-    'radar',
-    'timeline',
-    'relation-matrix',
-    'relation-columns',
-    'bubble-chart',
-    'heatmap',
-    'nested-map',
-    'compare-dates',
-    'graph',
-    'traceability',
-    'trail'
-  ] as const),
+  viewMode: enumCodec(BROWSER_VIEWS),
   sort: stringCodec,
   projectScope: enumCodec(['project', 'all'] as const),
   viewConfigs: stringCodec,
