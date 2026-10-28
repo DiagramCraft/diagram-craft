@@ -10,12 +10,15 @@ import {
   buildTraceabilityEntityQuery,
   buildTraceabilityRoots,
   groupTraceabilityOptions,
+  nextTraceabilityPathId,
+  parseTraceabilityConfig,
   pathStepKey,
   pruneInvalidTraceabilityPaths,
   traceabilityCompatibleRelations,
   traceabilityPathOptions,
   traceabilityPathStepContext,
-  traceabilityRelationDirections
+  traceabilityRelationDirections,
+  withUniquePathIds
 } from './traceabilityViewState';
 
 const config: TraceabilityViewConfig = {
@@ -798,5 +801,38 @@ describe('traceabilityViewState', () => {
     expect(coverage.rows[1]?.completionRate).toBe(0);
     // objective-3: no aligned projects
     expect(coverage.rows[2]?.completionRate).toBeNull();
+  });
+});
+
+describe('traceability path ids', () => {
+  const path = (id: string) => ({
+    id,
+    label: 'Trace',
+    path: config.paths[0]!.path,
+    targetSchemaIds: 'any' as const
+  });
+
+  it('never reuses an id after an earlier path was removed', () => {
+    // [path-1, path-2] -> remove path-1 -> add: the count-based id (path-2) would collide.
+    expect(nextTraceabilityPathId([{ id: 'path-2' }])).toBe('path-3');
+    expect(nextTraceabilityPathId([])).toBe('path-1');
+    expect(nextTraceabilityPathId([{ id: 'path-1' }, { id: 'custom' }, { id: 'path-4' }])).toBe(
+      'path-5'
+    );
+  });
+
+  it('gives later duplicates a fresh id and keeps the first', () => {
+    const fixed = withUniquePathIds({ ...config, paths: [path('path-2'), path('path-2')] });
+    expect(fixed.paths.map(p => p.id)).toEqual(['path-2', 'path-3']);
+  });
+
+  it('returns the same config when ids are already unique', () => {
+    const unique = { ...config, paths: [path('path-1'), path('path-2')] };
+    expect(withUniquePathIds(unique)).toBe(unique);
+  });
+
+  it('repairs duplicate ids when parsing a saved config', () => {
+    const parsed = parseTraceabilityConfig({ ...config, paths: [path('a'), path('a')] });
+    expect(new Set(parsed?.paths.map(p => p.id)).size).toBe(2);
   });
 });

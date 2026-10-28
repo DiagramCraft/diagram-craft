@@ -29,6 +29,7 @@ import {
   collectTargetSchemaIds,
   entityIsOrphan,
   hasAnyTargetSchema,
+  nextTraceabilityPathId,
   parseTraceabilityConfig,
   pruneInvalidTraceabilityPaths,
   traceabilityPathOptions,
@@ -263,7 +264,7 @@ export const TraceabilityView = ({
       paths: [
         ...editorConfig.paths,
         {
-          id: `path-${editorConfig.paths.length + 1}`,
+          id: nextTraceabilityPathId(editorConfig.paths),
           label: 'Trace',
           path: [option.step],
           targetSchemaIds: 'any'
