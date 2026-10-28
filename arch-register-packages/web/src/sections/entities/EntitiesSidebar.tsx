@@ -1,5 +1,5 @@
 import { savedViewIcon } from '../../lib/savedViewIcon';
-import { useState, useMemo, type ReactNode } from 'react';
+import { useEffect, useState, useMemo, type ReactNode } from 'react';
 import { useNavigate, useParams, useSearch, useLocation } from '@tanstack/react-router';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
@@ -35,7 +35,7 @@ import { TypeBadge } from '../../components/TypeBadge';
 import styles from '../../shell/SidePanel.module.css';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
-import { useEntityDrawer } from './entityDrawer/useEntityDrawer';
+import { asEntityPublicId, entityDetailRoute } from '../../routes/publicObjectRoutes';
 import {
   hasFacetSelection,
   parseConditionsFromSearch,
@@ -51,7 +51,7 @@ import {
 import { toSavedRelationViewSearch } from '../relations/relationBrowserState';
 import type { Collection } from '@arch-register/api-types/collectionContract';
 import { BaselineSidebarSection } from '../baselines/BaselineSidebarSection';
-import type { EntityBrowserSidebarTab } from '../../routes/searchParams';
+import { useSidebarTab, type EntityBrowserSidebarTab } from './useSidebarTab';
 
 const FacetRow = ({
   icon,
@@ -109,14 +109,23 @@ export const EntitiesSidebar = ({
   onExpand?: () => void;
 }) => {
   const navigate = useNavigate();
-  const { openEntityDrawer } = useEntityDrawer();
   const { entityId: routeEntityId } = useParams({ strict: false });
   const { pathname } = useLocation();
   const onRelationsRoute = pathname.includes('/entities/relations');
   const { permissions } = useWorkspaceContext();
   const schemaGroups = useMemo(() => groupSchemasByCategory(schemas), [schemas]);
   const search = useSearch({ strict: false });
-  const sidebarTab = search.sidebarTab ?? 'home';
+  const [sidebarTab, setSidebarTab] = useSidebarTab();
+  const contextTab: EntityBrowserSidebarTab | undefined = search.baselineId
+    ? 'baselines'
+    : search.collectionId
+      ? 'bookmarks'
+      : search.viewId
+        ? 'views'
+        : undefined;
+  useEffect(() => {
+    if (contextTab) setSidebarTab(contextTab);
+  }, [contextTab, setSidebarTab]);
 
   const activeFacets = useMemo(
     () => parseFacetSelectionFromSearch(search as BrowserSearch),
@@ -193,7 +202,6 @@ export const EntitiesSidebar = ({
       params: { workspaceSlug },
       search: (previous: Record<string, unknown>) => ({
         ...previous,
-        sidebarTab,
         filters: conditions.length > 0 ? JSON.stringify(conditions) : undefined,
         entityQuery: undefined,
         type: undefined,
@@ -244,8 +252,7 @@ export const EntitiesSidebar = ({
       to: isRelationView ? '/$workspaceSlug/entities/relations' : '/$workspaceSlug/entities',
       params: { workspaceSlug },
       search: {
-        ...(isRelationView ? toSavedRelationViewSearch(view) : toSavedViewSearch(view)),
-        sidebarTab: 'views'
+        ...(isRelationView ? toSavedRelationViewSearch(view) : toSavedViewSearch(view))
         // biome-ignore lint/suspicious/noExplicitAny: bypass
       } as any
     });
@@ -256,7 +263,6 @@ export const EntitiesSidebar = ({
       to: '/$workspaceSlug/entities',
       params: { workspaceSlug },
       search: {
-        sidebarTab: 'bookmarks',
         collectionId: collection.id,
         viewMode: 'table'
       }
@@ -268,21 +274,7 @@ export const EntitiesSidebar = ({
       <div className={`${styles.header} ${styles.tabHeader}`}>
         <Tabs.Root
           value={sidebarTab}
-          onValueChange={v =>
-            navigate({
-              to: '/$workspaceSlug/entities',
-              params: { workspaceSlug },
-              search: (prev: Record<string, unknown>) => {
-                const collectionId =
-                  typeof prev.collectionId === 'string' ? prev.collectionId : undefined;
-                return {
-                  ...prev,
-                  sidebarTab: v as EntityBrowserSidebarTab,
-                  collectionId: v === 'bookmarks' ? collectionId : undefined
-                };
-              }
-            })
-          }
+          onValueChange={v => setSidebarTab(v as EntityBrowserSidebarTab)}
         >
           <Tabs.List>
             <Tabs.Trigger value="home">Home</Tabs.Trigger>
@@ -481,7 +473,11 @@ export const EntitiesSidebar = ({
                   }
                   label={entity.entity_name}
                   active={routeEntityId === entity.entity_public_id}
-                  onClick={() => openEntityDrawer(entity.entity_public_id)}
+                  onClick={() =>
+                    navigate(
+                      entityDetailRoute(workspaceSlug, asEntityPublicId(entity.entity_public_id))
+                    )
+                  }
                   trailing={<TbPinned size={12} className="dim" />}
                   tagColor={color}
                 />
@@ -620,7 +616,7 @@ export const EntitiesSidebar = ({
               navigate({
                 to: '/$workspaceSlug/entities',
                 params: { workspaceSlug },
-                search: { sidebarTab: 'bookmarks', viewMode: 'table' }
+                search: { viewMode: 'table' }
               });
             }
             setDeleteCollectionTarget(null);

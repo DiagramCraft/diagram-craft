@@ -111,7 +111,6 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
                 ...previous,
                 section: 'entities' as const,
                 baselineId: undefined,
-                sidebarTab: undefined,
                 asOf: undefined,
                 asOfIncludeProjects: undefined
               })

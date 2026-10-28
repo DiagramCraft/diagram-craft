@@ -6,6 +6,5 @@ type BaselineContext = Pick<Baseline, 'id'>;
 export const baselineContextSearch = (
   baseline: BaselineContext
 ): Partial<SharedEntityBrowserSearchParams> => ({
-  baselineId: baseline.id,
-  sidebarTab: 'baselines'
+  baselineId: baseline.id
 });

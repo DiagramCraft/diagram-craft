@@ -2,13 +2,11 @@ import { BROWSER_VIEWS } from '@arch-register/api-types/viewContract';
 import {
   defineSearchParamSchema,
   enumCodec,
-  mapCodec,
   numberInRangeCodec,
   omitDefaultCodec,
   parseSearchParams,
   positivePageCodec,
   stringCodec,
-  type SearchParamCodecOutput,
   type SearchParamsFromSchema
 } from './searchParamCodecs';
 
@@ -24,27 +22,6 @@ export const validateEntityDrawerSearch = (
   raw: Record<string, unknown>
 ): EntityDrawerSearchParams => parseSearchParams(entityDrawerSearchParamSchema, raw);
 
-const entityBrowserSidebarValues = enumCodec(['home', 'views', 'bookmarks', 'baselines'] as const);
-
-export type EntityBrowserSidebarTab = SearchParamCodecOutput<typeof entityBrowserSidebarValues>;
-
-const entityBrowserSidebarCodec = mapCodec(
-  enumCodec([
-    'home',
-    'views',
-    'bookmarks',
-    'baselines',
-    'filters',
-    'pinned',
-    'collections'
-  ] as const),
-  (value): EntityBrowserSidebarTab => {
-    if (value === 'filters') return 'home';
-    if (value === 'pinned' || value === 'collections') return 'bookmarks';
-    return value;
-  }
-);
-
 const sharedEntityBrowserSearchSchema = defineSearchParamSchema({
   type: stringCodec,
   status: stringCodec,
@@ -57,7 +34,6 @@ const sharedEntityBrowserSearchSchema = defineSearchParamSchema({
   viewConfigs: stringCodec,
   // Comma-separated entity ids, one per trail column, tracking the currently walked chain.
   pathWalk: stringCodec,
-  sidebarTab: entityBrowserSidebarCodec,
   baselineId: stringCodec,
   collectionId: stringCodec,
   filters: stringCodec,
@@ -116,7 +92,6 @@ export const validateWorkspaceContentSearch = (
 // Entity detail params
 const entityDetailSearchSchema = defineSearchParamSchema({
   ...sharedContentBrowserSearchSchema,
-  sidebarTab: entityBrowserSidebarCodec,
   collectionId: stringCodec,
   apiQ: stringCodec,
   apiResource: stringCodec,
