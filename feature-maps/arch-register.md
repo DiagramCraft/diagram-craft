@@ -1007,8 +1007,9 @@
           active violations; it is gated by the same permission as the workspace Conformance section and links out
           to it for further investigation.
 
-        - @id:ar.entity-views.diff Users can pick a future date and view a workspace-wide diff of what changes by
-          then — entities added, removed, or changed, with all applicable planned changes across projects applied,
+        - @id:ar.entity-views.diff Users can pick a date and view a workspace-wide diff: for a future date, what changes by
+          then — entities added, removed, or changed, with all applicable planned changes across projects applied;
+          for a past date, what changed since then (compared forward to today),
           scoped to the browser's current search/filter/project-scope selection, with a field-level diff on
           drill-down for changed entities. Planned changes with a target date already in the past but never applied
           are excluded by default (an "include overdue changes" toggle brings them back in). Field values from

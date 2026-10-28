@@ -3,7 +3,7 @@ import { TbSettings } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { Popover } from '@diagram-craft/app-components/Popover';
-import { Select } from '@diagram-craft/app-components/Select';
+import { FilterDropdown } from '../../../components/FilterDropdown';
 import type { LayoutAlgorithm, LayoutOptions } from '../../../components/DependencyGraph';
 import styles from './EntityGraphView.module.css';
 
@@ -24,13 +24,17 @@ export const GraphLayoutToolbar = ({
 }: Props) => {
   return (
     <>
-      <span className={styles.eToolbarLabel}>Layout</span>
-      <Select.Root value={layout} onChange={value => value && setLayout(value as LayoutAlgorithm)}>
-        <Select.Item value="hierarchy">Hierarchy</Select.Item>
-        <Select.Item value="layered">Layered</Select.Item>
-        <Select.Item value="force">Force-directed</Select.Item>
-        <Select.Item value="tree">Tree</Select.Item>
-      </Select.Root>
+      <FilterDropdown
+        label="Layout"
+        value={layout}
+        onChange={value => setLayout(value as LayoutAlgorithm)}
+        options={[
+          { value: 'hierarchy', label: 'Hierarchy' },
+          { value: 'layered', label: 'Layered' },
+          { value: 'force', label: 'Force-directed' },
+          { value: 'tree', label: 'Tree' }
+        ]}
+      />
 
       {betweenLayoutAndSettings}
 
@@ -39,9 +43,10 @@ export const GraphLayoutToolbar = ({
           element={
             <Button
               size="sm"
-              variant="icon-only"
+              className={styles.eToolbarButton}
               icon={<TbSettings size={13} />}
               title="Advanced layout settings"
+              aria-label="Advanced layout settings"
             />
           }
         />

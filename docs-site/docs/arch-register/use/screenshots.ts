@@ -199,7 +199,7 @@ export const screenshots: ArchRegisterScreenshotConfig[] = [
     setup: async ({ entitiesPage }) => {
       await entitiesPage.goto({ viewMode: 'diff', asOf: '2026-12-31' });
       await expect(entitiesPage.browserTitle()).toBeVisible();
-      await expect(entitiesPage.page.getByText(/What changes by/)).toBeVisible({ timeout: 15000 });
+      await expect(entitiesPage.page.getByText(/What changes by|What changed since/)).toBeVisible({ timeout: 15000 });
     }
   },
   {

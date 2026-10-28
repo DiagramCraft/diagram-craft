@@ -53,6 +53,11 @@
   margin-left: auto;
 }
 
+.toggleRow:has(input:disabled) {
+  cursor: default;
+  opacity: 0.5;
+}
+
 .toggleRow {
   display: flex;
   align-items: center;

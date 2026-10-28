@@ -69,7 +69,7 @@ vi.mock('./entityHelpers', () => ({
 
 import { reconstructEntitiesAsOf } from './entitySnapshotReconstruction';
 import { reconstructRelationsAsOf } from './relationSnapshotReconstruction';
-import { diffEntityLandscapes } from './entityLandscapeDiffOperations';
+import { diffEntityLandscapes, matchesStateConditions } from './entityLandscapeDiffOperations';
 
 const now = new Date('2026-07-30T12:00:00.000Z');
 
@@ -421,6 +421,29 @@ describe('diffEntityLandscapes', () => {
 
     expect(result.added.map(entity => entity._uid)).toEqual(['beta']);
     expect(result.removed).toEqual([]);
+  });
+
+  it('treats several selected types as alternatives, not as all required', async () => {
+    const to = [
+      makeEntity('app', { schema_id: 'application' }),
+      makeEntity('svc', { schema_id: 'service' }),
+      makeEntity('other', { schema_id: 'database' })
+    ];
+    vi.mocked(reconstructEntitiesAsOf).mockResolvedValueOnce([]).mockResolvedValueOnce(to);
+    const typeConditions = [
+      { fieldId: '_schemaId', op: 'equals' as const, value: 'application' },
+      { fieldId: '_schemaId', op: 'equals' as const, value: 'service' }
+    ];
+
+    const result = await diffEntityLandscapes(
+      db,
+      'ws-1',
+      {} as never,
+      state({ conditions: typeConditions }),
+      state({ conditions: typeConditions })
+    );
+
+    expect(result.added.map(entity => entity._uid).sort()).toEqual(['app', 'svc']);
   });
 
   it('scopes by collection membership independently per side', async () => {
@@ -1132,5 +1155,50 @@ describe('diffEntityLandscapes', () => {
 
       expect(result.relations.added).toEqual([]);
     });
+  });
+});
+
+describe('matchesStateConditions', () => {
+  const equals = (fieldId: string, value: string) => ({
+    fieldId,
+    op: 'equals' as const,
+    value
+  });
+  const entity: Record<string, string> = { _schemaId: 'service', _owner: 'team-a' };
+  const matches = (condition: { fieldId: string; value: unknown }) =>
+    entity[condition.fieldId] === condition.value;
+
+  it('matches when any value of a facet matches', () => {
+    expect(
+      matchesStateConditions(
+        [equals('_schemaId', 'application'), equals('_schemaId', 'service')],
+        matches
+      )
+    ).toBe(true);
+  });
+
+  it('requires every different facet to match', () => {
+    expect(
+      matchesStateConditions(
+        [equals('_schemaId', 'service'), equals('_owner', 'team-b'), equals('_owner', 'team-c')],
+        matches
+      )
+    ).toBe(false);
+    expect(
+      matchesStateConditions(
+        [equals('_schemaId', 'service'), equals('_owner', 'team-b'), equals('_owner', 'team-a')],
+        matches
+      )
+    ).toBe(true);
+  });
+
+  it('requires all conditions that are not facets', () => {
+    expect(
+      matchesStateConditions([equals('_schemaId', 'service'), equals('other', 'x')], matches)
+    ).toBe(false);
+  });
+
+  it('matches with no conditions', () => {
+    expect(matchesStateConditions([], matches)).toBe(true);
   });
 });

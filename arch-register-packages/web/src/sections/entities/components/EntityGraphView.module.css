@@ -1,7 +1,6 @@
 /**
  * EntityGraphView - .icEntityGraphView
  * | Toolbar - .eToolbar
- *   | Label - .eToolbarLabel
  *   | Loading text - .eLoadingText
  * | Canvas - .eCanvas
  * | Node Name - .eNodeName
@@ -22,30 +21,23 @@
   .eToolbar {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 4px 14px;
-    height: 35.5px;
+    gap: 8px;
+    padding: 6px 10px;
+    min-height: 42px;
     border-bottom: 1px solid var(--panel-border);
     flex-shrink: 0;
     overflow-x: auto;
     overflow-y: hidden;
-
-    & > button {
-      width: 10rem;
-    }
   }
 
-  .eToolbarLabel {
-    font-size: 12px;
-    color: var(--base-fg-more-dim);
-    letter-spacing: 0.5px;
-    white-space: nowrap;
-    margin-right: -1px;
-    margin-left: 6px;
+  /* Same height and border as the FilterDropdowns in the toolbar (26px in total). */
+  .eToolbarButton[data-size="sm"] {
+    height: 24px;
+  }
 
-    &:first-child {
-      margin-left: 0;
-    }
+  .eToolbarButton[data-size="sm"][data-variant="default"] {
+    border-color: var(--panel-border);
+    background: var(--cmp-bg);
   }
 
   .eLoadingText {

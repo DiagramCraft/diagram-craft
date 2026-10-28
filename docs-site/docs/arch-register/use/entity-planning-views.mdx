@@ -40,10 +40,12 @@ the calendar toggle next to the date mapping to hide them. For the project-level
 
 ## Diff
 
-Use **Diff** to compare the current scope with a selected future date. The result identifies entities added, removed,
-or changed by that date and applies relevant planned changes across projects. The browser's filters and project scope
-limit the comparison; open a changed record to inspect field-level differences. Overdue planned changes are excluded
-by default and can be included with the view's overdue option.
+Use **Diff** to compare the current scope with a selected date. For a future date ("What changes by"), the result
+identifies entities added, removed, or changed by that date and applies relevant planned changes across projects. For
+a past date ("What changed since"), it compares that date forward to today: added entities were created since, removed
+ones were deleted since, and changed ones were edited since. The browser's filters and project scope limit the
+comparison; open a changed record to inspect field-level differences. Overdue planned changes are excluded by default
+and can be included with the view's overdue option.
 
 <ThemedImage
   alt="Entity diff view in Arch Register"

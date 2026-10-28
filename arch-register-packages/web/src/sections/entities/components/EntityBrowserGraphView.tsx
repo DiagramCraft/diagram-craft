@@ -2,14 +2,14 @@ import { useCallback, useMemo, useState } from 'react';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 import { Button } from '@diagram-craft/app-components/Button';
-import { MultiSelect, type MultiSelectItem } from '@diagram-craft/app-components/MultiSelect';
-import { NumberInput } from '@diagram-craft/app-components/NumberInput';
-import { Select } from '@diagram-craft/app-components/Select';
+import type { MultiSelectItem } from '@diagram-craft/app-components/MultiSelect';
+import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
-import { TbEyeOff, TbFileExport, TbPlus, TbVectorTriangle } from 'react-icons/tb';
+import { TbEyeOff, TbFileExport, TbFilter, TbPlus, TbVectorTriangle } from 'react-icons/tb';
 import { DependencyGraph } from '../../../components/DependencyGraph';
 import type { DependencyGraphEdge, DependencyGraphNode } from '../../../components/DependencyGraph';
+import { FilterDropdown } from '../../../components/FilterDropdown';
 import { LoadingState } from '../../../components/LoadingState';
 import { TypeBadge } from '../../../components/TypeBadge';
 import { useRelationSchemas } from '../../../hooks/useRelationSchemas';
@@ -19,6 +19,8 @@ import type { BrowserEntityRecord } from './entityBrowserState';
 import { normalizeEntityGraphConfig, type EntityGraphConfig } from './entityGraphConfig';
 import type { EntityGraphDirection, EntityNodeData } from './entityGraphState';
 import { GraphLayoutToolbar } from './GraphLayoutToolbar';
+import { GraphTooLarge } from './GraphTooLarge';
+import { isGraphTooLarge } from './graphSizeLimit';
 import { RelationDetailPopover } from './RelationDetailPopover';
 import { useEntityGraphController } from './useEntityGraphController';
 import styles from './EntityGraphView.module.css';
@@ -157,55 +159,73 @@ export const EntityBrowserGraphView = ({
           setLayoutOptions={setLayoutOptions}
         />
 
-        <span className={styles.eToolbarLabel}>Depth</span>
-        <NumberInput
-          value={maxDepth}
+        <FilterDropdown
+          label="Depth"
+          value={String(maxDepth)}
           onChange={value => {
-            if (value !== undefined) {
-              setMaxDepth(value);
-              graphConfig({ maxDepth: value });
-            }
+            const next = Number(value);
+            setMaxDepth(next);
+            graphConfig({ maxDepth: next });
           }}
-          min={1}
-          max={5}
-          step={1}
-          style={{ width: '50px' }}
+          options={[1, 2, 3, 4, 5].map(depth => ({ value: String(depth), label: String(depth) }))}
         />
 
-        <span className={styles.eToolbarLabel}>Direction</span>
-        <Select.Root
+        <FilterDropdown
+          label="Direction"
           value={direction}
           onChange={value => {
-            if (value) {
-              const next = value as EntityGraphDirection;
-              setDirection(next);
-              graphConfig({ direction: next });
-            }
+            const next = value as EntityGraphDirection;
+            setDirection(next);
+            graphConfig({ direction: next });
           }}
-          style={{ width: '70px' }}
-        >
-          <Select.Item value="both">Both</Select.Item>
-          <Select.Item value="upstream">In</Select.Item>
-          <Select.Item value="downstream">Out</Select.Item>
-        </Select.Root>
-
-        <span className={styles.eToolbarLabel}>Relation</span>
-        <MultiSelect
-          selectedValues={Array.from(relationSchemaFilter)}
-          availableItems={relationSchemaItems}
-          onSelectionChange={values => {
-            const next = new Set(values);
-            setRelationSchemaFilter(next);
-            graphConfig({ relationSchemaIds: values });
-          }}
-          placeholder="All relation types"
-          style={{ width: '120px' }}
+          options={[
+            { value: 'both', label: 'Both' },
+            { value: 'upstream', label: 'In' },
+            { value: 'downstream', label: 'Out' }
+          ]}
         />
+
+        <MenuButton.Root>
+          <MenuButton.Trigger
+            element={
+              <Button
+                size="sm"
+                className={styles.eToolbarButton}
+                icon={<TbFilter size={13} />}
+                variant={relationSchemaFilter.size > 0 ? 'primary' : undefined}
+                aria-label="Filter relation types"
+                title="Filter relation types"
+              >
+                {relationSchemaFilter.size === 0
+                  ? 'All relation types'
+                  : `${relationSchemaFilter.size} relation type${relationSchemaFilter.size === 1 ? '' : 's'}`}
+              </Button>
+            }
+          />
+          <MenuButton.Menu align="start">
+            {relationSchemaItems.length === 0 && <Menu.Item disabled>No relation types</Menu.Item>}
+            {relationSchemaItems.map(item => (
+              <Menu.CheckboxItem
+                key={item.value}
+                checked={relationSchemaFilter.has(item.value)}
+                onCheckedChange={checked => {
+                  const next = new Set(relationSchemaFilter);
+                  if (checked) next.add(item.value);
+                  else next.delete(item.value);
+                  setRelationSchemaFilter(next);
+                  graphConfig({ relationSchemaIds: [...next] });
+                }}
+              >
+                {item.label}
+              </Menu.CheckboxItem>
+            ))}
+          </MenuButton.Menu>
+        </MenuButton.Root>
 
         {isAnyLoading && <span className={styles.eLoadingText}>Loading…</span>}
 
         <Button
-          className={styles.eResetButton}
+          className={`${styles.eResetButton} ${styles.eToolbarButton}`}
           disabled={excludedIds.size === 0 && manuallyExpanded.size === 0}
           size="sm"
           onClick={resetGraph}
@@ -214,7 +234,7 @@ export const EntityBrowserGraphView = ({
         </Button>
 
         {allowActions && (
-          <Button size="sm" onClick={createDiagram}>
+          <Button size="sm" className={styles.eToolbarButton} onClick={createDiagram}>
             <TbFileExport size={14} />
             Create diagram
           </Button>
@@ -235,6 +255,12 @@ export const EntityBrowserGraphView = ({
             <div className={styles.eEmptyTitle}>No entities found.</div>
             <div>Try adjusting your search or filters.</div>
           </div>
+        ) : isGraphTooLarge(nodes.length, edges.length) ? (
+          <GraphTooLarge
+            nodeCount={nodes.length}
+            edgeCount={edges.length}
+            hint="Narrow the filters, lower the depth or choose specific relation types."
+          />
         ) : (
           <DependencyGraph<EntityNodeData>
             nodes={nodes}

@@ -27,6 +27,9 @@ type TimelineStripProps = {
   onToggleIncludePlannedChanges?: (include: boolean) => void;
   includeOverdueChanges?: boolean;
   onToggleIncludeOverdueChanges?: (include: boolean) => void;
+  /** Disable the planned/overdue toggles when the selected date is in the past (they only apply
+   *  to a projection into the future, e.g. in the Diff view). */
+  disablePlannedTogglesForPast?: boolean;
 };
 
 const markerTypeLabel = (type: AsOfMarker['type']) => {
@@ -74,7 +77,8 @@ export const TimelineStrip = ({
   includePlannedChanges,
   onToggleIncludePlannedChanges,
   includeOverdueChanges,
-  onToggleIncludeOverdueChanges
+  onToggleIncludeOverdueChanges,
+  disablePlannedTogglesForPast
 }: TimelineStripProps) => {
   const { todayMs, startMs, endMs, rangeMs } = useTimelineRange(markers);
   const todayIso = useMemo(() => toDateOnly(new Date(todayMs)), [todayMs]);
@@ -131,6 +135,9 @@ export const TimelineStrip = ({
       ? undefined
       : toTimelineDate(selectedDate);
   const isFuture = !!displayDate && displayDate > todayIso;
+  const plannedTogglesDisabled =
+    !!disablePlannedTogglesForPast && !!displayDate && displayDate < todayIso;
+  const futureOnlyTitle = plannedTogglesDisabled ? 'Only applies to future dates' : undefined;
   const todayPos = ((todayMs - startMs) / rangeMs) * 100;
 
   const years = useMemo(() => {
@@ -168,19 +175,21 @@ export const TimelineStrip = ({
 
         <div className={styles.panelHeadR}>
           {onToggleIncludePlannedChanges && (
-            <label className={styles.toggleRow}>
+            <label className={styles.toggleRow} title={futureOnlyTitle}>
               <Checkbox
                 value={includePlannedChanges ?? true}
                 onChange={v => onToggleIncludePlannedChanges(v ?? true)}
+                disabled={plannedTogglesDisabled}
               />
               <span>Planned changes</span>
             </label>
           )}
           {onToggleIncludeOverdueChanges && (
-            <label className={styles.toggleRow}>
+            <label className={styles.toggleRow} title={futureOnlyTitle}>
               <Checkbox
                 value={includeOverdueChanges ?? false}
                 onChange={v => onToggleIncludeOverdueChanges(v ?? false)}
+                disabled={plannedTogglesDisabled}
               />
               <span>Overdue changes</span>
             </label>

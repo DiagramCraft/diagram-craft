@@ -584,6 +584,7 @@ export const EntityBrowser = ({
           onToggleIncludePlannedChanges={projectId ? undefined : setIncludePlannedChanges}
           includeOverdueChanges={includeOverdueChanges}
           onToggleIncludeOverdueChanges={view === 'diff' ? setIncludeOverdueChanges : undefined}
+          disablePlannedTogglesForPast={view === 'diff'}
         />
       )}
 

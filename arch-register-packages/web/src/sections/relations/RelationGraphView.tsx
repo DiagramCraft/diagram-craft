@@ -11,13 +11,15 @@ import type {
 } from '../../components/DependencyGraph';
 import { LoadingState } from '../../components/LoadingState';
 import { TypeBadge } from '../../components/TypeBadge';
-import { Select } from '@diagram-craft/app-components/Select';
+import { FilterDropdown } from '../../components/FilterDropdown';
 import { useEntitiesByIds, useEntitiesByIdSet } from '../../hooks/useEntities';
 import { relationIds } from '../../lib/entityEditState';
 import { resolveSchemaColor } from '../../lib/schemaPresentation';
 import { TbVectorTriangle } from 'react-icons/tb';
 import { RelationDetailPopover } from '../entities/components/RelationDetailPopover';
 import { GraphLayoutToolbar } from '../entities/components/GraphLayoutToolbar';
+import { GraphTooLarge } from '../entities/components/GraphTooLarge';
+import { isGraphTooLarge } from '../entities/components/graphSizeLimit';
 import styles from '../entities/components/EntityGraphView.module.css';
 import {
   buildRelationGraphData,
@@ -233,28 +235,18 @@ export const RelationGraphView = ({
           setLayoutOptions={setLayoutOptions}
           betweenLayoutAndSettings={
             <>
-              <span className={styles.eToolbarLabel}>Edge labels</span>
-              <Select.Root
+              <FilterDropdown
+                label="Edge labels"
                 value={selectedEdgeLabelFieldId}
-                onChange={value => value && onEdgeLabelFieldIdChange(value)}
-              >
-                {labelOptions.map(option => (
-                  <Select.Item key={option.value} value={option.value}>
-                    {option.label}
-                  </Select.Item>
-                ))}
-              </Select.Root>
-              <span className={styles.eToolbarLabel}>Edge color</span>
-              <Select.Root
+                onChange={onEdgeLabelFieldIdChange}
+                options={labelOptions.map(option => ({ value: option.value, label: option.label }))}
+              />
+              <FilterDropdown
+                label="Edge color"
                 value={selectedEdgeColorFieldId}
-                onChange={value => value && onEdgeColorFieldIdChange(value)}
-              >
-                {labelOptions.map(option => (
-                  <Select.Item key={option.value} value={option.value}>
-                    {option.label}
-                  </Select.Item>
-                ))}
-              </Select.Root>
+                onChange={onEdgeColorFieldIdChange}
+                options={labelOptions.map(option => ({ value: option.value, label: option.label }))}
+              />
             </>
           }
         />
@@ -271,6 +263,12 @@ export const RelationGraphView = ({
             <div className={styles.eEmptyTitle}>No relations found.</div>
             <div>Try adjusting the current filters.</div>
           </div>
+        ) : isGraphTooLarge(nodes.length, edges.length) ? (
+          <GraphTooLarge
+            nodeCount={nodes.length}
+            edgeCount={edges.length}
+            hint="Narrow the filters to see fewer relations."
+          />
         ) : (
           <DependencyGraph<RelationGraphNodeData>
             nodes={nodes}

@@ -133,6 +133,37 @@ const matchesVisibleFilterCondition = (
   return matchesFilterCondition(entity, condition, completeness);
 };
 
+const FACET_FIELD_IDS = new Set(['_schemaId', '_lifecycle', '_owner']);
+
+type StateCondition = Parameters<typeof matchesFilterCondition>[1];
+
+// Mirrors the entity browser's facets (type, lifecycle, owner): several conditions on the same
+// facet are alternatives (an entity may be any of the selected types), while conditions on
+// different fields, and non-facet conditions, must all hold.
+const isFacetCondition = (condition: StateCondition): boolean =>
+  FACET_FIELD_IDS.has(condition.fieldId) &&
+  (condition.fieldId === '_schemaId'
+    ? condition.op === 'equals'
+    : condition.op === 'equals' || condition.op === 'empty');
+
+export const matchesStateConditions = (
+  conditions: StateCondition[],
+  matches: (condition: StateCondition) => boolean
+): boolean => {
+  const facetGroups = new Map<string, StateCondition[]>();
+  for (const condition of conditions) {
+    if (isFacetCondition(condition)) {
+      facetGroups.set(condition.fieldId, [
+        ...(facetGroups.get(condition.fieldId) ?? []),
+        condition
+      ]);
+    } else if (!matches(condition)) {
+      return false;
+    }
+  }
+  return [...facetGroups.values()].every(group => group.some(matches));
+};
+
 // Applies the same filtering rules the entity browser uses for its live/point-in-time entity
 // list (schema/owner/lifecycle/q via `filterEntities`, conditions, joined-assessment conditions,
 // and collection membership), evaluated against one side's reconstructed entity list. Run
@@ -174,7 +205,7 @@ const applyStateFilters = async (
     if (collectionEntityIdSet && !collectionEntityIdSet.has(entity.id)) return false;
     if (
       otherConditions.length > 0 &&
-      !otherConditions.every(c =>
+      !matchesStateConditions(otherConditions, c =>
         matchesVisibleFilterCondition(entity, c, entity.completeness, schemas, authCtx)
       )
     )
