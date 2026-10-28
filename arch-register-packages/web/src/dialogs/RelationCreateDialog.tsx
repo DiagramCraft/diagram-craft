@@ -56,7 +56,8 @@ export const RelationCreateDialog = ({
   const currentEndpointName = direction === 'incoming' ? 'out' : 'in';
   const otherEndpointName = direction === 'incoming' ? 'in' : 'out';
   const availableRelations = useMemo(
-    () => relationSchemas.filter(relation => allowed(relation[currentEndpointName], currentSchemaId)),
+    () =>
+      relationSchemas.filter(relation => allowed(relation[currentEndpointName], currentSchemaId)),
     [currentEndpointName, currentSchemaId, relationSchemas]
   );
   const [relationSchemaId, setRelationSchemaId] = useState('');
