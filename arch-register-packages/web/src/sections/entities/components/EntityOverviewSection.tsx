@@ -25,7 +25,7 @@ type Props = {
 };
 
 // Folds the schema's configurable detail-layout tabs (e.g. "Details", "Technical") into the same
-// top-level tab bar as the fixed Relationships/Future plans/Change history tabs, rather than
+// top-level tab bar as the fixed Relations/Conformance/Planned changes/Change history tabs, rather than
 // nesting them inside a single "Overview" tab.
 export const EntityOverviewSection = ({
   tab,
@@ -55,14 +55,14 @@ export const EntityOverviewSection = ({
               </Tabs.Trigger>
             ))}
             <Tabs.Trigger value="relations">
-              Relationships{relationCount > 0 ? ` (${relationCount})` : ''}
+              Relations{relationCount > 0 ? ` (${relationCount})` : ''}
             </Tabs.Trigger>
-            <Tabs.Trigger value="future-plans">Future plans ({futurePlansCount})</Tabs.Trigger>
             {conformanceProps.canViewConformance && (
               <Tabs.Trigger value="conformance">
                 Conformance{activeViolationCount > 0 ? ` (${activeViolationCount})` : ''}
               </Tabs.Trigger>
             )}
+            <Tabs.Trigger value="future-plans">Planned changes ({futurePlansCount})</Tabs.Trigger>
             {canViewAudit && <Tabs.Trigger value="changes">Change history</Tabs.Trigger>}
           </Tabs.List>
         </Tabs.Root>

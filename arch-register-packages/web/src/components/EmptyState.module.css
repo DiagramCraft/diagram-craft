@@ -15,10 +15,22 @@
   justify-content: center;
 }
 
+.dense {
+  padding-top: 24px;
+  padding-bottom: 24px;
+}
+
 .emptyTitle {
   font-size: 14px;
   font-weight: 500;
   color: var(--base-fg-dim);
+}
+
+.emptySub {
+  font-size: 12px;
+  max-width: 360px;
+  text-align: center;
+  color: var(--cmp-fg-disabled);
 }
 
 .compact {
@@ -62,4 +74,16 @@
   max-width: 360px;
   margin: 6px 0 14px;
   color: var(--cmp-fg-disabled);
+}
+
+.toneGood {
+  color: var(--green);
+}
+
+.toneWarning {
+  color: var(--warning-fg);
+}
+
+.toneError {
+  color: var(--error-fg);
 }

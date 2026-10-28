@@ -865,7 +865,7 @@
           Approved and applied relation changes are wired into the same governance engine, timeline markers, and
           workspace landscape-diff as entities. In the web UI, relations are added and edited as members in the Plan
           change dialog (alongside at least one entity), listed with entity members on the project's future-changes
-          view, and shown in a Future plans section of the relation drawer. The
+          view, and shown in a Planned changes section of the relation drawer. The
           entity detail screen's Relations tab and Topology view also surface typed relation instances (grouped by
           relation schema in Topology, using the schema's own color), each expandable in place to view field values
           and open the same audit-trail history dialog. Relation instances can additionally be browsed as
@@ -1001,7 +1001,7 @@
         - @id:ar.entity-views.entity-detail Entity detail screens present metadata, project membership, and diagram
           membership in an accordion, with metadata open initially and project/diagram counts visible while their
           sections are collapsed. Valid typed relation schemas without projected fields have their own accordion
-          sections, and planned changes are available in a dedicated Future plans tab beside Change history. A
+          sections, and planned changes are available in a dedicated Planned changes tab beside Change history. A
           Conformance tab shows the entity's own violations (active, acknowledged, exempt) with severity and
           last-seen timestamps, or a conformant/not-yet-evaluated state when none apply, with its tab title counting
           active violations; it is gated by the same permission as the workspace Conformance section and links out

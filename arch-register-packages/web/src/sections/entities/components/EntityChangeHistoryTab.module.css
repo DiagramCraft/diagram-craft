@@ -5,10 +5,8 @@
   gap: 20px;
 }
 
-.chDim {
-  color: var(--cmp-fg-disabled);
+.chNoWrap {
   white-space: nowrap;
-  font-size: 11px;
 }
 
 .snapshotTypeBadge {

@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { useEntityDrawer } from '../entityDrawer/useEntityDrawer';
 import { TbCalendarWeek } from 'react-icons/tb';
 import styles from './TimelineView.module.css';
 import {
@@ -111,6 +112,7 @@ export const TimelineView = ({
   );
   const { data: timelineData } = useEntityTimeline(workspaceId, timelineEntityIds, isEventMode);
 
+  const { openPlannedChangeDrawer } = useEntityDrawer();
   const [activeEntityId, setActiveEntityId] = useState<string | null>(null);
   const [timelineScrollLeft, setTimelineScrollLeft] = useState(0);
   const [snapDetail, setSnapDetail] = useState<{
@@ -271,10 +273,24 @@ export const TimelineView = ({
     [cfg, onConfigChange]
   );
 
-  const handleSnapSelect = useCallback((snap: TimelineDot | null, entity: EntityRecord) => {
-    setSnapDetail(snap ? { snap, entity } : null);
-    setActiveEntityId(null);
-  }, []);
+  const handleSnapSelect = useCallback(
+    (snap: TimelineDot | null, entity: EntityRecord) => {
+      setActiveEntityId(null);
+      // Planned/applied project changes open the shared planned-change drawer; only the entity's
+      // own version snapshots use the local panel.
+      if (snap?.source === 'project' && snap.entry.changeCase.project_id) {
+        setSnapDetail(null);
+        openPlannedChangeDrawer({
+          projectId: snap.entry.changeCase.project_id,
+          caseId: snap.entry.changeCase.id,
+          memberId: snap.entry.member.id
+        });
+        return;
+      }
+      setSnapDetail(snap ? { snap, entity } : null);
+    },
+    [openPlannedChangeDrawer]
+  );
 
   const handleBarClick = useCallback((entity: EntityRecord) => {
     setActiveEntityId(entity._uid);
@@ -389,8 +405,6 @@ export const TimelineView = ({
           linkedEntityIds == null ||
           linkedEntityIdSet.has(snapDetail.entity._uid)
         }
-        projects={projects}
-        milestonesById={milestonesById}
         schemaMap={schemaMap}
         lifecycleStates={lifecycleStates}
         onEntityClick={onEntityClick}

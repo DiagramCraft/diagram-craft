@@ -164,7 +164,7 @@ export const RelationDrawer = ({
         <span>{relation._owner?.name ?? '—'}</span>
       </div>
 
-      <div className={styles.sectionLabel}>Future plans</div>
+      <div className={styles.sectionLabel}>Planned changes</div>
       <RelationFuturePlansSection
         workspaceSlug={workspaceSlug}
         relation={relation}

@@ -8,14 +8,10 @@ import { resolveSchemaColor } from '../../../lib/schemaPresentation';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
-import type { Project } from '@arch-register/api-types/projectCrudContract';
-import type { Milestone } from '@arch-register/api-types/milestoneContract';
 import type { FieldOption } from './entityFieldSources';
-import { getSnapshotDateLabel } from './snapshotDisplay';
 import {
   dotCommitMessage,
   dotCreatedAt,
-  dotProjectId,
   dotStatus,
   type TimelineDot
 } from './TimelineSnapshotRows';
@@ -40,8 +36,6 @@ const SNAP_STATUS_LABEL: Record<string, string> = {
 export const SnapDetailPanel = ({
   detail,
   isLinked,
-  projects,
-  milestonesById,
   schemaMap,
   lifecycleStates,
   onEntityClick,
@@ -49,8 +43,6 @@ export const SnapDetailPanel = ({
 }: {
   detail: { snap: TimelineDot; entity: EntityRecord } | null;
   isLinked: boolean;
-  projects: Project[];
-  milestonesById: Map<string, Milestone>;
   schemaMap: Map<string, { schema: EntitySchema; index: number }>;
   lifecycleStates: WorkspaceLifecycleState[];
   onEntityClick: (id: string) => void;
@@ -58,8 +50,6 @@ export const SnapDetailPanel = ({
 }) => {
   const { snap, entity } = detail ?? {};
   const s = entity ? schemaMap.get(entity._schema.id) : null;
-  const snapProjectId = snap ? dotProjectId(snap) : null;
-  const project = snapProjectId ? projects.find(p => p.id === snapProjectId) : null;
   const snapStatus = snap ? dotStatus(snap) : null;
   const snapCommitMessage = snap ? dotCommitMessage(snap) : null;
 
@@ -101,37 +91,9 @@ export const SnapDetailPanel = ({
       }
     >
       <div className={styles.detailBody}>
-        {project && (
-          <div className={styles.detailField}>
-            <div className={styles.detailFieldLabel}>Project</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <span
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: '50%',
-                  background: project.color ?? 'var(--accent-fg)',
-                  flexShrink: 0
-                }}
-              />
-              <span className={styles.detailFieldValue}>{project.name}</span>
-            </div>
-          </div>
-        )}
-
         <div className={styles.detailField}>
-          <div className={styles.detailFieldLabel}>
-            {snap.source === 'project'
-              ? snap.entry.changeCase.milestone_id
-                ? 'Milestone'
-                : 'Target date'
-              : 'Captured'}
-          </div>
-          <div className={styles.detailFieldValue}>
-            {snap.source === 'project'
-              ? (getSnapshotDateLabel(snap.entry.changeCase, milestonesById) ?? '—')
-              : formatTimelineDate(dotCreatedAt(snap))}
-          </div>
+          <div className={styles.detailFieldLabel}>Captured</div>
+          <div className={styles.detailFieldValue}>{formatTimelineDate(dotCreatedAt(snap))}</div>
         </div>
 
         {snapCommitMessage && (

@@ -10,7 +10,7 @@ const activeTypedRelationFields = (schema: EntitySchema | null): TypedRelationFi
 /**
  * Relation schemas applicable to the given entity schema (either endpoint allows this schema)
  * that have no dedicated `typedRelation` field projecting them — i.e. would otherwise only be
- * reachable via the generic Relationships tab. Schema-only computation; does not depend on
+ * reachable via the generic Relations tab. Schema-only computation; does not depend on
  * relation record data.
  */
 export const computeApplicableUnboundRelationSchemas = (

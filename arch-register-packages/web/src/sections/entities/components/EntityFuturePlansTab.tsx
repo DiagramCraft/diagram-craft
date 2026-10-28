@@ -2,12 +2,13 @@ import type { ChangeCase } from '@arch-register/api-types/changeCaseContract';
 import type { Project } from '@arch-register/api-types/projectCrudContract';
 import type { ProjectEntity } from '@arch-register/api-types/projectEntityContract';
 import { EmptyState } from '../../../components/EmptyState';
+import { Table } from '../../../components/table/Table';
 import { useMilestones } from '../../../hooks/useMilestones';
 import { formatDate } from '../../../utils/dateFormat';
-import styles from './EntityOverviewTab.module.css';
+import { useEntityDrawer } from '../entityDrawer/useEntityDrawer';
 import pageStyles from '../EntityDetailScreen.module.css';
 import {
-  getSnapshotDateLabel,
+  getSnapshotEffectiveDate,
   toMilestonesById,
   flattenChangeCaseMembers
 } from './snapshotDisplay';
@@ -23,6 +24,7 @@ export const EntityFuturePlansTab = ({
   entityProjects: EntityProject[];
   changeCases: ChangeCase[];
 }) => {
+  const { openPlannedChangeDrawer } = useEntityDrawer();
   const futureEntries = flattenChangeCaseMembers(changeCases).filter(
     entry => entry.changeCase.status === 'planned'
   );
@@ -39,33 +41,66 @@ export const EntityFuturePlansTab = ({
   );
 
   if (futureEntries.length === 0) {
-    return <EmptyState title="No future plans" subtitle="Planned changes will appear here." />;
+    return (
+      <EmptyState dense title="No planned changes" subtitle="Planned changes will appear here." />
+    );
   }
+
+  const effectiveDate = (entry: (typeof futureEntries)[number]) =>
+    getSnapshotEffectiveDate(entry.changeCase, milestonesById);
+  const sortedEntries = [...futureEntries].sort((a, b) => {
+    const aDate = effectiveDate(a);
+    const bDate = effectiveDate(b);
+    if (aDate === bDate) return 0;
+    if (aDate == null) return 1;
+    if (bDate == null) return -1;
+    return aDate.localeCompare(bDate);
+  });
 
   return (
     <div className={pageStyles.futurePlansPage}>
-      {futureEntries.map(entry => {
-        const projectName =
-          entityProjects.find(ep => ep.project.id === entry.changeCase.project_id)?.project.name ??
-          entry.changeCase.project_id;
-        const dateLabel = entry.changeCase.milestone_id
-          ? getSnapshotDateLabel(entry.changeCase, milestonesById)
-          : entry.changeCase.target_date
-            ? formatDate(entry.changeCase.target_date)
-            : null;
+      <Table.Root>
+        <Table.Head>
+          <Table.Row>
+            <Table.HeaderCell>Date</Table.HeaderCell>
+            <Table.HeaderCell>Project</Table.HeaderCell>
+            <Table.HeaderCell>Milestone</Table.HeaderCell>
+            <Table.HeaderCell>Note</Table.HeaderCell>
+          </Table.Row>
+        </Table.Head>
+        <Table.Body>
+          {sortedEntries.map(entry => {
+            const projectName =
+              entityProjects.find(ep => ep.project.id === entry.changeCase.project_id)?.project
+                .name ?? entry.changeCase.project_id;
+            const date = effectiveDate(entry);
+            const milestoneName = entry.changeCase.milestone_id
+              ? milestonesById.get(entry.changeCase.milestone_id)?.name
+              : null;
 
-        return (
-          <div key={entry.member.id} className={styles.futurePlan}>
-            <div className={styles.futurePlanMeta}>
-              <span className={styles.futurePlanProject}>{projectName}</span>
-              {dateLabel && <span className={styles.futurePlanDate}>{dateLabel}</span>}
-            </div>
-            {entry.changeCase.commit_message && (
-              <div className={styles.futurePlanNote}>{entry.changeCase.commit_message}</div>
-            )}
-          </div>
-        );
-      })}
+            return (
+              <Table.Row
+                key={entry.member.id}
+                onClick={
+                  entry.changeCase.project_id
+                    ? () =>
+                        openPlannedChangeDrawer({
+                          projectId: entry.changeCase.project_id ?? '',
+                          caseId: entry.changeCase.id,
+                          memberId: entry.member.id
+                        })
+                    : undefined
+                }
+              >
+                <Table.Cell>{date ? formatDate(date) : '—'}</Table.Cell>
+                <Table.Cell>{projectName ?? '—'}</Table.Cell>
+                <Table.Cell>{milestoneName ?? '—'}</Table.Cell>
+                <Table.Cell>{entry.changeCase.commit_message ?? '—'}</Table.Cell>
+              </Table.Row>
+            );
+          })}
+        </Table.Body>
+      </Table.Root>
     </div>
   );
 };

@@ -1,5 +1,4 @@
-import { useNavigate } from '@tanstack/react-router';
-import { TbArrowRight, TbShieldCheck } from 'react-icons/tb';
+import { TbShieldCheck } from 'react-icons/tb';
 import { useConformanceViolations } from '../../../hooks/useConformance';
 import { SeverityBadge, ViolationStatusChip } from '../../../components/ConformanceBadges';
 import { EmptyState } from '../../../components/EmptyState';
@@ -15,22 +14,16 @@ type Props = {
 };
 
 export const EntityConformanceTab = ({ workspaceId, entityId, canViewConformance }: Props) => {
-  const navigate = useNavigate();
   const { data, isLoading } = useConformanceViolations(
     workspaceId,
     { entityId, limit: 200, offset: 0 },
     canViewConformance
   );
 
-  const goToConformance = () =>
-    navigate({
-      to: '/$workspaceSlug/settings/$section',
-      params: { workspaceSlug: workspaceId, section: 'conformance' }
-    });
-
   if (!canViewConformance) {
     return (
       <EmptyState
+        dense
         title="No access to conformance"
         subtitle="You do not have permission to view conformance results for this entity."
       />
@@ -46,14 +39,11 @@ export const EntityConformanceTab = ({ workspaceId, entityId, canViewConformance
   if (violations.length === 0) {
     return (
       <EmptyState
+        dense
         icon={<TbShieldCheck size={20} />}
+        tone="good"
         title="Conformant"
         subtitle="No active, acknowledged, or exempt violations were found for this entity."
-        action={
-          <button type="button" className={styles.link} onClick={goToConformance}>
-            View in Conformance <TbArrowRight size={12} />
-          </button>
-        }
       />
     );
   }
@@ -86,9 +76,6 @@ export const EntityConformanceTab = ({ workspaceId, entityId, canViewConformance
           ))}
         </Table.Body>
       </Table.Root>
-      <button type="button" className={styles.link} onClick={goToConformance}>
-        View in Conformance <TbArrowRight size={12} />
-      </button>
     </div>
   );
 };
