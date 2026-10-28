@@ -5,7 +5,7 @@ import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import type { TreeNode } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
-import type { MetricConfig } from '@arch-register/api-types/metricContract';
+import type { MetricConfig, MetricLegend } from '@arch-register/api-types/metricContract';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import type { EntityQuery, PathStep, QueryNode } from '@arch-register/api-types/entityQueryIR';
 import { useEntityBrowserTreeData } from './useEntityBrowserTreeData';
@@ -33,7 +33,7 @@ import {
 import {
   getMetricSourceOptions,
   parseMetricConfig,
-  isEnumSource,
+  isChoiceMetric,
   sourceKey
 } from './mapMetricConfig';
 import {
@@ -523,7 +523,7 @@ export const MapView = ({
   const metricLabel = activeOverlay
     ? activeOverlay.label
     : metricConfig
-      ? isEnumSource(metricConfig.source)
+      ? isChoiceMetric(metricConfig) || metricConfig.aggregation === 'none'
         ? (activeSourceOption?.label ?? metricConfig.source.kind)
         : `${activeSourceOption?.label ?? metricConfig.source.kind} (${aggregationLabel(metricConfig.aggregation)})`
       : '';
@@ -568,12 +568,13 @@ export const MapView = ({
 
   const {
     resultsByBoxId,
-    legend,
+    legend: rollupLegend,
     error: metricError
   } = useMapMetricRollup({
     workspaceId,
     boxEntityIds: visibleBoxIds,
-    metric: metricConfig,
+    // "None" is presentation-only: nothing is rolled up, leaf boxes use their own value.
+    metric: metricConfig?.aggregation === 'none' ? null : metricConfig,
     schemaId: typeFilter,
     owner: ownerFilter,
     lifecycle: statusFilter,
@@ -584,6 +585,28 @@ export const MapView = ({
     projectId,
     projectScope
   });
+
+  // With no aggregation there is no server legend: derive it from the leaves' own values (the
+  // select field's options give an enum its categories).
+  const legend = useMemo<MetricLegend>(() => {
+    if (metricConfig?.aggregation !== 'none') return rollupLegend;
+    const field =
+      metricConfig.source.kind === 'enum'
+        ? metricSourceSchema?.fields.find(
+            candidate =>
+              'fieldId' in metricConfig.source && candidate.id === metricConfig.source.fieldId
+          )
+        : undefined;
+    const options =
+      field && 'options' in field && Array.isArray(field.options)
+        ? (field.options as Array<{ value: string; label: string }>)
+        : undefined;
+    return {
+      min: directMetricRange.min,
+      max: directMetricRange.max,
+      categories: options?.map(option => ({ value: option.value, label: option.label }))
+    };
+  }, [directMetricRange, metricConfig, metricSourceSchema, rollupLegend]);
 
   const filteredRenderTree = useMemo(() => {
     if (!metricConfig || !cfg.hideMissingMetricData) {
@@ -604,7 +627,12 @@ export const MapView = ({
           metricSourceSchema,
           isLeaf
         );
-        if (hasMissingMetricData(metricConfig, result) && directValue == null) return null;
+        if (metricConfig.aggregation === 'none') {
+          // Without aggregation only a leaf can lack data; parents are never "missing".
+          if (isLeaf && directValue == null) return null;
+        } else if (hasMissingMetricData(metricConfig, result) && directValue == null) {
+          return null;
+        }
       }
       return {
         ...entry,
@@ -637,12 +665,23 @@ export const MapView = ({
         lifecycleStates,
         metricSourceSchema,
         isLeaf,
-        directMetricRange
+        directMetricRange,
+        cfg.colorScheme,
+        cfg.reverseColors
       );
       if (!color) return undefined;
       return { background: color };
     },
-    [metricConfig, resultsByBoxId, legend, lifecycleStates, metricSourceSchema, directMetricRange]
+    [
+      metricConfig,
+      resultsByBoxId,
+      legend,
+      lifecycleStates,
+      metricSourceSchema,
+      directMetricRange,
+      cfg.colorScheme,
+      cfg.reverseColors
+    ]
   );
 
   const nameStyle = useCallback(
@@ -656,11 +695,22 @@ export const MapView = ({
         lifecycleStates,
         metricSourceSchema,
         isLeaf,
-        directMetricRange
+        directMetricRange,
+        cfg.colorScheme,
+        cfg.reverseColors
       );
       return color ? { color: textColorForFill(color) } : undefined;
     },
-    [metricConfig, resultsByBoxId, legend, lifecycleStates, metricSourceSchema, directMetricRange]
+    [
+      metricConfig,
+      resultsByBoxId,
+      legend,
+      lifecycleStates,
+      metricSourceSchema,
+      directMetricRange,
+      cfg.colorScheme,
+      cfg.reverseColors
+    ]
   );
 
   const metricRowsFor = useCallback(
@@ -802,6 +852,8 @@ export const MapView = ({
             aggregation={metricConfig.aggregation}
             legend={legend}
             colourBands={metricConfig.colourBands}
+            colorScheme={cfg.colorScheme}
+            reverseColors={cfg.reverseColors}
             lifecycleStates={lifecycleStates}
           />
         ))}

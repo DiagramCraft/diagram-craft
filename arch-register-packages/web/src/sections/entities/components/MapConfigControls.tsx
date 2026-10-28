@@ -4,19 +4,31 @@ import type { RelationSchema } from '@arch-register/api-types/relationSchemaCont
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
-import type { MetricAggregation, MetricConfig } from '@arch-register/api-types/metricContract';
+import {
+  ANY_SOURCE_SCHEMA,
+  type MetricAggregation,
+  type MetricConfig
+} from '@arch-register/api-types/metricContract';
 import type { PathStep } from '@arch-register/api-types/entityQueryIR';
 import type { FieldGroupAccess, FieldGroupAccessControl } from '@arch-register/permissions';
-import { TbChevronDown, TbEyeOff, TbTrash } from 'react-icons/tb';
+import { TbArrowsExchange, TbChevronDown, TbEyeOff, TbTrash } from 'react-icons/tb';
 import styles from './MapView.module.css';
 import type { PopoverActions } from '@diagram-craft/app-components/Popover';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { Button } from '@diagram-craft/app-components/Button';
 import { FilterBuilder } from '../../../components/FilterBuilder';
-import { AGGREGATION_OPTIONS, isCurrencyMetric, isEnumSource, sourceKey } from './mapMetricConfig';
+import {
+  AGGREGATION_OPTIONS,
+  aggregationOptionLabel,
+  isCurrencyMetric,
+  isChoiceSource,
+  sourceKey
+} from './mapMetricConfig';
 import type { MetricSourceOption } from './mapMetricConfig';
 import type { MapConfig } from './mapViewConfig';
 import type { MapLevelConfig } from './mapViewState';
+import { FilterDropdown } from '../../../components/FilterDropdown';
+import { MAP_COLOR_SCHEME_OPTIONS, type MapColorScheme } from './mapColorScales';
 import { HopPicker } from './pathBuilder/HopPicker';
 import { HopSequence } from './pathBuilder/HopSequence';
 import {
@@ -452,90 +464,98 @@ export const MapConfigControls = ({
         <div className={styles.config}>
           <div className={styles.axisPill}>
             <span className={styles.axisKicker}>Metric</span>
-            <span className={styles.pathSummary}>
-              {metricTerminalSchema?.name ?? 'Select the final map level'}
-            </span>
-            <div className={styles.selectWrap}>
-              <select
-                className={styles.select}
-                value={metricConfig ? sourceKey(metricConfig.source) : ''}
-                disabled={mapTraversalError != null}
-                onChange={e => {
-                  const option = metricSourceOptions.find(
-                    candidate => sourceKey(candidate.source) === e.target.value
-                  );
-                  if (!option || !metricTerminalSchemaId) {
-                    setMetricConfig(null);
-                    return;
-                  }
-                  const nextIsEnum = isEnumSource(option.source);
-                  setMetricConfig({
-                    ...(metricConfig ?? {
-                      sourceSchemaId: metricTerminalSchemaId,
-                      source: option.source,
-                      aggregation: 'count'
-                    }),
-                    sourceSchemaId: metricTerminalSchemaId,
-                    sourceContext: metricTerminalContext,
-                    traversalPath: mapTraversalPath.length > 0 ? mapTraversalPath : undefined,
-                    traversalPathMode: 'suffixes',
+            <span className={styles.pathSummary}>{metricTerminalSchema?.name ?? 'Any schema'}</span>
+            <FilterDropdown
+              label="Field"
+              value={metricConfig ? sourceKey(metricConfig.source) : ''}
+              disabled={mapTraversalError != null}
+              onChange={value => {
+                const option = metricSourceOptions.find(
+                  candidate => sourceKey(candidate.source) === value
+                );
+                // With no single terminal schema (e.g. the last step reaches several), only
+                // schema-independent sources are offered; they apply to terminals of any schema.
+                const sourceSchemaId = metricTerminalSchemaId ?? ANY_SOURCE_SCHEMA;
+                if (!option) {
+                  setMetricConfig(null);
+                  return;
+                }
+                const nextIsChoice = isChoiceSource(option.source);
+                const keepsAggregation =
+                  metricConfig != null &&
+                  ['none', 'count', 'best', 'worst'].includes(metricConfig.aggregation);
+                setMetricConfig({
+                  ...(metricConfig ?? {
+                    sourceSchemaId,
                     source: option.source,
-                    aggregation: nextIsEnum ? 'count' : (metricConfig?.aggregation ?? 'count'),
-                    worstDirection: nextIsEnum ? undefined : metricConfig?.worstDirection,
-                    targetCurrency: undefined
-                  });
-                }}
-              >
-                <option value="">None</option>
-                {metricSourceOptions.map(option => (
-                  <option key={sourceKey(option.source)} value={sourceKey(option.source)}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              <TbChevronDown size={11} />
-            </div>
+                    aggregation: 'count'
+                  }),
+                  sourceSchemaId,
+                  sourceContext: metricTerminalContext,
+                  traversalPath: mapTraversalPath.length > 0 ? mapTraversalPath : undefined,
+                  traversalPathMode: 'suffixes',
+                  source: option.source,
+                  aggregation: nextIsChoice
+                    ? keepsAggregation
+                      ? metricConfig.aggregation
+                      : 'count'
+                    : (metricConfig?.aggregation ?? 'count'),
+                  worstDirection: metricConfig?.worstDirection,
+                  targetCurrency: undefined
+                });
+              }}
+              options={[
+                { value: '', label: 'None' },
+                ...metricSourceOptions.map(option => ({
+                  value: sourceKey(option.source),
+                  label: option.label
+                }))
+              ]}
+            />
             {mapTraversalError && <span className={styles.metricError}>{mapTraversalError}</span>}
           </div>
 
           {metricConfig && (
             <>
-              <span className={styles.cross}>›</span>
-              <div className={styles.selectWrap}>
-                <select
-                  className={styles.select}
-                  value={metricConfig.aggregation}
-                  onChange={e => {
-                    const aggregation = e.target.value as MetricAggregation;
-                    setMetricConfig({
-                      ...metricConfig,
-                      aggregation,
-                      worstDirection:
-                        aggregation === 'worst'
-                          ? (metricConfig.worstDirection ?? 'high')
-                          : undefined,
-                      targetCurrency:
-                        aggregation === 'count' || aggregation === 'percentage'
-                          ? undefined
-                          : metricConfig.targetCurrency,
-                      numeratorCondition:
-                        aggregation === 'percentage' ? metricConfig.numeratorCondition : undefined
-                    });
-                  }}
-                >
-                  {(isEnumSource(metricConfig.source)
-                    ? AGGREGATION_OPTIONS.filter(o => o.value === 'count' || o.value === 'worst')
-                    : AGGREGATION_OPTIONS
-                  ).map(o => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
-                <TbChevronDown size={11} />
-              </div>
+              <FilterDropdown
+                label="Aggregate"
+                value={metricConfig.aggregation}
+                onChange={value => {
+                  const aggregation = value as MetricAggregation;
+                  setMetricConfig({
+                    ...metricConfig,
+                    aggregation,
+                    worstDirection:
+                      aggregation === 'worst' || aggregation === 'best'
+                        ? (metricConfig.worstDirection ?? 'high')
+                        : undefined,
+                    targetCurrency:
+                      aggregation === 'count' || aggregation === 'percentage'
+                        ? undefined
+                        : metricConfig.targetCurrency,
+                    numeratorCondition:
+                      aggregation === 'percentage' ? metricConfig.numeratorCondition : undefined
+                  });
+                }}
+                options={(isChoiceSource(metricConfig.source)
+                  ? AGGREGATION_OPTIONS.filter(
+                      o =>
+                        o.value === 'none' ||
+                        o.value === 'count' ||
+                        o.value === 'best' ||
+                        o.value === 'worst' ||
+                        // A saved numeric aggregation of a lifecycle metric stays selectable.
+                        (metricConfig.source.kind === 'lifecycle' &&
+                          o.value === metricConfig.aggregation)
+                    )
+                  : AGGREGATION_OPTIONS
+                ).map(o => ({
+                  value: o.value,
+                  label: aggregationOptionLabel(o, isChoiceSource(metricConfig.source))
+                }))}
+              />
 
-              {metricConfig.aggregation === 'worst' && (
+              {(metricConfig.aggregation === 'worst' || metricConfig.aggregation === 'best') && (
                 <div className={styles.selectWrap}>
                   <select
                     className={styles.select}
@@ -547,7 +567,7 @@ export const MapConfigControls = ({
                       })
                     }
                   >
-                    {isEnumSource(metricConfig.source) ? (
+                    {isChoiceSource(metricConfig.source) ? (
                       <>
                         <option value="high">Last option is worst</option>
                         <option value="low">First option is worst</option>
@@ -620,14 +640,40 @@ export const MapConfigControls = ({
                 </Popover.Root>
               )}
 
-              <label className={styles.metricToggle}>
-                <input
-                  type="checkbox"
-                  checked={cfg.hideMissingMetricData === true}
-                  onChange={e => notify({ hideMissingMetricData: e.target.checked })}
-                />
-                Hide missing
-              </label>
+              <FilterDropdown
+                label="Colors"
+                value={cfg.colorScheme ?? 'blue'}
+                onChange={value => notify({ colorScheme: value as MapColorScheme })}
+                options={MAP_COLOR_SCHEME_OPTIONS}
+              />
+
+              <Button
+                size="sm"
+                className={styles.metricButton}
+                variant={cfg.reverseColors ? 'primary' : undefined}
+                icon={<TbArrowsExchange size={13} />}
+                title={cfg.reverseColors ? 'Use the normal color order' : 'Reverse the color order'}
+                aria-label={
+                  cfg.reverseColors ? 'Use the normal color order' : 'Reverse the color order'
+                }
+                aria-pressed={cfg.reverseColors === true}
+                onClick={() => notify({ reverseColors: !cfg.reverseColors })}
+              />
+
+              <Button
+                size="sm"
+                className={styles.metricButton}
+                variant={cfg.hideMissingMetricData ? 'primary' : undefined}
+                icon={<TbEyeOff size={13} />}
+                title={
+                  cfg.hideMissingMetricData ? 'Show boxes without data' : 'Hide boxes without data'
+                }
+                aria-label={
+                  cfg.hideMissingMetricData ? 'Show boxes without data' : 'Hide boxes without data'
+                }
+                aria-pressed={cfg.hideMissingMetricData === true}
+                onClick={() => notify({ hideMissingMetricData: !cfg.hideMissingMetricData })}
+              />
             </>
           )}
         </div>

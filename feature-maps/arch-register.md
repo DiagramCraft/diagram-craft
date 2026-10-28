@@ -1064,9 +1064,11 @@
 
         - @id:ar.entity-views.map Users can inspect containment hierarchies, including the built-in Vendor-to-Contract
           path, as a nested capability map, colouring boxes by a configurable metric rolled up from descendant entities
-          (a numeric metric can alternatively be drawn in good/warn/bad severity bands, with a band legend)
+          (a numeric metric can alternatively be drawn in good/warn/bad severity bands, with a band legend, and its
+          gradient can use a blue, green, red, red-amber-green, or grayscale color scheme, optionally reversed)
           (numeric or currency fields, lifecycle state, or assessment fields), using count, leaf-count, sum, average,
-          minimum, maximum, dominant-option, worst, or percentage aggregation. Leaf-count counts only descendants
+          minimum, maximum, best, worst, most-common-option (for select fields and lifecycle states), or percentage aggregation, or no aggregation at all ("None"),
+          which colours only the leaf boxes by their own value and leaves parent boxes uncoloured. Leaf-count counts only descendants
           with no containment children of their own — used, for example, by the Strategy & Capability Modelling
           application's capability roll-up (@id:ar.entities.strategy-model). Percentage aggregation shows the share
           of descendants matching a configurable numerator condition against the same field set as the entity

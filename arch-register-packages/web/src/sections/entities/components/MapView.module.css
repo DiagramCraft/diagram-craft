@@ -77,14 +77,6 @@
   flex-shrink: 0;
 }
 
-.cross {
-  font-size: 13px;
-  color: var(--base-fg-more-dim);
-  font-weight: 300;
-  padding: 0 2px;
-  flex-shrink: 0;
-}
-
 .pathSummary {
   max-width: 220px;
   overflow: hidden;
@@ -177,13 +169,14 @@
   color: var(--accent-fg);
 }
 
-.metricToggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--base-fg-more-dim);
-  font-size: 11px;
-  white-space: nowrap;
+.metricButton[data-size="sm"] {
+  height: 24px;
+}
+
+/* Match the dropdowns next to it (26px tall in total, panel border). */
+.metricButton[data-size="sm"][data-variant="default"] {
+  border-color: var(--panel-border);
+  background: var(--cmp-bg);
 }
 
 .levelAction:disabled {

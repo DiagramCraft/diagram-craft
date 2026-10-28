@@ -506,6 +506,26 @@ describe('computeBoxMetrics', () => {
     expect(result.results[0]?.value).toBe(3);
   });
 
+  it('best picks the opposite end from worst for numeric values', () => {
+    const entities = [
+      makeDomain('d1'),
+      makeService('s1', 'd1', { data: { parent: 'd1', score: 10 } }),
+      makeService('s2', 'd1', { data: { parent: 'd1', score: 3 } })
+    ];
+    const run = (worstDirection: 'low' | 'high') =>
+      computeBoxMetrics(
+        ['d1'],
+        { ...numericMetric, aggregation: 'best', worstDirection },
+        entities,
+        schemas,
+        lifecycleStates,
+        null
+      ).results[0]?.value;
+    // "high is worse" -> the best is the lowest value; "low is worse" -> the highest.
+    expect(run('high')).toBe(3);
+    expect(run('low')).toBe(10);
+  });
+
   it('worst picks the highest value when direction is "high"', () => {
     const entities = [
       makeDomain('d1'),
@@ -523,25 +543,84 @@ describe('computeBoxMetrics', () => {
     expect(result.results[0]?.value).toBe(10);
   });
 
-  it('lifecycle source ranks by sort_order and reports the winning lifecycle id', () => {
-    const entities = [
+  describe('lifecycle source', () => {
+    const lifecycleEntities = [
       makeDomain('d1'),
       makeService('s1', 'd1', { lifecycle: 'production' }),
-      makeService('s2', 'd1', { lifecycle: 'deprecated' }),
-      makeService('s3', 'd1', { lifecycle: null }) // unassigned, ignored
+      makeService('s2', 'd1', { lifecycle: 'production' }),
+      makeService('s3', 'd1', { lifecycle: 'deprecated' }),
+      makeService('s4', 'd1', { lifecycle: null }) // unassigned, ignored
     ];
-    const metric: MetricConfig = {
+    const lifecycleMetric = (
+      aggregation: MetricConfig['aggregation'],
+      worstDirection?: 'low' | 'high'
+    ): MetricConfig => ({
       sourceSchemaId: 'service',
       source: { kind: 'lifecycle' },
-      aggregation: 'worst',
-      worstDirection: 'high'
-    };
-    const result = computeBoxMetrics(['d1'], metric, entities, schemas, lifecycleStates, null);
-    expect(result.results[0]).toMatchObject({
-      value: 2,
-      lifecycleId: 'deprecated',
-      sourceCount: 3,
-      populatedCount: 2
+      aggregation,
+      worstDirection
+    });
+    const run = (metric: MetricConfig) =>
+      computeBoxMetrics(['d1'], metric, lifecycleEntities, schemas, lifecycleStates, null)
+        .results[0];
+
+    it('worst picks the last state in the lifecycle order when "high" is worse', () => {
+      expect(run(lifecycleMetric('worst', 'high'))).toMatchObject({
+        dominantValue: 'deprecated',
+        lifecycleId: 'deprecated',
+        sourceCount: 4,
+        populatedCount: 3
+      });
+    });
+
+    it('best picks the opposite end of the lifecycle order', () => {
+      expect(run(lifecycleMetric('best', 'high'))).toMatchObject({
+        dominantValue: 'production',
+        lifecycleId: 'production'
+      });
+    });
+
+    it('count reports the most common state and its distribution', () => {
+      const result = run(lifecycleMetric('count'));
+      expect(result).toMatchObject({ dominantValue: 'production', lifecycleId: 'production' });
+      expect(result?.distribution.find(entry => entry.value === 'production')?.count).toBe(2);
+    });
+
+    it('applies to terminals of any schema when the source schema is "*"', () => {
+      const workerSchema: SchemaDbResult = {
+        ...serviceSchema,
+        id: 'worker',
+        name: 'Worker',
+        key_prefix: 'WRK'
+      };
+      const mixed = [
+        makeDomain('d1'),
+        makeService('s1', 'd1', { lifecycle: 'production' }),
+        makeService('w1', 'd1', { lifecycle: 'deprecated', schema_id: 'worker' }),
+        makeService('w2', 'd1', { lifecycle: 'deprecated', schema_id: 'worker' })
+      ];
+      const run = (sourceSchemaId: string) =>
+        computeBoxMetrics(
+          ['d1'],
+          { ...lifecycleMetric('count'), sourceSchemaId },
+          mixed,
+          [...schemas, workerSchema],
+          lifecycleStates,
+          null
+        ).results[0];
+
+      // A single schema only sees its own terminals...
+      expect(run('service')).toMatchObject({ sourceCount: 1, dominantValue: 'production' });
+      // ...while "*" sees both schemas, so the two deprecated workers win.
+      expect(run('*')).toMatchObject({ sourceCount: 3, dominantValue: 'deprecated' });
+    });
+
+    it('keeps ranking by sort order for the numeric aggregations of saved metrics', () => {
+      expect(run(lifecycleMetric('maximum'))).toMatchObject({
+        value: 2,
+        lifecycleId: 'deprecated',
+        populatedCount: 3
+      });
     });
   });
 
@@ -765,6 +844,29 @@ describe('computeBoxMetrics - enum sources', () => {
       tierEnumOptions
     );
     expect(result.results[0]).toMatchObject({ dominantValue: 'gold', dominantLabel: 'Gold' });
+  });
+
+  it('best picks the opposite end of the enum order from worst', () => {
+    const entities = [
+      makeDomain('d1'),
+      makeService('s1', 'd1', { data: { parent: 'd1', tier: 'gold' } }),
+      makeService('s2', 'd1', { data: { parent: 'd1', tier: 'silver' } }),
+      makeService('s3', 'd1', { data: { parent: 'd1', tier: 'silver' } })
+    ];
+    const run = (worstDirection: 'low' | 'high') =>
+      computeBoxMetrics(
+        ['d1'],
+        { ...enumMetric, aggregation: 'best', worstDirection },
+        entities,
+        schemas,
+        lifecycleStates,
+        null,
+        tierEnumOptions
+      ).results[0];
+    // Order is gold, silver, bronze. "low" = first option is worst, so the best is the last one
+    // present (silver); "high" = last is worst, so the best is the first one present (gold).
+    expect(run('low')).toMatchObject({ dominantValue: 'silver' });
+    expect(run('high')).toMatchObject({ dominantValue: 'gold' });
   });
 
   it('worst picks the last-listed populated option when direction is "high"', () => {
@@ -1228,6 +1330,26 @@ describe('getBoxMetrics', () => {
       getBoxMetrics(db, 'ws-1', permissiveAuthCtx, {
         boxEntityIds: ['d1'],
         metric: { ...numericMetric, aggregation: 'worst' }
+      })
+    ).rejects.toMatchObject({ status: 400 });
+  });
+
+  it('rejects best aggregation without a worstDirection', async () => {
+    const db = makeDb([makeDomain('d1')]);
+    await expect(
+      getBoxMetrics(db, 'ws-1', permissiveAuthCtx, {
+        boxEntityIds: ['d1'],
+        metric: { ...numericMetric, aggregation: 'best' }
+      })
+    ).rejects.toMatchObject({ status: 400 });
+  });
+
+  it('rejects the presentation-only "none" aggregation', async () => {
+    const db = makeDb([makeDomain('d1')]);
+    await expect(
+      getBoxMetrics(db, 'ws-1', permissiveAuthCtx, {
+        boxEntityIds: ['d1'],
+        metric: { ...numericMetric, aggregation: 'none' }
       })
     ).rejects.toMatchObject({ status: 400 });
   });

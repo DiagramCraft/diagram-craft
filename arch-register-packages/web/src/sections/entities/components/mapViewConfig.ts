@@ -1,10 +1,13 @@
 import { mapViewConfigSchema } from '@arch-register/api-types/viewContract';
 import { normalizeViewConfig } from './entityViewConfig';
 import type { MapLevelConfig } from './mapViewState';
+import type { MapColorScheme } from './mapColorScales';
 
 export type MapConfig = {
   levelConfigs: MapLevelConfig[];
   hideMissingMetricData?: boolean;
+  colorScheme?: MapColorScheme;
+  reverseColors?: boolean;
   fieldIds?: string[];
   metricConfig?: unknown;
 };
@@ -18,7 +21,9 @@ export const DEFAULT_MAP_CONFIG: MapConfig = {
   ],
   fieldIds: undefined,
   metricConfig: undefined,
-  hideMissingMetricData: undefined
+  hideMissingMetricData: undefined,
+  colorScheme: undefined,
+  reverseColors: undefined
 };
 
 const legacyMapConfigDefaults = {
@@ -46,7 +51,9 @@ export const normalizeMapConfig = (raw: unknown): MapConfig => {
       })),
       fieldIds: parsed.fieldIds,
       metricConfig: parsed.metricConfig,
-      hideMissingMetricData: parsed.hideMissingMetricData
+      hideMissingMetricData: parsed.hideMissingMetricData,
+      colorScheme: parsed.colorScheme,
+      reverseColors: parsed.reverseColors
     };
   }
   const legacyIds = [parsed.level1SchemaId, parsed.level2SchemaId, parsed.level3SchemaId];
@@ -58,6 +65,8 @@ export const normalizeMapConfig = (raw: unknown): MapConfig => {
     })),
     fieldIds: parsed.fieldIds,
     metricConfig: parsed.metricConfig,
-    hideMissingMetricData: parsed.hideMissingMetricData
+    hideMissingMetricData: parsed.hideMissingMetricData,
+    colorScheme: parsed.colorScheme,
+    reverseColors: parsed.reverseColors
   };
 };

@@ -6,7 +6,12 @@ import type {
   MetricSource
 } from '@arch-register/api-types/metricContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
-import { categoricalColor, NEUTRAL_MISSING_COLOR } from './mapColorScales';
+import {
+  categoricalColor,
+  colorSchemeGradient,
+  NEUTRAL_MISSING_COLOR,
+  type MapColorScheme
+} from './mapColorScales';
 import { bandedLegend } from './mapBandColors';
 import { isEnumSource } from './mapMetricConfig';
 import { formatMetricLegendValue, formatMetricRateDate } from './mapMetricFormatting';
@@ -18,6 +23,8 @@ type MapLegendProps = {
   legend: MetricLegend;
   /** Severity bands; when set the legend shows one swatch per band tone instead of the ramp. */
   colourBands?: MetricConfig['colourBands'];
+  colorScheme?: MapColorScheme;
+  reverseColors?: boolean;
   lifecycleStates: WorkspaceLifecycleState[];
 };
 
@@ -27,6 +34,8 @@ export const MapLegend = ({
   aggregation,
   legend,
   colourBands,
+  colorScheme,
+  reverseColors,
   lifecycleStates
 }: MapLegendProps) => {
   if (colourBands?.length && aggregation !== 'percentage' && !isEnumSource(source)) {
@@ -108,7 +117,7 @@ export const MapLegend = ({
         </span>
         <span
           className={styles.gradient}
-          style={{ background: 'linear-gradient(to right, #86b6ef, #0d366b)' }}
+          style={{ background: colorSchemeGradient(colorScheme, reverseColors) }}
         />
         <span className={styles.rangeLabel}>
           {formatMetricLegendValue(legend.max, legend, aggregation)}

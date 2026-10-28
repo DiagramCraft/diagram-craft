@@ -336,6 +336,14 @@ export const mapViewConfigSchema = z.object({
     .boolean()
     .optional()
     .describe('Whether to hide boxes with no usable aggregate or metric source data'),
+  colorScheme: z
+    .enum(['blue', 'green', 'red', 'red-amber-green', 'grayscale'])
+    .optional()
+    .describe('Color scheme for the numeric metric gradient (default blue)'),
+  reverseColors: z
+    .boolean()
+    .optional()
+    .describe('Whether the numeric metric gradient runs from its high end to its low end'),
   metricConfig: z
     .unknown()
     .nullable()

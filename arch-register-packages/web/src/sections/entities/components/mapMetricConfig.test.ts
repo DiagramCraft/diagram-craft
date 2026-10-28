@@ -5,6 +5,9 @@ import {
   getMetricPathOptions,
   getMetricSourceOptions,
   isEnumSource,
+  aggregationOptionLabel,
+  isChoiceMetric,
+  AGGREGATION_OPTIONS,
   parseMetricConfig,
   sourceKey
 } from './mapMetricConfig';
@@ -22,6 +25,31 @@ describe('parseMetricConfig', () => {
       source: { kind: 'field', fieldId: 'score' },
       aggregation: 'average'
     });
+  });
+
+  it('accepts the "none" aggregation instead of discarding the whole metric', () => {
+    expect(
+      parseMetricConfig({
+        sourceSchemaId: 's1',
+        source: { kind: 'field', fieldId: 'score' },
+        aggregation: 'none'
+      })
+    ).toEqual({
+      sourceSchemaId: 's1',
+      source: { kind: 'field', fieldId: 'score' },
+      aggregation: 'none'
+    });
+  });
+
+  it('keeps a "best" aggregation with its direction', () => {
+    expect(
+      parseMetricConfig({
+        sourceSchemaId: 's1',
+        source: { kind: 'lifecycle' },
+        aggregation: 'best',
+        worstDirection: 'high'
+      })
+    ).toMatchObject({ aggregation: 'best', worstDirection: 'high' });
   });
 
   it('parses a well-formed worst config, keeping worstDirection', () => {
@@ -334,5 +362,42 @@ describe('isEnumSource', () => {
     expect(isEnumSource({ kind: 'field', fieldId: 'x' })).toBe(false);
     expect(isEnumSource({ kind: 'assessmentRating', fieldId: 'x' })).toBe(false);
     expect(isEnumSource({ kind: 'lifecycle' })).toBe(false);
+  });
+});
+
+describe('aggregationOptionLabel', () => {
+  const count = AGGREGATION_OPTIONS.find(option => option.value === 'count')!;
+  const best = AGGREGATION_OPTIONS.find(option => option.value === 'best')!;
+
+  it('calls count over a select field "Most common"', () => {
+    expect(aggregationOptionLabel(count, true)).toBe('Most common');
+    expect(aggregationOptionLabel(count, false)).toBe('Count');
+  });
+
+  it('leaves the other labels alone', () => {
+    expect(aggregationOptionLabel(best, true)).toBe('Best');
+  });
+});
+
+describe('isChoiceMetric', () => {
+  it('treats select sources as choices', () => {
+    expect(
+      isChoiceMetric({ source: { kind: 'enum', fieldId: 'tier' }, aggregation: 'count' })
+    ).toBe(true);
+  });
+
+  it('treats lifecycle as a choice only for the choice-style aggregations', () => {
+    for (const aggregation of ['count', 'best', 'worst'] as const) {
+      expect(isChoiceMetric({ source: { kind: 'lifecycle' }, aggregation })).toBe(true);
+    }
+    for (const aggregation of ['sum', 'average', 'minimum', 'maximum'] as const) {
+      expect(isChoiceMetric({ source: { kind: 'lifecycle' }, aggregation })).toBe(false);
+    }
+  });
+
+  it('does not treat numeric fields as choices', () => {
+    expect(
+      isChoiceMetric({ source: { kind: 'field', fieldId: 'cost' }, aggregation: 'count' })
+    ).toBe(false);
   });
 });
