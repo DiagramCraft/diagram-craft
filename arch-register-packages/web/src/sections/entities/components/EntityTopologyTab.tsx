@@ -162,6 +162,12 @@ export const EntityTopologyTab = ({
       typedIncoming.length ===
     0;
 
+  // References and relationships are shown as one set of incoming/outgoing connections, so the
+  // empty message is shown once - in the first grid that renders.
+  const noIncoming = usedByRefs.length + typedIncoming.length === 0;
+  const noOutgoing = consumesRefs.length + typedOutgoing.length === 0;
+  const showRefsGrid = usedByRefs.length > 0 || consumesRefs.length > 0;
+
   return (
     <div className={styles.topologyPage} ref={containerRef}>
       <svg className={styles.topoEdgeSvg}>
@@ -262,10 +268,10 @@ export const EntityTopologyTab = ({
         )}
       </div>
 
-      {(usedByRefs.length > 0 || consumesRefs.length > 0) && (
+      {showRefsGrid && (
         <div className={styles.topoRefsGrid}>
           <div className={`${styles.topoRefsCol} ${styles.topoRefsColIn}`}>
-            {usedByRefs.length === 0 && (
+            {noIncoming && (
               <div className={`${styles.topoRefsEmpty} ${sharedStyles.dim}`}>
                 No incoming references
               </div>
@@ -300,7 +306,7 @@ export const EntityTopologyTab = ({
             ))}
           </div>
           <div className={`${styles.topoRefsCol} ${styles.topoRefsColOut}`}>
-            {consumesRefs.length === 0 && (
+            {noOutgoing && (
               <div className={`${styles.topoRefsEmpty} ${sharedStyles.dim}`}>
                 No outgoing references
               </div>
@@ -340,9 +346,9 @@ export const EntityTopologyTab = ({
       {(typedOutgoing.length > 0 || typedIncoming.length > 0) && (
         <div className={styles.topoRefsGrid}>
           <div className={`${styles.topoRefsCol} ${styles.topoRefsColIn}`}>
-            {typedIncoming.length === 0 && (
+            {noIncoming && !showRefsGrid && (
               <div className={`${styles.topoRefsEmpty} ${sharedStyles.dim}`}>
-                No incoming relationships
+                No incoming references
               </div>
             )}
             {groupRelationsByRelationSchema(typedIncoming).map(group => (
@@ -376,9 +382,9 @@ export const EntityTopologyTab = ({
             ))}
           </div>
           <div className={`${styles.topoRefsCol} ${styles.topoRefsColOut}`}>
-            {typedOutgoing.length === 0 && (
+            {noOutgoing && !showRefsGrid && (
               <div className={`${styles.topoRefsEmpty} ${sharedStyles.dim}`}>
-                No outgoing relationships
+                No outgoing references
               </div>
             )}
             {groupRelationsByRelationSchema(typedOutgoing).map(group => (

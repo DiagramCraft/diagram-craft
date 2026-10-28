@@ -92,8 +92,8 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   const contentFolder = folder ?? null;
 
   const navigateToEntity = useCallback(
-    (id: string) => {
-      navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(id)));
+    (id: string, tab?: TabId) => {
+      navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(id), tab ? { tab } : undefined));
     },
     [navigate, workspaceSlug]
   );
@@ -545,7 +545,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
             incoming,
             schemas,
             lifecycleStates,
-            onEntityClick: navigateToEntity
+            onEntityClick: id => navigateToEntity(id, 'topology')
           }}
           graphProps={{
             workspaceId,
@@ -553,7 +553,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
             rootEntityName: entity._name ?? entity._slug,
             rootEntitySchemaId: entity._schema.id,
             schemas,
-            onEntityClick: navigateToEntity
+            onEntityClick: id => navigateToEntity(id, 'graph')
           }}
           dependentsProps={{ workspaceId, entityId, schemas, lifecycleStates }}
           blastRadiusProps={{
