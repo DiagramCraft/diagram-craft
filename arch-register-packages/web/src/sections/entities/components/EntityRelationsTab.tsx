@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { TbChevronRight } from 'react-icons/tb';
+import { TbChevronRight, TbPlus } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { TypeBadge } from '../../../components/TypeBadge';
@@ -10,7 +10,6 @@ import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { Relation } from '../types/entityDetailTypes';
 import styles from './EntityRelationsTab.module.css';
 import sharedStyles from '../EntityDetailScreen.module.css';
-import { EmptyState } from '../../../components/EmptyState';
 import { EntityNavigationLink } from '../../../components/EntityNavigationLink';
 import { useRelation, useDeleteRelation } from '../../../hooks/useRelations';
 import { RelationRecordCard } from './RelationRecordList';
@@ -46,6 +45,7 @@ export const EntityRelationsTab = ({
   entityName
 }: Props) => {
   const [createOpen, setCreateOpen] = useState(false);
+  const [createDirection, setCreateDirection] = useState<'incoming' | 'outgoing'>('incoming');
   const [editRelationId, setEditRelationId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{
     relationId: string;
@@ -61,101 +61,105 @@ export const EntityRelationsTab = ({
       ),
     [typedRelationsIncoming, typedRelationsOutgoing]
   );
-  const relationCount = outgoing.length + incoming.length;
-  const canCreateTypedRelation = relationSchemas.some(
-    relation =>
-      relation.in.schemaIds === 'any' ||
-      relation.in.schemaIds.includes(entitySchemaId) ||
-      relation.out.schemaIds === 'any' ||
-      relation.out.schemaIds.includes(entitySchemaId)
+  const canCreateIncomingRelation = relationSchemas.some(
+    relation => relation.out.schemaIds === 'any' || relation.out.schemaIds.includes(entitySchemaId)
   );
-
-  if (relationCount === 0) {
-    return (
-      <div className={styles.relationsPage}>
-        <EmptyState
-          title="No relationships"
-          subtitle="Add reference or containment fields to connect entities."
-        />
-        {canCreateTypedRelation && (
-          <Button onClick={() => setCreateOpen(true)} style={{ marginTop: 12 }}>
-            Add typed relation
-          </Button>
-        )}
-        <RelationCreateDialog
-          open={createOpen}
-          onClose={() => setCreateOpen(false)}
-          workspaceId={workspaceId}
-          currentEntityId={entityId}
-          currentSchemaId={entitySchemaId}
-          currentEntityName={entityName}
-          relationSchemas={relationSchemas}
-          schemas={schemas}
-        />
-      </div>
-    );
-  }
+  const canCreateOutgoingRelation = relationSchemas.some(
+    relation => relation.in.schemaIds === 'any' || relation.in.schemaIds.includes(entitySchemaId)
+  );
 
   return (
     <div className={styles.relationsPage}>
-      <div className={sharedStyles.sectionLabel}>Outgoing ({outgoing.length})</div>
-      <div className={styles.relationsList}>
-        {outgoing.map((r, i) =>
-          r.kind === 'typed' ? (
-            <TypedRelationRow
-              key={`o-${i}`}
-              relation={r}
-              direction="outgoing"
-              workspaceId={workspaceId}
-              schemas={schemas}
-              relationSchemas={relationSchemas}
-              initialRecord={typedRecords.get(r.relationId ?? '')}
-              onEdit={setEditRelationId}
-              onDelete={setDeleteTarget}
-            />
-          ) : (
-            <RelationRow key={`o-${i}`} relation={r} direction="outgoing" schemas={schemas} />
-          )
-        )}
-        {outgoing.length === 0 && (
-          <div className={sharedStyles.dim} style={{ padding: 8 }}>
-            None
+      <div className={styles.relationColumns}>
+        <section className={styles.relationPanel}>
+          <div className={`${sharedStyles.sectionTitle} ${styles.relationColumnTitle}`}>
+            Incoming
           </div>
-        )}
-      </div>
-      <div className={sharedStyles.sectionLabel}>Incoming ({incoming.length})</div>
-      <div className={styles.relationsList}>
-        {incoming.map((r, i) =>
-          r.kind === 'typed' ? (
-            <TypedRelationRow
-              key={`i-${i}`}
-              relation={r}
-              direction="incoming"
-              workspaceId={workspaceId}
-              schemas={schemas}
-              relationSchemas={relationSchemas}
-              initialRecord={typedRecords.get(r.relationId ?? '')}
-              onEdit={setEditRelationId}
-              onDelete={setDeleteTarget}
-            />
-          ) : (
-            <RelationRow key={`i-${i}`} relation={r} direction="incoming" schemas={schemas} />
-          )
-        )}
-        {incoming.length === 0 && (
-          <div className={sharedStyles.dim} style={{ padding: 8 }}>
-            None
+          <div className={styles.relationsList}>
+            {incoming.map((r, i) =>
+              r.kind === 'typed' ? (
+                <TypedRelationRow
+                  key={`i-${i}`}
+                  relation={r}
+                  direction="incoming"
+                  workspaceId={workspaceId}
+                  schemas={schemas}
+                  relationSchemas={relationSchemas}
+                  initialRecord={typedRecords.get(r.relationId ?? '')}
+                  onEdit={setEditRelationId}
+                  onDelete={setDeleteTarget}
+                />
+              ) : (
+                <RelationRow key={`i-${i}`} relation={r} direction="incoming" schemas={schemas} />
+              )
+            )}
+            {incoming.length === 0 && (
+              <div className={sharedStyles.dim} style={{ padding: 8 }}>
+                None
+              </div>
+            )}
           </div>
-        )}
+          <div className={styles.relationActions}>
+            <Button
+              size="sm"
+              icon={<TbPlus />}
+              onClick={() => {
+                setCreateDirection('incoming');
+                setCreateOpen(true);
+              }}
+              disabled={!canCreateIncomingRelation}
+            >
+              Add typed relation
+            </Button>
+          </div>
+        </section>
+        <section className={styles.relationPanel}>
+          <div className={`${sharedStyles.sectionTitle} ${styles.relationColumnTitle}`}>
+            Outgoing
+          </div>
+          <div className={styles.relationsList}>
+            {outgoing.map((r, i) =>
+              r.kind === 'typed' ? (
+                <TypedRelationRow
+                  key={`o-${i}`}
+                  relation={r}
+                  direction="outgoing"
+                  workspaceId={workspaceId}
+                  schemas={schemas}
+                  relationSchemas={relationSchemas}
+                  initialRecord={typedRecords.get(r.relationId ?? '')}
+                  onEdit={setEditRelationId}
+                  onDelete={setDeleteTarget}
+                />
+              ) : (
+                <RelationRow key={`o-${i}`} relation={r} direction="outgoing" schemas={schemas} />
+              )
+            )}
+            {outgoing.length === 0 && (
+              <div className={sharedStyles.dim} style={{ padding: 8 }}>
+                None
+              </div>
+            )}
+          </div>
+          <div className={styles.relationActions}>
+            <Button
+              size="sm"
+              icon={<TbPlus />}
+              onClick={() => {
+                setCreateDirection('outgoing');
+                setCreateOpen(true);
+              }}
+              disabled={!canCreateOutgoingRelation}
+            >
+              Add typed relation
+            </Button>
+          </div>
+        </section>
       </div>
-      {canCreateTypedRelation && (
-        <Button onClick={() => setCreateOpen(true)} style={{ marginTop: 12 }}>
-          Add typed relation
-        </Button>
-      )}
       <RelationCreateDialog
         open={createOpen}
         onClose={() => setCreateOpen(false)}
+        direction={createDirection}
         workspaceId={workspaceId}
         currentEntityId={entityId}
         currentSchemaId={entitySchemaId}

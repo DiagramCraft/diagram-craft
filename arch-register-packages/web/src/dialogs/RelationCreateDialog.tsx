@@ -20,6 +20,7 @@ type Props = {
   currentEntityId: string;
   currentSchemaId: string;
   currentEntityName: string;
+  direction: 'incoming' | 'outgoing';
   relationSchemas: RelationSchema[];
   schemas: EntitySchema[];
 };
@@ -47,35 +48,33 @@ export const RelationCreateDialog = ({
   currentEntityId,
   currentSchemaId,
   currentEntityName,
+  direction,
   relationSchemas,
   schemas
 }: Props) => {
   const createMutation = useCreateRelation(workspaceId);
+  const currentEndpointName = direction === 'incoming' ? 'out' : 'in';
+  const otherEndpointName = direction === 'incoming' ? 'in' : 'out';
   const availableRelations = useMemo(
-    () =>
-      relationSchemas.filter(
-        relation => allowed(relation.in, currentSchemaId) || allowed(relation.out, currentSchemaId)
-      ),
-    [currentSchemaId, relationSchemas]
+    () => relationSchemas.filter(relation => allowed(relation[currentEndpointName], currentSchemaId)),
+    [currentEndpointName, currentSchemaId, relationSchemas]
   );
   const [relationSchemaId, setRelationSchemaId] = useState('');
-  const [direction, setDirection] = useState<'in' | 'out'>('in');
   const [target, setTarget] = useState<EntitySummary | null>(null);
   const [search, setSearch] = useState('');
   const [values, setValues] = useState<Record<string, string | string[]>>({});
   const [error, setError] = useState('');
 
   const selectedRelation = availableRelations.find(relation => relation.id === relationSchemaId);
-  const currentEndpoint = selectedRelation?.[direction];
-  const otherEndpoint = direction === 'in' ? 'out' : 'in';
-  const targetSchemaIds = useMemo(() => {
-    if (!currentEndpoint || !allowed(currentEndpoint, currentSchemaId)) return [];
-    return currentEndpoint && selectedRelation
-      ? selectedRelation[otherEndpoint].schemaIds === 'any'
-        ? schemas.map(schema => schema.id)
-        : selectedRelation[otherEndpoint].schemaIds
-      : [];
-  }, [currentEndpoint, currentSchemaId, otherEndpoint, schemas, selectedRelation]);
+  const targetSchemaIds = useMemo(
+    () =>
+      selectedRelation
+        ? selectedRelation[otherEndpointName].schemaIds === 'any'
+          ? schemas.map(schema => schema.id)
+          : selectedRelation[otherEndpointName].schemaIds
+        : [],
+    [otherEndpointName, schemas, selectedRelation]
+  );
   const targetQuery = useEntities(
     workspaceId,
     { schemaIds: targetSchemaIds, q: search, view: 'summary', limit: 20 },
@@ -87,12 +86,11 @@ export const RelationCreateDialog = ({
     if (!open) return;
     const first = availableRelations[0];
     setRelationSchemaId(first?.id ?? '');
-    setDirection(first && allowed(first.in, currentSchemaId) ? 'in' : 'out');
     setTarget(null);
     setSearch('');
     setValues({});
     setError('');
-  }, [availableRelations, currentSchemaId, open]);
+  }, [availableRelations, open]);
 
   const handleSave = async () => {
     if (!selectedRelation || !target) {
@@ -102,8 +100,8 @@ export const RelationCreateDialog = ({
 
     const data: Record<string, unknown> = {
       _schemaId: selectedRelation.id,
-      _inEntityId: direction === 'in' ? currentEntityId : target._uid,
-      _outEntityId: direction === 'in' ? target._uid : currentEntityId
+      _inEntityId: direction === 'outgoing' ? currentEntityId : target._uid,
+      _outEntityId: direction === 'incoming' ? currentEntityId : target._uid
     };
     for (const field of activeFields) {
       const value =
@@ -154,11 +152,7 @@ export const RelationCreateDialog = ({
             <Select.Root
               value={relationSchemaId || undefined}
               onChange={next => {
-                const nextRelation = availableRelations.find(relation => relation.id === next);
                 setRelationSchemaId(next ?? '');
-                setDirection(
-                  nextRelation && allowed(nextRelation.in, currentSchemaId) ? 'in' : 'out'
-                );
                 setTarget(null);
                 setSearch('');
               }}
@@ -170,24 +164,6 @@ export const RelationCreateDialog = ({
                   {relation.name}
                 </Select.Item>
               ))}
-            </Select.Root>
-          </FormElement>
-          <FormElement label="Direction">
-            <Select.Root
-              value={direction}
-              onChange={next => {
-                setDirection((next ?? 'in') as 'in' | 'out');
-                setTarget(null);
-                setSearch('');
-              }}
-              style={{ width: '100%' }}
-            >
-              {selectedRelation && allowed(selectedRelation.in, currentSchemaId) && (
-                <Select.Item value="in">Outgoing from this entity</Select.Item>
-              )}
-              {selectedRelation && allowed(selectedRelation.out, currentSchemaId) && (
-                <Select.Item value="out">Incoming to this entity</Select.Item>
-              )}
             </Select.Root>
           </FormElement>
           <FormElement label="Target entity" required>
