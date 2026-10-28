@@ -10,7 +10,7 @@ import {
   parsePathWalkerConfig,
   pathStepKey,
   pathWalkerHops
-} from './pathWalkerViewState';
+} from './trailViewState';
 
 const makeRelation = (
   id: string,

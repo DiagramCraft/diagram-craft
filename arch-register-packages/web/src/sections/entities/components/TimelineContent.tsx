@@ -7,7 +7,6 @@ import {
   stringDateToTimelinePx
 } from '../../../components/timeline/timelineUtils';
 import { resolveSchemaColor } from '../../../lib/schemaPresentation';
-import { StatusChip } from '../../../components/StatusChip';
 import { TypeBadge } from '../../../components/TypeBadge';
 import type { EntityRecord, TimelineViewData } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
@@ -31,10 +30,7 @@ export type TimelineProjectEntityGroup = {
 type TimelineContentProps = {
   cfg: TimelineConfig;
   rows: EntityRecord[];
-  datedRows: EntityRecord[];
   groups: [string, EntityRecord[]][];
-  undatedRows: EntityRecord[];
-  undatedGroups: [string, EntityRecord[]][];
   projectEntityGroups: TimelineProjectEntityGroup[];
   timelineData: Record<string, TimelineViewData>;
   projects: Project[];
@@ -65,10 +61,7 @@ type TimelineContentProps = {
 export const TimelineContent = ({
   cfg,
   rows,
-  datedRows,
   groups,
-  undatedRows,
-  undatedGroups,
   projectEntityGroups,
   timelineData,
   projects,
@@ -140,8 +133,9 @@ export const TimelineContent = ({
       <div key={groupKey}>
         <div className={styles.groupRow}>
           <div className={`${styles.labelCol} ${styles.groupLabelCol}`}>
-            {groupKey}
-            <span className={styles.groupCount}>({entities.length})</span>
+            <span className={styles.groupName} title={groupKey}>
+              {groupKey}
+            </span>
           </div>
           <div className={styles.groupSpacer} style={{ width: totalWidth }}>
             {renderHorizonFills()}
@@ -164,7 +158,7 @@ export const TimelineContent = ({
           <div className={styles.headerRow}>
             <div className={`${styles.labelCol} ${styles.labelColHeader}`}>
               <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', opacity: 0.6 }}>
-                {isEventMode ? `${rows.length} entities` : `${datedRows.length} entities`}
+                {`${rows.length} entities`}
               </span>
             </div>
             <div className={styles.cols}>
@@ -250,8 +244,9 @@ export const TimelineContent = ({
             {/* Group header */}
             <div className={styles.groupRow}>
               <div className={`${styles.labelCol} ${styles.groupLabelCol}`}>
-                {groupKey}
-                <span className={styles.groupCount}>({entities.length})</span>
+                <span className={styles.groupName} title={groupKey}>
+                  {groupKey}
+                </span>
               </div>
               <div className={styles.groupSpacer} style={{ width: totalWidth }}>
                 {renderHorizonFills()}
@@ -314,9 +309,6 @@ export const TimelineContent = ({
                     >
                       {e._name ?? e._slug}
                     </span>
-                    {e._lifecycle && (
-                      <StatusChip value={e._lifecycle.id} lifecycleStates={lifecycleStates} />
-                    )}
                   </div>
 
                   {/* Bar track — click on bar/milestone opens detail panel */}
@@ -379,8 +371,9 @@ export const TimelineContent = ({
                   })}
               <div className={styles.groupRow}>
                 <div className={`${styles.labelCol} ${styles.groupLabelCol}`}>
-                  {project.name}
-                  <span className={styles.groupCount}>({entities.length})</span>
+                  <span className={styles.groupName} title={project.name}>
+                    {project.name}
+                  </span>
                 </div>
                 <div className={styles.groupSpacer} style={{ width: totalWidth }}>
                   {renderHorizonFills()}
@@ -419,27 +412,9 @@ export const TimelineContent = ({
           ))
         : cfg.groupBy === 'snapshot' && rows.map(entity => renderSnapBlock(entity))}
 
-      {/* Capability mode: dated rows are grouped by containment parent, while undated rows stay
-          visible in their own section rather than disappearing from the strategic view. */}
-      {isCapabilityMode && (
-        <>
-          {renderCapabilityGroups(groups)}
-          {undatedRows.length > 0 && (
-            <div className={styles.undatedSection}>
-              <div className={styles.undatedHeader}>
-                <div className={`${styles.labelCol} ${styles.groupLabelCol}`}>
-                  Undated
-                  <span className={styles.groupCount}>({undatedRows.length})</span>
-                </div>
-                <div className={styles.groupSpacer} style={{ width: totalWidth }}>
-                  {renderHorizonFills()}
-                </div>
-              </div>
-              {renderCapabilityGroups(undatedGroups)}
-            </div>
-          )}
-        </>
-      )}
+      {/* Parent + Entity + Project: entities grouped by containment parent; undated ones are listed
+          among the dated ones. */}
+      {isCapabilityMode && renderCapabilityGroups(groups)}
     </TimelineScaffold>
   );
 };

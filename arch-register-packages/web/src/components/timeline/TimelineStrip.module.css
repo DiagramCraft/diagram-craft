@@ -53,6 +53,11 @@
   margin-left: auto;
 }
 
+.toggleRow:has(input:disabled) {
+  cursor: default;
+  opacity: 0.5;
+}
+
 .toggleRow {
   display: flex;
   align-items: center;
@@ -100,28 +105,6 @@
 }
 
 /* Mode chip */
-.modeChip {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  padding: 2px 7px;
-  border-radius: var(--r-sm);
-}
-
-.modeChipPast {
-  background: color-mix(in oklch, var(--accent-9) 12%, transparent);
-  color: var(--accent-11);
-}
-
-.modeChipFuture {
-  background: color-mix(in oklch, var(--warning-fg) 12%, transparent);
-  color: var(--warning-fg);
-}
-
 /* Buttons */
 .dateInput {
   font-size: 10px;

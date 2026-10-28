@@ -1,9 +1,4 @@
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
-import type { EntitySchema } from '@arch-register/api-types/schemaContract';
-import {
-  isReferenceOrContainmentField,
-  isTypedRelationField
-} from '@arch-register/api-types/schemaContract';
 import {
   exploreViewConfigSchema,
   type ExploreViewConfig
@@ -30,6 +25,12 @@ export type ExploreColumn = {
   hop: number;
   entities: ExploreEntity[];
   availableSchemaIds: string[];
+  /** Incoming relations of this column's entities, i.e. what the next column to the left could show
+   *  (before that column's own relation filter). Only meaningful for the center and left columns. */
+  relationsToLeft: ExploreRelationOption[];
+  /** Outgoing relations of this column's entities, i.e. what the next column to the right could
+   *  show (before that column's own relation filter). Only meaningful for the center and right columns. */
+  relationsToRight: ExploreRelationOption[];
 };
 
 export type ExploreConnector = {
@@ -55,13 +56,6 @@ export type ExploreRelationOption = {
   kind: EntityRelation['kind'];
 };
 
-export type ExploreRelationFieldOption = {
-  label: string;
-  value: string;
-  kind: 'typed' | 'reference' | 'containment';
-  relationSchemaId?: string;
-};
-
 export type ExploreGraph = {
   columns: ExploreColumn[];
   connectors: ExploreConnector[];
@@ -72,7 +66,6 @@ export type ExploreGraph = {
 export const DEFAULT_EXPLORE_CONFIG: ExploreViewConfig = {
   leftDepth: 1,
   rightDepth: 1,
-  relationFieldNames: [],
   fieldIds: undefined
 };
 
@@ -85,13 +78,22 @@ export const normalizeExploreConfig = (
     )
   );
 
+  const leftDepth = Math.max(0, Math.trunc(config?.leftDepth ?? DEFAULT_EXPLORE_CONFIG.leftDepth));
+  const rightDepth = Math.max(
+    0,
+    Math.trunc(config?.rightDepth ?? DEFAULT_EXPLORE_CONFIG.rightDepth)
+  );
+
+  const columnRelationKeys: Record<string, string[]> = Object.fromEntries(
+    Object.entries(config?.columnRelationKeys ?? {})
+      .filter(([columnIndex]) => /^-?[1-9]\d*$/.test(columnIndex))
+      .map(([columnIndex, keys]) => [columnIndex, [...new Set(keys)]])
+  );
+
   return {
-    leftDepth: Math.max(0, Math.trunc(config?.leftDepth ?? DEFAULT_EXPLORE_CONFIG.leftDepth)),
-    rightDepth: Math.max(0, Math.trunc(config?.rightDepth ?? DEFAULT_EXPLORE_CONFIG.rightDepth)),
-    relationFieldNames: [
-      ...new Set(config?.relationFieldNames ?? DEFAULT_EXPLORE_CONFIG.relationFieldNames)
-    ],
-    relationKeys: config?.relationKeys == null ? undefined : [...new Set(config.relationKeys)],
+    leftDepth,
+    rightDepth,
+    columnRelationKeys: Object.keys(columnRelationKeys).length > 0 ? columnRelationKeys : undefined,
     columnSchemaIds: Object.keys(columnSchemaIds).length > 0 ? columnSchemaIds : undefined,
     fieldIds: config?.fieldIds
   };
@@ -107,51 +109,6 @@ export const parseExploreConfigValue = (raw: string | undefined): ExploreViewCon
   } catch {
     return null;
   }
-};
-
-export const buildRelationFieldOptions = (
-  schemas: EntitySchema[]
-): ExploreRelationFieldOption[] => {
-  const options = new Map<string, ExploreRelationFieldOption>();
-
-  for (const schema of schemas) {
-    for (const field of schema.fields) {
-      if (isReferenceOrContainmentField(field)) {
-        options.set(field.name, {
-          value: field.name,
-          label: field.predicate ?? field.name,
-          kind: field.type
-        });
-      } else if (isTypedRelationField(field)) {
-        options.set(field.name, {
-          value: field.name,
-          label: field.name,
-          kind: 'typed',
-          relationSchemaId: field.relationSchemaId
-        });
-      }
-    }
-  }
-
-  return [...options.values()].sort((a, b) => a.label.localeCompare(b.label));
-};
-
-export const buildDefaultRelationFieldNames = (schemas: EntitySchema[]): string[] => {
-  const names = new Set<string>();
-
-  for (const schema of schemas) {
-    for (const field of schema.fields) {
-      if (
-        field.type === 'reference' ||
-        field.type === 'containment' ||
-        isTypedRelationField(field)
-      ) {
-        names.add(field.name);
-      }
-    }
-  }
-
-  return [...names].sort((a, b) => a.localeCompare(b));
 };
 
 const toCenterEntity = (entity: EntityRecord): ExploreEntity => ({
@@ -182,7 +139,6 @@ export const buildRelationKey = (
   JSON.stringify([sourceEntitySchemaId, getRelationDisplayLabel(relation), targetEntitySchemaId]);
 
 const shouldIncludeRelation = (
-  selectedFieldNames: Set<string>,
   selectedRelationKeys: Set<string>,
   sourceEntitySchemaId: string,
   targetEntitySchemaId: string,
@@ -193,7 +149,7 @@ const shouldIncludeRelation = (
       buildRelationKey(sourceEntitySchemaId, targetEntitySchemaId, relation)
     );
   }
-  return selectedFieldNames.size === 0 || selectedFieldNames.has(relation.fieldName);
+  return true;
 };
 
 const toExploreConnector = ({
@@ -231,27 +187,29 @@ const toExploreConnector = ({
   relationKey: buildRelationKey(sourceEntitySchemaId, targetEntitySchemaId, relation)
 });
 
-export const buildExploreRelationOptions = (
-  connectors: ExploreConnector[]
-): ExploreRelationOption[] => {
-  const options = new Map<string, ExploreRelationOption>();
+const collectRelationOption = (
+  options: Map<string, ExploreRelationOption>,
+  sourceEntitySchemaId: string,
+  targetEntitySchemaId: string,
+  relation: EntityRelation
+) => {
+  const relationKey = buildRelationKey(sourceEntitySchemaId, targetEntitySchemaId, relation);
+  if (options.has(relationKey)) return;
+  options.set(relationKey, {
+    relationKey,
+    sourceEntitySchemaId,
+    targetEntitySchemaId,
+    fieldLabel: getRelationDisplayLabel(relation),
+    kind: relation.kind
+  });
+};
 
-  for (const connector of connectors) {
-    options.set(connector.relationKey, {
-      relationKey: connector.relationKey,
-      sourceEntitySchemaId: connector.fromEntitySchemaId,
-      targetEntitySchemaId: connector.toEntitySchemaId,
-      fieldLabel: connector.fieldLabel,
-      kind: connector.kind
-    });
-  }
-
-  return [...options.values()].sort((a, b) =>
+const sortRelationOptions = (options: Map<string, ExploreRelationOption>) =>
+  [...options.values()].sort((a, b) =>
     `${a.sourceEntitySchemaId} ${a.fieldLabel} ${a.targetEntitySchemaId}`.localeCompare(
       `${b.sourceEntitySchemaId} ${b.fieldLabel} ${b.targetEntitySchemaId}`
     )
   );
-};
 
 const dedupeColumn = (entities: ExploreEntity[]) => {
   const seen = new Set<string>();
@@ -274,8 +232,6 @@ export const buildExploreGraph = ({
   excludedEntityIds?: ReadonlySet<string>;
 }): ExploreGraph => {
   const normalizedConfig = normalizeExploreConfig(config);
-  const selectedFieldNames = new Set(normalizedConfig.relationFieldNames);
-  const selectedRelationKeys = new Set(normalizedConfig.relationKeys ?? []);
   const columns = new Map<number, ExploreColumn>();
   const connectors: ExploreConnector[] = [];
 
@@ -286,7 +242,9 @@ export const buildExploreGraph = ({
     entities: dedupeColumn(centerEntities.map(toCenterEntity)).filter(
       entity => !excludedEntityIds.has(entity.entityId)
     ),
-    availableSchemaIds: []
+    availableSchemaIds: [],
+    relationsToLeft: [],
+    relationsToRight: []
   };
   columns.set(0, centerColumn);
 
@@ -294,6 +252,7 @@ export const buildExploreGraph = ({
   for (let hop = 1; hop <= normalizedConfig.leftDepth; hop++) {
     const nextEntities: ExploreEntity[] = [];
     const availableSchemaIds = new Set<string>();
+    const selectedRelationKeys = new Set(normalizedConfig.columnRelationKeys?.[String(-hop)] ?? []);
     const selectedSchemaId = normalizedConfig.columnSchemaIds?.[String(-hop)];
 
     for (const entity of currentLeft) {
@@ -304,7 +263,6 @@ export const buildExploreGraph = ({
         if (excludedEntityIds.has(relation.entityId)) continue;
         if (
           !shouldIncludeRelation(
-            selectedFieldNames,
             selectedRelationKeys,
             relation.entitySchemaId,
             entity.schemaId,
@@ -337,7 +295,9 @@ export const buildExploreGraph = ({
       direction: 'left',
       hop,
       entities,
-      availableSchemaIds: [...availableSchemaIds]
+      availableSchemaIds: [...availableSchemaIds],
+      relationsToLeft: [],
+      relationsToRight: []
     });
     currentLeft = entities;
   }
@@ -346,6 +306,7 @@ export const buildExploreGraph = ({
   for (let hop = 1; hop <= normalizedConfig.rightDepth; hop++) {
     const nextEntities: ExploreEntity[] = [];
     const availableSchemaIds = new Set<string>();
+    const selectedRelationKeys = new Set(normalizedConfig.columnRelationKeys?.[String(hop)] ?? []);
     const selectedSchemaId = normalizedConfig.columnSchemaIds?.[String(hop)];
 
     for (const entity of currentRight) {
@@ -356,7 +317,6 @@ export const buildExploreGraph = ({
         if (excludedEntityIds.has(relation.entityId)) continue;
         if (
           !shouldIncludeRelation(
-            selectedFieldNames,
             selectedRelationKeys,
             entity.schemaId,
             relation.entitySchemaId,
@@ -389,9 +349,36 @@ export const buildExploreGraph = ({
       direction: 'right',
       hop,
       entities,
-      availableSchemaIds: [...availableSchemaIds]
+      availableSchemaIds: [...availableSchemaIds],
+      relationsToLeft: [],
+      relationsToRight: []
     });
     currentRight = entities;
+  }
+
+  // Which relations could lead out of each column: the options of that column's "Filter relations".
+  // Computed from the column's own entities, so they exist even beyond the last visible column.
+  for (const column of columns.values()) {
+    if (column.direction !== 'right') {
+      const options = new Map<string, ExploreRelationOption>();
+      for (const entity of column.entities) {
+        for (const relation of relationsMap.get(entity.entityId)?.incoming ?? []) {
+          if (excludedEntityIds.has(relation.entityId)) continue;
+          collectRelationOption(options, relation.entitySchemaId, entity.schemaId, relation);
+        }
+      }
+      column.relationsToLeft = sortRelationOptions(options);
+    }
+    if (column.direction !== 'left') {
+      const options = new Map<string, ExploreRelationOption>();
+      for (const entity of column.entities) {
+        for (const relation of relationsMap.get(entity.entityId)?.outgoing ?? []) {
+          if (excludedEntityIds.has(relation.entityId)) continue;
+          collectRelationOption(options, entity.schemaId, relation.entitySchemaId, relation);
+        }
+      }
+      column.relationsToRight = sortRelationOptions(options);
+    }
   }
 
   const orderedColumns = [...columns.values()].sort((a, b) => a.index - b.index);

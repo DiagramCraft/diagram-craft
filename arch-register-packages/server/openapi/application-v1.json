@@ -99214,15 +99214,15 @@
                           "tree",
                           "radar",
                           "timeline",
-                          "matrix",
-                          "explore",
-                          "bubble",
+                          "relation-matrix",
+                          "relation-columns",
+                          "bubble-chart",
                           "heatmap",
-                          "map",
-                          "diff",
+                          "nested-map",
+                          "compare-dates",
                           "graph",
                           "traceability",
-                          "path-walker"
+                          "trail"
                         ],
                         "type": "string",
                         "description": "View display mode"
@@ -102410,6 +102410,10 @@
                                   "showHorizonBands": {
                                     "type": "boolean",
                                     "description": "Whether Historical, Now, Next, and Later horizon bands are visible"
+                                  },
+                                  "includeUndated": {
+                                    "type": "boolean",
+                                    "description": "Whether entities without a date for the mapped fields are listed (default true)"
                                   }
                                 },
                                 "required": [
@@ -102420,7 +102424,7 @@
                                 ],
                                 "description": "Configuration for timeline view"
                               },
-                              "matrix": {
+                              "relation-matrix": {
                                 "type": "object",
                                 "properties": {
                                   "colMode": {
@@ -102524,9 +102528,9 @@
                                   "hideEmptyRows",
                                   "hideEmptyCols"
                                 ],
-                                "description": "Configuration for matrix view"
+                                "description": "Configuration for relation matrix view"
                               },
-                              "explore": {
+                              "relation-columns": {
                                 "type": "object",
                                 "properties": {
                                   "fieldIds": {
@@ -102550,20 +102554,18 @@
                                     "default": 1,
                                     "description": "Depth of relationships to explore on the right"
                                   },
-                                  "relationFieldNames": {
-                                    "type": "array",
-                                    "items": {
+                                  "columnRelationKeys": {
+                                    "type": "object",
+                                    "propertyNames": {
                                       "type": "string"
                                     },
-                                    "default": [],
-                                    "description": "Relationship field names to include"
-                                  },
-                                  "relationKeys": {
-                                    "type": "array",
-                                    "items": {
-                                      "type": "string"
+                                    "additionalProperties": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string"
+                                      }
                                     },
-                                    "description": "Specific relationship instances to include"
+                                    "description": "Relationship instances to include per column, keyed by column index (negative = left); a column without an entry shows all relations"
                                   },
                                   "columnSchemaIds": {
                                     "type": "object",
@@ -102576,9 +102578,9 @@
                                     "description": "Schema identifier selected for each non-center explore column"
                                   }
                                 },
-                                "description": "Configuration for explore view"
+                                "description": "Configuration for relation columns view"
                               },
-                              "bubble": {
+                              "bubble-chart": {
                                 "type": "object",
                                 "properties": {
                                   "xFieldId": {
@@ -102660,7 +102662,7 @@
                                   "sizeFieldId",
                                   "colorFieldId"
                                 ],
-                                "description": "Configuration for bubble view"
+                                "description": "Configuration for bubble chart view"
                               },
                               "heatmap": {
                                 "type": "object",
@@ -102699,7 +102701,7 @@
                                 ],
                                 "description": "Configuration for heat-map view"
                               },
-                              "map": {
+                              "nested-map": {
                                 "type": "object",
                                 "properties": {
                                   "fieldIds": {
@@ -104289,69 +104291,24 @@
                                     },
                                     "description": "Ordered map levels; later levels may be hidden from the rendered map"
                                   },
-                                  "levels": {
-                                    "type": "integer",
-                                    "minimum": 1,
-                                    "maximum": 3,
-                                    "default": 2,
-                                    "description": "Number of map levels (1-3)"
-                                  },
-                                  "level1SchemaId": {
-                                    "anyOf": [
-                                      {
-                                        "type": "string"
-                                      },
-                                      {
-                                        "type": "null"
-                                      }
-                                    ],
-                                    "default": null,
-                                    "description": "Schema identifier for level 1"
-                                  },
-                                  "level1Columns": {
-                                    "type": "integer",
-                                    "minimum": 1,
-                                    "maximum": 4,
-                                    "default": 3,
-                                    "description": "Number of columns for level 1 (1-4)"
-                                  },
-                                  "level2SchemaId": {
-                                    "anyOf": [
-                                      {
-                                        "type": "string"
-                                      },
-                                      {
-                                        "type": "null"
-                                      }
-                                    ],
-                                    "description": "Schema identifier for level 2"
-                                  },
-                                  "level2Columns": {
-                                    "type": "integer",
-                                    "minimum": 1,
-                                    "maximum": 4,
-                                    "description": "Number of columns for level 2 (1-4)"
-                                  },
-                                  "level3SchemaId": {
-                                    "anyOf": [
-                                      {
-                                        "type": "string"
-                                      },
-                                      {
-                                        "type": "null"
-                                      }
-                                    ],
-                                    "description": "Schema identifier for level 3"
-                                  },
-                                  "level3Columns": {
-                                    "type": "integer",
-                                    "minimum": 1,
-                                    "maximum": 4,
-                                    "description": "Number of columns for level 3 (1-4)"
-                                  },
                                   "hideMissingMetricData": {
                                     "type": "boolean",
                                     "description": "Whether to hide boxes with no usable aggregate or metric source data"
+                                  },
+                                  "colorScheme": {
+                                    "enum": [
+                                      "blue",
+                                      "green",
+                                      "red",
+                                      "red-amber-green",
+                                      "grayscale"
+                                    ],
+                                    "type": "string",
+                                    "description": "Color scheme for the numeric metric gradient (default blue)"
+                                  },
+                                  "reverseColors": {
+                                    "type": "boolean",
+                                    "description": "Whether the numeric metric gradient runs from its high end to its low end"
                                   },
                                   "metricConfig": {
                                     "anyOf": [
@@ -104363,7 +104320,7 @@
                                     "description": "Metric roll-up configuration applied to box coloring"
                                   }
                                 },
-                                "description": "Configuration for map view"
+                                "description": "Configuration for nested map view"
                               },
                               "graph": {
                                 "type": "object",
@@ -105108,7 +105065,7 @@
                                 ],
                                 "description": "Configuration for generic architecture traceability views"
                               },
-                              "path-walker": {
+                              "trail": {
                                 "type": "object",
                                 "properties": {
                                   "hops": {
@@ -106650,7 +106607,7 @@
                                     "description": "The remembered relationship chain: the hop chosen for each column boundary as the user walked it. Empty/absent for a fresh walk."
                                   }
                                 },
-                                "description": "Configuration for the single-path hop walker view"
+                                "description": "Configuration for the single-path trail view"
                               }
                             }
                           },
@@ -106776,15 +106733,15 @@
                       "tree",
                       "radar",
                       "timeline",
-                      "matrix",
-                      "explore",
-                      "bubble",
+                      "relation-matrix",
+                      "relation-columns",
+                      "bubble-chart",
                       "heatmap",
-                      "map",
-                      "diff",
+                      "nested-map",
+                      "compare-dates",
                       "graph",
                       "traceability",
-                      "path-walker"
+                      "trail"
                     ],
                     "type": "string",
                     "description": "View display mode"
@@ -109545,6 +109502,10 @@
                               "showHorizonBands": {
                                 "type": "boolean",
                                 "description": "Whether Historical, Now, Next, and Later horizon bands are visible"
+                              },
+                              "includeUndated": {
+                                "type": "boolean",
+                                "description": "Whether entities without a date for the mapped fields are listed (default true)"
                               }
                             },
                             "required": [
@@ -109555,7 +109516,7 @@
                             ],
                             "description": "Configuration for timeline view"
                           },
-                          "matrix": {
+                          "relation-matrix": {
                             "type": "object",
                             "properties": {
                               "colMode": {
@@ -109659,9 +109620,9 @@
                               "hideEmptyRows",
                               "hideEmptyCols"
                             ],
-                            "description": "Configuration for matrix view"
+                            "description": "Configuration for relation matrix view"
                           },
-                          "explore": {
+                          "relation-columns": {
                             "type": "object",
                             "properties": {
                               "fieldIds": {
@@ -109685,20 +109646,18 @@
                                 "default": 1,
                                 "description": "Depth of relationships to explore on the right"
                               },
-                              "relationFieldNames": {
-                                "type": "array",
-                                "items": {
+                              "columnRelationKeys": {
+                                "type": "object",
+                                "propertyNames": {
                                   "type": "string"
                                 },
-                                "default": [],
-                                "description": "Relationship field names to include"
-                              },
-                              "relationKeys": {
-                                "type": "array",
-                                "items": {
-                                  "type": "string"
+                                "additionalProperties": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
                                 },
-                                "description": "Specific relationship instances to include"
+                                "description": "Relationship instances to include per column, keyed by column index (negative = left); a column without an entry shows all relations"
                               },
                               "columnSchemaIds": {
                                 "type": "object",
@@ -109711,9 +109670,9 @@
                                 "description": "Schema identifier selected for each non-center explore column"
                               }
                             },
-                            "description": "Configuration for explore view"
+                            "description": "Configuration for relation columns view"
                           },
-                          "bubble": {
+                          "bubble-chart": {
                             "type": "object",
                             "properties": {
                               "xFieldId": {
@@ -109795,7 +109754,7 @@
                               "sizeFieldId",
                               "colorFieldId"
                             ],
-                            "description": "Configuration for bubble view"
+                            "description": "Configuration for bubble chart view"
                           },
                           "heatmap": {
                             "type": "object",
@@ -109834,7 +109793,7 @@
                             ],
                             "description": "Configuration for heat-map view"
                           },
-                          "map": {
+                          "nested-map": {
                             "type": "object",
                             "properties": {
                               "fieldIds": {
@@ -111130,69 +111089,24 @@
                                 },
                                 "description": "Ordered map levels; later levels may be hidden from the rendered map"
                               },
-                              "levels": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "maximum": 3,
-                                "default": 2,
-                                "description": "Number of map levels (1-3)"
-                              },
-                              "level1SchemaId": {
-                                "anyOf": [
-                                  {
-                                    "type": "string"
-                                  },
-                                  {
-                                    "type": "null"
-                                  }
-                                ],
-                                "default": null,
-                                "description": "Schema identifier for level 1"
-                              },
-                              "level1Columns": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "maximum": 4,
-                                "default": 3,
-                                "description": "Number of columns for level 1 (1-4)"
-                              },
-                              "level2SchemaId": {
-                                "anyOf": [
-                                  {
-                                    "type": "string"
-                                  },
-                                  {
-                                    "type": "null"
-                                  }
-                                ],
-                                "description": "Schema identifier for level 2"
-                              },
-                              "level2Columns": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "maximum": 4,
-                                "description": "Number of columns for level 2 (1-4)"
-                              },
-                              "level3SchemaId": {
-                                "anyOf": [
-                                  {
-                                    "type": "string"
-                                  },
-                                  {
-                                    "type": "null"
-                                  }
-                                ],
-                                "description": "Schema identifier for level 3"
-                              },
-                              "level3Columns": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "maximum": 4,
-                                "description": "Number of columns for level 3 (1-4)"
-                              },
                               "hideMissingMetricData": {
                                 "type": "boolean",
                                 "description": "Whether to hide boxes with no usable aggregate or metric source data"
+                              },
+                              "colorScheme": {
+                                "enum": [
+                                  "blue",
+                                  "green",
+                                  "red",
+                                  "red-amber-green",
+                                  "grayscale"
+                                ],
+                                "type": "string",
+                                "description": "Color scheme for the numeric metric gradient (default blue)"
+                              },
+                              "reverseColors": {
+                                "type": "boolean",
+                                "description": "Whether the numeric metric gradient runs from its high end to its low end"
                               },
                               "metricConfig": {
                                 "anyOf": [
@@ -111204,7 +111118,7 @@
                                 "description": "Metric roll-up configuration applied to box coloring"
                               }
                             },
-                            "description": "Configuration for map view"
+                            "description": "Configuration for nested map view"
                           },
                           "graph": {
                             "type": "object",
@@ -111949,7 +111863,7 @@
                             ],
                             "description": "Configuration for generic architecture traceability views"
                           },
-                          "path-walker": {
+                          "trail": {
                             "type": "object",
                             "properties": {
                               "hops": {
@@ -113197,7 +113111,7 @@
                                 "description": "The remembered relationship chain: the hop chosen for each column boundary as the user walked it. Empty/absent for a fresh walk."
                               }
                             },
-                            "description": "Configuration for the single-path hop walker view"
+                            "description": "Configuration for the single-path trail view"
                           }
                         }
                       },
@@ -113293,15 +113207,15 @@
                         "tree",
                         "radar",
                         "timeline",
-                        "matrix",
-                        "explore",
-                        "bubble",
+                        "relation-matrix",
+                        "relation-columns",
+                        "bubble-chart",
                         "heatmap",
-                        "map",
-                        "diff",
+                        "nested-map",
+                        "compare-dates",
                         "graph",
                         "traceability",
-                        "path-walker"
+                        "trail"
                       ],
                       "type": "string",
                       "description": "View display mode"
@@ -116489,6 +116403,10 @@
                                 "showHorizonBands": {
                                   "type": "boolean",
                                   "description": "Whether Historical, Now, Next, and Later horizon bands are visible"
+                                },
+                                "includeUndated": {
+                                  "type": "boolean",
+                                  "description": "Whether entities without a date for the mapped fields are listed (default true)"
                                 }
                               },
                               "required": [
@@ -116499,7 +116417,7 @@
                               ],
                               "description": "Configuration for timeline view"
                             },
-                            "matrix": {
+                            "relation-matrix": {
                               "type": "object",
                               "properties": {
                                 "colMode": {
@@ -116603,9 +116521,9 @@
                                 "hideEmptyRows",
                                 "hideEmptyCols"
                               ],
-                              "description": "Configuration for matrix view"
+                              "description": "Configuration for relation matrix view"
                             },
-                            "explore": {
+                            "relation-columns": {
                               "type": "object",
                               "properties": {
                                 "fieldIds": {
@@ -116629,20 +116547,18 @@
                                   "default": 1,
                                   "description": "Depth of relationships to explore on the right"
                                 },
-                                "relationFieldNames": {
-                                  "type": "array",
-                                  "items": {
+                                "columnRelationKeys": {
+                                  "type": "object",
+                                  "propertyNames": {
                                     "type": "string"
                                   },
-                                  "default": [],
-                                  "description": "Relationship field names to include"
-                                },
-                                "relationKeys": {
-                                  "type": "array",
-                                  "items": {
-                                    "type": "string"
+                                  "additionalProperties": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    }
                                   },
-                                  "description": "Specific relationship instances to include"
+                                  "description": "Relationship instances to include per column, keyed by column index (negative = left); a column without an entry shows all relations"
                                 },
                                 "columnSchemaIds": {
                                   "type": "object",
@@ -116655,9 +116571,9 @@
                                   "description": "Schema identifier selected for each non-center explore column"
                                 }
                               },
-                              "description": "Configuration for explore view"
+                              "description": "Configuration for relation columns view"
                             },
-                            "bubble": {
+                            "bubble-chart": {
                               "type": "object",
                               "properties": {
                                 "xFieldId": {
@@ -116739,7 +116655,7 @@
                                 "sizeFieldId",
                                 "colorFieldId"
                               ],
-                              "description": "Configuration for bubble view"
+                              "description": "Configuration for bubble chart view"
                             },
                             "heatmap": {
                               "type": "object",
@@ -116778,7 +116694,7 @@
                               ],
                               "description": "Configuration for heat-map view"
                             },
-                            "map": {
+                            "nested-map": {
                               "type": "object",
                               "properties": {
                                 "fieldIds": {
@@ -118368,69 +118284,24 @@
                                   },
                                   "description": "Ordered map levels; later levels may be hidden from the rendered map"
                                 },
-                                "levels": {
-                                  "type": "integer",
-                                  "minimum": 1,
-                                  "maximum": 3,
-                                  "default": 2,
-                                  "description": "Number of map levels (1-3)"
-                                },
-                                "level1SchemaId": {
-                                  "anyOf": [
-                                    {
-                                      "type": "string"
-                                    },
-                                    {
-                                      "type": "null"
-                                    }
-                                  ],
-                                  "default": null,
-                                  "description": "Schema identifier for level 1"
-                                },
-                                "level1Columns": {
-                                  "type": "integer",
-                                  "minimum": 1,
-                                  "maximum": 4,
-                                  "default": 3,
-                                  "description": "Number of columns for level 1 (1-4)"
-                                },
-                                "level2SchemaId": {
-                                  "anyOf": [
-                                    {
-                                      "type": "string"
-                                    },
-                                    {
-                                      "type": "null"
-                                    }
-                                  ],
-                                  "description": "Schema identifier for level 2"
-                                },
-                                "level2Columns": {
-                                  "type": "integer",
-                                  "minimum": 1,
-                                  "maximum": 4,
-                                  "description": "Number of columns for level 2 (1-4)"
-                                },
-                                "level3SchemaId": {
-                                  "anyOf": [
-                                    {
-                                      "type": "string"
-                                    },
-                                    {
-                                      "type": "null"
-                                    }
-                                  ],
-                                  "description": "Schema identifier for level 3"
-                                },
-                                "level3Columns": {
-                                  "type": "integer",
-                                  "minimum": 1,
-                                  "maximum": 4,
-                                  "description": "Number of columns for level 3 (1-4)"
-                                },
                                 "hideMissingMetricData": {
                                   "type": "boolean",
                                   "description": "Whether to hide boxes with no usable aggregate or metric source data"
+                                },
+                                "colorScheme": {
+                                  "enum": [
+                                    "blue",
+                                    "green",
+                                    "red",
+                                    "red-amber-green",
+                                    "grayscale"
+                                  ],
+                                  "type": "string",
+                                  "description": "Color scheme for the numeric metric gradient (default blue)"
+                                },
+                                "reverseColors": {
+                                  "type": "boolean",
+                                  "description": "Whether the numeric metric gradient runs from its high end to its low end"
                                 },
                                 "metricConfig": {
                                   "anyOf": [
@@ -118442,7 +118313,7 @@
                                   "description": "Metric roll-up configuration applied to box coloring"
                                 }
                               },
-                              "description": "Configuration for map view"
+                              "description": "Configuration for nested map view"
                             },
                             "graph": {
                               "type": "object",
@@ -120118,7 +119989,7 @@
                               ],
                               "description": "Configuration for generic architecture traceability views"
                             },
-                            "path-walker": {
+                            "trail": {
                               "type": "object",
                               "properties": {
                                 "hops": {
@@ -121660,7 +121531,7 @@
                                   "description": "The remembered relationship chain: the hop chosen for each column boundary as the user walked it. Empty/absent for a fresh walk."
                                 }
                               },
-                              "description": "Configuration for the single-path hop walker view"
+                              "description": "Configuration for the single-path trail view"
                             }
                           }
                         },
@@ -121777,15 +121648,15 @@
                       "tree",
                       "radar",
                       "timeline",
-                      "matrix",
-                      "explore",
-                      "bubble",
+                      "relation-matrix",
+                      "relation-columns",
+                      "bubble-chart",
                       "heatmap",
-                      "map",
-                      "diff",
+                      "nested-map",
+                      "compare-dates",
                       "graph",
                       "traceability",
-                      "path-walker"
+                      "trail"
                     ],
                     "type": "string",
                     "description": "View display mode"
@@ -124546,6 +124417,10 @@
                               "showHorizonBands": {
                                 "type": "boolean",
                                 "description": "Whether Historical, Now, Next, and Later horizon bands are visible"
+                              },
+                              "includeUndated": {
+                                "type": "boolean",
+                                "description": "Whether entities without a date for the mapped fields are listed (default true)"
                               }
                             },
                             "required": [
@@ -124556,7 +124431,7 @@
                             ],
                             "description": "Configuration for timeline view"
                           },
-                          "matrix": {
+                          "relation-matrix": {
                             "type": "object",
                             "properties": {
                               "colMode": {
@@ -124660,9 +124535,9 @@
                               "hideEmptyRows",
                               "hideEmptyCols"
                             ],
-                            "description": "Configuration for matrix view"
+                            "description": "Configuration for relation matrix view"
                           },
-                          "explore": {
+                          "relation-columns": {
                             "type": "object",
                             "properties": {
                               "fieldIds": {
@@ -124686,20 +124561,18 @@
                                 "default": 1,
                                 "description": "Depth of relationships to explore on the right"
                               },
-                              "relationFieldNames": {
-                                "type": "array",
-                                "items": {
+                              "columnRelationKeys": {
+                                "type": "object",
+                                "propertyNames": {
                                   "type": "string"
                                 },
-                                "default": [],
-                                "description": "Relationship field names to include"
-                              },
-                              "relationKeys": {
-                                "type": "array",
-                                "items": {
-                                  "type": "string"
+                                "additionalProperties": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
                                 },
-                                "description": "Specific relationship instances to include"
+                                "description": "Relationship instances to include per column, keyed by column index (negative = left); a column without an entry shows all relations"
                               },
                               "columnSchemaIds": {
                                 "type": "object",
@@ -124712,9 +124585,9 @@
                                 "description": "Schema identifier selected for each non-center explore column"
                               }
                             },
-                            "description": "Configuration for explore view"
+                            "description": "Configuration for relation columns view"
                           },
-                          "bubble": {
+                          "bubble-chart": {
                             "type": "object",
                             "properties": {
                               "xFieldId": {
@@ -124796,7 +124669,7 @@
                               "sizeFieldId",
                               "colorFieldId"
                             ],
-                            "description": "Configuration for bubble view"
+                            "description": "Configuration for bubble chart view"
                           },
                           "heatmap": {
                             "type": "object",
@@ -124835,7 +124708,7 @@
                             ],
                             "description": "Configuration for heat-map view"
                           },
-                          "map": {
+                          "nested-map": {
                             "type": "object",
                             "properties": {
                               "fieldIds": {
@@ -126131,69 +126004,24 @@
                                 },
                                 "description": "Ordered map levels; later levels may be hidden from the rendered map"
                               },
-                              "levels": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "maximum": 3,
-                                "default": 2,
-                                "description": "Number of map levels (1-3)"
-                              },
-                              "level1SchemaId": {
-                                "anyOf": [
-                                  {
-                                    "type": "string"
-                                  },
-                                  {
-                                    "type": "null"
-                                  }
-                                ],
-                                "default": null,
-                                "description": "Schema identifier for level 1"
-                              },
-                              "level1Columns": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "maximum": 4,
-                                "default": 3,
-                                "description": "Number of columns for level 1 (1-4)"
-                              },
-                              "level2SchemaId": {
-                                "anyOf": [
-                                  {
-                                    "type": "string"
-                                  },
-                                  {
-                                    "type": "null"
-                                  }
-                                ],
-                                "description": "Schema identifier for level 2"
-                              },
-                              "level2Columns": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "maximum": 4,
-                                "description": "Number of columns for level 2 (1-4)"
-                              },
-                              "level3SchemaId": {
-                                "anyOf": [
-                                  {
-                                    "type": "string"
-                                  },
-                                  {
-                                    "type": "null"
-                                  }
-                                ],
-                                "description": "Schema identifier for level 3"
-                              },
-                              "level3Columns": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "maximum": 4,
-                                "description": "Number of columns for level 3 (1-4)"
-                              },
                               "hideMissingMetricData": {
                                 "type": "boolean",
                                 "description": "Whether to hide boxes with no usable aggregate or metric source data"
+                              },
+                              "colorScheme": {
+                                "enum": [
+                                  "blue",
+                                  "green",
+                                  "red",
+                                  "red-amber-green",
+                                  "grayscale"
+                                ],
+                                "type": "string",
+                                "description": "Color scheme for the numeric metric gradient (default blue)"
+                              },
+                              "reverseColors": {
+                                "type": "boolean",
+                                "description": "Whether the numeric metric gradient runs from its high end to its low end"
                               },
                               "metricConfig": {
                                 "anyOf": [
@@ -126205,7 +126033,7 @@
                                 "description": "Metric roll-up configuration applied to box coloring"
                               }
                             },
-                            "description": "Configuration for map view"
+                            "description": "Configuration for nested map view"
                           },
                           "graph": {
                             "type": "object",
@@ -126950,7 +126778,7 @@
                             ],
                             "description": "Configuration for generic architecture traceability views"
                           },
-                          "path-walker": {
+                          "trail": {
                             "type": "object",
                             "properties": {
                               "hops": {
@@ -128198,7 +128026,7 @@
                                 "description": "The remembered relationship chain: the hop chosen for each column boundary as the user walked it. Empty/absent for a fresh walk."
                               }
                             },
-                            "description": "Configuration for the single-path hop walker view"
+                            "description": "Configuration for the single-path trail view"
                           }
                         }
                       },
@@ -128289,15 +128117,15 @@
                         "tree",
                         "radar",
                         "timeline",
-                        "matrix",
-                        "explore",
-                        "bubble",
+                        "relation-matrix",
+                        "relation-columns",
+                        "bubble-chart",
                         "heatmap",
-                        "map",
-                        "diff",
+                        "nested-map",
+                        "compare-dates",
                         "graph",
                         "traceability",
-                        "path-walker"
+                        "trail"
                       ],
                       "type": "string",
                       "description": "View display mode"
@@ -131485,6 +131313,10 @@
                                 "showHorizonBands": {
                                   "type": "boolean",
                                   "description": "Whether Historical, Now, Next, and Later horizon bands are visible"
+                                },
+                                "includeUndated": {
+                                  "type": "boolean",
+                                  "description": "Whether entities without a date for the mapped fields are listed (default true)"
                                 }
                               },
                               "required": [
@@ -131495,7 +131327,7 @@
                               ],
                               "description": "Configuration for timeline view"
                             },
-                            "matrix": {
+                            "relation-matrix": {
                               "type": "object",
                               "properties": {
                                 "colMode": {
@@ -131599,9 +131431,9 @@
                                 "hideEmptyRows",
                                 "hideEmptyCols"
                               ],
-                              "description": "Configuration for matrix view"
+                              "description": "Configuration for relation matrix view"
                             },
-                            "explore": {
+                            "relation-columns": {
                               "type": "object",
                               "properties": {
                                 "fieldIds": {
@@ -131625,20 +131457,18 @@
                                   "default": 1,
                                   "description": "Depth of relationships to explore on the right"
                                 },
-                                "relationFieldNames": {
-                                  "type": "array",
-                                  "items": {
+                                "columnRelationKeys": {
+                                  "type": "object",
+                                  "propertyNames": {
                                     "type": "string"
                                   },
-                                  "default": [],
-                                  "description": "Relationship field names to include"
-                                },
-                                "relationKeys": {
-                                  "type": "array",
-                                  "items": {
-                                    "type": "string"
+                                  "additionalProperties": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    }
                                   },
-                                  "description": "Specific relationship instances to include"
+                                  "description": "Relationship instances to include per column, keyed by column index (negative = left); a column without an entry shows all relations"
                                 },
                                 "columnSchemaIds": {
                                   "type": "object",
@@ -131651,9 +131481,9 @@
                                   "description": "Schema identifier selected for each non-center explore column"
                                 }
                               },
-                              "description": "Configuration for explore view"
+                              "description": "Configuration for relation columns view"
                             },
-                            "bubble": {
+                            "bubble-chart": {
                               "type": "object",
                               "properties": {
                                 "xFieldId": {
@@ -131735,7 +131565,7 @@
                                 "sizeFieldId",
                                 "colorFieldId"
                               ],
-                              "description": "Configuration for bubble view"
+                              "description": "Configuration for bubble chart view"
                             },
                             "heatmap": {
                               "type": "object",
@@ -131774,7 +131604,7 @@
                               ],
                               "description": "Configuration for heat-map view"
                             },
-                            "map": {
+                            "nested-map": {
                               "type": "object",
                               "properties": {
                                 "fieldIds": {
@@ -133364,69 +133194,24 @@
                                   },
                                   "description": "Ordered map levels; later levels may be hidden from the rendered map"
                                 },
-                                "levels": {
-                                  "type": "integer",
-                                  "minimum": 1,
-                                  "maximum": 3,
-                                  "default": 2,
-                                  "description": "Number of map levels (1-3)"
-                                },
-                                "level1SchemaId": {
-                                  "anyOf": [
-                                    {
-                                      "type": "string"
-                                    },
-                                    {
-                                      "type": "null"
-                                    }
-                                  ],
-                                  "default": null,
-                                  "description": "Schema identifier for level 1"
-                                },
-                                "level1Columns": {
-                                  "type": "integer",
-                                  "minimum": 1,
-                                  "maximum": 4,
-                                  "default": 3,
-                                  "description": "Number of columns for level 1 (1-4)"
-                                },
-                                "level2SchemaId": {
-                                  "anyOf": [
-                                    {
-                                      "type": "string"
-                                    },
-                                    {
-                                      "type": "null"
-                                    }
-                                  ],
-                                  "description": "Schema identifier for level 2"
-                                },
-                                "level2Columns": {
-                                  "type": "integer",
-                                  "minimum": 1,
-                                  "maximum": 4,
-                                  "description": "Number of columns for level 2 (1-4)"
-                                },
-                                "level3SchemaId": {
-                                  "anyOf": [
-                                    {
-                                      "type": "string"
-                                    },
-                                    {
-                                      "type": "null"
-                                    }
-                                  ],
-                                  "description": "Schema identifier for level 3"
-                                },
-                                "level3Columns": {
-                                  "type": "integer",
-                                  "minimum": 1,
-                                  "maximum": 4,
-                                  "description": "Number of columns for level 3 (1-4)"
-                                },
                                 "hideMissingMetricData": {
                                   "type": "boolean",
                                   "description": "Whether to hide boxes with no usable aggregate or metric source data"
+                                },
+                                "colorScheme": {
+                                  "enum": [
+                                    "blue",
+                                    "green",
+                                    "red",
+                                    "red-amber-green",
+                                    "grayscale"
+                                  ],
+                                  "type": "string",
+                                  "description": "Color scheme for the numeric metric gradient (default blue)"
+                                },
+                                "reverseColors": {
+                                  "type": "boolean",
+                                  "description": "Whether the numeric metric gradient runs from its high end to its low end"
                                 },
                                 "metricConfig": {
                                   "anyOf": [
@@ -133438,7 +133223,7 @@
                                   "description": "Metric roll-up configuration applied to box coloring"
                                 }
                               },
-                              "description": "Configuration for map view"
+                              "description": "Configuration for nested map view"
                             },
                             "graph": {
                               "type": "object",
@@ -135114,7 +134899,7 @@
                               ],
                               "description": "Configuration for generic architecture traceability views"
                             },
-                            "path-walker": {
+                            "trail": {
                               "type": "object",
                               "properties": {
                                 "hops": {
@@ -136656,7 +136441,7 @@
                                   "description": "The remembered relationship chain: the hop chosen for each column boundary as the user walked it. Empty/absent for a fresh walk."
                                 }
                               },
-                              "description": "Configuration for the single-path hop walker view"
+                              "description": "Configuration for the single-path trail view"
                             }
                           }
                         },
@@ -182949,7 +182734,7 @@
                     "properties": {
                       "sourceSchemaId": {
                         "type": "string",
-                        "description": "Entity or relation schema identifier for the terminal metric source"
+                        "description": "Entity or relation schema identifier for the terminal metric source; \"*\" means any schema (lifecycle and assessment sources only)"
                       },
                       "sourceContext": {
                         "enum": [
@@ -184395,17 +184180,19 @@
                       },
                       "aggregation": {
                         "enum": [
+                          "none",
                           "count",
                           "leafCount",
                           "sum",
                           "average",
                           "minimum",
                           "maximum",
+                          "best",
                           "worst",
                           "percentage"
                         ],
                         "type": "string",
-                        "description": "Aggregation function applied across matching descendant entities. \"leafCount\" counts only terminal entities that have no containment children of their own."
+                        "description": "Aggregation function applied across matching descendant entities. \"leafCount\" counts only terminal entities that have no containment children of their own. \"none\" is presentation only (the map colors leaf boxes by their own value) and is not accepted by the roll-up API. \"best\" picks the opposite end of the scale from \"worst\"."
                       },
                       "numeratorCondition": {
                         "type": "object",
@@ -184451,7 +184238,7 @@
                           "high"
                         ],
                         "type": "string",
-                        "description": "Direction used for \"worst\" aggregation. For numeric/lifecycle sources, \"low\" means lower values are worse and \"high\" means higher values are worse. For enum sources, \"low\" means the first option in the enum's configured order is worse and \"high\" means the last option is worse. Required when aggregation is \"worst\"."
+                        "description": "Direction used for \"worst\" and \"best\" aggregation (\"best\" is the opposite end). For numeric/lifecycle sources, \"low\" means lower values are worse and \"high\" means higher values are worse. For enum sources, \"low\" means the first option in the enum's configured order is worse and \"high\" means the last option is worse. Required when aggregation is \"worst\" or \"best\"."
                       },
                       "targetCurrency": {
                         "type": "string",

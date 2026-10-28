@@ -14,14 +14,9 @@ import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import { useWorkspaceAuthorization } from '../../auth/WorkspaceAuthorizationContext';
 import { QueryBuilder } from '../entities/components/queryBuilder/QueryBuilder';
 import { AdvancedQueryEditor } from '../entities/components/queryBuilder/AdvancedQueryEditor';
-import {
-  countConditions,
-  isVisuallyEditable
-} from '../entities/components/queryBuilder/queryBuilderState';
+import { countConditions } from '../entities/components/queryBuilder/queryBuilderState';
 import { useParseEntityQueryText, usePrintEntityQueryText } from '../../hooks/useEntityQueryText';
 import filterStyles from '../entities/components/EntityBrowser.module.css';
-
-type Mode = 'simple' | 'advanced';
 
 type RelationQueryModeControlsProps = {
   workspaceId: string;
@@ -36,14 +31,13 @@ type RelationQueryModeControlsProps = {
   lifecycleStates: WorkspaceLifecycleState[];
 };
 
-// The Relations browser's query controls, mirroring the entity browser's QueryModeControls: the
-// progressive `QueryBuilder` (rootKind="relation" - flat relation / In-Out endpoint conditions →
-// Any/All groups → NOT → relationForward/relationBackward traversal and projection columns, #3120)
-// is available in both modes. The Simple/Advanced toggle only swaps the left-hand input: Simple has
-// none (relations have no live free-text search), Advanced shows a text field bound to the same
-// relation-rooted `EntityQuery` IR the builder edits. Both are full-fidelity, so nothing is lost
-// switching. A scoped `[...]` filter on a relation-context hop, or a `source: 'relation'`
-// projection, still keeps the query in Advanced mode - those editors haven't landed yet.
+// The Relations browser's query controls, mirroring the entity browser's QueryModeControls: a
+// Filter popover with the progressive `QueryBuilder` (rootKind="relation" - flat relation / In-Out
+// endpoint conditions → Any/All groups → NOT → relationForward/relationBackward traversal and
+// projection columns, #3120) and an Advanced popover with a text editor bound to the same
+// relation-rooted `EntityQuery` IR. Both are full-fidelity, so nothing is lost switching. A scoped
+// `[...]` filter on a relation-context hop, or a `source: 'relation'` projection, is only
+// editable as text - those visual editors haven't landed yet.
 export const RelationQueryModeControls = ({
   workspaceId,
   relationQuery,
@@ -55,17 +49,10 @@ export const RelationQueryModeControls = ({
   lifecycleStates
 }: RelationQueryModeControlsProps) => {
   const filterPopoverRef = useRef<PopoverActions | null>(null);
-
-  const [mode, setMode] = useState<Mode>(() =>
-    isVisuallyEditable(relationQuery) ? 'simple' : 'advanced'
-  );
-  useEffect(() => {
-    if (!isVisuallyEditable(relationQuery)) setMode('advanced');
-  }, [relationQuery]);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   const [advancedText, setAdvancedText] = useState('');
   const [advancedErrors, setAdvancedErrors] = useState<EntityQueryParseError[]>([]);
-  const [textPreview, setTextPreview] = useState('');
 
   const parseText = useParseEntityQueryText(workspaceId);
   const printText = usePrintEntityQueryText(workspaceId);
@@ -75,10 +62,10 @@ export const RelationQueryModeControls = ({
   const emit = (query: EntityQuery | null) =>
     setRelationQuery(query ? { ...query, root_kind: 'relation' } : null);
 
-  // Re-seed the Advanced text field on (re)entering Advanced mode or when the query changes out
-  // from under it (a different saved view).
+  // Re-seed the Advanced text field on opening the popover or when the query changes out from
+  // under it (a different saved view).
   useEffect(() => {
-    if (mode !== 'advanced') return;
+    if (!advancedOpen) return;
     let cancelled = false;
     printMutate({ query: relationQuery, pretty: true }).then(res => {
       if (!cancelled) setAdvancedText(res.text);
@@ -86,22 +73,7 @@ export const RelationQueryModeControls = ({
     return () => {
       cancelled = true;
     };
-  }, [mode, relationQuery, printMutate]);
-
-  // Debounced read-only text preview for Simple mode.
-  useEffect(() => {
-    if (mode !== 'simple') return;
-    let cancelled = false;
-    const handle = setTimeout(() => {
-      printMutate({ query: relationQuery, pretty: true }).then(res => {
-        if (!cancelled) setTextPreview(res.text);
-      });
-    }, 250);
-    return () => {
-      cancelled = true;
-      clearTimeout(handle);
-    };
-  }, [mode, relationQuery, printMutate]);
+  }, [advancedOpen, relationQuery, printMutate]);
 
   // `parseText` returns `projections` for `columns` clauses in the text (specs/QUERY_LANGUAGE.md
   // §4.6); trust those and only fall back to the pre-edit set when the text expressed none (§10).
@@ -154,21 +126,6 @@ export const RelationQueryModeControls = ({
 
   return (
     <>
-      {mode === 'advanced' && (
-        <AdvancedQueryEditor
-          value={advancedText}
-          onChange={value => {
-            setAdvancedText(value);
-            if (advancedErrors.length > 0) setAdvancedErrors([]);
-          }}
-          onSubmit={() => void submitAdvancedText(advancedText)}
-          onFormat={() => void formatAdvancedText()}
-          onClear={handleAdvancedClear}
-          error={advancedErrors[0]?.message}
-          formatPending={parseText.isPending || printText.isPending}
-        />
-      )}
-
       <Popover.Root actionsRef={filterPopoverRef}>
         <Popover.Trigger
           element={
@@ -203,20 +160,42 @@ export const RelationQueryModeControls = ({
             enums={enums}
             getFieldGroupAccess={getFieldGroupAccess}
             showFreeText={false}
-            textPreview={mode === 'simple' ? textPreview : undefined}
             onClose={() => filterPopoverRef.current?.close()}
           />
         </Popover.Content>
       </Popover.Root>
 
-      <Button
-        size="sm"
-        variant="secondary"
-        onClick={() => setMode(mode === 'simple' ? 'advanced' : 'simple')}
-        title={mode === 'simple' ? 'Switch to advanced query mode' : 'Switch to simple query mode'}
-      >
-        {mode === 'simple' ? 'Advanced' : 'Simple'}
-      </Button>
+      <Popover.Root open={advancedOpen} onOpenChange={setAdvancedOpen}>
+        <Popover.Trigger
+          element={
+            <Button size="sm" variant="secondary" title="Edit the query as text">
+              Advanced
+            </Button>
+          }
+        />
+        <Popover.Content
+          sideOffset={4}
+          align="start"
+          arrow={false}
+          closeButton={false}
+          className={filterStyles.filterPopover}
+        >
+          <div style={{ width: 480, maxWidth: '90vw', padding: 10 }}>
+            <AdvancedQueryEditor
+              value={advancedText}
+              onChange={value => {
+                setAdvancedText(value);
+                if (advancedErrors.length > 0) setAdvancedErrors([]);
+              }}
+              onSubmit={() => void submitAdvancedText(advancedText)}
+              onFormat={() => void formatAdvancedText()}
+              onClear={handleAdvancedClear}
+              error={advancedErrors[0]?.message}
+              formatPending={parseText.isPending || printText.isPending}
+            />
+          </div>
+        </Popover.Content>
+      </Popover.Root>
     </>
   );
 };

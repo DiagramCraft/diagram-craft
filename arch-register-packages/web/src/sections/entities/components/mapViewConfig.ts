@@ -1,10 +1,13 @@
 import { mapViewConfigSchema } from '@arch-register/api-types/viewContract';
 import { normalizeViewConfig } from './entityViewConfig';
 import type { MapLevelConfig } from './mapViewState';
+import type { MapColorScheme } from './mapColorScales';
 
 export type MapConfig = {
   levelConfigs: MapLevelConfig[];
   hideMissingMetricData?: boolean;
+  colorScheme?: MapColorScheme;
+  reverseColors?: boolean;
   fieldIds?: string[];
   metricConfig?: unknown;
 };
@@ -18,23 +21,16 @@ export const DEFAULT_MAP_CONFIG: MapConfig = {
   ],
   fieldIds: undefined,
   metricConfig: undefined,
-  hideMissingMetricData: undefined
-};
-
-const legacyMapConfigDefaults = {
-  ...DEFAULT_MAP_CONFIG,
-  levels: 2,
-  level1SchemaId: null as string | null,
-  level1Columns: 3,
-  level2SchemaId: null as string | null,
-  level2Columns: 3,
-  level3SchemaId: null as string | null,
-  level3Columns: 3,
-  levelConfigs: undefined as MapLevelConfig[] | undefined
+  hideMissingMetricData: undefined,
+  colorScheme: undefined,
+  reverseColors: undefined
 };
 
 export const normalizeMapConfig = (raw: unknown): MapConfig => {
-  const parsed = normalizeViewConfig(mapViewConfigSchema, raw, legacyMapConfigDefaults);
+  const parsed = normalizeViewConfig(mapViewConfigSchema, raw, {
+    ...DEFAULT_MAP_CONFIG,
+    levelConfigs: undefined as MapLevelConfig[] | undefined
+  });
   if (parsed.levelConfigs?.length) {
     return {
       levelConfigs: parsed.levelConfigs.map(level => ({
@@ -46,18 +42,17 @@ export const normalizeMapConfig = (raw: unknown): MapConfig => {
       })),
       fieldIds: parsed.fieldIds,
       metricConfig: parsed.metricConfig,
-      hideMissingMetricData: parsed.hideMissingMetricData
+      hideMissingMetricData: parsed.hideMissingMetricData,
+      colorScheme: parsed.colorScheme,
+      reverseColors: parsed.reverseColors
     };
   }
-  const legacyIds = [parsed.level1SchemaId, parsed.level2SchemaId, parsed.level3SchemaId];
-  const legacyColumns = [parsed.level1Columns, parsed.level2Columns, parsed.level3Columns];
   return {
-    levelConfigs: legacyIds.slice(0, parsed.levels).map((schemaId, index) => ({
-      schemaId,
-      columns: legacyColumns[index] ?? 3
-    })),
+    levelConfigs: DEFAULT_MAP_CONFIG.levelConfigs,
     fieldIds: parsed.fieldIds,
     metricConfig: parsed.metricConfig,
-    hideMissingMetricData: parsed.hideMissingMetricData
+    hideMissingMetricData: parsed.hideMissingMetricData,
+    colorScheme: parsed.colorScheme,
+    reverseColors: parsed.reverseColors
   };
 };

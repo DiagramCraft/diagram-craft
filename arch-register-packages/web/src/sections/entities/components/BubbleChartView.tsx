@@ -1,42 +1,47 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
-import styles from './BubbleView.module.css';
-import { TbChevronDown, TbGrid3X3 } from 'react-icons/tb';
-import { Button } from '@diagram-craft/app-components/Button';
+import styles from './BubbleChartView.module.css';
+import { TbGrid3X3 } from 'react-icons/tb';
+import { ToolbarButton } from '../../../components/ToolbarButton';
 import { Popover, type PopoverActions } from '@diagram-craft/app-components/Popover';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { EmptyState } from '../../../components/EmptyState';
+import { MixedSchemasWarning } from '../../../components/MixedSchemasWarning';
+import { FilterDropdown } from '../../../components/FilterDropdown';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { bubbleViewConfigSchema } from '@arch-register/api-types/viewContract';
 import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
 import {
-  getCategoricalFields,
-  getNumericFields,
   getCategoricalFieldValues,
   getNumericFieldRange,
-  type FieldOption,
   type JoinedAssessmentContext
 } from './entityFieldSources';
+import {
+  keepKnownFieldId,
+  repairAxisPair,
+  useAxisFieldOptions,
+  useSeedDefaultConfig
+} from './useAxisFieldOptions';
 import { normalizeViewConfig } from './entityViewConfig';
 import { TooltipChip, TooltipChips, TooltipRow } from '../../../components/HoverCardParts';
 import {
   BUBBLE_COLORS,
+  MARGIN_BOTTOM,
   MARGIN_LEFT,
+  MARGIN_RIGHT,
   MARGIN_TOP,
   PLOT_H,
   PLOT_W,
-  VB_H,
-  VB_W,
   buildBubbles,
   DEFAULT_BUBBLE_QUADRANTS,
   type BubbleConfig
-} from './bubbleViewState';
+} from './bubbleChartState';
 import { useHydratedEntityRows } from '../../../hooks/useHydratedEntityRows';
 import { useDelayedDisclosure } from '../../../hooks/useDelayedDisclosure';
 import { usePersistedViewConfig } from '../../../hooks/usePersistedViewConfig';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-export type { BubbleConfig } from './bubbleViewState';
+export type { BubbleConfig } from './bubbleChartState';
 
 // bubbleViewConfigSchema has no sensible non-empty defaults (all fields are workspace-specific
 // selections), so normalizeViewConfig is given an empty sentinel here and the result is treated
@@ -54,12 +59,14 @@ const OPEN_DELAY_MS = 250;
 const CLOSE_DELAY_MS = 120;
 
 const LABEL_DENSITY_THRESHOLD = 40;
+const MIN_PLOT_W = 240;
+const MIN_PLOT_H = 160;
 
 // ── Config helpers ────────────────────────────────────────────────────────────
 
-// ── BubbleView ────────────────────────────────────────────────────────────────
+// ── BubbleChartView ────────────────────────────────────────────────────────────────
 
-export const BubbleView = ({
+export const BubbleChartView = ({
   rows,
   linkedEntityIds,
   onEntityClick,
@@ -73,12 +80,12 @@ export const BubbleView = ({
   hideToolbar?: boolean;
   joinedAssessment?: JoinedAssessmentContext | null;
 }) => {
-  const { workspaceSlug, schemas, lifecycleStates, teams } = useWorkspaceContext();
+  const { workspaceSlug, lifecycleStates, teams } = useWorkspaceContext();
   const parsedConfig = useMemo(() => {
     const normalized = normalizeViewConfig(bubbleViewConfigSchema, configProp, EMPTY_BUBBLE_CONFIG);
     return normalized.xFieldId ? normalized : null;
   }, [configProp]);
-  const [config, setConfig] = usePersistedViewConfig({
+  const [rawConfig, setConfig] = usePersistedViewConfig({
     storageKey: `ar-bubble-config-${workspaceSlug}`,
     externalConfig: parsedConfig,
     onChange: onConfigChange
@@ -100,52 +107,46 @@ export const BubbleView = ({
   const scheduleClose = hoverDisclosure.scheduleClose;
 
   // Rows arrive in 'summary' view; custom select/number fields need the full-view records.
-  // Fields are unioned across every schema present in the current rows (not schema-scoped),
-  // so fetch the full-view records per row schema, the same way MatrixView's attribute mode does.
-  const rowSchemaIds = useMemo(() => [...new Set(rows.map(r => r._schema.id))], [rows]);
-  const schemasInScope = useMemo(
-    () => schemas.filter(s => rowSchemaIds.includes(s.id)),
-    [schemas, rowSchemaIds]
-  );
-
+  const { schemasInScope, categoricalFields, numericFields, axisFieldOptions, isNumericField } =
+    useAxisFieldOptions(rows, joinedAssessment);
+  const hasMixedSchemas = useMemo(() => new Set(rows.map(r => r._schema.id)).size > 1, [rows]);
   const entities = useHydratedEntityRows(workspaceSlug, rows);
 
-  const categoricalFields = useMemo(
-    () => getCategoricalFields(schemasInScope, lifecycleStates, teams, joinedAssessment),
-    [schemasInScope, lifecycleStates, teams, joinedAssessment]
-  );
-  const numericFields = useMemo(
-    () => getNumericFields(schemasInScope, joinedAssessment),
-    [schemasInScope, joinedAssessment]
-  );
-  const axisFieldOptions: FieldOption[] = useMemo(
-    () => [...numericFields, ...categoricalFields],
-    [numericFields, categoricalFields]
-  );
+  const config = useMemo((): BubbleConfig | null => {
+    if (!rawConfig || axisFieldOptions.length === 0) return rawConfig;
+    const [xFieldId, yFieldId] = repairAxisPair(
+      axisFieldOptions,
+      rawConfig.xFieldId,
+      rawConfig.yFieldId
+    );
+    const sizeFieldId = keepKnownFieldId(numericFields, rawConfig.sizeFieldId);
+    const colorFieldId = keepKnownFieldId(categoricalFields, rawConfig.colorFieldId);
+    return xFieldId === rawConfig.xFieldId &&
+      yFieldId === rawConfig.yFieldId &&
+      sizeFieldId === rawConfig.sizeFieldId &&
+      colorFieldId === rawConfig.colorFieldId
+      ? rawConfig
+      : { ...rawConfig, xFieldId, yFieldId, sizeFieldId, colorFieldId };
+  }, [rawConfig, axisFieldOptions, numericFields, categoricalFields]);
 
-  const isNumericField = useCallback(
-    (fieldId: string) => numericFields.some(f => f.id === fieldId),
-    [numericFields]
-  );
-
+  const setHoverOpen = hoverDisclosure.setOpen;
   const applyConfig = useCallback(
     (newConfig: BubbleConfig) => {
       setConfig(newConfig);
-      hoverDisclosure.setOpen(false);
+      setHoverOpen(false);
     },
-    [setConfig, hoverDisclosure]
+    [setConfig, setHoverOpen]
   );
 
-  useEffect(() => {
-    if (config || axisFieldOptions.length === 0) return;
+  useSeedDefaultConfig(config, axisFieldOptions.length > 0, () =>
     applyConfig({
       xFieldId: axisFieldOptions[0]?.id ?? '',
       yFieldId: axisFieldOptions[1]?.id ?? axisFieldOptions[0]?.id ?? '',
       sizeFieldId: null,
       colorFieldId: null,
       quadrants: DEFAULT_BUBBLE_QUADRANTS
-    });
-  }, [config, axisFieldOptions, applyConfig]);
+    })
+  );
 
   // ── Scales ──────────────────────────────────────────────────────────────────
 
@@ -203,6 +204,35 @@ export const BubbleView = ({
     return m;
   }, [colorCategories]);
 
+  // The chart fills its container: measure it and size the plot area to match, so the drawing
+  // is 1:1 with screen pixels (bubble radii and text keep their size instead of scaling).
+  const [wrapSize, setWrapSize] = useState<{ width: number; height: number } | null>(null);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the wrapper only mounts once a config exists, so re-attach the observer when that changes
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(([entry]) => {
+      const { width, height } = entry!.contentRect;
+      setWrapSize(prev =>
+        prev && prev.width === Math.round(width) && prev.height === Math.round(height)
+          ? prev
+          : { width: Math.round(width), height: Math.round(height) }
+      );
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [config]);
+  const plotW = Math.max(
+    MIN_PLOT_W,
+    wrapSize ? wrapSize.width - MARGIN_LEFT - MARGIN_RIGHT : PLOT_W
+  );
+  const plotH = Math.max(
+    MIN_PLOT_H,
+    wrapSize ? wrapSize.height - MARGIN_TOP - MARGIN_BOTTOM : PLOT_H
+  );
+  const vbW = MARGIN_LEFT + plotW + MARGIN_RIGHT;
+  const vbH = MARGIN_TOP + plotH + MARGIN_BOTTOM;
+
   const { bubbles, clusterBadges } = useMemo(
     () =>
       buildBubbles({
@@ -214,7 +244,9 @@ export const BubbleView = ({
         xCategories,
         yCategories,
         colorCategories,
-        colorMap
+        colorMap,
+        plotWidth: plotW,
+        plotHeight: plotH
       }),
     [
       entities,
@@ -225,7 +257,9 @@ export const BubbleView = ({
       xCategories,
       yCategories,
       colorCategories,
-      colorMap
+      colorMap,
+      plotW,
+      plotH
     ]
   );
 
@@ -256,103 +290,66 @@ export const BubbleView = ({
     <div className={styles.screen}>
       {!hideToolbar && (
         <div className={styles.config}>
-          <div className={styles.axisPill}>
-            <span className={styles.axisKicker}>X axis</span>
-            <div className={styles.selectWrap}>
-              <select
-                className={styles.select}
-                value={config?.xFieldId ?? ''}
-                disabled={axisFieldOptions.length === 0}
-                onChange={e => config && applyConfig({ ...config, xFieldId: e.target.value })}
-              >
-                {axisFieldOptions.length === 0 && <option value="">—</option>}
-                {axisFieldOptions.map(f => (
-                  <option key={f.id} value={f.id}>
-                    {f.label}
-                  </option>
-                ))}
-              </select>
-              <TbChevronDown size={11} />
-            </div>
-          </div>
+          <FilterDropdown
+            label="X axis"
+            value={config?.xFieldId ?? ''}
+            onChange={value => config && applyConfig({ ...config, xFieldId: value })}
+            disabled={axisFieldOptions.length === 0}
+            options={
+              axisFieldOptions.length === 0
+                ? [{ value: '', label: '—' }]
+                : axisFieldOptions.map(f => ({ value: f.id, label: f.label }))
+            }
+          />
 
-          <div className={styles.axisPill}>
-            <span className={styles.axisKicker}>Y axis</span>
-            <div className={styles.selectWrap}>
-              <select
-                className={styles.select}
-                value={config?.yFieldId ?? ''}
-                disabled={axisFieldOptions.length === 0}
-                onChange={e => config && applyConfig({ ...config, yFieldId: e.target.value })}
-              >
-                {axisFieldOptions.length === 0 && <option value="">—</option>}
-                {axisFieldOptions.map(f => (
-                  <option key={f.id} value={f.id}>
-                    {f.label}
-                  </option>
-                ))}
-              </select>
-              <TbChevronDown size={11} />
-            </div>
-          </div>
+          <FilterDropdown
+            label="Y axis"
+            value={config?.yFieldId ?? ''}
+            onChange={value => config && applyConfig({ ...config, yFieldId: value })}
+            disabled={axisFieldOptions.length === 0}
+            options={
+              axisFieldOptions.length === 0
+                ? [{ value: '', label: '—' }]
+                : axisFieldOptions.map(f => ({ value: f.id, label: f.label }))
+            }
+          />
 
-          <div className={styles.axisPill}>
-            <span className={styles.axisKicker}>Size</span>
-            <div className={styles.selectWrap}>
-              <select
-                className={styles.select}
-                value={config?.sizeFieldId ?? ''}
-                disabled={!config}
-                onChange={e =>
-                  config && applyConfig({ ...config, sizeFieldId: e.target.value ?? null })
-                }
-              >
-                <option value="">Uniform</option>
-                {numericFields.map(f => (
-                  <option key={f.id} value={f.id}>
-                    {f.label}
-                  </option>
-                ))}
-              </select>
-              <TbChevronDown size={11} />
-            </div>
-          </div>
+          <FilterDropdown
+            label="Size"
+            value={config?.sizeFieldId ?? ''}
+            onChange={value => config && applyConfig({ ...config, sizeFieldId: value || null })}
+            disabled={!config || numericFields.length === 0}
+            options={[
+              { value: '', label: 'Uniform' },
+              ...numericFields.map(f => ({ value: f.id, label: f.label }))
+            ]}
+          />
 
-          <div className={styles.axisPill}>
-            <span className={styles.axisKicker}>Color</span>
-            <div className={styles.selectWrap}>
-              <select
-                className={styles.select}
-                value={config?.colorFieldId ?? ''}
-                disabled={!config}
-                onChange={e =>
-                  config && applyConfig({ ...config, colorFieldId: e.target.value ?? null })
-                }
-              >
-                <option value="">Uniform</option>
-                {categoricalFields.map(f => (
-                  <option key={f.id} value={f.id}>
-                    {f.label}
-                  </option>
-                ))}
-              </select>
-              <TbChevronDown size={11} />
-            </div>
-          </div>
+          <FilterDropdown
+            label="Color"
+            value={config?.colorFieldId ?? ''}
+            onChange={value => config && applyConfig({ ...config, colorFieldId: value || null })}
+            disabled={!config || categoricalFields.length === 0}
+            options={[
+              { value: '', label: 'Uniform' },
+              ...categoricalFields.map(f => ({ value: f.id, label: f.label }))
+            ]}
+          />
+
+          {hasMixedSchemas && <MixedSchemasWarning />}
 
           <div style={{ flex: 1 }} />
 
           <Popover.Root actionsRef={quadrantsActionsRef}>
             <Popover.Trigger
               element={
-                <Button
-                  size="sm"
-                  variant={config?.quadrants.enabled ? 'primary' : 'secondary'}
+                <ToolbarButton
+                  variant={config?.quadrants.enabled ? 'primary' : undefined}
                   disabled={!config}
                   icon={<TbGrid3X3 size={12} />}
                 >
                   Quadrants
-                </Button>
+                </ToolbarButton>
               }
             />
             <Popover.Content
@@ -464,23 +461,24 @@ export const BubbleView = ({
         {!config ? (
           <EmptyState
             title="Bubble chart not configured"
-            subtitle="Map fields to the X, Y, size and colour axes above."
+            subtitle="Map fields to the X, Y, size and color axes above."
           />
         ) : (
           <div className={styles.body}>
             <div className={styles.svgWrap} ref={wrapRef} onMouseMove={onSvgMouseMove}>
               <svg
                 className={styles.svg}
-                viewBox={`0 0 ${VB_W} ${VB_H}`}
-                preserveAspectRatio="xMidYMid meet"
+                width={vbW}
+                height={vbH}
+                viewBox={`0 0 ${vbW} ${vbH}`}
                 overflow="visible"
               >
                 {/* Axes */}
                 <line
                   x1={MARGIN_LEFT}
-                  y1={MARGIN_TOP + PLOT_H}
-                  x2={MARGIN_LEFT + PLOT_W}
-                  y2={MARGIN_TOP + PLOT_H}
+                  y1={MARGIN_TOP + plotH}
+                  x2={MARGIN_LEFT + plotW}
+                  y2={MARGIN_TOP + plotH}
                   stroke="var(--panel-border)"
                   strokeWidth="1"
                 />
@@ -488,24 +486,24 @@ export const BubbleView = ({
                   x1={MARGIN_LEFT}
                   y1={MARGIN_TOP}
                   x2={MARGIN_LEFT}
-                  y2={MARGIN_TOP + PLOT_H}
+                  y2={MARGIN_TOP + plotH}
                   stroke="var(--panel-border)"
                   strokeWidth="1"
                 />
                 <text
-                  x={MARGIN_LEFT + PLOT_W / 2}
-                  y={VB_H - 10}
+                  x={MARGIN_LEFT + plotW / 2}
+                  y={vbH - 10}
                   textAnchor="middle"
-                  style={{ fontSize: 11, fill: 'var(--base-fg-more-dim)' }}
+                  style={{ fontSize: 11, fontWeight: 600, fill: 'var(--base-fg-more-dim)' }}
                 >
                   {xLabel}
                 </text>
                 <text
                   x={14}
-                  y={MARGIN_TOP + PLOT_H / 2}
+                  y={MARGIN_TOP + plotH / 2}
                   textAnchor="middle"
-                  transform={`rotate(-90, 14, ${MARGIN_TOP + PLOT_H / 2})`}
-                  style={{ fontSize: 11, fill: 'var(--base-fg-more-dim)' }}
+                  transform={`rotate(-90, 14, ${MARGIN_TOP + plotH / 2})`}
+                  style={{ fontSize: 11, fontWeight: 600, fill: 'var(--base-fg-more-dim)' }}
                 >
                   {yLabel}
                 </text>
@@ -513,31 +511,27 @@ export const BubbleView = ({
                 {config.quadrants.enabled && (
                   <g className={styles.quadrantsOverlay}>
                     <line
-                      x1={MARGIN_LEFT + PLOT_W / 2}
+                      x1={MARGIN_LEFT + plotW / 2}
                       y1={MARGIN_TOP}
-                      x2={MARGIN_LEFT + PLOT_W / 2}
-                      y2={MARGIN_TOP + PLOT_H}
+                      x2={MARGIN_LEFT + plotW / 2}
+                      y2={MARGIN_TOP + plotH}
                     />
                     <line
                       x1={MARGIN_LEFT}
-                      y1={MARGIN_TOP + PLOT_H / 2}
-                      x2={MARGIN_LEFT + PLOT_W}
-                      y2={MARGIN_TOP + PLOT_H / 2}
+                      y1={MARGIN_TOP + plotH / 2}
+                      x2={MARGIN_LEFT + plotW}
+                      y2={MARGIN_TOP + plotH / 2}
                     />
                     <text x={MARGIN_LEFT + 12} y={MARGIN_TOP + 18}>
                       {config.quadrants.labels.topLeft}
                     </text>
-                    <text x={MARGIN_LEFT + PLOT_W - 12} y={MARGIN_TOP + 18} textAnchor="end">
+                    <text x={MARGIN_LEFT + plotW - 12} y={MARGIN_TOP + 18} textAnchor="end">
                       {config.quadrants.labels.topRight}
                     </text>
-                    <text x={MARGIN_LEFT + 12} y={MARGIN_TOP + PLOT_H - 12}>
+                    <text x={MARGIN_LEFT + 12} y={MARGIN_TOP + plotH - 12}>
                       {config.quadrants.labels.bottomLeft}
                     </text>
-                    <text
-                      x={MARGIN_LEFT + PLOT_W - 12}
-                      y={MARGIN_TOP + PLOT_H - 12}
-                      textAnchor="end"
-                    >
+                    <text x={MARGIN_LEFT + plotW - 12} y={MARGIN_TOP + plotH - 12} textAnchor="end">
                       {config.quadrants.labels.bottomRight}
                     </text>
                   </g>

@@ -6,7 +6,7 @@ const base: EntityBrowserEmbedConfig = {
   q: '',
   conditions: [],
   sort: 'name',
-  view: 'map',
+  view: 'nested-map',
   viewConfigs: {}
 };
 

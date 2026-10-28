@@ -1,5 +1,9 @@
 import type { PathStep } from '@arch-register/api-types/entityQueryIR';
-import type { MetricConfig, MetricTraversalStep } from '@arch-register/api-types/metricContract';
+import {
+  metricSourceSchemaMatches,
+  type MetricConfig,
+  type MetricTraversalStep
+} from '@arch-register/api-types/metricContract';
 import type { AuthorizationContext } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../../db/database';
 import type { EntityDbResult, SchemaDbResult } from '../catalog/db/catalogDatabase';
@@ -216,7 +220,7 @@ const selectTerminals = (
     for (const occurrence of path.occurrences) {
       const terminal = occurrence.terminal;
       if (
-        terminal.schemaId !== metric.sourceSchemaId ||
+        !metricSourceSchemaMatches(metric.sourceSchemaId, terminal.schemaId) ||
         (metric.traversalPath == null && metric.path == null && terminal.id === boxId)
       ) {
         continue;

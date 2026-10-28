@@ -367,10 +367,15 @@ describe('APP_DASHBOARD_SEEDS', () => {
     const ids = tabs.flatMap(tab => tab.widgets.map(widget => widget.id));
     expect(new Set(ids).size).toBe(ids.length);
     const traceability = [tabs[2]!.widgets[0]!, tabs[3]!.widgets[0]!];
-    expect(traceability.map(widget => widget.config.view)).toEqual(['matrix', 'matrix']);
+    expect(traceability.map(widget => widget.config.view)).toEqual([
+      'relation-matrix',
+      'relation-matrix'
+    ]);
     for (const widget of traceability) {
       expect(
-        (widget.config.viewConfigs as { matrix: Record<string, unknown> }).matrix
+        (widget.config.viewConfigs as { 'relation-matrix': Record<string, unknown> })[
+          'relation-matrix'
+        ]
       ).toMatchObject({
         cellColorSource: 'row',
         cellColorFieldId: 'Operating Effectiveness'

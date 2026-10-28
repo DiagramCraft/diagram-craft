@@ -1,12 +1,6 @@
 /* Screen */
 .screen {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
-  min-height: 0;
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r-md);
+  composes: frame from "../../../components/ViewConfigBar.module.css";
 }
 
 /* Content */
@@ -21,55 +15,7 @@
 
 /* Config bar */
 .config {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  border-bottom: 1px solid var(--panel-border);
-  flex-shrink: 0;
-  flex-wrap: wrap;
-  min-height: 42px;
-}
-
-.axisPill {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  height: 28px;
-}
-
-.axisKicker {
-  font-size: 9.5px;
-  font-weight: 600;
-  letter-spacing: 0.6px;
-  text-transform: uppercase;
-  color: var(--base-fg-more-dim);
-  flex-shrink: 0;
-}
-
-.selectWrap {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  position: relative;
-  background: var(--panel-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r);
-  padding: 0 6px 0 8px;
-  height: 24px;
-  cursor: pointer;
-}
-
-.select {
-  appearance: none;
-  background: transparent;
-  border: none;
-  outline: none;
-  font-size: 11.5px;
-  color: var(--base-fg);
-  cursor: pointer;
-  padding: 0;
-  font-family: inherit;
+  composes: bar from "../../../components/ViewConfigBar.module.css";
 }
 
 .noFields {
@@ -134,7 +80,7 @@
   text {
     fill: var(--base-fg-more-dim);
     font-size: 10px;
-    font-weight: 600;
+    font-weight: 400;
     letter-spacing: 0.3px;
     user-select: none;
   }
@@ -152,17 +98,17 @@
 .svgWrap {
   flex: 1;
   position: relative;
-  min-height: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  /* The page scrolls, so there is no fixed height to fill: take the full width and derive the
+     height from it (the chart's nominal 8:5 shape), within sensible limits. */
+  align-self: flex-start;
+  aspect-ratio: 8 / 5;
+  min-height: 320px;
+  max-height: 80vh;
 }
 
 .svg {
-  width: 100%;
-  height: 100%;
-  max-width: 900px;
-  max-height: 640px;
+  position: absolute;
+  inset: 0;
   display: block;
 }
 

@@ -1,5 +1,9 @@
 import type { AuthorizationContext } from '@arch-register/permissions';
-import type { MetricConfig, MetricTraversalStep } from '@arch-register/api-types/metricContract';
+import {
+  metricSourceSchemaMatches,
+  type MetricConfig,
+  type MetricTraversalStep
+} from '@arch-register/api-types/metricContract';
 import { decodeRefs } from '../../types';
 import { isFieldViewRestricted } from '../auth/fieldGroupAccessControl';
 import {
@@ -69,7 +73,7 @@ const collectContainmentTerminals = (
     .map(id => entityById.get(id))
     .filter(
       (entity): entity is EntityDbResult =>
-        entity != null && entity.schema_id === metric.sourceSchemaId
+        entity != null && metricSourceSchemaMatches(metric.sourceSchemaId, entity.schema_id)
     )
     .map(entity => ({ kind: 'entity' as const, entity }));
   return { terminals, duplicateCount: 0 };
@@ -294,7 +298,7 @@ const collectPathTerminals = async (
         if (relation && relationSchema && relation.schema_id === metric.sourceSchemaId) {
           terminals.push({ kind: 'relation', relation, schema: relationSchema });
         }
-      } else if (occurrence.entity.schema_id === metric.sourceSchemaId) {
+      } else if (metricSourceSchemaMatches(metric.sourceSchemaId, occurrence.entity.schema_id)) {
         terminals.push({ kind: 'entity', entity: occurrence.entity });
       }
     }

@@ -41,7 +41,7 @@ export const entityMenuItems = (
   // Merge requires the same admin_entity permission as delete, so it's gated on the same flag.
   if (onMerge && entity.canDelete) {
     items.push({
-      label: 'Merge into…',
+      label: 'Merge…',
       icon: <TbGitMerge size={14} />,
       onClick: () => onMerge(entity)
     });

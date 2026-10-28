@@ -12,6 +12,7 @@ import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigCont
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useEntityDrawer } from '../entityDrawer/useEntityDrawer';
 import { BulkEditToolbar } from './BulkEditToolbar';
+import { CloneEntityDialog } from './CloneEntityDialog';
 import {
   buildEntityQueryFromBrowserFilters,
   hasFacetConditions,
@@ -315,14 +316,14 @@ export const EntityBrowser = ({
     projectId,
     setJoinAssessmentId
   ]);
-  const readOnly = !!asOf && !collectionId && view !== 'diff';
+  const readOnly = !!asOf && !collectionId && view !== 'compare-dates';
   const [tlOpen, setTlOpen] = useState(!!asOf && !collectionId);
   const [includeOverdueChanges, setIncludeOverdueChanges] = useState(false);
   useEffect(() => {
     if (asOf && !collectionId) setTlOpen(true);
   }, [asOf, collectionId]);
   useEffect(() => {
-    if (view === 'diff' && !collectionId) setTlOpen(true);
+    if (view === 'compare-dates' && !collectionId) setTlOpen(true);
   }, [view, collectionId]);
   const { data: fetchedTimelineMarkers = [] } = useTimelineMarkers(
     workspaceId,
@@ -410,6 +411,9 @@ export const EntityBrowser = ({
   );
 
   const {
+    cloneTarget,
+    confirmCloneEntity,
+    setCloneTarget,
     confirmDeleteEntity,
     deleteTarget: hookDeleteTarget,
     handleCloneEntity,
@@ -490,7 +494,7 @@ export const EntityBrowser = ({
     [displayFieldSchemas, entityQuery?.projections, projectContext, joinedAssessmentContext]
   );
   const displayView = DISPLAY_FIELD_VIEWS.has(view)
-    ? (view as 'table' | 'cards' | 'tree' | 'explore' | 'map')
+    ? (view as 'table' | 'cards' | 'tree' | 'relation-columns' | 'nested-map')
     : null;
   const selectedDisplayFieldIds = displayView
     ? filterDisplayFieldIdsForContext(
@@ -579,7 +583,10 @@ export const EntityBrowser = ({
           includePlannedChanges={projectId ? undefined : includePlannedChanges}
           onToggleIncludePlannedChanges={projectId ? undefined : setIncludePlannedChanges}
           includeOverdueChanges={includeOverdueChanges}
-          onToggleIncludeOverdueChanges={view === 'diff' ? setIncludeOverdueChanges : undefined}
+          onToggleIncludeOverdueChanges={
+            view === 'compare-dates' ? setIncludeOverdueChanges : undefined
+          }
+          disablePlannedTogglesForPast={view === 'compare-dates'}
         />
       )}
 
@@ -607,7 +614,6 @@ export const EntityBrowser = ({
               setStep={setStep}
               onClear={clearSelection}
               onConfirm={handleConfirm}
-              onNavigateToEntity={navigateToEntity}
             />
           )}
           <div className={view === 'graph' ? styles.graphView : undefined}>
@@ -688,6 +694,12 @@ export const EntityBrowser = ({
           onNext={goToNextPage}
         />
       )}
+      <CloneEntityDialog
+        open={!!cloneTarget}
+        entityName={cloneTarget ? (cloneTarget._name ?? cloneTarget._slug) : ''}
+        onConfirm={confirmCloneEntity}
+        onCancel={() => setCloneTarget(null)}
+      />
       <DeleteConfirmationDialog
         open={!!hookDeleteTarget}
         title="Delete entity?"

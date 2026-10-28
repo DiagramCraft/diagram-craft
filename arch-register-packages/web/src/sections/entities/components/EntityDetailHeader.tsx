@@ -105,7 +105,7 @@ export const EntityDetailHeader = ({
       case 'clone':
         return { label: 'Clone', icon: <TbCopy size={14} />, onClick: onClone };
       case 'mergeInto':
-        return { label: 'Merge into…', icon: <TbGitMerge size={14} />, onClick: onMergeInto };
+        return { label: 'Merge…', icon: <TbGitMerge size={14} />, onClick: onMergeInto };
       case 'delete':
         return { label: 'Delete', icon: <TbTrash size={14} />, danger: true, onClick: onDelete };
     }

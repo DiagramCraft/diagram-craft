@@ -9,9 +9,9 @@ import { formatDate } from '../../../utils/dateFormat';
 import { useEntityLandscapeDiff } from '../../../hooks/useEntities';
 import { useRelationSchemas } from '../../../hooks/useRelationSchemas';
 import { LandscapeDiffTable } from './LandscapeDiffTable';
-import styles from './EntityDiffView.module.css';
+import styles from './CompareDatesView.module.css';
 
-export const EntityDiffView = ({
+export const CompareDatesView = ({
   workspaceId,
   projectId,
   projectScope,
@@ -69,18 +69,34 @@ export const EntityDiffView = ({
     [q, conditions, projectId, projectScope, collectionId]
   );
 
+  // A date in the past is compared forward to today ("what changed since"), so added/removed/
+  // changed read naturally; a future date is compared from today ("what changes by").
+  const isPast = targetDate != null && targetDate < new Date().toISOString().slice(0, 10);
+
   const states = useMemo(() => {
     if (!targetDate) return null;
+    const now = {
+      asOf: new Date().toISOString(),
+      includePlannedChanges: false,
+      includeOverdueChanges: false,
+      ...filters
+    };
+    if (isPast) {
+      return {
+        from: {
+          asOf: targetDate,
+          includePlannedChanges: false,
+          includeOverdueChanges: false,
+          ...filters
+        },
+        to: now
+      };
+    }
     return {
-      from: {
-        asOf: new Date().toISOString(),
-        includePlannedChanges: false,
-        includeOverdueChanges: false,
-        ...filters
-      },
+      from: now,
       to: { asOf: targetDate, includePlannedChanges, includeOverdueChanges, ...filters }
     };
-  }, [targetDate, includePlannedChanges, includeOverdueChanges, filters]);
+  }, [targetDate, isPast, includePlannedChanges, includeOverdueChanges, filters]);
 
   const { data: diff, isLoading } = useEntityLandscapeDiff(
     workspaceId,
@@ -117,7 +133,9 @@ export const EntityDiffView = ({
   return (
     <div className={styles.wrap}>
       <div className={styles.header}>
-        <div className={styles.headerTitle}>What changes by {formatDate(targetDate)}</div>
+        <div className={styles.headerTitle}>
+          {isPast ? 'What changed since' : 'What changes by'} {formatDate(targetDate)}
+        </div>
         <div className={styles.headerCounts}>
           {diff.added.length} added &middot; {diff.removed.length} removed &middot;{' '}
           {diff.changed.length} changed

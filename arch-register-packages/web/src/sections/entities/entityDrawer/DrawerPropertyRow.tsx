@@ -178,7 +178,7 @@ export const DrawerPropertyRow = ({
   const valueClass =
     presentation === 'mini-panel' && !isMiniPanelRelation
       ? styles.statValue
-      : styles.metadataValue + ' ' + styles.metadataLinkedValue;
+      : `${styles.metadataValue} ${styles.metadataLinkedValue}`;
 
   return (
     <div className={rowClass}>

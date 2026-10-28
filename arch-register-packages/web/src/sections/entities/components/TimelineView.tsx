@@ -10,7 +10,6 @@ import {
   buildContainmentParentNames,
   collectTimelineDates,
   getDatedTimelineRows,
-  getUndatedTimelineRows,
   groupTimelineRows
 } from './timelineViewState';
 import { buildTimelineHorizonBands, collectTimelineEventDates } from './timelineRoadmapState';
@@ -87,7 +86,12 @@ export const TimelineView = ({
   linkedEntityIds,
   hideToolbar
 }: TimelineViewProps) => {
-  const dateFields = useDateFieldOptions(schemas);
+  // Date mapping only offers date fields of the types present in the current results.
+  const schemasInScope = useMemo(() => {
+    const idsInRows = new Set(rows.map(row => row._schema.id));
+    return schemas.filter(schema => idsInRows.has(schema.id));
+  }, [rows, schemas]);
+  const dateFields = useDateFieldOptions(schemasInScope);
   const TODAY = useMemo(() => new Date(), []);
   const { data: milestones = [] } = useMilestones(workspaceId);
   const milestonesById = useMemo(() => toMilestonesById(milestones), [milestones]);
@@ -123,9 +127,9 @@ export const TimelineView = ({
   onConfigChangeRef.current = onConfigChange;
 
   // Reset field ids if date field options change and current ids become invalid. Skipped until
-  // schemas have loaded: before that only the built-in date fields exist, so every saved
+  // the result schemas are known: before that only the built-in date fields exist, so every saved
   // schema field id (e.g. restored from the URL on reload) would be treated as invalid.
-  const schemasLoaded = schemas.length > 0;
+  const schemasLoaded = schemasInScope.length > 0;
   useEffect(() => {
     if (!schemasLoaded) return;
     const ids = dateFields.map(f => f.id);
@@ -152,6 +156,9 @@ export const TimelineView = ({
     () => getDatedTimelineRows(rows, cfg.startFieldId, cfg.endFieldId, getDateValue),
     [rows, cfg.startFieldId, cfg.endFieldId]
   );
+  // What the timeline lists. Undated entities are mixed in with the dated ones in every grouping
+  // (they simply have no bar), and the Undated toggle can hide them.
+  const visibleRows = cfg.includeUndated ? rows : datedRows;
 
   const { treeNodes, treeEdges } = useEntityBrowserTreeData({
     workspaceId,
@@ -175,24 +182,12 @@ export const TimelineView = ({
   // Group by owner, type, or containment parent (not used in snapshot mode)
   const groups = useMemo(() => {
     if (cfg.groupBy === 'snapshot' || cfg.groupBy === 'project') return [];
-    return groupTimelineRows(datedRows, cfg.groupBy, schemaMap, parentNameByUid);
-  }, [datedRows, cfg.groupBy, schemaMap, parentNameByUid]);
-
-  const undatedRows = useMemo(
-    () => (cfg.groupBy === 'capability' ? getUndatedTimelineRows(rows, datedRows) : []),
-    [cfg.groupBy, datedRows, rows]
-  );
-  const undatedGroups = useMemo(
-    () =>
-      cfg.groupBy === 'capability'
-        ? groupTimelineRows(undatedRows, 'capability', schemaMap, parentNameByUid)
-        : [],
-    [cfg.groupBy, parentNameByUid, schemaMap, undatedRows]
-  );
+    return groupTimelineRows(visibleRows, cfg.groupBy, schemaMap, parentNameByUid);
+  }, [visibleRows, cfg.groupBy, schemaMap, parentNameByUid]);
 
   // Date range + columns
   const { rangeStart, rangeEnd, columns, totalWidth } = useMemo(() => {
-    const sourceRows = isEventMode ? rows : datedRows;
+    const sourceRows = visibleRows;
     const fallbackDates = isEventMode
       ? [new Date(TODAY.getFullYear() - 1, 0, 1), new Date(TODAY.getFullYear() + 1, 11, 31)]
       : [];
@@ -217,8 +212,7 @@ export const TimelineView = ({
       fallbackDates
     });
   }, [
-    datedRows,
-    rows,
+    visibleRows,
     cfg.startFieldId,
     cfg.endFieldId,
     cfg.zoom,
@@ -262,11 +256,8 @@ export const TimelineView = ({
     setTimelineScrollLeft(event.currentTarget.scrollLeft);
   }, []);
   const activeEntity = useMemo(
-    () =>
-      activeEntityId
-        ? ((isEventMode ? rows : datedRows).find(e => e._uid === activeEntityId) ?? null)
-        : null,
-    [activeEntityId, datedRows, rows, isEventMode]
+    () => (activeEntityId ? (visibleRows.find(e => e._uid === activeEntityId) ?? null) : null),
+    [activeEntityId, visibleRows]
   );
 
   const updateCfg = useCallback(
@@ -294,7 +285,7 @@ export const TimelineView = ({
     if (cfg.groupBy !== 'project') return [];
 
     const entitiesByProject = new Map<string, EntityRecord[]>();
-    rows.forEach(entity => {
+    visibleRows.forEach(entity => {
       const projectIdsForEntity = new Set(
         toChangeCaseEntries(timelineData[entity._uid])
           .map(entry => entry.changeCase.project_id)
@@ -310,10 +301,8 @@ export const TimelineView = ({
     return projects
       .map(project => ({ project, entities: entitiesByProject.get(project.id) ?? [] }))
       .filter(group => group.entities.length > 0);
-  }, [cfg.groupBy, projects, rows, timelineData]);
-  const isEmpty = isEventMode ? rows.length === 0 : datedRows.length === 0;
-  const totalDated =
-    cfg.groupBy === 'capability' ? datedRows.length : isEventMode ? rows.length : datedRows.length;
+  }, [cfg.groupBy, projects, visibleRows, timelineData]);
+  const isEmpty = visibleRows.length === 0;
 
   const handleEntityPanelToggle = useCallback((entityId: string) => {
     setActiveEntityId(previous => (previous === entityId ? null : entityId));
@@ -326,8 +315,6 @@ export const TimelineView = ({
           cfg={cfg}
           onChange={updateCfg}
           dateFields={dateFields}
-          totalDated={totalDated}
-          totalRows={rows.length}
           isEventMode={isEventMode}
         />
       )}
@@ -335,7 +322,11 @@ export const TimelineView = ({
       {isEmpty ? (
         <EmptyState
           icon={<TbCalendarWeek size={26} />}
-          title={isEventMode ? 'No entities in this view' : 'No entities with dates in this view'}
+          title={
+            isEventMode || cfg.includeUndated
+              ? 'No entities in this view'
+              : 'No entities with dates in this view'
+          }
           subtitle={
             isEventMode
               ? 'Add entities to see their snapshot history and planned project changes.'
@@ -345,11 +336,8 @@ export const TimelineView = ({
       ) : (
         <TimelineContent
           cfg={cfg}
-          rows={rows}
-          datedRows={datedRows}
+          rows={visibleRows}
           groups={groups}
-          undatedRows={undatedRows}
-          undatedGroups={undatedGroups}
           projectEntityGroups={projectEntityGroups as TimelineProjectEntityGroup[]}
           timelineData={timelineData as Record<string, TimelineViewData>}
           projects={projects}

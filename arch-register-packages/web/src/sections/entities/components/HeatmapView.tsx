@@ -1,18 +1,22 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { TbChevronDown } from 'react-icons/tb';
+import { useCallback, useMemo, useState } from 'react';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { EmptyState } from '../../../components/EmptyState';
+import { MixedSchemasWarning } from '../../../components/MixedSchemasWarning';
+import { FilterDropdown } from '../../../components/FilterDropdown';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { heatmapViewConfigSchema } from '@arch-register/api-types/viewContract';
 import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
 import {
-  getCategoricalFields,
   getCategoricalFieldValues,
-  getNumericFields,
   getNumericFieldRange,
-  type FieldOption,
   type JoinedAssessmentContext
 } from './entityFieldSources';
+import {
+  keepKnownFieldId,
+  repairAxisPair,
+  useAxisFieldOptions,
+  useSeedDefaultConfig
+} from './useAxisFieldOptions';
 import { normalizeViewConfig } from './entityViewConfig';
 import {
   buildAxisBuckets,
@@ -31,7 +35,7 @@ export type { HeatmapConfig } from './heatmapViewState';
 // heatmapViewConfigSchema has no sensible non-empty defaults (axis fields are
 // workspace-specific), so normalizeViewConfig is given an empty sentinel and the result is
 // treated as "unconfigured" whenever likelihoodFieldId is empty — same all-or-nothing
-// `config: HeatmapConfig | null` pattern BubbleView uses for its axis config.
+// `config: HeatmapConfig | null` pattern BubbleChartView uses for its axis config.
 const EMPTY_HEATMAP_CONFIG: HeatmapConfig = {
   likelihoodFieldId: '',
   impactFieldId: '',
@@ -53,7 +57,7 @@ export const HeatmapView = ({
   hideToolbar?: boolean;
   joinedAssessment?: JoinedAssessmentContext | null;
 }) => {
-  const { workspaceSlug, schemas, lifecycleStates, teams } = useWorkspaceContext();
+  const { workspaceSlug, lifecycleStates, teams } = useWorkspaceContext();
   const parsedConfig = useMemo(() => {
     const normalized = normalizeViewConfig(
       heatmapViewConfigSchema,
@@ -62,7 +66,7 @@ export const HeatmapView = ({
     );
     return normalized.likelihoodFieldId ? normalized : null;
   }, [configProp]);
-  const [config, setConfig] = usePersistedViewConfig({
+  const [rawConfig, setConfig] = usePersistedViewConfig({
     storageKey: `ar-heatmap-config-${workspaceSlug}`,
     externalConfig: parsedConfig,
     onChange: onConfigChange
@@ -77,31 +81,25 @@ export const HeatmapView = ({
 
   const linkedEntityIdSet = useMemo(() => new Set(linkedEntityIds ?? []), [linkedEntityIds]);
 
-  const rowSchemaIds = useMemo(() => [...new Set(rows.map(r => r._schema.id))], [rows]);
-  const schemasInScope = useMemo(
-    () => schemas.filter(s => rowSchemaIds.includes(s.id)),
-    [schemas, rowSchemaIds]
-  );
+  const { schemasInScope, numericFields, axisFieldOptions, isNumericField, hasMixedSchemas } =
+    useAxisFieldOptions(rows, joinedAssessment);
 
   const entities = useHydratedEntityRows(workspaceSlug, rows);
 
-  const categoricalFields = useMemo(
-    () => getCategoricalFields(schemasInScope, lifecycleStates, teams, joinedAssessment),
-    [schemasInScope, lifecycleStates, teams, joinedAssessment]
-  );
-  const numericFields = useMemo(
-    () => getNumericFields(schemasInScope, joinedAssessment),
-    [schemasInScope, joinedAssessment]
-  );
-  const axisFieldOptions: FieldOption[] = useMemo(
-    () => [...numericFields, ...categoricalFields],
-    [numericFields, categoricalFields]
-  );
-
-  const isNumericField = useCallback(
-    (fieldId: string) => numericFields.some(f => f.id === fieldId),
-    [numericFields]
-  );
+  const config = useMemo((): HeatmapConfig | null => {
+    if (!rawConfig || axisFieldOptions.length === 0) return rawConfig;
+    const [likelihoodFieldId, impactFieldId] = repairAxisPair(
+      axisFieldOptions,
+      rawConfig.likelihoodFieldId,
+      rawConfig.impactFieldId
+    );
+    const colorFieldId = keepKnownFieldId(numericFields, rawConfig.colorFieldId);
+    return likelihoodFieldId === rawConfig.likelihoodFieldId &&
+      impactFieldId === rawConfig.impactFieldId &&
+      colorFieldId === rawConfig.colorFieldId
+      ? rawConfig
+      : { ...rawConfig, likelihoodFieldId, impactFieldId, colorFieldId };
+  }, [rawConfig, axisFieldOptions, numericFields]);
 
   const applyConfig = useCallback(
     (newConfig: HeatmapConfig) => {
@@ -111,15 +109,14 @@ export const HeatmapView = ({
     [setConfig]
   );
 
-  useEffect(() => {
-    if (config || axisFieldOptions.length === 0) return;
+  useSeedDefaultConfig(config, axisFieldOptions.length > 0, () =>
     applyConfig({
       likelihoodFieldId: axisFieldOptions[0]?.id ?? '',
       impactFieldId: axisFieldOptions[1]?.id ?? axisFieldOptions[0]?.id ?? '',
       buckets: 5,
       colorFieldId: null
-    });
-  }, [config, axisFieldOptions, applyConfig]);
+    })
+  );
 
   const likelihoodCategories = useMemo(() => {
     if (!config || isNumericField(config.likelihoodFieldId)) return null;
@@ -211,90 +208,53 @@ export const HeatmapView = ({
     <div className={styles.screen}>
       {!hideToolbar && (
         <div className={styles.config}>
-          <div className={styles.axisPill}>
-            <span className={styles.axisKicker}>Likelihood</span>
-            <div className={styles.selectWrap}>
-              <select
-                className={styles.select}
-                value={config?.likelihoodFieldId ?? ''}
-                disabled={axisFieldOptions.length === 0}
-                onChange={e =>
-                  config && applyConfig({ ...config, likelihoodFieldId: e.target.value })
-                }
-              >
-                {axisFieldOptions.length === 0 && <option value="">—</option>}
-                {axisFieldOptions.map(f => (
-                  <option key={f.id} value={f.id}>
-                    {f.label}
-                  </option>
-                ))}
-              </select>
-              <TbChevronDown size={11} />
-            </div>
-          </div>
+          <FilterDropdown
+            label="Row"
+            value={config?.likelihoodFieldId ?? ''}
+            onChange={value => config && applyConfig({ ...config, likelihoodFieldId: value })}
+            disabled={axisFieldOptions.length === 0}
+            options={
+              axisFieldOptions.length === 0
+                ? [{ value: '', label: '—' }]
+                : axisFieldOptions.map(f => ({ value: f.id, label: f.label }))
+            }
+          />
 
-          <div className={styles.axisPill}>
-            <span className={styles.axisKicker}>Impact</span>
-            <div className={styles.selectWrap}>
-              <select
-                className={styles.select}
-                value={config?.impactFieldId ?? ''}
-                disabled={axisFieldOptions.length === 0}
-                onChange={e => config && applyConfig({ ...config, impactFieldId: e.target.value })}
-              >
-                {axisFieldOptions.length === 0 && <option value="">—</option>}
-                {axisFieldOptions.map(f => (
-                  <option key={f.id} value={f.id}>
-                    {f.label}
-                  </option>
-                ))}
-              </select>
-              <TbChevronDown size={11} />
-            </div>
-          </div>
+          <FilterDropdown
+            label="Column"
+            value={config?.impactFieldId ?? ''}
+            onChange={value => config && applyConfig({ ...config, impactFieldId: value })}
+            disabled={axisFieldOptions.length === 0}
+            options={
+              axisFieldOptions.length === 0
+                ? [{ value: '', label: '—' }]
+                : axisFieldOptions.map(f => ({ value: f.id, label: f.label }))
+            }
+          />
 
-          <div className={styles.axisPill}>
-            <span className={styles.axisKicker}>Bands</span>
-            <div className={styles.selectWrap}>
-              <select
-                className={styles.select}
-                value={config?.buckets ?? 5}
-                disabled={!config}
-                onChange={e =>
-                  config && applyConfig({ ...config, buckets: Number(e.target.value) })
-                }
-              >
-                {[2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
-                ))}
-              </select>
-              <TbChevronDown size={11} />
-            </div>
-          </div>
+          <FilterDropdown
+            label="Bands"
+            value={String(config?.buckets ?? 5)}
+            onChange={value => config && applyConfig({ ...config, buckets: Number(value) })}
+            disabled={!config}
+            options={[2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => ({
+              value: String(n),
+              label: String(n)
+            }))}
+          />
 
-          <div className={styles.axisPill}>
-            <span className={styles.axisKicker}>Cell colour</span>
-            <div className={styles.selectWrap}>
-              <select
-                className={styles.select}
-                value={config?.colorFieldId ?? ''}
-                disabled={!config}
-                onChange={e =>
-                  config && applyConfig({ ...config, colorFieldId: e.target.value || null })
-                }
-              >
-                <option value="">Severity (position)</option>
-                {numericFields.map(f => (
-                  <option key={f.id} value={f.id}>
-                    {f.label}
-                  </option>
-                ))}
-              </select>
-              <TbChevronDown size={11} />
-            </div>
-          </div>
+          <FilterDropdown
+            label="Color"
+            value={config?.colorFieldId ?? ''}
+            onChange={value => config && applyConfig({ ...config, colorFieldId: value || null })}
+            disabled={!config || numericFields.length === 0}
+            options={[
+              { value: '', label: 'Default' },
+              ...numericFields.map(f => ({ value: f.id, label: f.label }))
+            ]}
+          />
+
+          {hasMixedSchemas && <MixedSchemasWarning />}
 
           {axisFieldOptions.length === 0 && (
             <span className={styles.noFields}>
@@ -308,7 +268,7 @@ export const HeatmapView = ({
         {!config ? (
           <EmptyState
             title="Heat map not configured"
-            subtitle="Map fields to the likelihood and impact axes above."
+            subtitle="Map fields to the row and column axes above."
           />
         ) : (
           <div className={styles.body}>
@@ -323,14 +283,14 @@ export const HeatmapView = ({
                   className={styles.xAxisTitle}
                   style={{ gridColumn: `3 / span ${impactBuckets.length}` }}
                 >
-                  {impactLabel || 'Impact'}
+                  {impactLabel || 'Column'}
                 </div>
 
                 <div
                   className={styles.yAxisTitle}
                   style={{ gridRow: `2 / span ${likelihoodBuckets.length + 1}` }}
                 >
-                  <span>{likelihoodLabel || 'Likelihood'}</span>
+                  <span>{likelihoodLabel || 'Row'}</span>
                 </div>
                 <div className={styles.corner} />
                 {impactBuckets.map(bucket => (
@@ -372,7 +332,7 @@ export const HeatmapView = ({
                             });
                           }}
                         >
-                          {count}
+                          {count === 0 ? '-' : count}
                         </button>
                       );
                     })}
@@ -384,13 +344,13 @@ export const HeatmapView = ({
             {unmappedCount > 0 && (
               <div className={styles.unmapped}>
                 {unmappedCount} {unmappedCount === 1 ? 'entity has' : 'entities have'} no{' '}
-                {likelihoodLabel || 'likelihood'} or {impactLabel || 'impact'} value and{' '}
+                {likelihoodLabel || 'row'} or {impactLabel || 'column'} value and{' '}
                 {unmappedCount === 1 ? "isn't" : "aren't"} shown in the grid.
               </div>
             )}
 
             {config.colorFieldId && (
-              <div className={styles.legendNote}>Cell colour reflects average {colorLabel}.</div>
+              <div className={styles.legendNote}>Cell color reflects average {colorLabel}.</div>
             )}
           </div>
         )}

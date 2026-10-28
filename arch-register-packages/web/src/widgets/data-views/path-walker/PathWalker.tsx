@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useEntities } from '../../../hooks/useEntities';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEntityDrawer';
-import { PathWalkerView } from '../../../sections/entities/components/PathWalkerView';
+import { TrailView } from '../../../sections/entities/components/TrailView';
 import { type BrowserEntityRecord } from '../../../sections/entities/components/entityBrowserState';
 import styles from './PathWalker.module.css';
 import {
@@ -16,7 +16,7 @@ const FETCH_LIMIT = 1000;
 /**
  * Generic multi-column relationship walker: lists every entity of one type and lets the viewer
  * follow a chain of relations column by column (selection and hop choices are local state, seeded
- * from the configured chain). Wraps `PathWalkerView`, the same view the `path-walker` saved-view
+ * from the configured chain). Wraps `TrailView`, the same view the `path-walker` saved-view
  * mode renders.
  */
 export const PathWalkerWidget = ({ config }: { config: PathWalkerWidgetConfig }) => {
@@ -41,7 +41,7 @@ export const PathWalkerWidget = ({ config }: { config: PathWalkerWidgetConfig })
 
   return (
     <div className={styles.walker}>
-      <PathWalkerView
+      <TrailView
         rows={roots.data as BrowserEntityRecord[]}
         schemas={schemas}
         relationSchemas={relationSchemas}

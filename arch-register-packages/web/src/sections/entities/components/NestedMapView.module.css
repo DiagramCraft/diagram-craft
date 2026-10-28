@@ -12,14 +12,8 @@
 /* ── Config bar ──────────────────────────────────────────────── */
 
 .config {
-  display: flex;
-  align-items: center;
+  composes: bar from "../../../components/ViewConfigBar.module.css";
   gap: 6px;
-  padding: 6px 10px;
-  border-bottom: 1px solid var(--panel-border);
-  flex-shrink: 0;
-  flex-wrap: wrap;
-  min-height: 42px;
 }
 
 .hierarchyConfig {
@@ -77,14 +71,6 @@
   flex-shrink: 0;
 }
 
-.cross {
-  font-size: 13px;
-  color: var(--base-fg-more-dim);
-  font-weight: 300;
-  padding: 0 2px;
-  flex-shrink: 0;
-}
-
 .pathSummary {
   max-width: 220px;
   overflow: hidden;
@@ -92,16 +78,6 @@
   white-space: nowrap;
   color: var(--base-fg);
   font-size: 11px;
-}
-
-.pathClear {
-  border: 0;
-  background: transparent;
-  color: var(--base-fg-more-dim);
-  cursor: pointer;
-  font: inherit;
-  font-size: 11px;
-  padding: 2px 4px;
 }
 
 .selectWrap {
@@ -175,15 +151,6 @@
 
 .levelHidden {
   color: var(--accent-fg);
-}
-
-.metricToggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--base-fg-more-dim);
-  font-size: 11px;
-  white-space: nowrap;
 }
 
 .levelAction:disabled {

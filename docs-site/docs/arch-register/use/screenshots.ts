@@ -150,7 +150,7 @@ export const screenshots: ArchRegisterScreenshotConfig[] = [
       await entitiesPage.goto();
       await entitiesPage.openEntity(authApiEntity.name);
       await entitiesPage.openEntityActions();
-      await entitiesPage.page.getByRole('menuitem', { name: 'Merge into…' }).click();
+      await entitiesPage.page.getByRole('menuitem', { name: 'Merge…' }).click();
       const mergeDialog = entitiesPage.page.getByRole('alertdialog', { name: 'Merge entity' });
       await mergeDialog.getByPlaceholder('Search for an entity…').fill(customerApiEntity.name);
       await entitiesPage.page.getByRole('option', { name: customerApiEntity.name }).click();
@@ -197,9 +197,9 @@ export const screenshots: ArchRegisterScreenshotConfig[] = [
     name: 'browser-diff',
     fullPage: false,
     setup: async ({ entitiesPage }) => {
-      await entitiesPage.goto({ viewMode: 'diff', asOf: '2026-12-31' });
+      await entitiesPage.goto({ viewMode: 'compare-dates', asOf: '2026-12-31' });
       await expect(entitiesPage.browserTitle()).toBeVisible();
-      await expect(entitiesPage.page.getByText(/What changes by/)).toBeVisible({ timeout: 15000 });
+      await expect(entitiesPage.page.getByText(/What changes by|What changed since/)).toBeVisible({ timeout: 15000 });
     }
   },
   {
@@ -208,7 +208,7 @@ export const screenshots: ArchRegisterScreenshotConfig[] = [
     name: 'browser-matrix',
     fullPage: false,
     setup: async ({ entitiesPage }) => {
-      await entitiesPage.goto({ viewMode: 'matrix' });
+      await entitiesPage.goto({ viewMode: 'relation-matrix' });
       await entitiesPage.expectLoaded();
       await expect(entitiesPage.browserTitle()).toBeVisible();
     }
@@ -219,7 +219,7 @@ export const screenshots: ArchRegisterScreenshotConfig[] = [
     name: 'browser-bubble',
     fullPage: false,
     setup: async ({ entitiesPage }) => {
-      await entitiesPage.goto({ viewMode: 'bubble' });
+      await entitiesPage.goto({ viewMode: 'bubble-chart' });
       await entitiesPage.expectLoaded();
       await expect(entitiesPage.browserTitle()).toBeVisible();
     }
@@ -236,12 +236,11 @@ export const screenshots: ArchRegisterScreenshotConfig[] = [
       // what the app's own navigate() call produces, so it survives that round-trip as a string.
       const viewConfigs = JSON.stringify(
         JSON.stringify({
-          map: {
-            levels: 2,
-            level1SchemaId: domainSchema.id,
-            level1Columns: 3,
-            level2SchemaId: systemSchema.id,
-            level2Columns: 3,
+          'nested-map': {
+            levelConfigs: [
+              { schemaId: domainSchema.id, columns: 3 },
+              { schemaId: systemSchema.id, columns: 3 }
+            ],
             metricConfig: {
               sourceSchemaId: componentSchema.id,
               source: { kind: 'lifecycle' },
@@ -250,7 +249,7 @@ export const screenshots: ArchRegisterScreenshotConfig[] = [
           }
         })
       );
-      await entitiesPage.goto({ viewMode: 'map', viewConfigs });
+      await entitiesPage.goto({ viewMode: 'nested-map', viewConfigs });
       await entitiesPage.expectLoaded();
       await expect(entitiesPage.browserTitle()).toBeVisible();
     }
@@ -261,7 +260,7 @@ export const screenshots: ArchRegisterScreenshotConfig[] = [
     name: 'browser-explore',
     fullPage: false,
     setup: async ({ entitiesPage }) => {
-      await entitiesPage.goto({ viewMode: 'explore' });
+      await entitiesPage.goto({ viewMode: 'relation-columns' });
       await entitiesPage.expectLoaded();
       await expect(entitiesPage.browserTitle()).toBeVisible();
     }
@@ -283,7 +282,7 @@ export const screenshots: ArchRegisterScreenshotConfig[] = [
     name: 'browser-path-walker',
     fullPage: false,
     setup: async ({ entitiesPage }) => {
-      await entitiesPage.goto({ viewMode: 'path-walker', type: componentSchema.id });
+      await entitiesPage.goto({ viewMode: 'trail', type: componentSchema.id });
       await expect(entitiesPage.browserTitle()).toBeVisible();
       await entitiesPage.page.getByRole('button', { name: /Frontend App/ }).click();
       await expect(

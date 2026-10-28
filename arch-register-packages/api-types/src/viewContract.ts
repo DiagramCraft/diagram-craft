@@ -15,23 +15,25 @@ import {
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
+export const BROWSER_VIEWS = [
+  'table',
+  'cards',
+  'tree',
+  'radar',
+  'timeline',
+  'relation-matrix',
+  'relation-columns',
+  'bubble-chart',
+  'heatmap',
+  'nested-map',
+  'compare-dates',
+  'graph',
+  'traceability',
+  'trail'
+] as const;
+
 export const browserViewSchema = z
-  .enum([
-    'table',
-    'cards',
-    'tree',
-    'radar',
-    'timeline',
-    'matrix',
-    'explore',
-    'bubble',
-    'heatmap',
-    'map',
-    'diff',
-    'graph',
-    'traceability',
-    'path-walker'
-  ])
+  .enum(BROWSER_VIEWS)
   .describe('Available view modes for displaying entities');
 
 const filterConditionFields = {
@@ -118,7 +120,11 @@ export const timelineViewConfigSchema = z.object({
   showHorizonBands: z
     .boolean()
     .optional()
-    .describe('Whether Historical, Now, Next, and Later horizon bands are visible')
+    .describe('Whether Historical, Now, Next, and Later horizon bands are visible'),
+  includeUndated: z
+    .boolean()
+    .optional()
+    .describe('Whether entities without a date for the mapped fields are listed (default true)')
 });
 
 export const matrixViewConfigSchema = z.object({
@@ -301,37 +307,18 @@ export const mapViewConfigSchema = z.object({
     .min(1)
     .optional()
     .describe('Ordered map levels; later levels may be hidden from the rendered map'),
-  // Legacy fixed-depth fields are retained so existing saved views remain valid. The web view
-  // migrates them to levelConfigs when it loads the configuration.
-  levels: z.number().int().min(1).max(3).default(2).describe('Number of map levels (1-3)'),
-  level1SchemaId: z.string().nullable().default(null).describe('Schema identifier for level 1'),
-  level1Columns: z
-    .number()
-    .int()
-    .min(1)
-    .max(4)
-    .default(3)
-    .describe('Number of columns for level 1 (1-4)'),
-  level2SchemaId: z.string().nullable().optional().describe('Schema identifier for level 2'),
-  level2Columns: z
-    .number()
-    .int()
-    .min(1)
-    .max(4)
-    .optional()
-    .describe('Number of columns for level 2 (1-4)'),
-  level3SchemaId: z.string().nullable().optional().describe('Schema identifier for level 3'),
-  level3Columns: z
-    .number()
-    .int()
-    .min(1)
-    .max(4)
-    .optional()
-    .describe('Number of columns for level 3 (1-4)'),
   hideMissingMetricData: z
     .boolean()
     .optional()
     .describe('Whether to hide boxes with no usable aggregate or metric source data'),
+  colorScheme: z
+    .enum(['blue', 'green', 'red', 'red-amber-green', 'grayscale'])
+    .optional()
+    .describe('Color scheme for the numeric metric gradient (default blue)'),
+  reverseColors: z
+    .boolean()
+    .optional()
+    .describe('Whether the numeric metric gradient runs from its high end to its low end'),
   metricConfig: z
     .unknown()
     .nullable()
@@ -353,14 +340,12 @@ export const exploreViewConfigSchema = z.object({
     .min(0)
     .default(1)
     .describe('Depth of relationships to explore on the right'),
-  relationFieldNames: z
-    .array(z.string())
-    .default([])
-    .describe('Relationship field names to include'),
-  relationKeys: z
-    .array(z.string())
+  columnRelationKeys: z
+    .record(z.string(), z.array(z.string()))
     .optional()
-    .describe('Specific relationship instances to include'),
+    .describe(
+      'Relationship instances to include per column, keyed by column index (negative = left); a column without an entry shows all relations'
+    ),
   columnSchemaIds: z
     .record(z.string(), z.string())
     .optional()
@@ -413,20 +398,26 @@ const viewConfigSchema = z
     tree: treeViewConfigSchema.optional().describe('Configuration for tree view'),
     radar: radarViewConfigSchema.optional().describe('Configuration for radar view'),
     timeline: timelineViewConfigSchema.optional().describe('Configuration for timeline view'),
-    matrix: matrixViewConfigSchema.optional().describe('Configuration for matrix view'),
-    explore: exploreViewConfigSchema.optional().describe('Configuration for explore view'),
-    bubble: bubbleViewConfigSchema.optional().describe('Configuration for bubble view'),
+    'relation-matrix': matrixViewConfigSchema
+      .optional()
+      .describe('Configuration for relation matrix view'),
+    'relation-columns': exploreViewConfigSchema
+      .optional()
+      .describe('Configuration for relation columns view'),
+    'bubble-chart': bubbleViewConfigSchema
+      .optional()
+      .describe('Configuration for bubble chart view'),
     heatmap: heatmapViewConfigSchema.optional().describe('Configuration for heat-map view'),
-    map: mapViewConfigSchema.optional().describe('Configuration for map view'),
+    'nested-map': mapViewConfigSchema.optional().describe('Configuration for nested map view'),
     graph: graphViewConfigSchema
       .optional()
       .describe('Configuration for entity and relation graph views'),
     traceability: traceabilityViewConfigSchema
       .optional()
       .describe('Configuration for generic architecture traceability views'),
-    'path-walker': pathWalkerViewConfigSchema
+    trail: pathWalkerViewConfigSchema
       .optional()
-      .describe('Configuration for the single-path hop walker view')
+      .describe('Configuration for the single-path trail view')
   })
   .nullable()
   .describe('View-specific configuration (only one view type should be configured)');
@@ -654,6 +645,8 @@ export const workspaceViewContract = oc.tag('Views').router({
 });
 
 export type BrowserView = z.infer<typeof browserViewSchema>;
+
+export type SavedViewConfig = z.infer<typeof viewConfigSchema>;
 
 export type FilterCondition = z.infer<typeof filterConditionSchema>;
 

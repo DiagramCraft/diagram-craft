@@ -1,6 +1,9 @@
 import { useState, useMemo, useCallback } from 'react';
-import styles from './MatrixView.module.css';
-import { TbChevronDown, TbRowRemove, TbColumnRemove } from 'react-icons/tb';
+import styles from './RelationMatrixView.module.css';
+import { TbColumnRemove, TbHelp, TbRowRemove } from 'react-icons/tb';
+import { Popover } from '@diagram-craft/app-components/Popover';
+import { ToolbarButton } from '../../../components/ToolbarButton';
+import { FilterDropdown } from '../../../components/FilterDropdown';
 import { TypeBadge } from '../../../components/TypeBadge';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useEntities, useMultipleEntityRelations } from '../../../hooks/useEntities';
@@ -22,7 +25,7 @@ import {
 } from './entityFieldSources';
 import { normalizeViewConfig } from './entityViewConfig';
 import { EmptyState } from '../../../components/EmptyState';
-import { autoPickColSchemaId, buildMatrixData, type MatrixAttrField } from './matrixViewState';
+import { autoPickColSchemaId, buildMatrixData, type MatrixAttrField } from './relationMatrixState';
 import { useHydratedEntityRows } from '../../../hooks/useHydratedEntityRows';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -53,7 +56,7 @@ const DEFAULT_MATRIX_CONFIG: MatrixConfig = {
   cellColorFieldId: null
 };
 
-type MatrixViewProps = EntityBrowserRowViewProps & {
+type RelationMatrixViewProps = EntityBrowserRowViewProps & {
   schemaMap: Map<string, { schema: EntitySchema; index: number }>;
   config: unknown;
   onConfigChange: (cfg: MatrixConfig) => void;
@@ -90,7 +93,7 @@ type RelationFieldOption = {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export const MatrixView = ({
+export const RelationMatrixView = ({
   rows,
   schemaMap,
   onEntityClick,
@@ -99,7 +102,7 @@ export const MatrixView = ({
   linkedEntityIds,
   hideToolbar,
   joinedAssessment
-}: MatrixViewProps) => {
+}: RelationMatrixViewProps) => {
   const { workspaceSlug: workspaceId, schemas, lifecycleStates, teams } = useWorkspaceContext();
   const parsedConfig = useMemo(
     () => normalizeViewConfig(matrixViewConfigSchema, config, DEFAULT_MATRIX_CONFIG),
@@ -362,40 +365,39 @@ export const MatrixView = ({
 
   // ── Matrix computation ─────────────────────────────────────────────────────
 
-  const { displayRows, displayCols, cellMatrix, cellValues, totalFilled, rowCounts, colCounts } =
-    useMemo(
-      () =>
-        buildMatrixData({
-          rows,
-          colMode,
-          colEntities,
-          attrField: effAttrField,
-          colFieldId: effColFieldId,
-          relationsMap,
-          filterFieldName,
-          hideEmptyRows,
-          hideEmptyCols,
-          fullRowsMap,
-          cellColorSource: effColorField?.source ?? null,
-          cellColorFieldId: effColorField?.fieldId ?? null,
-          cellColorEntityValue,
-          cellColorValueOrder: effColorField?.options.map(o => o.value) ?? []
-        }),
-      [
+  const { displayRows, displayCols, cellMatrix, cellValues, rowCounts, colCounts } = useMemo(
+    () =>
+      buildMatrixData({
         rows,
         colMode,
         colEntities,
-        effAttrField,
-        effColFieldId,
+        attrField: effAttrField,
+        colFieldId: effColFieldId,
         relationsMap,
         filterFieldName,
         hideEmptyRows,
         hideEmptyCols,
         fullRowsMap,
-        effColorField,
-        cellColorEntityValue
-      ]
-    );
+        cellColorSource: effColorField?.source ?? null,
+        cellColorFieldId: effColorField?.fieldId ?? null,
+        cellColorEntityValue,
+        cellColorValueOrder: effColorField?.options.map(o => o.value) ?? []
+      }),
+    [
+      rows,
+      colMode,
+      colEntities,
+      effAttrField,
+      effColFieldId,
+      relationsMap,
+      filterFieldName,
+      hideEmptyRows,
+      hideEmptyCols,
+      fullRowsMap,
+      effColorField,
+      cellColorEntityValue
+    ]
+  );
 
   // ── Derived display values ─────────────────────────────────────────────────
 
@@ -406,10 +408,6 @@ export const MatrixView = ({
     colMode === 'entity' && colSchemaEntry
       ? resolveSchemaColor(colSchemaEntry.schema, colSchemaEntry.index)
       : 'var(--accent-fg)';
-
-  const selectedRelationOption = filterFieldName
-    ? (availableFieldNames.find(option => option.value === filterFieldName) ?? null)
-    : null;
 
   const isEmpty = !displayRows.length || !displayCols.length;
   const noRelations =
@@ -431,192 +429,146 @@ export const MatrixView = ({
       {/* Config bar */}
       {!hideToolbar && (
         <div className={styles.config}>
-          {/* Rows pill */}
-          <div className={styles.axisPill}>
-            <span className={styles.axisKicker}>Rows</span>
-            <span className={styles.typeTag}>
-              <span>Entities</span>
-            </span>
-          </div>
+          <FilterDropdown
+            label="Columns"
+            value={colMode}
+            onChange={value => {
+              const next = value as 'entity' | 'attribute';
+              setColMode(next);
+              notifyConfigChange({ colMode: next });
+            }}
+            options={[
+              { value: 'entity', label: 'Entity' },
+              { value: 'attribute', label: 'Attribute' }
+            ]}
+          />
 
-          {/* Cols pill */}
-          <div className={styles.axisPill}>
-            <span className={styles.axisKicker}>Cols</span>
+          {colMode === 'entity' ? (
+            <>
+              <FilterDropdown
+                label="Type"
+                value={effColSchemaId ?? ''}
+                onChange={handleColSchemaChange}
+                options={schemas.map(s => ({ value: s.id, label: s.name }))}
+              />
 
-            <div className={styles.segmented}>
-              <button
-                type="button"
-                className={colMode === 'entity' ? styles.segmentedActive : ''}
-                onClick={() => {
-                  setColMode('entity');
-                  notifyConfigChange({ colMode: 'entity' });
-                }}
-              >
-                Entity
-              </button>
-              <button
-                type="button"
-                className={colMode === 'attribute' ? styles.segmentedActive : ''}
-                onClick={() => {
-                  setColMode('attribute');
-                  notifyConfigChange({ colMode: 'attribute' });
-                }}
-              >
-                Attribute
-              </button>
-            </div>
-
-            {colMode === 'entity' ? (
-              <>
-                <label className={styles.selectWrap}>
-                  <select
-                    className={styles.select}
-                    value={effColSchemaId ?? ''}
-                    onChange={e => handleColSchemaChange(e.target.value)}
-                  >
-                    {schemas.map(s => (
-                      <option key={s.id} value={s.id}>
-                        {s.name}
-                      </option>
-                    ))}
-                  </select>
-                  <TbChevronDown size={10} />
-                </label>
-
-                {availableFieldNames.length > 1 && (
-                  <label className={styles.selectWrap}>
-                    <span className={styles.selectVia}>via</span>
-                    {selectedRelationOption?.kind === 'typed' && (
-                      <TypeBadge
-                        color={selectedRelationOption.color ?? 'var(--accent-fg)'}
-                        icon={selectedRelationOption.icon}
-                        size={14}
-                      />
-                    )}
-                    <select
-                      className={styles.select}
-                      value={filterFieldName ?? 'any'}
-                      onChange={e => {
-                        const v = e.target.value === 'any' ? null : e.target.value;
-                        setFilterFieldName(v);
-                        notifyConfigChange({ filterFieldName: v });
-                      }}
-                    >
-                      <option value="any">any relation</option>
-                      {availableFieldNames.map(option => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                          {option.kind === 'typed' ? ' (typed relation)' : ''}
-                        </option>
-                      ))}
-                    </select>
-                    <TbChevronDown size={10} />
-                  </label>
-                )}
-
-                {colorFields.length > 0 && (
-                  <label className={styles.selectWrap}>
-                    <span className={styles.selectVia}>color by</span>
-                    <select
-                      className={styles.select}
-                      value={effColorField?.key ?? 'none'}
-                      onChange={e => {
-                        const field = colorFields.find(f => f.key === e.target.value) ?? null;
-                        setCellColorSource(field?.source ?? null);
-                        setCellColorFieldId(field?.fieldId ?? null);
-                        notifyConfigChange({
-                          cellColorSource: field?.source ?? null,
-                          cellColorFieldId: field?.fieldId ?? null
-                        });
-                      }}
-                    >
-                      <option value="none">none</option>
-                      {colorFields.map(f => (
-                        <option key={f.key} value={f.key}>
-                          {f.label} ({COLOR_SOURCE_LABEL[f.source]})
-                        </option>
-                      ))}
-                    </select>
-                    <TbChevronDown size={10} />
-                  </label>
-                )}
-
-                {noRelations && (
-                  <span className={styles.noRel}>— no relations between these types</span>
-                )}
-              </>
-            ) : attrFields.length > 0 ? (
-              <label className={styles.selectWrap}>
-                <select
-                  className={styles.select}
-                  value={effColFieldId ?? ''}
-                  onChange={e => {
-                    setColEnumFieldId(e.target.value);
-                    notifyConfigChange({ colEnumFieldId: e.target.value });
+              {availableFieldNames.length > 1 && (
+                <FilterDropdown
+                  label="Via"
+                  value={filterFieldName ?? 'any'}
+                  onChange={value => {
+                    const v = value === 'any' ? null : value;
+                    setFilterFieldName(v);
+                    notifyConfigChange({ filterFieldName: v });
                   }}
-                >
-                  {attrFields.map(f => (
-                    <option key={f.fieldId} value={f.fieldId}>
-                      {f.label}
-                    </option>
-                  ))}
-                </select>
-                <TbChevronDown size={10} />
-              </label>
-            ) : (
-              <span className={styles.noRel}>No attributes available</span>
-            )}
-          </div>
+                  options={[
+                    { value: 'any', label: 'Any relation' },
+                    ...availableFieldNames.map(option => ({
+                      value: option.value,
+                      label: `${option.label}${option.kind === 'typed' ? ' (typed relation)' : ''}`
+                    }))
+                  ]}
+                />
+              )}
 
-          <div style={{ flex: 1 }} />
+              {colorFields.length > 0 && (
+                <FilterDropdown
+                  label="Color"
+                  value={effColorField?.key ?? 'none'}
+                  onChange={value => {
+                    const field = colorFields.find(f => f.key === value) ?? null;
+                    setCellColorSource(field?.source ?? null);
+                    setCellColorFieldId(field?.fieldId ?? null);
+                    notifyConfigChange({
+                      cellColorSource: field?.source ?? null,
+                      cellColorFieldId: field?.fieldId ?? null
+                    });
+                  }}
+                  options={[
+                    { value: 'none', label: 'None' },
+                    ...colorFields.map(f => ({
+                      value: f.key,
+                      label: `${f.label} (${COLOR_SOURCE_LABEL[f.source]})`
+                    }))
+                  ]}
+                />
+              )}
 
-          {!isEmpty && (
-            <span className={styles.stat}>
-              {totalFilled} filled&thinsp;·&thinsp;{displayRows.length}&thinsp;×&thinsp;
-              {displayCols.length}
-            </span>
+              {effColorField && !isEmpty && (
+                <Popover.Root>
+                  <Popover.Trigger
+                    element={
+                      <ToolbarButton
+                        icon={<TbHelp size={13} />}
+                        title="Show color legend"
+                        aria-label="Show color legend"
+                      />
+                    }
+                  />
+                  <Popover.Content
+                    side="bottom"
+                    sideOffset={4}
+                    align="start"
+                    arrow={false}
+                    closeButton={false}
+                    className={styles.legendPopover}
+                  >
+                    <div className={styles.legendTitle}>{effColorField.label}</div>
+                    {effColorField.options.map(o => (
+                      <div key={o.value} className={styles.legendItem}>
+                        <span
+                          className={styles.pip}
+                          style={{ background: valueColors.get(o.value) }}
+                        />
+                        {o.label}
+                      </div>
+                    ))}
+                  </Popover.Content>
+                </Popover.Root>
+              )}
+
+              {noRelations && (
+                <span className={styles.noRel}>— no relations between these types</span>
+              )}
+            </>
+          ) : attrFields.length > 0 ? (
+            <FilterDropdown
+              label="Attribute"
+              value={effColFieldId ?? ''}
+              onChange={value => {
+                setColEnumFieldId(value);
+                notifyConfigChange({ colEnumFieldId: value });
+              }}
+              options={attrFields.map(f => ({ value: f.fieldId, label: f.label }))}
+            />
+          ) : (
+            <span className={styles.noRel}>No attributes available</span>
           )}
 
-          <div style={{ flex: 1 }} />
-
-          <div className={styles.toggles}>
-            <button
-              type="button"
-              data-active={hideEmptyRows ? 'true' : 'false'}
-              title="Hide empty rows"
-              onClick={() => {
-                const next = !hideEmptyRows;
-                setHideEmptyRows(next);
-                notifyConfigChange({ hideEmptyRows: next });
-              }}
-            >
-              <TbRowRemove size={10} />
-            </button>
-            <button
-              type="button"
-              data-active={hideEmptyCols ? 'true' : 'false'}
-              title="Hide empty cols"
-              onClick={() => {
-                const next = !hideEmptyCols;
-                setHideEmptyCols(next);
-                notifyConfigChange({ hideEmptyCols: next });
-              }}
-            >
-              <TbColumnRemove size={10} />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {effColorField && !isEmpty && (
-        <div className={styles.legend}>
-          <span className={styles.legendTitle}>{effColorField.label}</span>
-          {effColorField.options.map(o => (
-            <span key={o.value} className={styles.legendItem}>
-              <span className={styles.pip} style={{ background: valueColors.get(o.value) }} />
-              {o.label}
-            </span>
-          ))}
+          <ToolbarButton
+            variant={hideEmptyRows ? 'primary' : 'secondary'}
+            icon={<TbRowRemove size={13} />}
+            title={hideEmptyRows ? 'Show empty rows' : 'Hide empty rows'}
+            aria-label={hideEmptyRows ? 'Show empty rows' : 'Hide empty rows'}
+            aria-pressed={hideEmptyRows}
+            onClick={() => {
+              const next = !hideEmptyRows;
+              setHideEmptyRows(next);
+              notifyConfigChange({ hideEmptyRows: next });
+            }}
+          />
+          <ToolbarButton
+            variant={hideEmptyCols ? 'primary' : 'secondary'}
+            icon={<TbColumnRemove size={13} />}
+            title={hideEmptyCols ? 'Show empty columns' : 'Hide empty columns'}
+            aria-label={hideEmptyCols ? 'Show empty columns' : 'Hide empty columns'}
+            aria-pressed={hideEmptyCols}
+            onClick={() => {
+              const next = !hideEmptyCols;
+              setHideEmptyCols(next);
+              notifyConfigChange({ hideEmptyCols: next });
+            }}
+          />
         </div>
       )}
 
@@ -724,7 +676,22 @@ export const MatrixView = ({
                           onMouseEnter={() => setHoveredCol(ci)}
                           onMouseLeave={() => setHoveredCol(null)}
                         >
-                          {filled && <span className={styles.pip} style={{ background: color }} />}
+                          {filled && (
+                            <span
+                              className={styles.pip}
+                              style={{ background: color }}
+                              title={
+                                effColorField
+                                  ? `${effColorField.label}: ${
+                                      value != null
+                                        ? (effColorField.options.find(o => o.value === value)
+                                            ?.label ?? value)
+                                        : 'No value'
+                                    }`
+                                  : undefined
+                              }
+                            />
+                          )}
                         </td>
                       );
                     })}

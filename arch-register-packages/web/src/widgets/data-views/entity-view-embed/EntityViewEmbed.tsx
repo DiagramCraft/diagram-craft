@@ -58,7 +58,7 @@ export const EntityViewEmbed = ({ config }: { config: SavedViewEmbedWidgetConfig
       limit:
         savedView?.viewMode === 'graph' ||
         savedView?.viewMode === 'traceability' ||
-        savedView?.viewMode === 'path-walker'
+        savedView?.viewMode === 'trail'
           ? undefined
           : 100
     },

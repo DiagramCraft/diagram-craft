@@ -18,7 +18,7 @@ MDX block so wiki pages can show a live (or static, published) snapshot of a sav
 ## View modes
 
 Views live directly in this folder: `TableView`, `CardsView`, `TreeView`, `RadarView`,
-`TimelineView`, `MatrixView`, `ExploreView`, and `EntityBrowserGraphView`. The graph view starts
+`TimelineView`, `RelationMatrixView`, `RelationColumnsView`, and `EntityBrowserGraphView`. The graph view starts
 with every filtered entity as a highlighted root and lazily traverses linked entities using the
 same relation data and depth/direction controls as the entity detail graph. There are two prop shapes:
 

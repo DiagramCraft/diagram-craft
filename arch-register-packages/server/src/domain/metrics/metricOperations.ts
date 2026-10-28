@@ -6,10 +6,12 @@ import type { LifecycleStateDbResult } from '../workspace/db/workspaceDatabase';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import { currencyValueSchema } from '@arch-register/api-types/common';
-import type {
-  MetricConfig,
-  MetricDistributionEntry,
-  MetricRollupResponse
+import {
+  ANY_SOURCE_SCHEMA,
+  metricSourceSchemaMatches,
+  type MetricConfig,
+  type MetricDistributionEntry,
+  type MetricRollupResponse
 } from '@arch-register/api-types/metricContract';
 import { getInlineAssessmentEnumOptions } from '@arch-register/api-types/assessmentFieldOptions';
 import { httpAssert } from '../../utils/httpAssert';
@@ -40,18 +42,41 @@ type MetricSourceSchema = SchemaDbResult | RelationSchemaDbResult;
 const isEnumSourceKind = (kind: MetricConfig['source']['kind']) =>
   kind === 'enum' || kind === 'assessmentEnum';
 
+// A lifecycle source is an ordered set of states, so it is always treated like a select field
+// (most common / best / worst state).
+export const isLifecycleChoiceMetric = (metric: Pick<MetricConfig, 'source'>) =>
+  metric.source.kind === 'lifecycle';
+
 const isMetricSourceAvailable = (
   metric: MetricConfig,
   schemas: SchemaDbResult[],
   assessmentFields?: readonly { id: string; type: string }[],
   relationSchemas: RelationSchemaDbResult[] = []
 ): boolean => {
+  const source = metric.source;
+  if (metric.sourceSchemaId === ANY_SOURCE_SCHEMA) {
+    // No single schema to read fields from: only schema-independent sources make sense.
+    if (metric.sourceContext === 'relation') return false;
+    if (source.kind === 'lifecycle') return true;
+    if (source.kind === 'assessmentRating') {
+      return (
+        assessmentFields == null ||
+        assessmentFields.some(field => field.id === source.fieldId && field.type === 'rating')
+      );
+    }
+    if (source.kind === 'assessmentEnum') {
+      return (
+        assessmentFields == null ||
+        assessmentFields.some(field => field.id === source.fieldId && field.type === 'enum')
+      );
+    }
+    return false;
+  }
   const sourceSchema =
     metric.sourceContext === 'relation'
       ? relationSchemas.find(schema => schema.id === metric.sourceSchemaId)
       : schemas.find(schema => schema.id === metric.sourceSchemaId);
   if (!sourceSchema) return false;
-  const source = metric.source;
 
   if (source.kind === 'field') {
     return sourceSchema.fields.some(
@@ -92,18 +117,12 @@ const isMetricSourceAvailable = (
 const extractValue = (
   entity: EntityDbResult | RelationDbResult,
   source: MetricConfig['source'],
-  lifecycleSortOrder: Map<string, number>,
   responsesByEntity: Map<string, Record<string, string | number | boolean>> | null,
   sourceSchema: MetricSourceSchema | undefined,
   authCtx: AuthorizationContext | null
 ): MetricValue | null => {
-  if (source.kind === 'lifecycle') {
-    if (entity.lifecycle == null) return null;
-    const sortOrder = lifecycleSortOrder.get(entity.lifecycle);
-    return sortOrder == null
-      ? null
-      : { value: sortOrder, lifecycleId: entity.lifecycle, currencyCode: null };
-  }
+  // Lifecycle is a choice source and never reaches the numeric roll-up.
+  if (source.kind === 'lifecycle') return null;
 
   if (
     source.kind !== 'assessmentRating' &&
@@ -206,15 +225,19 @@ const aggregate = (
       const max = values.reduce((a, b) => (b.value > a.value ? b : a));
       return { value: max.value, lifecycleId: max.lifecycleId };
     }
-    case 'worst': {
-      const picked =
-        worstDirection === 'low'
-          ? values.reduce((a, b) => (b.value < a.value ? b : a))
-          : values.reduce((a, b) => (b.value > a.value ? b : a));
+    case 'worst':
+    case 'best': {
+      // "best" is the opposite end of the same scale as "worst".
+      const lowIsPicked = (aggregation === 'worst') === (worstDirection === 'low');
+      const picked = lowIsPicked
+        ? values.reduce((a, b) => (b.value < a.value ? b : a))
+        : values.reduce((a, b) => (b.value > a.value ? b : a));
       return { value: picked.value, lifecycleId: picked.lifecycleId };
     }
     case 'count':
       return { value: values.length, lifecycleId: null };
+    case 'none':
+      throw new Error('"none" aggregation is presentation-only and is never rolled up');
     case 'leafCount':
       throw new Error('"leafCount" aggregation is computed in computeBoxMetrics, not aggregate()');
     case 'percentage':
@@ -328,8 +351,11 @@ export const computeBoxMetrics = (
   traversalResults?: Map<string, MetricTraversalResult>
 ): MetricRollupResponse => {
   const entityById = new Map(entities.map(e => [e.id, e]));
-  const lifecycleSortOrder = new Map(lifecycleStates.map(s => [s.id, s.sort_order]));
   const worstDirection = metric.worstDirection ?? 'high';
+  const lifecycleChoice = isLifecycleChoiceMetric(metric);
+  const lifecycleOptions: EnumOption[] = [...lifecycleStates]
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map(state => ({ value: state.id, label: state.label }));
   const sourceSchema =
     metric.sourceContext === 'relation'
       ? undefined
@@ -351,42 +377,53 @@ export const computeBoxMetrics = (
             .map(id => entityById.get(id))
             .filter(
               (entity): entity is EntityDbResult =>
-                entity != null && entity.schema_id === metric.sourceSchemaId
+                entity != null && metricSourceSchemaMatches(metric.sourceSchemaId, entity.schema_id)
             )
             .map(entity => ({ kind: 'entity' as const, entity }))
         : [];
     const sourceCount = sourceTerminals.length;
     const duplicateCount = traversal?.duplicateCount ?? 0;
 
-    if (isEnumSourceKind(metric.source.kind)) {
-      const source = metric.source as Extract<
-        MetricConfig['source'],
-        { kind: 'enum' | 'assessmentEnum' }
-      >;
-      const values = sourceTerminals
-        .map(terminal =>
-          extractEnumValue(
-            terminal.kind === 'entity' ? terminal.entity : terminal.relation,
-            source,
-            responsesByEntity,
-            terminal.kind === 'entity' ? sourceSchema : terminal.schema,
-            authCtx
-          )
-        )
-        .filter((v): v is string => v != null);
+    if (isEnumSourceKind(metric.source.kind) || lifecycleChoice) {
+      const values = lifecycleChoice
+        ? sourceTerminals
+            .map(terminal => (terminal.kind === 'entity' ? terminal.entity : terminal.relation))
+            .map(record => record.lifecycle)
+            .filter((v): v is string => v != null)
+        : sourceTerminals
+            .map(terminal =>
+              extractEnumValue(
+                terminal.kind === 'entity' ? terminal.entity : terminal.relation,
+                metric.source as Extract<
+                  MetricConfig['source'],
+                  { kind: 'enum' | 'assessmentEnum' }
+                >,
+                responsesByEntity,
+                terminal.kind === 'entity' ? sourceSchema : terminal.schema,
+                authCtx
+              )
+            )
+            .filter((v): v is string => v != null);
+      const optionList = lifecycleChoice ? lifecycleOptions : (enumOptions ?? []);
       const {
         dominantValue: modeValue,
         dominantLabel: modeLabel,
         distribution
-      } = computeDistribution(values, enumOptions ?? []);
+      } = computeDistribution(values, optionList);
       const { dominantValue, dominantLabel } =
-        metric.aggregation === 'worst'
-          ? pickWorstEnumOption(values, enumOptions ?? [], worstDirection)
+        metric.aggregation === 'worst' || metric.aggregation === 'best'
+          ? pickWorstEnumOption(
+              values,
+              optionList,
+              // "best" is the opposite end of the enum order from "worst".
+              (metric.aggregation === 'worst') === (worstDirection === 'low') ? 'low' : 'high'
+            )
           : { dominantValue: modeValue, dominantLabel: modeLabel };
       return {
         boxEntityId,
         value: sourceCount,
-        lifecycleId: null,
+        // Lets the map color the box with the state's own color, as for the other lifecycle metrics.
+        lifecycleId: lifecycleChoice ? dominantValue : null,
         dominantValue,
         dominantLabel,
         distribution,
@@ -455,7 +492,6 @@ export const computeBoxMetrics = (
         extractValue(
           terminal.kind === 'entity' ? terminal.entity : terminal.relation,
           metric.source,
-          lifecycleSortOrder,
           responsesByEntity,
           terminal.kind === 'entity' ? sourceSchema : terminal.schema,
           authCtx
@@ -624,20 +660,26 @@ export const getBoxMetrics = async (
     projectScope = 'all'
   } = options;
 
-  if (metric.aggregation === 'worst') {
+  httpAssert.true(metric.aggregation !== 'none', {
+    status: 400,
+    message: '"none" is a presentation-only aggregation and cannot be rolled up'
+  });
+  if (metric.aggregation === 'worst' || metric.aggregation === 'best') {
     httpAssert.present(metric.worstDirection, {
       status: 400,
-      message: '"worst" aggregation requires worstDirection'
+      message: `"${metric.aggregation}" aggregation requires worstDirection`
     });
   }
   if (isEnumSourceKind(metric.source.kind)) {
     httpAssert.true(
       metric.aggregation === 'count' ||
         metric.aggregation === 'leafCount' ||
+        metric.aggregation === 'best' ||
         metric.aggregation === 'worst',
       {
         status: 400,
-        message: 'Enum-sourced metrics only support "count", "leafCount" or "worst" aggregation'
+        message:
+          'Enum-sourced metrics only support "count", "leafCount", "best" or "worst" aggregation'
       }
     );
   }

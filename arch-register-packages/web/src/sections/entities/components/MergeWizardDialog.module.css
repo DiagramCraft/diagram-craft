@@ -180,9 +180,3 @@
   gap: 8px;
   margin-top: 12px;
 }
-
-.queueIndicator {
-  font-size: 11px;
-  color: var(--base-fg-more-dim);
-  text-align: right;
-}

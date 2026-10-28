@@ -231,6 +231,12 @@
   width: 32px;
 }
 
+/* An inline checkbox sits on the text baseline, which nudges it off the vertical centre that the
+   cell's vertical-align: middle gives the neighbouring icon. */
+.checkboxCell .checkbox {
+  display: block;
+}
+
 /* Name cell */
 .name {
   display: flex;

@@ -85,6 +85,24 @@
   margin-bottom: 4px;
 }
 
+/* Foldable section header in the column picker; same look as .fieldsGroupLabel. */
+.fieldsGroupToggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  color: var(--base-fg-dim);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
 .fieldsRow {
   display: flex;
   align-items: center;
@@ -126,6 +144,10 @@
   padding: 8px 12px;
   max-height: min(360px, 60vh);
   overflow: auto;
+
+  > div > div {
+    color: var(--base-fg);
+  }
 }
 
 .assessmentOption {
@@ -134,17 +156,17 @@
   gap: 6px;
   width: 100%;
   text-align: left;
-  padding: 5px 6px;
-  font-size: 12px;
+  padding: 5px 0;
+  font-size: 11px;
   border-radius: var(--r);
   border: none;
   background: transparent;
-  color: var(--base-fg);
+  color: var(--base-fg-dim);
   cursor: pointer;
 }
 
 .assessmentOption:hover {
-  background: var(--cmp-bg-hover);
+  color: var(--accent-fg);
 }
 
 .assessmentOptionActive {
@@ -156,8 +178,8 @@
 .assessmentOptionCheck {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 14px;
+  justify-content: left;
+  width: 10px;
   flex-shrink: 0;
   color: var(--accent-fg);
 }
@@ -195,4 +217,23 @@
   overflow: hidden;
   text-overflow: ellipsis;
   align-self: center;
+}
+
+.viewHelpPopover {
+  position: relative !important;
+  z-index: 1100 !important;
+  width: 280px;
+  padding: 12px !important;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--base-fg);
+}
+
+.viewHelpTitle {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.viewHelpText {
+  color: var(--base-fg-more-dim);
 }

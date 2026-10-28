@@ -38,16 +38,8 @@ export type MapLevelConfig = {
   targetSchemaId?: string | null;
 };
 
-export const getMapSchemaIds = (cfg: {
-  levelConfigs?: MapLevelConfig[];
-  levels?: number;
-  level1SchemaId?: string | null;
-  level2SchemaId?: string | null;
-  level3SchemaId?: string | null;
-}): string[] => {
-  const ids = cfg.levelConfigs
-    ? cfg.levelConfigs.map(level => level.schemaId)
-    : [cfg.level1SchemaId, cfg.level2SchemaId, cfg.level3SchemaId].slice(0, cfg.levels ?? 3);
+export const getMapSchemaIds = (cfg: { levelConfigs?: MapLevelConfig[] }): string[] => {
+  const ids = (cfg.levelConfigs ?? []).map(level => level.schemaId);
   return [...new Set(ids.filter((id): id is string => !!id))];
 };
 

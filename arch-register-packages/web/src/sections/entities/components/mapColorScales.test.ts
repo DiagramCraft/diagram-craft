@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   categoricalColor,
+  colorSchemeGradient,
+  MAP_COLOR_SCHEME_OPTIONS,
   NEUTRAL_MISSING_COLOR,
   numericColor,
   textColorForFill
@@ -63,5 +65,40 @@ describe('textColorForFill', () => {
   it('picks readable text against the neutral missing-data color', () => {
     const text = textColorForFill(NEUTRAL_MISSING_COLOR);
     expect(['#0b0b0b', '#ffffff']).toContain(text);
+  });
+});
+
+describe('color schemes', () => {
+  it('defaults to the blue ramp', () => {
+    expect(numericColor(0, 0, 100)).toBe(numericColor(0, 0, 100, 'blue'));
+    expect(colorSchemeGradient()).toBe(colorSchemeGradient('blue'));
+  });
+
+  it('gives each scheme its own low and high end', () => {
+    const lows = MAP_COLOR_SCHEME_OPTIONS.map(option => numericColor(0, 0, 100, option.value));
+    const highs = MAP_COLOR_SCHEME_OPTIONS.map(option => numericColor(100, 0, 100, option.value));
+    expect(new Set(lows).size).toBe(MAP_COLOR_SCHEME_OPTIONS.length);
+    expect(new Set(highs).size).toBe(MAP_COLOR_SCHEME_OPTIONS.length);
+  });
+
+  it('runs red-amber-green from green (low) to red (high)', () => {
+    expect(numericColor(0, 0, 100, 'red-amber-green')).toBe('#4caf50');
+    expect(numericColor(100, 0, 100, 'red-amber-green')).toBe('#a82424');
+  });
+
+  it('builds a legend gradient from the scheme ramp', () => {
+    expect(colorSchemeGradient('grayscale')).toContain('#d4d4d4');
+    expect(colorSchemeGradient('grayscale')).toContain('#1a1a1a');
+  });
+});
+
+describe('reversed color schemes', () => {
+  it('swaps the low and high ends', () => {
+    expect(numericColor(0, 0, 100, 'green', true)).toBe(numericColor(100, 0, 100, 'green'));
+    expect(numericColor(100, 0, 100, 'green', true)).toBe(numericColor(0, 0, 100, 'green'));
+  });
+
+  it('reverses the legend gradient', () => {
+    expect(colorSchemeGradient('red-amber-green', true)).toMatch(/#a82424.*#4caf50/);
   });
 });

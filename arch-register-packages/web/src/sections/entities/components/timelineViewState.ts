@@ -83,14 +83,6 @@ export const getDatedTimelineRows = (
 ): EntityRecord[] =>
   rows.filter(entity => getDate(entity, startFieldId) ?? getDate(entity, endFieldId));
 
-export const getUndatedTimelineRows = (
-  rows: EntityRecord[],
-  datedRows: EntityRecord[]
-): EntityRecord[] => {
-  const datedIds = new Set(datedRows.map(entity => entity._uid));
-  return rows.filter(entity => !datedIds.has(entity._uid));
-};
-
 export const groupTimelineRows = (
   rows: EntityRecord[],
   groupBy: Exclude<TimelineGroupBy, 'snapshot' | 'project'>,

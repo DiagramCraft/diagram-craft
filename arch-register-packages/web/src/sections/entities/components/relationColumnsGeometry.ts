@@ -1,4 +1,4 @@
-import type { ExploreConnector } from './ExploreView.helpers';
+import type { ExploreConnector } from './RelationColumnsView.helpers';
 
 export type ExploreConnectorLine = ExploreConnector & {
   x1: number;

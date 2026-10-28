@@ -9,6 +9,7 @@ type FilterDropdownProps = {
   onChange: (v: string) => void;
   options: Option[];
   variant?: 'default' | 'secondary';
+  disabled?: boolean;
 };
 
 export const FilterDropdown = ({
@@ -16,13 +17,23 @@ export const FilterDropdown = ({
   value,
   onChange,
   options,
-  variant
+  variant,
+  disabled = false
 }: FilterDropdownProps) => (
-  <div className={styles.cFilterDropdown} data-variant={variant ?? 'default'}>
+  <div
+    className={styles.cFilterDropdown}
+    data-variant={variant ?? 'default'}
+    data-disabled={disabled || undefined}
+  >
     <span className={styles.eLabel}>{label}</span>
     <span className={styles.eValue}>{options.find(o => o.value === value)?.label ?? value}</span>
     <TbChevronDown size={10} />
-    <select className={styles.eSelect} value={value} onChange={e => onChange(e.target.value)}>
+    <select
+      className={styles.eSelect}
+      value={value}
+      disabled={disabled}
+      onChange={e => onChange(e.target.value)}
+    >
       {options.map(o => (
         <option key={o.value} value={o.value}>
           {o.label}

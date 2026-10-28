@@ -16,7 +16,8 @@ describe('timeline view configuration defaults', () => {
       showProjectLanes: true,
       showMilestones: true,
       showAutosaves: true,
-      showHorizonBands: true
+      showHorizonBands: true,
+      includeUndated: true
     });
   });
 

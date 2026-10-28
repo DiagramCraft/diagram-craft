@@ -7,21 +7,21 @@ import type { BrowserView, FilterCondition } from '@arch-register/api-types/view
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import { useMemo, type ReactNode } from 'react';
-import { BubbleView } from './BubbleView';
+import { BubbleChartView } from './BubbleChartView';
 import { CardsView } from './CardsView';
 import { EntityBrowserGraphView } from './EntityBrowserGraphView';
-import { EntityDiffView } from './EntityDiffView';
-import { ExploreView } from './ExploreView';
+import { CompareDatesView } from './CompareDatesView';
+import { RelationColumnsView } from './RelationColumnsView';
 import { HeatmapView } from './HeatmapView';
-import { MapView } from './MapView';
+import { NestedMapView } from './NestedMapView';
 import type { MapOverlay } from './mapOverlays';
-import { MatrixView } from './MatrixView';
+import { RelationMatrixView } from './RelationMatrixView';
 import { RadarView } from './RadarView';
 import { TableView, type TableViewProps } from './TableView';
 import { TimelineView } from './TimelineView';
 import { TreeView } from './TreeView';
 import { TraceabilityView } from './TraceabilityView';
-import { PathWalkerView } from './PathWalkerView';
+import { TrailView } from './TrailView';
 import type { BrowserEntityRecord, ProjectBrowserContext } from './entityBrowserState';
 import type { EntityDisplayField } from './entityDisplayFields';
 import type { JoinedAssessmentContext } from './entityFieldSources';
@@ -66,7 +66,7 @@ type EntityBrowserViewData = {
   joinedAssessment?: JoinedAssessmentContext | null;
   responsesByEntity?: Map<string, Record<string, string | number | boolean>>;
   onCountChange?: (count: number) => void;
-  /** Map view only: selectable heat overlays (see `MapView`'s `overlays`). */
+  /** Map view only: selectable heat overlays (see `NestedMapView`'s `overlays`). */
   mapOverlays?: MapOverlay[];
   /** Map view only: dims boxes not owned by one of these owners. */
   mapDimOwnerIds?: string[];
@@ -189,9 +189,9 @@ export const EntityBrowserView = ({
           allowActions={mode.kind === 'interactive'}
         />
       );
-    case 'diff':
+    case 'compare-dates':
       return (
-        <EntityDiffView
+        <CompareDatesView
           workspaceId={workspaceId}
           projectId={projectId}
           projectScope={projectScope}
@@ -207,9 +207,9 @@ export const EntityBrowserView = ({
           teams={teams ?? []}
         />
       );
-    case 'map':
+    case 'nested-map':
       return (
-        <MapView
+        <NestedMapView
           workspaceId={workspaceId}
           projectId={projectId}
           projectScope={projectScope}
@@ -236,9 +236,9 @@ export const EntityBrowserView = ({
           dimOwnerIds={mapDimOwnerIds}
         />
       );
-    case 'explore':
+    case 'relation-columns':
       return (
-        <ExploreView
+        <RelationColumnsView
           rows={rows}
           onEntityClick={onEntityClick}
           config={activeViewConfig}
@@ -249,9 +249,9 @@ export const EntityBrowserView = ({
           displayFields={displayFields}
         />
       );
-    case 'matrix':
+    case 'relation-matrix':
       return (
-        <MatrixView
+        <RelationMatrixView
           rows={rows}
           schemaMap={schemaMap}
           onEntityClick={onEntityClick}
@@ -280,9 +280,9 @@ export const EntityBrowserView = ({
           isLoading={isLoading}
         />
       );
-    case 'path-walker':
+    case 'trail':
       return (
-        <PathWalkerView
+        <TrailView
           rows={rows}
           schemas={schemas}
           relationSchemas={relationSchemas}
@@ -331,9 +331,9 @@ export const EntityBrowserView = ({
           joinedAssessment={joinedAssessment}
         />
       );
-    case 'bubble':
+    case 'bubble-chart':
       return (
-        <BubbleView
+        <BubbleChartView
           rows={rows}
           linkedEntityIds={linkedEntityIds}
           onEntityClick={onEntityClick}
@@ -373,6 +373,8 @@ export const EntityBrowserView = ({
           onEntityClick={onEntityClick}
           onDelete={onDelete}
           onClone={onClone}
+          onManageCollections={onManageCollections}
+          onMerge={onMerge}
           lifecycleStates={lifecycleStates}
           projectContext={projectContext}
           readOnly={readOnly}

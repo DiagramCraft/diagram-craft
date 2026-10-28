@@ -3,7 +3,7 @@ import { MAX_PATH_HOPS, type PathStep } from '@arch-register/api-types/entityQue
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import { resolveRelationSchemaNames } from '../entity-browser-embed/EntityBrowserEmbedFieldResolution';
-import { hopOptionsFrom } from '../../../sections/entities/components/pathWalkerViewState';
+import { hopOptionsFrom } from '../../../sections/entities/components/trailViewState';
 import {
   pathStepKey,
   type PathStepOption

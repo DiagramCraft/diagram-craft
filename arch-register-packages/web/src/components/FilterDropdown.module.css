@@ -28,17 +28,14 @@
     }
   }
 
-  &:hover {
-    border-color: var(--cmp-border-hover);
-  }
-
   .eLabel {
     font-size: 11px;
     color: var(--base-fg-more-dim);
+    margin-right: 2px;
   }
 
   .eValue {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--base-fg);
     font-family: inherit;
     max-width: 160px;
@@ -53,5 +50,18 @@
     cursor: pointer;
     width: 100%;
     height: 100%;
+  }
+
+  &[data-disabled] {
+    opacity: 0.5;
+    cursor: default;
+
+    &:hover {
+      border-color: var(--panel-border);
+    }
+
+    .eSelect {
+      cursor: default;
+    }
   }
 }

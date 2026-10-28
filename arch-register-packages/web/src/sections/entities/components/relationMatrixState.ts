@@ -22,7 +22,6 @@ export type MatrixData = {
   cellMatrix: boolean[][];
   /** Per-cell color-field value (weakest across matching relations); null when absent. */
   cellValues: (string | null)[][];
-  totalFilled: number;
   rowCounts: number[];
   colCounts: number[];
 };
@@ -77,7 +76,6 @@ const emptyMatrixData = (): MatrixData => ({
   displayCols: [],
   cellMatrix: [],
   cellValues: [],
-  totalFilled: 0,
   rowCounts: [],
   colCounts: []
 });
@@ -180,11 +178,10 @@ export const buildMatrixData = ({
   );
   const cellMatrix = cells.map(row => row.map(cell => cell.filled));
   const cellValues = cells.map(row => row.map(cell => cell.value));
-  const totalFilled = cellMatrix.flat().filter(Boolean).length;
   const rowCounts = cellMatrix.map(row => row.filter(Boolean).length);
   const colCounts = displayCols.map(
     (_, columnIndex) => cellMatrix.filter(row => row[columnIndex]).length
   );
 
-  return { displayRows, displayCols, cellMatrix, cellValues, totalFilled, rowCounts, colCounts };
+  return { displayRows, displayCols, cellMatrix, cellValues, rowCounts, colCounts };
 };

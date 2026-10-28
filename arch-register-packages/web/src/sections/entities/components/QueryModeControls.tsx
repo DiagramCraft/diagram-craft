@@ -18,7 +18,7 @@ import { SearchInput } from '../../../components/SearchInput';
 import { FilterBuilder } from '../../../components/FilterBuilder';
 import { QueryBuilder } from './queryBuilder/QueryBuilder';
 import { AdvancedQueryEditor } from './queryBuilder/AdvancedQueryEditor';
-import { countConditions, isVisuallyEditable } from './queryBuilder/queryBuilderState';
+import { countConditions } from './queryBuilder/queryBuilderState';
 import {
   buildEntityQueryFromBrowserFilters,
   stripEmptyGroups,
@@ -29,8 +29,6 @@ import {
   usePrintEntityQueryText
 } from '../../../hooks/useEntityQueryText';
 import styles from './EntityBrowser.module.css';
-
-type Mode = 'simple' | 'advanced';
 
 type QueryModeControlsProps = {
   workspaceId: string;
@@ -52,13 +50,12 @@ type QueryModeControlsProps = {
   joinedAssessment?: Assessment | null;
 };
 
-// The entity browser's query controls. The filter popover (the progressive `QueryBuilder`: flat
-// conditions → Any/All groups → NOT → traversal) is available in BOTH modes. The Simple/Advanced
-// toggle only changes the left-hand input: Simple shows the plain live search box (`q`, merged at
-// execution via `withLiveSearchText`); Advanced replaces it with a text field bound to the same
+// The entity browser's query controls: the live search box (`q`, merged at execution via
+// `withLiveSearchText`), a Filter popover (the progressive `QueryBuilder`: flat conditions →
+// Any/All groups → NOT → traversal) and an Advanced popover with a text field bound to the same
 // `EntityQuery` IR the builder edits. Both representations are full-fidelity, so nothing is lost
 // switching. Surfaces without `setEntityQuery` (the markdown embed) fall back to the legacy flat
-// `FilterBuilder` with no toggle.
+// `FilterBuilder` with no Advanced popover.
 export const QueryModeControls = (props: QueryModeControlsProps) => {
   const {
     workspaceId,
@@ -88,19 +85,10 @@ export const QueryModeControls = (props: QueryModeControlsProps) => {
     [entityQuery, typeFilter, conditions, joinAssessmentId]
   );
 
-  const [mode, setMode] = useState<Mode>(() =>
-    entityQuery && !isVisuallyEditable(entityQuery) ? 'advanced' : 'simple'
-  );
-  // Keep a query the visual builder can't fully edit yet (relation traversal, relationExists,
-  // projections) in Advanced mode so it stays editable - mirrors the pre-existing "force advanced
-  // for non-representable" behaviour, just with a wider "editable" bar. Never forces the reverse.
-  useEffect(() => {
-    if (entityQuery && !isVisuallyEditable(entityQuery)) setMode('advanced');
-  }, [entityQuery]);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   const [advancedText, setAdvancedText] = useState('');
   const [advancedErrors, setAdvancedErrors] = useState<EntityQueryParseError[]>([]);
-  const [textPreview, setTextPreview] = useState('');
 
   const parseText = useParseEntityQueryText(workspaceId);
   const printText = usePrintEntityQueryText(workspaceId);
@@ -109,11 +97,11 @@ export const QueryModeControls = (props: QueryModeControlsProps) => {
 
   const printMutate = printText.mutateAsync;
 
-  // Re-seed the Advanced text field whenever we (re)enter Advanced mode, or the canonical query
-  // changes out from under it (a different saved/predefined view, a sidebar facet click). Advanced
-  // mode only writes `entityQuery` on Enter/Clear, so this never fights the user's typing.
+  // Re-seed the Advanced text field whenever the popover opens, or the canonical query changes
+  // out from under it (a different saved/predefined view, a sidebar facet click). The Advanced
+  // editor only writes `entityQuery` on Enter/Clear, so this never fights the user's typing.
   useEffect(() => {
-    if (mode !== 'advanced') return;
+    if (!advancedOpen) return;
     let cancelled = false;
     printMutate({
       query: withSchemaIdAsPredicate(stripEmptyGroups(canonical)),
@@ -124,26 +112,7 @@ export const QueryModeControls = (props: QueryModeControlsProps) => {
     return () => {
       cancelled = true;
     };
-  }, [mode, canonical, printMutate]);
-
-  // Debounced text preview for Visual mode - a read-only "here's the query as text" line so the
-  // grammar stays discoverable.
-  useEffect(() => {
-    if (mode !== 'simple' || !setEntityQuery) return;
-    let cancelled = false;
-    const handle = setTimeout(() => {
-      printMutate({
-        query: withSchemaIdAsPredicate(stripEmptyGroups(canonical)),
-        pretty: true
-      }).then(res => {
-        if (!cancelled) setTextPreview(res.text);
-      });
-    }, 250);
-    return () => {
-      cancelled = true;
-      clearTimeout(handle);
-    };
-  }, [mode, canonical, printMutate, setEntityQuery]);
+  }, [advancedOpen, canonical, printMutate]);
 
   // `parseText` returns projections for every representable `columns` clause. Only retain the
   // legacy projections that have no textual form (path-less columns); query-level path/aggregate
@@ -258,29 +227,14 @@ export const QueryModeControls = (props: QueryModeControlsProps) => {
 
   return (
     <>
-      {mode === 'simple' ? (
-        <SearchInput
-          size="sm"
-          className={styles.searchInline}
-          placeholder="Search by name, owner…"
-          value={q}
-          onChange={setQ}
-          onClear={() => setQ('')}
-        />
-      ) : (
-        <AdvancedQueryEditor
-          value={advancedText}
-          onChange={value => {
-            setAdvancedText(value);
-            if (advancedErrors.length > 0) setAdvancedErrors([]);
-          }}
-          onSubmit={() => void submitAdvancedText(advancedText)}
-          onFormat={() => void formatAdvancedText()}
-          onClear={handleAdvancedClear}
-          error={advancedErrors[0]?.message}
-          formatPending={parseText.isPending || printText.isPending}
-        />
-      )}
+      <SearchInput
+        size="sm"
+        className={styles.searchInline}
+        placeholder="Search by name, owner…"
+        value={q}
+        onChange={setQ}
+        onClear={() => setQ('')}
+      />
 
       <Popover.Root actionsRef={filterPopoverRef}>
         <Popover.Trigger element={filterButton(conditionCount)} />
@@ -301,24 +255,43 @@ export const QueryModeControls = (props: QueryModeControlsProps) => {
             enums={enums}
             joinedAssessment={joinedAssessment}
             getFieldGroupAccess={getFieldGroupAccess}
-            textPreview={mode === 'simple' ? textPreview : undefined}
             showFreeText={false}
             onClose={() => filterPopoverRef.current?.close()}
           />
         </Popover.Content>
       </Popover.Root>
 
-      <Button
-        size="sm"
-        variant="secondary"
-        onClick={() => {
-          if (mode === 'simple') setEntityQuery(canonical);
-          setMode(mode === 'simple' ? 'advanced' : 'simple');
-        }}
-        title={mode === 'simple' ? 'Switch to advanced query mode' : 'Switch to simple query mode'}
-      >
-        {mode === 'simple' ? 'Advanced' : 'Simple'}
-      </Button>
+      <Popover.Root open={advancedOpen} onOpenChange={setAdvancedOpen}>
+        <Popover.Trigger
+          element={
+            <Button size="sm" variant="secondary" title="Edit the query as text">
+              Advanced
+            </Button>
+          }
+        />
+        <Popover.Content
+          sideOffset={4}
+          align="start"
+          arrow={false}
+          closeButton={false}
+          className={styles.filterPopover}
+        >
+          <div style={{ width: 480, maxWidth: '90vw', padding: 10 }}>
+            <AdvancedQueryEditor
+              value={advancedText}
+              onChange={value => {
+                setAdvancedText(value);
+                if (advancedErrors.length > 0) setAdvancedErrors([]);
+              }}
+              onSubmit={() => void submitAdvancedText(advancedText)}
+              onFormat={() => void formatAdvancedText()}
+              onClear={handleAdvancedClear}
+              error={advancedErrors[0]?.message}
+              formatPending={parseText.isPending || printText.isPending}
+            />
+          </div>
+        </Popover.Content>
+      </Popover.Root>
     </>
   );
 };

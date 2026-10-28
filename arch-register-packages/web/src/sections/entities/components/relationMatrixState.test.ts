@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { EntityRecord, EntityRelation } from '@arch-register/api-types/entityContract';
-import { autoPickColSchemaId, buildMatrixData, type MatrixAttrField } from './matrixViewState';
+import { autoPickColSchemaId, buildMatrixData, type MatrixAttrField } from './relationMatrixState';
 
 const entity = (id: string, schemaId = 'service', fields: Record<string, unknown> = {}) =>
   ({
@@ -64,7 +64,6 @@ describe('matrix view state', () => {
     expect(data.displayRows.map(row => row._uid)).toEqual(['r1']);
     expect(data.displayCols.map(column => column.id)).toEqual(['a']);
     expect(data.cellMatrix).toEqual([[true]]);
-    expect(data.totalFilled).toBe(1);
   });
 
   it('reads custom multi-select values from full rows', () => {

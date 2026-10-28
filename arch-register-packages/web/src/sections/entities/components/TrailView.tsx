@@ -14,15 +14,10 @@ import { groupPathStepOptions, targetSchemaIdsForStep } from './pathBuilder/path
 import type { BrowserEntityRecord } from './entityBrowserState';
 import { WalkerColumn } from './WalkerColumn';
 import { useHopFanoutCounts } from './useHopFanoutCounts';
-import styles from './PathWalkerView.module.css';
-import {
-  hopDirectionGlyph,
-  hopOptionsFrom,
-  pathStepKey,
-  pathWalkerHops
-} from './pathWalkerViewState';
+import styles from './TrailView.module.css';
+import { hopDirectionGlyph, hopOptionsFrom, pathStepKey, pathWalkerHops } from './trailViewState';
 
-type PathWalkerViewProps = {
+type TrailViewProps = {
   rows: BrowserEntityRecord[];
   schemas: EntitySchema[];
   relationSchemas: RelationSchema[];
@@ -40,7 +35,7 @@ type PathWalkerViewProps = {
   lockHops?: boolean;
 };
 
-export const PathWalkerView = ({
+export const TrailView = ({
   rows,
   schemas,
   relationSchemas,
@@ -51,7 +46,7 @@ export const PathWalkerView = ({
   selection: selectionProp,
   onWalkChange,
   lockHops = false
-}: PathWalkerViewProps) => {
+}: TrailViewProps) => {
   const [localHops, setLocalHops] = useState<PathStep[]>(() => pathWalkerHops(config));
   const [localSelection, setLocalSelection] = useState<string[]>([]);
   const hops = onWalkChange ? pathWalkerHops(config) : localHops;

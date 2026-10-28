@@ -335,7 +335,7 @@
 
         - @id:ar.strategy.capability-map The Capability map section is a configurable dashboard (seeded as the
           `strategy-capability-map` app dashboard, editable like other app dashboards) whose widget is an entity
-          browser embed in Map view (@id:ar.entity-views.map) over the Business Capability containment hierarchy
+          browser embed in Nested map view (@id:ar.entity-views.map) over the Business Capability containment hierarchy
           (L1 domains → L2 → L3). Its toolbar offers an overlay selector that colours the tiles in severity
           colours — each overlay a capability field rolled up over the subtree and banded into heat colours, listed in
           the widget's Advanced configuration (seeded with maturity, maturity gap, investment and risk) — with a
@@ -967,6 +967,9 @@
           not-evaluated entities; unresolved filtering matches active or acknowledged violations, and stale evaluation
           coverage is shown separately from the substantive status.
 
+        - @id:ar.entity-views.help Users can click a "?" icon beside the View dropdown to see a short description of how
+          the currently selected view works.
+
         - @id:ar.entity-views.cards Users can inspect entities as cards for quick scanning of record summaries.
 
         - @id:ar.entity-views.tree Users can inspect hierarchical entity structure in a tree-oriented view.
@@ -988,8 +991,10 @@
         - @id:ar.entity-views.timeline Users can inspect date-driven entity history and planned change context in a
           condensed Entity + Project timeline, grouping rows by owner, type, or containment parent, with configurable
           project lanes, milestone guides, autosave snapshot visibility, and continuous Historical, Now, Next, and
-          Later horizon bands. The Capability + Entity + Project strategic roadmap mode aggregates accessible
-          project-linked workspace entities, keeps owners visible, and places undated entities in a separate section.
+          Later horizon bands. The Parent + Entity + Project strategic roadmap mode aggregates accessible
+          project-linked workspace entities and keeps owners visible. Entities without a date for the mapped fields
+          are listed among the dated ones (without a bar) in every grouping, and a toggle next to the date mapping
+          hides them.
           When grouped by Project + Entity, a project with both a start and target date set shows a gantt bar spanning
           that range in its group header.
 
@@ -1002,8 +1007,9 @@
           active violations; it is gated by the same permission as the workspace Conformance section and links out
           to it for further investigation.
 
-        - @id:ar.entity-views.diff Users can pick a future date and view a workspace-wide diff of what changes by
-          then — entities added, removed, or changed, with all applicable planned changes across projects applied,
+        - @id:ar.entity-views.diff Users can pick a date and view a workspace-wide diff: for a future date, what changes by
+          then — entities added, removed, or changed, with all applicable planned changes across projects applied;
+          for a past date, what changed since then (compared forward to today),
           scoped to the browser's current search/filter/project-scope selection, with a field-level diff on
           drill-down for changed entities. Planned changes with a target date already in the past but never applied
           are excluded by default (an "include overdue changes" toggle brings them back in). Field values from
@@ -1059,9 +1065,11 @@
 
         - @id:ar.entity-views.map Users can inspect containment hierarchies, including the built-in Vendor-to-Contract
           path, as a nested capability map, colouring boxes by a configurable metric rolled up from descendant entities
-          (a numeric metric can alternatively be drawn in good/warn/bad severity bands, with a band legend)
+          (a numeric metric can alternatively be drawn in good/warn/bad severity bands, with a band legend, and its
+          gradient can use a blue, green, red, red-amber-green, or grayscale color scheme, optionally reversed)
           (numeric or currency fields, lifecycle state, or assessment fields), using count, leaf-count, sum, average,
-          minimum, maximum, dominant-option, worst, or percentage aggregation. Leaf-count counts only descendants
+          minimum, maximum, best, worst, most-common-option (for select fields and lifecycle states), or percentage aggregation, or no aggregation at all ("None"),
+          which colours only the leaf boxes by their own value and leaves parent boxes uncoloured. Leaf-count counts only descendants
           with no containment children of their own — used, for example, by the Strategy & Capability Modelling
           application's capability roll-up (@id:ar.entities.strategy-model). Percentage aggregation shows the share
           of descendants matching a configurable numerator condition against the same field set as the entity
@@ -1094,13 +1102,14 @@
           only top-most entities as roots. Repeated terminal sources are deduplicated and collapsed duplicates are
           marked in the map with a count and hover detail.
 
-        - @id:ar.entity-views.explore Users can inspect entity data in a configurable side-by-side exploration view,
-          using a scoped relation filter popup grouped by source entity schema and labelled with source schema,
-          predicate, and target schema; each non-center column can be filtered to a schema, with the selection
-          constraining subsequent traversal and persisting with the view configuration. Selected schema relationships
-          apply across matching entities, while typed relation instances remain included alongside generic reference
-          and containment relations by default. Entity cards provide context-menu actions to exclude an entity from
-          the exploration or focus the entity filter on that entity.
+        - @id:ar.entity-views.explore Users can inspect entity data in the Relation columns view, a configurable side-by-side exploration view,
+          using a per-column menu: each column can filter its outgoing relations (listed as source schema, predicate,
+          and target schema; for the filtered entities these are the relations that populate the next column to the
+          right), and each non-center column can be filtered to a schema, with the selections constraining subsequent traversal and persisting with the view
+          configuration; columns can also be added, hidden, or reset (which clears the filters set from that column
+          and the entities excluded from it). Typed relation instances remain included
+          alongside generic reference and containment relations by default. Entity cards provide context-menu
+          actions to exclude an entity from the exploration or focus the entity filter on that entity.
 
         - @id:ar.entity-views.saved-configuration Users can configure and reuse entity view fields, filters, sorting,
           display modes, and joined data such as assessment fields. Saved views may also use relationship-aware
@@ -1406,13 +1415,12 @@
           entity to the workspace's designated deprecated lifecycle state.
 
         - @id:ar.collaboration.entity-merge Workspace administrators with merge permission can merge a duplicate
-          entity into a canonical one from a "Merge into…" action on the entity detail page or the entity browser
-          (single or multi-select), via a four-step wizard: pick a same-schema target entity, review every field,
+          entity into a canonical one from a "Merge…" action on the entity detail page or an entity browser row
+          menu, via a four-step wizard: pick a same-schema target entity, review every field,
           relation, and side-table conflict plus repointed dependents and any blockers, type the source entity's name
           to confirm, then view the merged result. Field-group-restricted conflicts are shown read-only with an
           explanation rather than left for the user to resolve, and acknowledgeable blockers require an explicit
-          checkbox before the merge can proceed; merging several selected entities into the same target runs the
-          wizard once per source in sequence. Source and target must share project scope: a cross-project pair is a
+          checkbox before the merge can proceed. Source and target must share project scope: a cross-project pair is a
           hard blocker, an open governance case on the source is a hard blocker, and a merge that would drop a source's
           project confinement or move the canonical record into a project proceeds only on an acknowledged warning.
           Under the hood the wizard drives the preview/execute API: the preview is

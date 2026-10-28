@@ -30,15 +30,27 @@ export const CollectionPickerDialog = ({
   const [createNewCollection, setCreateNewCollection] = useState(false);
   const isSaving = addEntity.isPending || removeEntity.isPending || createCollection.isPending;
 
-  const setMembership = (collectionId: string, isMember: boolean) => {
-    const mutation = isMember ? addEntity : removeEntity;
-    mutation.mutate({ collectionId, entityId });
-  };
+  // Membership toggles are staged here and only applied on Save, so Cancel discards them.
+  const [pendingMembership, setPendingMembership] = useState<Map<string, boolean>>(new Map());
+  const isMember = (collection: { id: string; isMember?: boolean }) =>
+    pendingMembership.get(collection.id) ?? collection.isMember ?? false;
+
+  const setMembership = (collection: { id: string; isMember?: boolean }, value: boolean) =>
+    setPendingMembership(prev => {
+      const next = new Map(prev);
+      if (value === (collection.isMember ?? false)) next.delete(collection.id);
+      else next.set(collection.id, value);
+      return next;
+    });
 
   const handleSave = async () => {
     if (createNewCollection && !newCollectionName.trim()) return;
 
     try {
+      for (const [collectionId, value] of pendingMembership) {
+        const mutation = value ? addEntity : removeEntity;
+        await mutation.mutateAsync({ collectionId, entityId });
+      }
       if (createNewCollection) {
         const collection = await createCollection.mutateAsync({ name: newCollectionName.trim() });
         await addEntity.mutateAsync({ collectionId: collection.id, entityId });
@@ -56,6 +68,7 @@ export const CollectionPickerDialog = ({
       title="Manage collections"
       sub={entityName ? `Choose collections for ${entityName}.` : undefined}
       buttons={[
+        { label: 'Cancel', type: 'cancel', onClick: onClose },
         {
           label: 'Save',
           type: 'default',
@@ -77,8 +90,8 @@ export const CollectionPickerDialog = ({
             }}
           >
             <Checkbox
-              value={collection.isMember ?? false}
-              onChange={value => setMembership(collection.id, value ?? false)}
+              value={isMember(collection)}
+              onChange={value => setMembership(collection, value ?? false)}
               disabled={isSaving}
             />
             <span style={{ flex: 1 }}>{collection.name}</span>

@@ -4963,20 +4963,15 @@ const resolveViewModeConfigSchemaIds = (
           schemaId: idMap.get(config.schemaId) ?? config.schemaId
         })
       };
-    case 'matrix':
+    case 'relation-matrix':
       return {
         ...config,
         ...(typeof config.colSchemaId === 'string' && {
           colSchemaId: idMap.get(config.colSchemaId) ?? config.colSchemaId
         })
       };
-    case 'map': {
+    case 'nested-map': {
       const resolved: Record<string, unknown> = { ...config };
-      for (const key of ['level1SchemaId', 'level2SchemaId', 'level3SchemaId']) {
-        if (typeof config[key] === 'string') {
-          resolved[key] = idMap.get(config[key] as string) ?? config[key];
-        }
-      }
       if (Array.isArray(config.levelConfigs)) {
         resolved.levelConfigs = (config.levelConfigs as Array<Record<string, unknown>>).map(
           level =>
@@ -4987,7 +4982,7 @@ const resolveViewModeConfigSchemaIds = (
       }
       return resolved;
     }
-    case 'explore':
+    case 'relation-columns':
       return {
         ...config,
         ...(typeof config.columnSchemaIds === 'object' &&
@@ -5039,7 +5034,14 @@ const resolveViewConfigSchemaIds = (
 ): Record<string, unknown> | null => {
   if (!config) return config;
   const resolved: Record<string, unknown> = { ...config };
-  for (const mode of ['radar', 'matrix', 'map', 'explore', 'graph', 'traceability']) {
+  for (const mode of [
+    'radar',
+    'relation-matrix',
+    'nested-map',
+    'relation-columns',
+    'graph',
+    'traceability'
+  ]) {
     const modeConfig = config[mode];
     if (modeConfig && typeof modeConfig === 'object') {
       resolved[mode] = resolveViewModeConfigSchemaIds(

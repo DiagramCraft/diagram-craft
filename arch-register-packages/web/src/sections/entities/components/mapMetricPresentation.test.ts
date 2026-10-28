@@ -132,4 +132,54 @@ describe('map metric presentation', () => {
     expect(hasMissingMetricData(numericMetric, result({ value: null }))).toBe(true);
     expect(hasMissingMetricData(numericMetric, result({ value: 42 }))).toBe(false);
   });
+
+  describe('"none" aggregation', () => {
+    const noneMetric = metric({ kind: 'field', fieldId: 'cost' }, 'none');
+    const noLegend = { min: null, max: null };
+
+    it('colors a leaf from its own value and leaves parents uncolored', () => {
+      expect(
+        resolveBoxColor(node, noneMetric, new Map(), noLegend, [], schema, true, {
+          min: 0,
+          max: 100
+        })
+      ).toBe(numericColor(42, 0, 100));
+      expect(
+        resolveBoxColor(node, noneMetric, new Map(), noLegend, [], schema, false, {
+          min: 0,
+          max: 100
+        })
+      ).toBeNull();
+    });
+
+    it('uses the neutral color for a leaf without a value', () => {
+      const empty = { ...node, cost: null } as unknown as TreeNode;
+      expect(
+        resolveBoxColor(empty, noneMetric, new Map(), noLegend, [], schema, true, {
+          min: 0,
+          max: 100
+        })
+      ).toBe(NEUTRAL_MISSING_COLOR);
+    });
+
+    it('shows no value label or metric rows for a parent', () => {
+      expect(metricValueLabel(node, false, noneMetric, schema, undefined, [])).toBeNull();
+      expect(
+        buildMetricRows(node, false, noneMetric, 'Cost', 'Cost', new Map(), [], schema)
+      ).toEqual([]);
+    });
+  });
+
+  it('reads a leaf direct value for the any-schema source "*"', () => {
+    const anyLifecycle = {
+      sourceSchemaId: '*',
+      source: { kind: 'lifecycle' },
+      aggregation: 'none'
+    } as MetricConfig;
+    const leaf = { ...node, _lifecycle: { id: 'production' } } as unknown as TreeNode;
+    expect(getDirectMetricValue(leaf, anyLifecycle, undefined, true)).toEqual({
+      kind: 'lifecycle',
+      value: 'production'
+    });
+  });
 });
