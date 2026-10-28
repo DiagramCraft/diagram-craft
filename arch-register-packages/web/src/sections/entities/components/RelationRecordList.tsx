@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { TbChevronRight, TbPencil, TbTrash } from 'react-icons/tb';
+import { TbChevronRight, TbHistory, TbPencil, TbTrash } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import type {
   RelationField,
   RelationSchema
 } from '@arch-register/api-types/relationSchemaContract';
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
+import { DropdownMenu } from '../../../components/DropdownMenu';
+import { Table } from '../../../components/table/Table';
 import { EntityNavigationLink } from '../../../components/EntityNavigationLink';
 import { RelationAuditLogDialog } from '../../../dialogs/RelationAuditLogDialog';
 import { useEntitiesByIds } from '../../../hooks/useEntities';
@@ -77,6 +79,8 @@ export const RelationRecordCard = ({
 }) => {
   const otherEndpoint = direction === 'outgoing' ? record._out : record._in;
   const activeFields = (relationSchema?.fields ?? []).filter(f => !f.archived);
+  // A relation without fields of its own has nothing to expand; history moves to a menu instead.
+  const expandable = activeFields.length > 0;
   const entityRelationIds = activeFields
     .filter(f => f.type === 'entityRelation')
     .flatMap(f => relationIds(record[f.id]));
@@ -108,28 +112,33 @@ export const RelationRecordCard = ({
         {/* Not `styles.relation` (own border/background — would look like a nested card) and
             not a <button> (the entity name inside is a real navigation link, which can't
             legally nest inside one). Clicking anywhere but the link toggles expand. */}
-        {/* biome-ignore lint/a11y/useSemanticElements: nested entity link can't sit inside a <button> */}
         <div
-          role="button"
-          tabIndex={0}
-          style={{ flex: 1, cursor: 'pointer' }}
-          onClick={onToggleExpand}
-          onKeyDown={event => {
-            if (event.key === 'Enter' || event.key === ' ') {
-              event.preventDefault();
-              onToggleExpand();
-            }
-          }}
+          role={expandable ? 'button' : undefined}
+          tabIndex={expandable ? 0 : undefined}
+          style={{ flex: 1, cursor: expandable ? 'pointer' : undefined }}
+          onClick={expandable ? onToggleExpand : undefined}
+          onKeyDown={
+            expandable
+              ? event => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    onToggleExpand();
+                  }
+                }
+              : undefined
+          }
         >
           <span className={styles.relationLead}>
-            <TbChevronRight
-              size={10}
-              className={sharedStyles.dim}
-              style={{
-                transform: expanded ? 'rotate(90deg)' : undefined,
-                transition: 'transform 0.1s ease'
-              }}
-            />
+            {expandable && (
+              <TbChevronRight
+                size={10}
+                className={sharedStyles.dim}
+                style={{
+                  transform: expanded ? 'rotate(90deg)' : undefined,
+                  transition: 'transform 0.1s ease'
+                }}
+              />
+            )}
             <EntityNavigationLink
               publicId={otherEndpoint.id}
               className={styles.relationName}
@@ -142,8 +151,16 @@ export const RelationRecordCard = ({
             )}
           </span>
         </div>
-        {(onEdit || onDelete) && (
+        {(onEdit || onDelete || !expandable) && (
           <div style={{ display: 'flex', gap: 4 }}>
+            {!expandable && (
+              <DropdownMenu
+                trigger={<Table.DotsButton aria-label="Relation actions" />}
+                items={[
+                  { label: 'View history', icon: <TbHistory size={13} />, onClick: onViewHistory }
+                ]}
+              />
+            )}
             {onEdit && (
               <Button
                 variant="icon-only"
@@ -173,7 +190,7 @@ export const RelationRecordCard = ({
           </div>
         )}
       </div>
-      {expanded && (
+      {expanded && expandable && (
         <div style={{ padding: '8px 10px 4px 16px' }}>
           {activeFields.map(f => (
             <div key={f.id} className={overviewStyles.propRow} style={{ alignItems: 'center' }}>
@@ -235,6 +252,7 @@ export const RelationRecordList = ({
         onClose={() => setHistoryRecord(null)}
         workspaceId={workspaceId}
         relation={historyRecord}
+        relationSchema={relationSchema}
       />
     </div>
   );

@@ -298,6 +298,7 @@ const TypedRelationRow = ({
         onClose={() => setShowHistory(false)}
         workspaceId={workspaceId}
         relation={record}
+        relationSchema={relationSchema}
       />
     </>
   );

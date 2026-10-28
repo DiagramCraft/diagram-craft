@@ -439,8 +439,7 @@ export const PropertyRow = ({
     <div className={`${styles.propRow} ${hasError ? styles.propRowError : ''}`}>
       <div className={styles.propLabel}>
         {label ?? field.name}
-        <FieldDescriptionIcon description={field.description} />
-        <span className={styles.propType}>{typeLabel}</span>
+        <FieldDescriptionIcon description={field.description} suffix={typeLabel} />
         {field.requirementLevel === 'optional' && (
           <span className={styles.propOptional}>(optional)</span>
         )}

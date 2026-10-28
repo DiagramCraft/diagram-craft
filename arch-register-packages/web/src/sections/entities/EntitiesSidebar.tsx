@@ -11,6 +11,7 @@ import {
   TbPencil,
   TbTrash,
   TbPinned,
+  TbPinnedOff,
   TbBookmark,
   TbLayoutSidebarLeftCollapse,
   TbLayoutSidebarLeftExpand,
@@ -19,7 +20,7 @@ import {
 import { groupSchemasByCategory, resolveSchemaColor } from '../../lib/schemaPresentation';
 import type { SavedView } from '@arch-register/api-types/viewContract';
 import { useSavedViews, useDeleteSavedView, useUpdateSavedView } from '../../hooks/useSavedViews';
-import { usePinnedEntities } from '../../hooks/useNotifications';
+import { useDeletePinnedEntity, usePinnedEntities } from '../../hooks/useNotifications';
 import { useEntityFacets } from '../../hooks/useEntities';
 import {
   useCollections,
@@ -145,6 +146,12 @@ export const EntitiesSidebar = ({
     undefined,
     { enabled: sidebarTab === 'bookmarks' }
   );
+  const unpinEntityMutation = useDeletePinnedEntity(workspaceSlug);
+  const [pinnedMenu, setPinnedMenu] = useState<{
+    x: number;
+    y: number;
+    entityId: string;
+  } | null>(null);
   const deleteViewMutation = useDeleteSavedView(workspaceSlug);
   const updateViewMutation = useUpdateSavedView(workspaceSlug);
   const updateCollectionMutation = useUpdateCollection(workspaceSlug);
@@ -478,6 +485,15 @@ export const EntitiesSidebar = ({
                       entityDetailRoute(workspaceSlug, asEntityPublicId(entity.entity_public_id))
                     )
                   }
+                  onContextMenu={event => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    setPinnedMenu({
+                      x: event.clientX,
+                      y: event.clientY,
+                      entityId: entity.entity_id
+                    });
+                  }}
                   trailing={<TbPinned size={12} className="dim" />}
                   tagColor={color}
                 />
@@ -530,6 +546,21 @@ export const EntitiesSidebar = ({
         }}
         onCancel={() => setDeleteViewTarget(null)}
       />
+
+      {pinnedMenu && (
+        <ContextMenu.Imperative
+          x={pinnedMenu.x}
+          y={pinnedMenu.y}
+          onClose={() => setPinnedMenu(null)}
+        >
+          <Menu.Item
+            leftSlot={<TbPinnedOff size={13} />}
+            onClick={() => unpinEntityMutation.mutate(pinnedMenu.entityId)}
+          >
+            Unpin
+          </Menu.Item>
+        </ContextMenu.Imperative>
+      )}
 
       {viewMenu && (
         <ContextMenu.Imperative x={viewMenu.x} y={viewMenu.y} onClose={() => setViewMenu(null)}>
