@@ -31,6 +31,8 @@ import {
   type ChangeCaseMemberEntry
 } from './snapshotDisplay';
 import { getOwnTimelineVersions, getOwnVersionDisplayStatus } from './timelineViewState';
+import { EntityTabPage } from './EntityTabPage';
+import { TbTimeline } from 'react-icons/tb';
 
 type EntityProject = { project: Project; entity_type: ProjectEntity['entity_type'] };
 
@@ -156,11 +158,14 @@ export const EntityTimelineTab = ({
 
   if (!hasData) {
     return (
-      <EmptyState
-        dense
-        title="No snapshot history yet"
-        subtitle="Snapshots are created automatically when the entity is saved."
-      />
+      <EntityTabPage>
+        <EmptyState
+          framed
+          icon={<TbTimeline size={20} />}
+          title="No snapshot history yet"
+          subtitle="Snapshots are created automatically when the entity is saved."
+        />
+      </EntityTabPage>
     );
   }
 

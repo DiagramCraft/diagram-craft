@@ -1,4 +1,4 @@
-import { TbShieldCheck } from 'react-icons/tb';
+import { TbLock, TbShieldCheck } from 'react-icons/tb';
 import { useConformanceViolations } from '../../../hooks/useConformance';
 import { SeverityBadge, ViolationStatusChip } from '../../../components/ConformanceBadges';
 import { EmptyState } from '../../../components/EmptyState';
@@ -22,11 +22,14 @@ export const EntityConformanceTab = ({ workspaceId, entityId, canViewConformance
 
   if (!canViewConformance) {
     return (
-      <EmptyState
-        dense
-        title="No access to conformance"
-        subtitle="You do not have permission to view conformance results for this entity."
-      />
+      <EntityTabPage>
+        <EmptyState
+          framed
+          icon={<TbLock size={20} />}
+          title="No access to conformance"
+          subtitle="You do not have permission to view conformance results for this entity."
+        />
+      </EntityTabPage>
     );
   }
 
@@ -38,13 +41,15 @@ export const EntityConformanceTab = ({ workspaceId, entityId, canViewConformance
 
   if (violations.length === 0) {
     return (
-      <EmptyState
-        dense
-        icon={<TbShieldCheck size={20} />}
-        tone="good"
-        title="Conformant"
-        subtitle="No active, acknowledged, or exempt violations were found for this entity."
-      />
+      <EntityTabPage>
+        <EmptyState
+          framed
+          icon={<TbShieldCheck size={20} />}
+          tone="good"
+          title="Conformant"
+          subtitle="No active, acknowledged, or exempt violations were found for this entity."
+        />
+      </EntityTabPage>
     );
   }
 

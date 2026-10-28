@@ -14,8 +14,6 @@ export const EmptyState = (props: {
   action?: React.ReactNode;
   compact?: boolean;
   framed?: boolean;
-  /** Less vertical padding, for empty states inside a page or tab rather than filling a page. */
-  dense?: boolean;
   /** Colours the icon to signal the state: `good` (e.g. nothing wrong), `warning` or `error`. */
   tone?: 'neutral' | 'good' | 'warning' | 'error';
 }) => {
@@ -24,9 +22,7 @@ export const EmptyState = (props: {
   }
 
   return (
-    <div
-      className={`${props.framed ? styles.framed : styles.empty} ${props.dense ? styles.dense : ''}`}
-    >
+    <div className={props.framed ? styles.framed : styles.empty}>
       {props.icon && (
         <div
           className={`${props.framed ? styles.framedIcon : styles.emptyIcon} ${TONE_CLASS[props.tone ?? 'neutral']}`}

@@ -15,6 +15,7 @@ import { Table } from '../../../components/table/Table';
 import { DropdownMenu } from '../../../components/DropdownMenu';
 import { EmptyState } from '../../../components/EmptyState';
 import { LoadingState } from '../../../components/LoadingState';
+import { TbHistory } from 'react-icons/tb';
 
 type Props = {
   workspaceId: string;
@@ -69,11 +70,14 @@ export const EntityChangeHistoryTab = ({
 
   if (savedVersions.length === 0) {
     return (
-      <EmptyState
-        dense
-        title="No change history yet"
-        subtitle="Changes will appear here as properties are edited."
-      />
+      <EntityTabPage>
+        <EmptyState
+          framed
+          icon={<TbHistory size={20} />}
+          title="No change history yet"
+          subtitle="Changes will appear here as properties are edited."
+        />
+      </EntityTabPage>
     );
   }
 

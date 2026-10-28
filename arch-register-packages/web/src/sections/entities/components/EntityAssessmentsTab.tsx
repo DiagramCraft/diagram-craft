@@ -19,6 +19,8 @@ import { asProjectPublicId, projectDetailRoute } from '../../../routes/publicObj
 import { MemberAvatar } from '../../../components/MemberAvatar';
 import { EmptyState } from '../../../components/EmptyState';
 import styles from './EntityAssessmentsTab.module.css';
+import { EntityTabPage } from './EntityTabPage';
+import { TbClipboardList } from 'react-icons/tb';
 
 const STATUS_LABEL = {
   not_started: 'Not started',
@@ -101,11 +103,14 @@ export const EntityAssessmentsTab = ({
 
   if (relevant.length === 0) {
     return (
-      <EmptyState
-        dense
-        title="No open assessments"
-        subtitle={`${schema?.name ?? 'This entity type'} isn't in scope for any open or closed assessment.`}
-      />
+      <EntityTabPage>
+        <EmptyState
+          framed
+          icon={<TbClipboardList size={20} />}
+          title="No open assessments"
+          subtitle={`${schema?.name ?? 'This entity type'} isn't in scope for any open or closed assessment.`}
+        />
+      </EntityTabPage>
     );
   }
 

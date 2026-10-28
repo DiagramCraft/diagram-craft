@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { TbFileText } from 'react-icons/tb';
+import { TbFiles, TbFileText } from 'react-icons/tb';
 import { useRelatedDocumentContent } from '../../../hooks/useDocuments';
 import { EmptyState } from '../../../components/EmptyState';
 import { LoadingState } from '../../../components/LoadingState';
@@ -47,11 +47,14 @@ export const EntityRelatedContentTab = ({
   if (isLoading) return <LoadingState text="Loading related content…" />;
   if (rows.length === 0)
     return (
-      <EmptyState
-        dense
-        title="No related typed documents"
-        subtitle="Documents that link to this entity will appear here."
-      />
+      <EntityTabPage>
+        <EmptyState
+          framed
+          icon={<TbFiles size={20} />}
+          title="No related typed documents"
+          subtitle="Documents that link to this entity will appear here."
+        />
+      </EntityTabPage>
     );
 
   const open = (item: (typeof data)[number]) =>

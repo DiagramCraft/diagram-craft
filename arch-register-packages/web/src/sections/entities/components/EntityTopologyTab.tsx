@@ -409,7 +409,6 @@ export const EntityTopologyTab = ({
 
       {isEmpty && (
         <EmptyState
-          dense
           title="No relationships defined"
           subtitle="Add reference or containment fields to see the topology."
         />

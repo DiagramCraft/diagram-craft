@@ -12,6 +12,7 @@ import {
   toMilestonesById,
   flattenChangeCaseMembers
 } from './snapshotDisplay';
+import { TbCalendarEvent } from 'react-icons/tb';
 
 type EntityProject = { project: Project; entity_type: ProjectEntity['entity_type'] };
 
@@ -42,7 +43,14 @@ export const EntityPlannedChangesTab = ({
 
   if (futureEntries.length === 0) {
     return (
-      <EmptyState dense title="No planned changes" subtitle="Planned changes will appear here." />
+      <EntityTabPage>
+        <EmptyState
+          framed
+          icon={<TbCalendarEvent size={20} />}
+          title="No planned changes"
+          subtitle="Planned changes will appear here."
+        />
+      </EntityTabPage>
     );
   }
 
