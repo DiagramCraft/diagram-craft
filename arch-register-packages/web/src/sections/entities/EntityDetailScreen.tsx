@@ -507,6 +507,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
             entitySchemaId: schema?.id ?? '',
             entityName: entity._name
           }}
+          relatedContentProps={{ workspaceId, entityId }}
           changeHistoryProps={{
             workspaceId,
             entityId,
@@ -530,7 +531,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
         />
       )}
 
-      {/* Context: Topology / Graph / Blast radius / Related content */}
+      {/* Context: Topology / Graph / Blast radius */}
       {!contentFolder && CONTEXT_TAB_IDS.includes(tab) && (
         <EntityContextSection
           tab={tab}
@@ -562,7 +563,6 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
             schemas,
             lifecycleStates
           }}
-          relatedContentProps={{ workspaceId, entityId }}
         />
       )}
 
