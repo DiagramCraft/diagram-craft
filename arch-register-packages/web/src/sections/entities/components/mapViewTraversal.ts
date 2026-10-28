@@ -104,7 +104,7 @@ export const collectIncludedPathNodeIds = (
 
 /** Builds the map's render tree directly from correlated relation paths, replacing the
  *  client-side containment-only reassembly (`buildMapChildren`/`getContainmentChildren`) for maps
- *  whose whole level path is expressible as `PathStep`s (see `MapView.tsx`'s
+ *  whose whole level path is expressible as `PathStep`s (see `NestedMapView.tsx`'s
  *  `useIncludePathTraversal`). Path nodes sharing a prefix (e.g. the same System reached via two
  *  different Component paths under one Domain) are merged into a single tree node rather than
  *  duplicated, by matching on id at each depth. `hydrate` resolves a path node's id to its full

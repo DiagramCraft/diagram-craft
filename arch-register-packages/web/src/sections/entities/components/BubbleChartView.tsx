@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
-import styles from './BubbleView.module.css';
+import styles from './BubbleChartView.module.css';
 import { TbAlertTriangle, TbGrid3X3 } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Popover, type PopoverActions } from '@diagram-craft/app-components/Popover';
@@ -30,14 +30,14 @@ import {
   buildBubbles,
   DEFAULT_BUBBLE_QUADRANTS,
   type BubbleConfig
-} from './bubbleViewState';
+} from './bubbleChartState';
 import { useHydratedEntityRows } from '../../../hooks/useHydratedEntityRows';
 import { useDelayedDisclosure } from '../../../hooks/useDelayedDisclosure';
 import { usePersistedViewConfig } from '../../../hooks/usePersistedViewConfig';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-export type { BubbleConfig } from './bubbleViewState';
+export type { BubbleConfig } from './bubbleChartState';
 
 // bubbleViewConfigSchema has no sensible non-empty defaults (all fields are workspace-specific
 // selections), so normalizeViewConfig is given an empty sentinel here and the result is treated
@@ -60,9 +60,9 @@ const MIN_PLOT_H = 160;
 
 // ── Config helpers ────────────────────────────────────────────────────────────
 
-// ── BubbleView ────────────────────────────────────────────────────────────────
+// ── BubbleChartView ────────────────────────────────────────────────────────────────
 
-export const BubbleView = ({
+export const BubbleChartView = ({
   rows,
   linkedEntityIds,
   onEntityClick,
@@ -104,7 +104,7 @@ export const BubbleView = ({
 
   // Rows arrive in 'summary' view; custom select/number fields need the full-view records.
   // Fields are unioned across every schema present in the current rows (not schema-scoped),
-  // so fetch the full-view records per row schema, the same way MatrixView's attribute mode does.
+  // so fetch the full-view records per row schema, the same way RelationMatrixView's attribute mode does.
   const rowSchemaIds = useMemo(() => [...new Set(rows.map(r => r._schema.id))], [rows]);
   const schemasInScope = useMemo(
     () => schemas.filter(s => rowSchemaIds.includes(s.id)),

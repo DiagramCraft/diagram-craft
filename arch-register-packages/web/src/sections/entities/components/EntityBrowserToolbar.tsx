@@ -27,16 +27,16 @@ const ALL_VIEW_OPTIONS = [
   { value: 'cards', label: 'Cards' },
   { value: 'tree', label: 'Tree' },
   { value: 'radar', label: 'Radar' },
-  { value: 'bubble', label: 'Bubble' },
+  { value: 'bubble-chart', label: 'Bubble chart' },
   { value: 'heatmap', label: 'Heat map' },
   { value: 'timeline', label: 'Timeline' },
-  { value: 'matrix', label: 'Matrix' },
-  { value: 'explore', label: 'Explore' },
-  { value: 'map', label: 'Map' },
-  { value: 'diff', label: 'Diff' },
+  { value: 'relation-matrix', label: 'Relation matrix' },
+  { value: 'relation-columns', label: 'Relation columns' },
+  { value: 'nested-map', label: 'Nested map' },
+  { value: 'compare-dates', label: 'Compare dates' },
   { value: 'graph', label: 'Graph' },
   { value: 'traceability', label: 'Traceability' },
-  { value: 'path-walker', label: 'Path walker' }
+  { value: 'trail', label: 'Trail' }
 ];
 
 type EntityBrowserToolbarProps = {

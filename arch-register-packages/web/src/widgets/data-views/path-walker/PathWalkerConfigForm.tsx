@@ -4,7 +4,7 @@ import { type PathStep } from '@arch-register/api-types/entityQueryIR';
 import { Select } from '@diagram-craft/app-components/Select';
 import { FormGroup } from '../../../components/FormGroup';
 import { pathStepKey } from '../../../sections/entities/components/pathBuilder/pathBuilderState';
-import { hopDirectionGlyph } from '../../../sections/entities/components/pathWalkerViewState';
+import { hopDirectionGlyph } from '../../../sections/entities/components/trailViewState';
 import {
   findRootSchema,
   hopChainOptions,

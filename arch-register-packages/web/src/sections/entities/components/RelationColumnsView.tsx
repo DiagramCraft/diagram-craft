@@ -11,7 +11,7 @@ import {
   exploreViewConfigSchema,
   type ExploreViewConfig
 } from '@arch-register/api-types/viewContract';
-import styles from './ExploreView.module.css';
+import styles from './RelationColumnsView.module.css';
 import { EmptyState } from '../../../components/EmptyState';
 import {
   buildExploreGraph,
@@ -19,8 +19,8 @@ import {
   normalizeExploreConfig,
   type ExploreEntity,
   type ExploreRelationOption
-} from './ExploreView.helpers';
-import { connectorDistance, type ExploreConnectorLine } from './exploreGeometry';
+} from './RelationColumnsView.helpers';
+import { connectorDistance, type ExploreConnectorLine } from './relationColumnsGeometry';
 import { Button } from '@diagram-craft/app-components/Button';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
@@ -31,7 +31,7 @@ import {
   type EntityDisplayField
 } from './entityDisplayFields';
 
-type ExploreViewProps = EntityBrowserRowViewProps & {
+type RelationColumnsViewProps = EntityBrowserRowViewProps & {
   config: unknown;
   onConfigChange: (cfg: ExploreViewConfig) => void;
   hideToolbar?: boolean;
@@ -48,7 +48,7 @@ type ConnectorTooltip = {
   y: number;
 } | null;
 
-export const ExploreView = ({
+export const RelationColumnsView = ({
   rows,
   onEntityClick,
   config,
@@ -57,7 +57,7 @@ export const ExploreView = ({
   onFocusEntity,
   hideToolbar,
   displayFields
-}: ExploreViewProps) => {
+}: RelationColumnsViewProps) => {
   const parsedConfig = useMemo(() => {
     const result = exploreViewConfigSchema.safeParse(config);
     return result.success ? result.data : null;
@@ -86,7 +86,7 @@ export const ExploreView = ({
     () => normalizeExploreConfig(parsedConfig ?? localConfig),
     [parsedConfig, localConfig]
   );
-  const selectedDisplayFields = getDisplayFieldIds('explore', normalizedConfig);
+  const selectedDisplayFields = getDisplayFieldIds('relation-columns', normalizedConfig);
   const linkedEntityIdSet = useMemo(() => new Set(linkedEntityIds ?? []), [linkedEntityIds]);
   const [connectorTooltip, setConnectorTooltip] = useState<ConnectorTooltip>(null);
   // Entity id -> index of the column it was excluded from. The exclusion applies everywhere; the

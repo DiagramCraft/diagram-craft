@@ -9,7 +9,7 @@ import {
   buildRelationFieldOptions,
   normalizeExploreConfig,
   parseExploreConfigValue
-} from './ExploreView.helpers';
+} from './RelationColumnsView.helpers';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 
 const entity = (

@@ -9,9 +9,9 @@ import { formatDate } from '../../../utils/dateFormat';
 import { useEntityLandscapeDiff } from '../../../hooks/useEntities';
 import { useRelationSchemas } from '../../../hooks/useRelationSchemas';
 import { LandscapeDiffTable } from './LandscapeDiffTable';
-import styles from './EntityDiffView.module.css';
+import styles from './CompareDatesView.module.css';
 
-export const EntityDiffView = ({
+export const CompareDatesView = ({
   workspaceId,
   projectId,
   projectScope,

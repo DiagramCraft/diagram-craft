@@ -217,9 +217,9 @@ const controlTraceMatrix = (
     q: '',
     conditions: [],
     sort: 'name',
-    view: 'matrix',
+    view: 'relation-matrix',
     viewConfigs: {
-      matrix: {
+      'relation-matrix': {
         colMode: 'entity',
         colSchemaId: colSchemaName,
         colEnumFieldId: null,
@@ -1321,9 +1321,9 @@ export const APP_DASHBOARD_SEEDS: Record<string, AppDashboardSeed> = {
           q: '',
           conditions: [],
           sort: 'name',
-          view: 'map',
+          view: 'nested-map',
           viewConfigs: {
-            map: {
+            'nested-map': {
               // Domains (no parent) → L2 → L3, following the `parent` containment field down.
               // Schema NAMES are resolved to ids at render time.
               levelConfigs: [

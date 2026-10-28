@@ -171,7 +171,7 @@ describe('validateEntitySearch', () => {
         sort: 'owner',
         projectScope: 'all',
         viewConfigs:
-          '{"radar":{"schemaId":"application"},"timeline":{"groupBy":"owner"},"map":{"levels":2},"explore":{"leftDepth":2,"rightDepth":1,"relationFieldNames":["Depends On"]}}',
+          '{"radar":{"schemaId":"application"},"timeline":{"groupBy":"owner"},"nested-map":{"levels":2},"relation-columns":{"leftDepth":2,"rightDepth":1,"relationFieldNames":["Depends On"]}}',
         sidebarTab: 'views'
       })
     ).toEqual({
@@ -184,7 +184,7 @@ describe('validateEntitySearch', () => {
       sort: 'owner',
       projectScope: 'all',
       viewConfigs:
-        '{"radar":{"schemaId":"application"},"timeline":{"groupBy":"owner"},"map":{"levels":2},"explore":{"leftDepth":2,"rightDepth":1,"relationFieldNames":["Depends On"]}}',
+        '{"radar":{"schemaId":"application"},"timeline":{"groupBy":"owner"},"nested-map":{"levels":2},"relation-columns":{"leftDepth":2,"rightDepth":1,"relationFieldNames":["Depends On"]}}',
       sidebarTab: 'views',
       filters: undefined
     });

@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
-import styles from './MatrixView.module.css';
+import styles from './RelationMatrixView.module.css';
 import { TbColumnRemove, TbHelp, TbRowRemove } from 'react-icons/tb';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { Button } from '@diagram-craft/app-components/Button';
@@ -25,7 +25,7 @@ import {
 } from './entityFieldSources';
 import { normalizeViewConfig } from './entityViewConfig';
 import { EmptyState } from '../../../components/EmptyState';
-import { autoPickColSchemaId, buildMatrixData, type MatrixAttrField } from './matrixViewState';
+import { autoPickColSchemaId, buildMatrixData, type MatrixAttrField } from './relationMatrixState';
 import { useHydratedEntityRows } from '../../../hooks/useHydratedEntityRows';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -56,7 +56,7 @@ const DEFAULT_MATRIX_CONFIG: MatrixConfig = {
   cellColorFieldId: null
 };
 
-type MatrixViewProps = EntityBrowserRowViewProps & {
+type RelationMatrixViewProps = EntityBrowserRowViewProps & {
   schemaMap: Map<string, { schema: EntitySchema; index: number }>;
   config: unknown;
   onConfigChange: (cfg: MatrixConfig) => void;
@@ -93,7 +93,7 @@ type RelationFieldOption = {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export const MatrixView = ({
+export const RelationMatrixView = ({
   rows,
   schemaMap,
   onEntityClick,
@@ -102,7 +102,7 @@ export const MatrixView = ({
   linkedEntityIds,
   hideToolbar,
   joinedAssessment
-}: MatrixViewProps) => {
+}: RelationMatrixViewProps) => {
   const { workspaceSlug: workspaceId, schemas, lifecycleStates, teams } = useWorkspaceContext();
   const parsedConfig = useMemo(
     () => normalizeViewConfig(matrixViewConfigSchema, config, DEFAULT_MATRIX_CONFIG),

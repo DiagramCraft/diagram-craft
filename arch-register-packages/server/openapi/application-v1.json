@@ -99214,15 +99214,15 @@
                           "tree",
                           "radar",
                           "timeline",
-                          "matrix",
-                          "explore",
-                          "bubble",
+                          "relation-matrix",
+                          "relation-columns",
+                          "bubble-chart",
                           "heatmap",
-                          "map",
-                          "diff",
+                          "nested-map",
+                          "compare-dates",
                           "graph",
                           "traceability",
-                          "path-walker"
+                          "trail"
                         ],
                         "type": "string",
                         "description": "View display mode"
@@ -102424,7 +102424,7 @@
                                 ],
                                 "description": "Configuration for timeline view"
                               },
-                              "matrix": {
+                              "relation-matrix": {
                                 "type": "object",
                                 "properties": {
                                   "colMode": {
@@ -102528,9 +102528,9 @@
                                   "hideEmptyRows",
                                   "hideEmptyCols"
                                 ],
-                                "description": "Configuration for matrix view"
+                                "description": "Configuration for relation matrix view"
                               },
-                              "explore": {
+                              "relation-columns": {
                                 "type": "object",
                                 "properties": {
                                   "fieldIds": {
@@ -102593,9 +102593,9 @@
                                     "description": "Schema identifier selected for each non-center explore column"
                                   }
                                 },
-                                "description": "Configuration for explore view"
+                                "description": "Configuration for relation columns view"
                               },
-                              "bubble": {
+                              "bubble-chart": {
                                 "type": "object",
                                 "properties": {
                                   "xFieldId": {
@@ -102677,7 +102677,7 @@
                                   "sizeFieldId",
                                   "colorFieldId"
                                 ],
-                                "description": "Configuration for bubble view"
+                                "description": "Configuration for bubble chart view"
                               },
                               "heatmap": {
                                 "type": "object",
@@ -102716,7 +102716,7 @@
                                 ],
                                 "description": "Configuration for heat-map view"
                               },
-                              "map": {
+                              "nested-map": {
                                 "type": "object",
                                 "properties": {
                                   "fieldIds": {
@@ -104395,7 +104395,7 @@
                                     "description": "Metric roll-up configuration applied to box coloring"
                                   }
                                 },
-                                "description": "Configuration for map view"
+                                "description": "Configuration for nested map view"
                               },
                               "graph": {
                                 "type": "object",
@@ -105140,7 +105140,7 @@
                                 ],
                                 "description": "Configuration for generic architecture traceability views"
                               },
-                              "path-walker": {
+                              "trail": {
                                 "type": "object",
                                 "properties": {
                                   "hops": {
@@ -106682,7 +106682,7 @@
                                     "description": "The remembered relationship chain: the hop chosen for each column boundary as the user walked it. Empty/absent for a fresh walk."
                                   }
                                 },
-                                "description": "Configuration for the single-path hop walker view"
+                                "description": "Configuration for the single-path trail view"
                               }
                             }
                           },
@@ -106808,15 +106808,15 @@
                       "tree",
                       "radar",
                       "timeline",
-                      "matrix",
-                      "explore",
-                      "bubble",
+                      "relation-matrix",
+                      "relation-columns",
+                      "bubble-chart",
                       "heatmap",
-                      "map",
-                      "diff",
+                      "nested-map",
+                      "compare-dates",
                       "graph",
                       "traceability",
-                      "path-walker"
+                      "trail"
                     ],
                     "type": "string",
                     "description": "View display mode"
@@ -109591,7 +109591,7 @@
                             ],
                             "description": "Configuration for timeline view"
                           },
-                          "matrix": {
+                          "relation-matrix": {
                             "type": "object",
                             "properties": {
                               "colMode": {
@@ -109695,9 +109695,9 @@
                               "hideEmptyRows",
                               "hideEmptyCols"
                             ],
-                            "description": "Configuration for matrix view"
+                            "description": "Configuration for relation matrix view"
                           },
-                          "explore": {
+                          "relation-columns": {
                             "type": "object",
                             "properties": {
                               "fieldIds": {
@@ -109760,9 +109760,9 @@
                                 "description": "Schema identifier selected for each non-center explore column"
                               }
                             },
-                            "description": "Configuration for explore view"
+                            "description": "Configuration for relation columns view"
                           },
-                          "bubble": {
+                          "bubble-chart": {
                             "type": "object",
                             "properties": {
                               "xFieldId": {
@@ -109844,7 +109844,7 @@
                               "sizeFieldId",
                               "colorFieldId"
                             ],
-                            "description": "Configuration for bubble view"
+                            "description": "Configuration for bubble chart view"
                           },
                           "heatmap": {
                             "type": "object",
@@ -109883,7 +109883,7 @@
                             ],
                             "description": "Configuration for heat-map view"
                           },
-                          "map": {
+                          "nested-map": {
                             "type": "object",
                             "properties": {
                               "fieldIds": {
@@ -111268,7 +111268,7 @@
                                 "description": "Metric roll-up configuration applied to box coloring"
                               }
                             },
-                            "description": "Configuration for map view"
+                            "description": "Configuration for nested map view"
                           },
                           "graph": {
                             "type": "object",
@@ -112013,7 +112013,7 @@
                             ],
                             "description": "Configuration for generic architecture traceability views"
                           },
-                          "path-walker": {
+                          "trail": {
                             "type": "object",
                             "properties": {
                               "hops": {
@@ -113261,7 +113261,7 @@
                                 "description": "The remembered relationship chain: the hop chosen for each column boundary as the user walked it. Empty/absent for a fresh walk."
                               }
                             },
-                            "description": "Configuration for the single-path hop walker view"
+                            "description": "Configuration for the single-path trail view"
                           }
                         }
                       },
@@ -113357,15 +113357,15 @@
                         "tree",
                         "radar",
                         "timeline",
-                        "matrix",
-                        "explore",
-                        "bubble",
+                        "relation-matrix",
+                        "relation-columns",
+                        "bubble-chart",
                         "heatmap",
-                        "map",
-                        "diff",
+                        "nested-map",
+                        "compare-dates",
                         "graph",
                         "traceability",
-                        "path-walker"
+                        "trail"
                       ],
                       "type": "string",
                       "description": "View display mode"
@@ -116567,7 +116567,7 @@
                               ],
                               "description": "Configuration for timeline view"
                             },
-                            "matrix": {
+                            "relation-matrix": {
                               "type": "object",
                               "properties": {
                                 "colMode": {
@@ -116671,9 +116671,9 @@
                                 "hideEmptyRows",
                                 "hideEmptyCols"
                               ],
-                              "description": "Configuration for matrix view"
+                              "description": "Configuration for relation matrix view"
                             },
-                            "explore": {
+                            "relation-columns": {
                               "type": "object",
                               "properties": {
                                 "fieldIds": {
@@ -116736,9 +116736,9 @@
                                   "description": "Schema identifier selected for each non-center explore column"
                                 }
                               },
-                              "description": "Configuration for explore view"
+                              "description": "Configuration for relation columns view"
                             },
-                            "bubble": {
+                            "bubble-chart": {
                               "type": "object",
                               "properties": {
                                 "xFieldId": {
@@ -116820,7 +116820,7 @@
                                 "sizeFieldId",
                                 "colorFieldId"
                               ],
-                              "description": "Configuration for bubble view"
+                              "description": "Configuration for bubble chart view"
                             },
                             "heatmap": {
                               "type": "object",
@@ -116859,7 +116859,7 @@
                               ],
                               "description": "Configuration for heat-map view"
                             },
-                            "map": {
+                            "nested-map": {
                               "type": "object",
                               "properties": {
                                 "fieldIds": {
@@ -118538,7 +118538,7 @@
                                   "description": "Metric roll-up configuration applied to box coloring"
                                 }
                               },
-                              "description": "Configuration for map view"
+                              "description": "Configuration for nested map view"
                             },
                             "graph": {
                               "type": "object",
@@ -120214,7 +120214,7 @@
                               ],
                               "description": "Configuration for generic architecture traceability views"
                             },
-                            "path-walker": {
+                            "trail": {
                               "type": "object",
                               "properties": {
                                 "hops": {
@@ -121756,7 +121756,7 @@
                                   "description": "The remembered relationship chain: the hop chosen for each column boundary as the user walked it. Empty/absent for a fresh walk."
                                 }
                               },
-                              "description": "Configuration for the single-path hop walker view"
+                              "description": "Configuration for the single-path trail view"
                             }
                           }
                         },
@@ -121873,15 +121873,15 @@
                       "tree",
                       "radar",
                       "timeline",
-                      "matrix",
-                      "explore",
-                      "bubble",
+                      "relation-matrix",
+                      "relation-columns",
+                      "bubble-chart",
                       "heatmap",
-                      "map",
-                      "diff",
+                      "nested-map",
+                      "compare-dates",
                       "graph",
                       "traceability",
-                      "path-walker"
+                      "trail"
                     ],
                     "type": "string",
                     "description": "View display mode"
@@ -124656,7 +124656,7 @@
                             ],
                             "description": "Configuration for timeline view"
                           },
-                          "matrix": {
+                          "relation-matrix": {
                             "type": "object",
                             "properties": {
                               "colMode": {
@@ -124760,9 +124760,9 @@
                               "hideEmptyRows",
                               "hideEmptyCols"
                             ],
-                            "description": "Configuration for matrix view"
+                            "description": "Configuration for relation matrix view"
                           },
-                          "explore": {
+                          "relation-columns": {
                             "type": "object",
                             "properties": {
                               "fieldIds": {
@@ -124825,9 +124825,9 @@
                                 "description": "Schema identifier selected for each non-center explore column"
                               }
                             },
-                            "description": "Configuration for explore view"
+                            "description": "Configuration for relation columns view"
                           },
-                          "bubble": {
+                          "bubble-chart": {
                             "type": "object",
                             "properties": {
                               "xFieldId": {
@@ -124909,7 +124909,7 @@
                               "sizeFieldId",
                               "colorFieldId"
                             ],
-                            "description": "Configuration for bubble view"
+                            "description": "Configuration for bubble chart view"
                           },
                           "heatmap": {
                             "type": "object",
@@ -124948,7 +124948,7 @@
                             ],
                             "description": "Configuration for heat-map view"
                           },
-                          "map": {
+                          "nested-map": {
                             "type": "object",
                             "properties": {
                               "fieldIds": {
@@ -126333,7 +126333,7 @@
                                 "description": "Metric roll-up configuration applied to box coloring"
                               }
                             },
-                            "description": "Configuration for map view"
+                            "description": "Configuration for nested map view"
                           },
                           "graph": {
                             "type": "object",
@@ -127078,7 +127078,7 @@
                             ],
                             "description": "Configuration for generic architecture traceability views"
                           },
-                          "path-walker": {
+                          "trail": {
                             "type": "object",
                             "properties": {
                               "hops": {
@@ -128326,7 +128326,7 @@
                                 "description": "The remembered relationship chain: the hop chosen for each column boundary as the user walked it. Empty/absent for a fresh walk."
                               }
                             },
-                            "description": "Configuration for the single-path hop walker view"
+                            "description": "Configuration for the single-path trail view"
                           }
                         }
                       },
@@ -128417,15 +128417,15 @@
                         "tree",
                         "radar",
                         "timeline",
-                        "matrix",
-                        "explore",
-                        "bubble",
+                        "relation-matrix",
+                        "relation-columns",
+                        "bubble-chart",
                         "heatmap",
-                        "map",
-                        "diff",
+                        "nested-map",
+                        "compare-dates",
                         "graph",
                         "traceability",
-                        "path-walker"
+                        "trail"
                       ],
                       "type": "string",
                       "description": "View display mode"
@@ -131627,7 +131627,7 @@
                               ],
                               "description": "Configuration for timeline view"
                             },
-                            "matrix": {
+                            "relation-matrix": {
                               "type": "object",
                               "properties": {
                                 "colMode": {
@@ -131731,9 +131731,9 @@
                                 "hideEmptyRows",
                                 "hideEmptyCols"
                               ],
-                              "description": "Configuration for matrix view"
+                              "description": "Configuration for relation matrix view"
                             },
-                            "explore": {
+                            "relation-columns": {
                               "type": "object",
                               "properties": {
                                 "fieldIds": {
@@ -131796,9 +131796,9 @@
                                   "description": "Schema identifier selected for each non-center explore column"
                                 }
                               },
-                              "description": "Configuration for explore view"
+                              "description": "Configuration for relation columns view"
                             },
-                            "bubble": {
+                            "bubble-chart": {
                               "type": "object",
                               "properties": {
                                 "xFieldId": {
@@ -131880,7 +131880,7 @@
                                 "sizeFieldId",
                                 "colorFieldId"
                               ],
-                              "description": "Configuration for bubble view"
+                              "description": "Configuration for bubble chart view"
                             },
                             "heatmap": {
                               "type": "object",
@@ -131919,7 +131919,7 @@
                               ],
                               "description": "Configuration for heat-map view"
                             },
-                            "map": {
+                            "nested-map": {
                               "type": "object",
                               "properties": {
                                 "fieldIds": {
@@ -133598,7 +133598,7 @@
                                   "description": "Metric roll-up configuration applied to box coloring"
                                 }
                               },
-                              "description": "Configuration for map view"
+                              "description": "Configuration for nested map view"
                             },
                             "graph": {
                               "type": "object",
@@ -135274,7 +135274,7 @@
                               ],
                               "description": "Configuration for generic architecture traceability views"
                             },
-                            "path-walker": {
+                            "trail": {
                               "type": "object",
                               "properties": {
                                 "hops": {
@@ -136816,7 +136816,7 @@
                                   "description": "The remembered relationship chain: the hop chosen for each column boundary as the user walked it. Empty/absent for a fresh walk."
                                 }
                               },
-                              "description": "Configuration for the single-path hop walker view"
+                              "description": "Configuration for the single-path trail view"
                             }
                           }
                         },

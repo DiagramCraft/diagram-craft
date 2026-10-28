@@ -22,15 +22,15 @@ export const browserViewSchema = z
     'tree',
     'radar',
     'timeline',
-    'matrix',
-    'explore',
-    'bubble',
+    'relation-matrix',
+    'relation-columns',
+    'bubble-chart',
     'heatmap',
-    'map',
-    'diff',
+    'nested-map',
+    'compare-dates',
     'graph',
     'traceability',
-    'path-walker'
+    'trail'
   ])
   .describe('Available view modes for displaying entities');
 
@@ -433,20 +433,26 @@ const viewConfigSchema = z
     tree: treeViewConfigSchema.optional().describe('Configuration for tree view'),
     radar: radarViewConfigSchema.optional().describe('Configuration for radar view'),
     timeline: timelineViewConfigSchema.optional().describe('Configuration for timeline view'),
-    matrix: matrixViewConfigSchema.optional().describe('Configuration for matrix view'),
-    explore: exploreViewConfigSchema.optional().describe('Configuration for explore view'),
-    bubble: bubbleViewConfigSchema.optional().describe('Configuration for bubble view'),
+    'relation-matrix': matrixViewConfigSchema
+      .optional()
+      .describe('Configuration for relation matrix view'),
+    'relation-columns': exploreViewConfigSchema
+      .optional()
+      .describe('Configuration for relation columns view'),
+    'bubble-chart': bubbleViewConfigSchema
+      .optional()
+      .describe('Configuration for bubble chart view'),
     heatmap: heatmapViewConfigSchema.optional().describe('Configuration for heat-map view'),
-    map: mapViewConfigSchema.optional().describe('Configuration for map view'),
+    'nested-map': mapViewConfigSchema.optional().describe('Configuration for nested map view'),
     graph: graphViewConfigSchema
       .optional()
       .describe('Configuration for entity and relation graph views'),
     traceability: traceabilityViewConfigSchema
       .optional()
       .describe('Configuration for generic architecture traceability views'),
-    'path-walker': pathWalkerViewConfigSchema
+    trail: pathWalkerViewConfigSchema
       .optional()
-      .describe('Configuration for the single-path hop walker view')
+      .describe('Configuration for the single-path trail view')
   })
   .nullable()
   .describe('View-specific configuration (only one view type should be configured)');

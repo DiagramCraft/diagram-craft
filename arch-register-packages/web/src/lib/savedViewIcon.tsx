@@ -25,9 +25,9 @@ export const savedViewIcon = (mode: string, size = 12): ReactElement => {
       return <TbChartRadar size={size} />;
     case 'timeline':
       return <TbCalendarWeek size={size} />;
-    case 'explore':
+    case 'relation-columns':
       return <TbColumns3 size={size} />;
-    case 'map':
+    case 'nested-map':
       return <TbMap size={size} />;
     case 'graph':
       return <TbVectorTriangle size={size} />;

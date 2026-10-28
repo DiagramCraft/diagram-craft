@@ -851,10 +851,10 @@ export type SavedViewDbResult = {
     tree?: TreeViewConfig;
     radar?: RadarViewConfig;
     timeline?: TimelineViewConfig;
-    matrix?: MatrixViewConfig;
-    explore?: ExploreViewConfig;
-    bubble?: BubbleViewConfig;
-    map?: MapViewConfig;
+    'relation-matrix'?: MatrixViewConfig;
+    'relation-columns'?: ExploreViewConfig;
+    'bubble-chart'?: BubbleViewConfig;
+    'nested-map'?: MapViewConfig;
     graph?: GraphViewConfig;
   } | null;
   created_at: Date;

@@ -143,12 +143,13 @@ export const EntityBrowserEmbedConfigForm = ({ config, onChange }: Props) => {
   // A seeded map names its level schemas; resolve them to live ids (as the rendered embed does)
   // so the Hierarchy section shows the selected types. Edits then save the resolved ids.
   const resolvedActiveViewConfig = useMemo(
-    () => (view === 'map' ? resolveMapViewConfig(activeViewConfig, schemas) : activeViewConfig),
+    () =>
+      view === 'nested-map' ? resolveMapViewConfig(activeViewConfig, schemas) : activeViewConfig,
     [view, activeViewConfig, schemas]
   );
   const mapOverlays = useMemo(
     () =>
-      view === 'map'
+      view === 'nested-map'
         ? resolveMapOverlays(
             config.overlays,
             typeFilter ? schemas.find(schema => schema.id === typeFilter) : undefined
@@ -168,7 +169,7 @@ export const EntityBrowserEmbedConfigForm = ({ config, onChange }: Props) => {
     [schemas, typeFilter, projectId, entityQuery?.projections]
   );
   const displayView = DISPLAY_FIELD_VIEWS.has(view)
-    ? (view as 'table' | 'cards' | 'tree' | 'explore' | 'map')
+    ? (view as 'table' | 'cards' | 'tree' | 'relation-columns' | 'nested-map')
     : null;
 
   const isPagedBrowse = (view === 'table' || view === 'cards') && sort === 'name';
@@ -304,9 +305,11 @@ export const EntityBrowserEmbedConfigForm = ({ config, onChange }: Props) => {
           statusFilter={statusFilter}
           activeViewConfig={resolvedActiveViewConfig}
           // The map and tree fetch their own data, so they need the resolved query and conditions.
-          conditions={view === 'map' || view === 'tree' ? conditions : undefined}
-          entityQuery={view === 'map' || view === 'tree' ? previewEntityQuery : undefined}
-          executionEntityQuery={view === 'map' || view === 'tree' ? previewEntityQuery : undefined}
+          conditions={view === 'nested-map' || view === 'tree' ? conditions : undefined}
+          entityQuery={view === 'nested-map' || view === 'tree' ? previewEntityQuery : undefined}
+          executionEntityQuery={
+            view === 'nested-map' || view === 'tree' ? previewEntityQuery : undefined
+          }
           mapOverlays={mapOverlays}
           mapDimOwnerIds={config.dimOwnerIds}
           sort={effectiveSort}

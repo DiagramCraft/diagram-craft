@@ -45,7 +45,7 @@ const restrictedViewsTest = test.extend<{ restrictedViews: true }>({
         name: 'Restricted Secret View',
         description: 'Contains a restricted literal',
         is_admin_view: false,
-        view_mode: 'map',
+        view_mode: 'nested-map',
         filters: {
           schemaId: COMPONENT_SCHEMA_ID,
           root: {
@@ -57,7 +57,7 @@ const restrictedViewsTest = test.extend<{ restrictedViews: true }>({
           }
         },
         config: {
-          map: {
+          'nested-map': {
             fieldIds: ['pii_scope'],
             levels: 1,
             level1SchemaId: COMPONENT_SCHEMA_ID,

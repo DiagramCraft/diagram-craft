@@ -12,7 +12,7 @@ import {
 import type { PathStep } from '@arch-register/api-types/entityQueryIR';
 import type { FieldGroupAccess, FieldGroupAccessControl } from '@arch-register/permissions';
 import { TbArrowsExchange, TbChevronDown, TbEyeOff, TbTrash } from 'react-icons/tb';
-import styles from './MapView.module.css';
+import styles from './NestedMapView.module.css';
 import type { PopoverActions } from '@diagram-craft/app-components/Popover';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { Button } from '@diagram-craft/app-components/Button';

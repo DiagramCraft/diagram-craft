@@ -335,7 +335,7 @@
 
         - @id:ar.strategy.capability-map The Capability map section is a configurable dashboard (seeded as the
           `strategy-capability-map` app dashboard, editable like other app dashboards) whose widget is an entity
-          browser embed in Map view (@id:ar.entity-views.map) over the Business Capability containment hierarchy
+          browser embed in Nested map view (@id:ar.entity-views.map) over the Business Capability containment hierarchy
           (L1 domains → L2 → L3). Its toolbar offers an overlay selector that colours the tiles in severity
           colours — each overlay a capability field rolled up over the subtree and banded into heat colours, listed in
           the widget's Advanced configuration (seeded with maturity, maturity gap, investment and risk) — with a
@@ -1102,7 +1102,7 @@
           only top-most entities as roots. Repeated terminal sources are deduplicated and collapsed duplicates are
           marked in the map with a count and hover detail.
 
-        - @id:ar.entity-views.explore Users can inspect entity data in a configurable side-by-side exploration view,
+        - @id:ar.entity-views.explore Users can inspect entity data in the Relation columns view, a configurable side-by-side exploration view,
           using a per-column menu: each column can filter its outgoing relations (listed as source schema, predicate,
           and target schema; for the filtered entities these are the relations that populate the next column to the
           right), and each non-center column can be filtered to a schema, with the selections constraining subsequent traversal and persisting with the view

@@ -80,8 +80,12 @@ describe('entity browser view field persistence', () => {
         aggregation: 'average'
       }
     };
-    expect(toSavedViewConfig('map', { map: mapConfig })).toEqual({ map: mapConfig });
-    expect(parseViewConfigs(serializeViewConfigs({ map: mapConfig }))).toEqual({ map: mapConfig });
+    expect(toSavedViewConfig('nested-map', { 'nested-map': mapConfig })).toEqual({
+      'nested-map': mapConfig
+    });
+    expect(parseViewConfigs(serializeViewConfigs({ 'nested-map': mapConfig }))).toEqual({
+      'nested-map': mapConfig
+    });
   });
 
   it('persists entity graph traversal settings in URL and saved-view configuration', () => {
@@ -157,10 +161,10 @@ describe('entity browser view field persistence', () => {
         }
       }
     };
-    const configs = { bubble: bubbleConfig };
+    const configs = { 'bubble-chart': bubbleConfig };
 
     expect(parseViewConfigs(serializeViewConfigs(configs))).toEqual(configs);
-    expect(toSavedViewConfig('bubble', configs)).toEqual({ bubble: bubbleConfig });
+    expect(toSavedViewConfig('bubble-chart', configs)).toEqual({ 'bubble-chart': bubbleConfig });
   });
 
   it('rejects malformed and non-object view-config payloads', () => {
@@ -176,7 +180,7 @@ describe('entity browser view field persistence', () => {
 
   it('resets Explore relation filters while preserving other view settings', () => {
     const configs = {
-      explore: {
+      'relation-columns': {
         leftDepth: 2,
         rightDepth: 3,
         relationKeys: ['service->api'],
@@ -187,7 +191,7 @@ describe('entity browser view field persistence', () => {
     };
 
     expect(resetExploreRelationFilter(configs)).toEqual({
-      explore: {
+      'relation-columns': {
         leftDepth: 2,
         rightDepth: 3,
         relationFieldNames: []
@@ -234,7 +238,7 @@ describe('pruneAssessmentReferences', () => {
         ringFieldId: 'severity',
         ringOrder: []
       },
-      matrix: {
+      'relation-matrix': {
         colMode: 'attribute',
         colSchemaId: null,
         colEnumFieldId: '_assessment:enum1',
@@ -244,7 +248,7 @@ describe('pruneAssessmentReferences', () => {
       }
     });
     expect(viewConfigs.radar).toMatchObject({ quadrantFieldId: '', ringFieldId: 'severity' });
-    expect(viewConfigs.matrix).toMatchObject({ colEnumFieldId: null });
+    expect(viewConfigs['relation-matrix']).toMatchObject({ colEnumFieldId: null });
   });
 
   it('leaves configs without assessment references untouched', () => {
@@ -255,7 +259,7 @@ describe('pruneAssessmentReferences', () => {
 
   it('clears an assessment-sourced map metricConfig entirely', () => {
     const { viewConfigs } = pruneAssessmentReferences([], {
-      map: {
+      'nested-map': {
         levels: 2,
         level1SchemaId: 's1',
         level1Columns: 3,
@@ -270,12 +274,12 @@ describe('pruneAssessmentReferences', () => {
         }
       }
     });
-    expect(viewConfigs.map).toMatchObject({ level1SchemaId: 's1', metricConfig: null });
+    expect(viewConfigs['nested-map']).toMatchObject({ level1SchemaId: 's1', metricConfig: null });
   });
 
   it('leaves a non-assessment-sourced map metricConfig untouched', () => {
     const configs = {
-      map: {
+      'nested-map': {
         levels: 2,
         level1SchemaId: 's1',
         level1Columns: 3,

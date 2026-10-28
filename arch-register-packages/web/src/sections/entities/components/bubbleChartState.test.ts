@@ -6,7 +6,7 @@ import {
   formatNumber,
   positionOnBubbleAxis,
   type BubbleConfig
-} from './bubbleViewState';
+} from './bubbleChartState';
 
 const entity = (id: string, x: number, y: number) =>
   ({

@@ -194,8 +194,8 @@ test.describe('entities section', () => {
   test('filters an explore column by schema and persists the selection', async ({ page }) => {
     const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);
 
-    await entitiesPage.goto({ viewMode: 'explore', q: frontendAppEntity.name });
-    await expect(page).toHaveURL(/viewMode=explore/);
+    await entitiesPage.goto({ viewMode: 'relation-columns', q: frontendAppEntity.name });
+    await expect(page).toHaveURL(/viewMode=relation-columns/);
 
     const outgoingColumn = entitiesPage.exploreColumn(1);
     await expect(entitiesPage.exploreColumnMenu(1)).toBeVisible();
@@ -212,10 +212,10 @@ test.describe('entities section', () => {
     const viewConfigs = (
       typeof parsedViewConfigs === 'string' ? JSON.parse(parsedViewConfigs) : parsedViewConfigs
     ) as {
-      explore?: { columnSchemaIds?: Record<string, string> };
+      'relation-columns'?: { columnSchemaIds?: Record<string, string> };
     };
     expect(viewConfigs).toMatchObject({
-      explore: { columnSchemaIds: { '1': apiSchema.id } }
+      'relation-columns': { columnSchemaIds: { '1': apiSchema.id } }
     });
 
     await page.reload();

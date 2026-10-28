@@ -31,7 +31,7 @@ export type { HeatmapConfig } from './heatmapViewState';
 // heatmapViewConfigSchema has no sensible non-empty defaults (axis fields are
 // workspace-specific), so normalizeViewConfig is given an empty sentinel and the result is
 // treated as "unconfigured" whenever likelihoodFieldId is empty — same all-or-nothing
-// `config: HeatmapConfig | null` pattern BubbleView uses for its axis config.
+// `config: HeatmapConfig | null` pattern BubbleChartView uses for its axis config.
 const EMPTY_HEATMAP_CONFIG: HeatmapConfig = {
   likelihoodFieldId: '',
   impactFieldId: '',
@@ -136,7 +136,7 @@ export const HeatmapView = ({
   );
 
   // Seed a default config once; `setConfig` may write to the URL asynchronously, so without this
-  // guard the effect re-fires every render until the config round-trips (see BubbleView).
+  // guard the effect re-fires every render until the config round-trips (see BubbleChartView).
   const seededDefaultRef = useRef(false);
   useEffect(() => {
     if (config) {

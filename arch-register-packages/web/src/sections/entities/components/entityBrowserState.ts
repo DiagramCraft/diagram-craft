@@ -435,7 +435,7 @@ export const serializeViewConfigs = (value: BrowserViewConfigMap): string | unde
 
 const persistedViewConfigStorageKeys: Partial<Record<BrowserView, string>> = {
   radar: 'ar-radar-config',
-  bubble: 'ar-bubble-config',
+  'bubble-chart': 'ar-bubble-config',
   heatmap: 'ar-heatmap-config'
 };
 
@@ -459,7 +459,7 @@ export const getPersistedViewConfig = (
 export const resetExploreRelationFilter = (
   viewConfigs: BrowserViewConfigMap
 ): BrowserViewConfigMap => {
-  const exploreConfig = viewConfigs.explore;
+  const exploreConfig = viewConfigs['relation-columns'];
   if (exploreConfig == null || typeof exploreConfig !== 'object') return viewConfigs;
 
   const config = exploreConfig as {
@@ -483,7 +483,7 @@ export const resetExploreRelationFilter = (
   } = exploreConfig as Record<string, unknown>;
   return {
     ...viewConfigs,
-    explore: { ...rest, relationFieldNames: [] }
+    'relation-columns': { ...rest, relationFieldNames: [] }
   };
 };
 
@@ -542,23 +542,23 @@ export const pruneAssessmentReferences = (
 };
 
 export const isTreeBasedView = (view: BrowserView): boolean =>
-  view === 'tree' || view === 'map' || view === 'diff';
+  view === 'tree' || view === 'nested-map' || view === 'compare-dates';
 
 export const getSavedViewConfig = (view: SavedView): unknown | null => {
   if (view.config == null) return null;
   if (view.viewMode === 'radar') return view.config.radar ?? null;
   if (view.viewMode === 'timeline') return view.config.timeline ?? null;
-  if (view.viewMode === 'matrix') return view.config.matrix ?? null;
-  if (view.viewMode === 'explore') return view.config.explore ?? null;
-  if (view.viewMode === 'bubble') return view.config.bubble ?? null;
+  if (view.viewMode === 'relation-matrix') return view.config['relation-matrix'] ?? null;
+  if (view.viewMode === 'relation-columns') return view.config['relation-columns'] ?? null;
+  if (view.viewMode === 'bubble-chart') return view.config['bubble-chart'] ?? null;
   if (view.viewMode === 'heatmap') return view.config.heatmap ?? null;
-  if (view.viewMode === 'map') return view.config.map ?? null;
+  if (view.viewMode === 'nested-map') return view.config['nested-map'] ?? null;
   if (view.viewMode === 'table') return view.config.table ?? null;
   if (view.viewMode === 'cards') return view.config.cards ?? null;
   if (view.viewMode === 'tree') return view.config.tree ?? null;
   if (view.viewMode === 'graph') return view.config.graph ?? null;
   if (view.viewMode === 'traceability') return view.config.traceability ?? null;
-  if (view.viewMode === 'path-walker') return view.config['path-walker'] ?? null;
+  if (view.viewMode === 'trail') return view.config.trail ?? null;
   return null;
 };
 
@@ -670,17 +670,17 @@ export const toSavedViewConfig = (
   if (config != null) {
     if (view === 'radar') result.radar = config;
     if (view === 'timeline') result.timeline = config;
-    if (view === 'matrix') result.matrix = config;
-    if (view === 'explore') result.explore = config;
-    if (view === 'bubble') result.bubble = config;
+    if (view === 'relation-matrix') result['relation-matrix'] = config;
+    if (view === 'relation-columns') result['relation-columns'] = config;
+    if (view === 'bubble-chart') result['bubble-chart'] = config;
     if (view === 'heatmap') result.heatmap = config;
-    if (view === 'map') result.map = config;
+    if (view === 'nested-map') result['nested-map'] = config;
     if (view === 'table') result.table = config;
     if (view === 'cards') result.cards = config;
     if (view === 'tree') result.tree = config;
     if (view === 'graph') result.graph = config;
     if (view === 'traceability') result.traceability = config;
-    if (view === 'path-walker') result['path-walker'] = config;
+    if (view === 'trail') result.trail = config;
   }
   return Object.keys(result).length > 0 ? (result as CreateSavedViewRequest['config']) : null;
 };

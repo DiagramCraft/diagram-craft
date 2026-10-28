@@ -56,20 +56,20 @@ const sharedEntityBrowserSearchSchema = defineSearchParamSchema({
     'tree',
     'radar',
     'timeline',
-    'matrix',
-    'explore',
-    'bubble',
+    'relation-matrix',
+    'relation-columns',
+    'bubble-chart',
     'heatmap',
-    'map',
-    'diff',
+    'nested-map',
+    'compare-dates',
     'graph',
     'traceability',
-    'path-walker'
+    'trail'
   ] as const),
   sort: stringCodec,
   projectScope: enumCodec(['project', 'all'] as const),
   viewConfigs: stringCodec,
-  // Comma-separated entity ids, one per path-walker column, tracking the currently walked chain.
+  // Comma-separated entity ids, one per trail column, tracking the currently walked chain.
   pathWalk: stringCodec,
   sidebarTab: entityBrowserSidebarCodec,
   baselineId: stringCodec,

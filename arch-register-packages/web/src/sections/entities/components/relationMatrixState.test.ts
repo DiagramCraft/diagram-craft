@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { EntityRecord, EntityRelation } from '@arch-register/api-types/entityContract';
-import { autoPickColSchemaId, buildMatrixData, type MatrixAttrField } from './matrixViewState';
+import { autoPickColSchemaId, buildMatrixData, type MatrixAttrField } from './relationMatrixState';
 
 const entity = (id: string, schemaId = 'service', fields: Record<string, unknown> = {}) =>
   ({

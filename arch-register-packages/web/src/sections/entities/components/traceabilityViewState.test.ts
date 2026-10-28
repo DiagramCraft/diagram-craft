@@ -187,7 +187,7 @@ describe('traceabilityViewState', () => {
     // pointing at the Domain schema) would otherwise read as a nonsensical self-loop, "Domain ->
     // Domain" - the field's predicate ("belongs to") disambiguates it, matching the
     // field.predicate ?? field.name convention used elsewhere (schemaGraphState.ts,
-    // ExploreView.helpers.ts).
+    // RelationColumnsView.helpers.ts).
     const system = makeSchema('system', 'System', [
       {
         id: 'domain',

@@ -87,10 +87,10 @@ export const EntityBrowserEmbed = ({ config }: Props) => {
 
   const resolvedActiveViewConfig = useMemo(
     () =>
-      config.view === 'matrix'
-        ? resolveMatrixViewConfig(config.viewConfigs.matrix, schemas, rootSchema)
-        : config.view === 'map'
-          ? resolveMapViewConfig(config.viewConfigs.map, schemas)
+      config.view === 'relation-matrix'
+        ? resolveMatrixViewConfig(config.viewConfigs['relation-matrix'], schemas, rootSchema)
+        : config.view === 'nested-map'
+          ? resolveMapViewConfig(config.viewConfigs['nested-map'], schemas)
           : resolveTableFieldIds(config.viewConfigs[config.view], rootSchema),
     [config, rootSchema, schemas]
   );
@@ -103,7 +103,8 @@ export const EntityBrowserEmbed = ({ config }: Props) => {
     (resolvedActiveViewConfig as { fieldIds: string[] }).fieldIds.includes('_usageCount');
 
   const mapOverlays = useMemo(
-    () => (config.view === 'map' ? resolveMapOverlays(config.overlays, rootSchema) : undefined),
+    () =>
+      config.view === 'nested-map' ? resolveMapOverlays(config.overlays, rootSchema) : undefined,
     [config.view, config.overlays, rootSchema]
   );
 
@@ -178,7 +179,7 @@ export const EntityBrowserEmbed = ({ config }: Props) => {
 
   const viewConfig = resolvedActiveViewConfig ?? null;
   const allRows = rows as BrowserEntityRecord[];
-  const fetchesOwnTree = config.view === 'map' || config.view === 'tree';
+  const fetchesOwnTree = config.view === 'nested-map' || config.view === 'tree';
   const browserRows = interactive
     ? serverPaged
       ? allRows

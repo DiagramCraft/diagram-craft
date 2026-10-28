@@ -316,14 +316,14 @@ export const EntityBrowser = ({
     projectId,
     setJoinAssessmentId
   ]);
-  const readOnly = !!asOf && !collectionId && view !== 'diff';
+  const readOnly = !!asOf && !collectionId && view !== 'compare-dates';
   const [tlOpen, setTlOpen] = useState(!!asOf && !collectionId);
   const [includeOverdueChanges, setIncludeOverdueChanges] = useState(false);
   useEffect(() => {
     if (asOf && !collectionId) setTlOpen(true);
   }, [asOf, collectionId]);
   useEffect(() => {
-    if (view === 'diff' && !collectionId) setTlOpen(true);
+    if (view === 'compare-dates' && !collectionId) setTlOpen(true);
   }, [view, collectionId]);
   const { data: fetchedTimelineMarkers = [] } = useTimelineMarkers(
     workspaceId,
@@ -494,7 +494,7 @@ export const EntityBrowser = ({
     [displayFieldSchemas, entityQuery?.projections, projectContext, joinedAssessmentContext]
   );
   const displayView = DISPLAY_FIELD_VIEWS.has(view)
-    ? (view as 'table' | 'cards' | 'tree' | 'explore' | 'map')
+    ? (view as 'table' | 'cards' | 'tree' | 'relation-columns' | 'nested-map')
     : null;
   const selectedDisplayFieldIds = displayView
     ? filterDisplayFieldIdsForContext(
@@ -583,8 +583,10 @@ export const EntityBrowser = ({
           includePlannedChanges={projectId ? undefined : includePlannedChanges}
           onToggleIncludePlannedChanges={projectId ? undefined : setIncludePlannedChanges}
           includeOverdueChanges={includeOverdueChanges}
-          onToggleIncludeOverdueChanges={view === 'diff' ? setIncludeOverdueChanges : undefined}
-          disablePlannedTogglesForPast={view === 'diff'}
+          onToggleIncludeOverdueChanges={
+            view === 'compare-dates' ? setIncludeOverdueChanges : undefined
+          }
+          disablePlannedTogglesForPast={view === 'compare-dates'}
         />
       )}
 

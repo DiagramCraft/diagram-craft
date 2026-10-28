@@ -4,7 +4,7 @@ import {
   cubicPoint,
   pointToSegmentDistance,
   type ExploreConnectorLine
-} from './exploreGeometry';
+} from './relationColumnsGeometry';
 
 const line = {
   fromColumn: 0,

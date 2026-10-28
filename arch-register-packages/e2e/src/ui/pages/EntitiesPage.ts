@@ -41,7 +41,7 @@ export class EntitiesPage extends WorkspacePage {
     await expect(this.browserTitle()).toHaveText(name);
   };
 
-  switchView = async (view: 'table' | 'cards' | 'tree' | 'graph' | 'explore') => {
+  switchView = async (view: 'table' | 'cards' | 'tree' | 'graph' | 'relation-columns') => {
     await this.goto({ viewMode: view });
     await expect(this.browserTitle()).toBeVisible();
   };

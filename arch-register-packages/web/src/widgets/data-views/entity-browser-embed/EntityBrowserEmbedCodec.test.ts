@@ -13,8 +13,8 @@ const fullConfig: EntityBrowserEmbedConfig = {
   view: 'radar',
   viewConfigs: {
     radar: { xAxis: 'impact', yAxis: 'effort' },
-    explore: { relationFields: ['dependsOn', 'ownedBy'] },
-    bubble: {
+    'relation-columns': { relationFields: ['dependsOn', 'ownedBy'] },
+    'bubble-chart': {
       xFieldId: 'cost',
       yFieldId: 'headcount',
       sizeFieldId: null,
@@ -29,7 +29,7 @@ const fullConfig: EntityBrowserEmbedConfig = {
         }
       }
     },
-    map: {
+    'nested-map': {
       levels: 3,
       level1SchemaId: 'schema-domain',
       level1Columns: 3,

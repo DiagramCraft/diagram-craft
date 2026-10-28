@@ -21,7 +21,7 @@ export type HeatmapCell = {
 /**
  * Buckets for one axis: a select field contributes one bucket per declared option (in
  * declaration order), a numeric field is split into `bucketCount` equal-width bands across
- * `range`. Mirrors how BubbleView's `positionOnBubbleAxis` treats categorical vs. numeric axes.
+ * `range`. Mirrors how BubbleChartView's `positionOnBubbleAxis` treats categorical vs. numeric axes.
  */
 export const buildAxisBuckets = (
   categories: FieldOption[] | null,

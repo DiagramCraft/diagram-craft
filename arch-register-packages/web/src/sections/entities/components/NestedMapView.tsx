@@ -1,6 +1,6 @@
 import { useMemo, useCallback, useEffect, useRef, useState } from 'react';
 import { TbSearch } from 'react-icons/tb';
-import styles from './MapView.module.css';
+import styles from './NestedMapView.module.css';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import type { TreeNode } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
@@ -69,7 +69,7 @@ import type { JoinedAssessmentContext } from './entityFieldSources';
 import type { EntityHoverCardRow } from '../../../components/EntityHoverCardBody';
 import type { PopoverActions } from '@diagram-craft/app-components/Popover';
 
-type MapViewProps = {
+type NestedMapViewProps = {
   workspaceId: string;
   projectId?: string;
   projectScope: 'project' | 'all';
@@ -129,7 +129,7 @@ const resolveMetricTerminalSchemaId = (args: {
   return null;
 };
 
-export const MapView = ({
+export const NestedMapView = ({
   workspaceId,
   projectId,
   projectScope,
@@ -154,7 +154,7 @@ export const MapView = ({
   onCountChange,
   overlays,
   dimOwnerIds
-}: MapViewProps) => {
+}: NestedMapViewProps) => {
   const { schemas, currencies, enums, teams } = useWorkspaceContext();
   const { data: relationSchemas = [] } = useRelationSchemas(workspaceId);
   const { getFieldGroupAccess } = useWorkspaceAuthorization(workspaceId);
@@ -361,7 +361,7 @@ export const MapView = ({
   ]);
   const linkedEntityIdSet = useMemo(() => new Set(linkedEntityIds ?? []), [linkedEntityIds]);
 
-  const selectedDisplayFields = getDisplayFieldIds('map', cfg).map(
+  const selectedDisplayFields = getDisplayFieldIds('nested-map', cfg).map(
     id => displayFields.find(field => field.id === id) ?? { id, label: id, group: 'Fields' }
   );
 

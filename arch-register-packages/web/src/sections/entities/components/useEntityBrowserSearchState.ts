@@ -165,8 +165,8 @@ export const useEntityBrowserSearchState = ({
   const setPathWalk = useCallback(
     (hops: PathStep[], selection: string[]) => {
       const nextConfigs: BrowserViewConfigMap = { ...viewConfigs };
-      if (hops.length > 0) nextConfigs['path-walker'] = { hops };
-      else delete nextConfigs['path-walker'];
+      if (hops.length > 0) nextConfigs['trail'] = { hops };
+      else delete nextConfigs['trail'];
       navigateBrowser(
         {
           viewConfigs: serializeViewConfigs(nextConfigs),

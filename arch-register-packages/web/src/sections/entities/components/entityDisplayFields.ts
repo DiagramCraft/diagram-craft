@@ -19,8 +19,8 @@ export const DISPLAY_FIELD_VIEWS = new Set<BrowserView>([
   'table',
   'cards',
   'tree',
-  'explore',
-  'map'
+  'relation-columns',
+  'nested-map'
 ]);
 
 export type EntityDisplayField = {
@@ -51,14 +51,14 @@ const STANDARD_FIELDS: EntityDisplayField[] = [
 ];
 
 export const DEFAULT_DISPLAY_FIELDS: Record<
-  'table' | 'cards' | 'tree' | 'explore' | 'map',
+  'table' | 'cards' | 'tree' | 'relation-columns' | 'nested-map',
   string[]
 > = {
   table: ['_description', '_owner', '_lifecycle', '_projectRole', '_namespace', '_completeness'],
   cards: ['_lifecycle', '_description', '_owner', '_projectRole', '_projectStatus'],
   tree: ['_description', '_owner', '_lifecycle', '_namespace'],
-  explore: ['_slug', '_owner'],
-  map: ['_description', '_lifecycle', '_owner', '_tags']
+  'relation-columns': ['_slug', '_owner'],
+  'nested-map': ['_description', '_lifecycle', '_owner', '_tags']
 };
 
 /** Number-like columns (number, currency, and derived number/currency/rating), shown right-aligned
@@ -170,7 +170,7 @@ export const buildEntityDisplayFields = (
 };
 
 export const getDisplayFieldIds = (
-  view: 'table' | 'cards' | 'tree' | 'explore' | 'map',
+  view: 'table' | 'cards' | 'tree' | 'relation-columns' | 'nested-map',
   config: unknown
 ): string[] => {
   if (
