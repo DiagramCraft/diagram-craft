@@ -557,6 +557,27 @@ test.describe('project routes', () => {
     expect(revisions).toHaveLength(2);
   });
 
+  test('rejects saving a new markdown document with a name already in use', async ({ orpc }) => {
+    const project = await createProject(orpc, { name: `Duplicate names ${Date.now()}` });
+    const body = {
+      scope: 'project' as const,
+      project_id: project.id,
+      name: 'Same name',
+      body: '# One',
+      document_type_id: null,
+      metadata: {}
+    };
+
+    await orpc.projects.saveNewMarkdownContent({ params: { workspace: 'default' }, body });
+
+    await expect(
+      orpc.projects.saveNewMarkdownContent({
+        params: { workspace: 'default' },
+        body: { ...body, body: '# Two' }
+      })
+    ).rejects.toThrow("A document named 'Same name' already exists here");
+  });
+
   test('blocks restoring a revision that fails the current type requirements', async ({ orpc }) => {
     const suffix = Date.now().toString();
     const type = await orpc.documents.documentTypes.create({

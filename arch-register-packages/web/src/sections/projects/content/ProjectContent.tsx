@@ -206,6 +206,8 @@ export const ProjectContent = ({
             onClose={() => setDialog(null)}
             workspaceSlug={workspaceSlug}
             projectId={projectId}
+            scope={scope}
+            folder={folderPath || null}
             onCreated={file => openMarkdown(file.id, 'edit')}
             onOpenDraft={draft =>
               navigate(

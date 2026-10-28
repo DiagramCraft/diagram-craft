@@ -234,6 +234,8 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
         open={markdownFolder !== undefined}
         onClose={() => setMarkdownFolder(undefined)}
         workspaceSlug={workspaceSlug}
+        scope={scope}
+        folder={markdownFolder ?? null}
         onCreated={file => {
           setMarkdownFolder(undefined);
           navigate({

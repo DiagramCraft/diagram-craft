@@ -215,6 +215,8 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
         open={addMarkdownOpen}
         onClose={() => setAddMarkdownOpen(false)}
         workspaceSlug={workspaceSlug}
+        scope={scope}
+        folder={folder || null}
         onCreated={file => {
           setAddMarkdownOpen(false);
           handleMarkdownClick(file.id, 'edit');

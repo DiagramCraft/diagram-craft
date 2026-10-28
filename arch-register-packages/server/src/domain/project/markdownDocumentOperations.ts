@@ -182,6 +182,12 @@ export const saveNewMarkdownContent = async (
       const nodes = await resolved.listNodes(db, ws);
       const filePath = input.folder ? `${input.folder}/${input.name}.md` : `${input.name}.md`;
       assertContentPathWritable(nodes, filePath);
+      // Without this the upsert below would update the existing node in place, leaving the new
+      // node id unreferenced and failing later on a foreign key.
+      httpAssert.true(!nodes.some(node => node.path === filePath), {
+        status: 409,
+        message: `A document named '${input.name}' already exists here`
+      });
       const documentType = input.document_type_id
         ? await db.document.getDocumentType(ws, input.document_type_id)
         : null;

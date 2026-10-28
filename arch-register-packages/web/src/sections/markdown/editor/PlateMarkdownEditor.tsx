@@ -18,6 +18,8 @@ interface PlateMarkdownEditorProps {
 
 export const PlateMarkdownEditor = ({ value, onChange }: PlateMarkdownEditorProps) => {
   const externalValueRef = useRef(value);
+  // True while an externally applied value is flushing through Plate's onChange.
+  const applyingExternalValueRef = useRef(false);
 
   const editor = usePlateEditor({
     plugins: editorPlugins,
@@ -35,11 +37,18 @@ export const PlateMarkdownEditor = ({ value, onChange }: PlateMarkdownEditorProp
   useEffect(() => {
     if (value === externalValueRef.current) return;
     externalValueRef.current = value;
+    // Plate reports setValue as an ordinary change (flushed in a microtask). Echoing it to the
+    // parent would mark freshly loaded or saved content as an unsaved edit.
+    applyingExternalValueRef.current = true;
     editor.tf.setValue(deserializeMd(editor, value));
+    void Promise.resolve().then(() => {
+      applyingExternalValueRef.current = false;
+    });
   }, [value, editor]);
 
   const handleChange = useCallback(
     ({ value: _editorValue }: { value: Value; editor: typeof editor }) => {
+      if (applyingExternalValueRef.current) return;
       const md = serializeMd(editor);
       externalValueRef.current = md;
       onChange(md);
