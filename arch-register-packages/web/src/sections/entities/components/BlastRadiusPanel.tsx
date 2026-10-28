@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { TbChevronRight } from 'react-icons/tb';
 import type { EntityTraversalSubject } from '@arch-register/api-types/entityTraversalContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
@@ -54,7 +54,7 @@ type Props = {
   embedded?: boolean;
 };
 
-const DEPTH_OPTIONS = [
+export const BLAST_RADIUS_DEPTH_OPTIONS = [
   { value: '1', label: 'Direct (depth 1)' },
   { value: '2', label: 'Extended (depth 2)' },
   { value: '3', label: 'Extended (depth 3)' }
@@ -178,7 +178,7 @@ export const BlastRadiusPanel = ({
           <span className={styles.cardTitle}>{title}</span>
         </div>
         {showFilters && (
-          <Toolbar {...{ depth, setDepth, ownerFilter, setOwnerFilter, ownerOptions }} />
+          <BlastRadiusToolbar {...{ depth, setDepth, ownerFilter, setOwnerFilter, ownerOptions }} />
         )}
         {groups && !pathsMissing && status !== 'loading' && status !== 'error' ? (
           body
@@ -192,32 +192,34 @@ export const BlastRadiusPanel = ({
   return (
     <div className={embedded ? styles.panelEmbedded : styles.panel}>
       {showFilters && (
-        <Toolbar {...{ depth, setDepth, ownerFilter, setOwnerFilter, ownerOptions }} />
+        <BlastRadiusToolbar {...{ depth, setDepth, ownerFilter, setOwnerFilter, ownerOptions }} />
       )}
       {body}
     </div>
   );
 };
 
-const Toolbar = ({
+export const BlastRadiusToolbar = ({
   depth,
   setDepth,
   ownerFilter,
   setOwnerFilter,
-  ownerOptions
+  ownerOptions,
+  children
 }: {
   depth: number;
   setDepth: (depth: number) => void;
   ownerFilter: string;
   setOwnerFilter: (owner: string) => void;
   ownerOptions: { value: string; label: string }[];
+  children?: ReactNode;
 }) => (
   <div className={styles.toolbar}>
     <FilterDropdown
       label="Depth"
       value={String(depth)}
       onChange={v => setDepth(Number(v))}
-      options={DEPTH_OPTIONS}
+      options={BLAST_RADIUS_DEPTH_OPTIONS}
     />
     <FilterDropdown
       label="Owner"
@@ -225,10 +227,11 @@ const Toolbar = ({
       onChange={setOwnerFilter}
       options={ownerOptions}
     />
+    {children}
   </div>
 );
 
-const BlastRadiusItem = ({
+export const BlastRadiusItem = ({
   variant,
   entity,
   schemas,

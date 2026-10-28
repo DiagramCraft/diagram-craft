@@ -11,7 +11,6 @@ import {
   entityBatchRelationsQuery,
   entityCountQuery,
   entityCountsBySchemaQuery,
-  entityDependentsQuery,
   entityDetailQuery,
   entityFacetsQuery,
   entityJsonQuery,
@@ -97,11 +96,6 @@ export const useEntityCount = (
 // Hook for fetching entity relations
 export const useEntityRelations = (workspaceId: string, entityId: string) => {
   return useQuery(entityRelationsQuery(workspaceId, entityId));
-};
-
-// Hook for fetching entity dependents (direct or transitive)
-export const useEntityDependents = (workspaceId: string, entityId: string, transitive: boolean) => {
-  return useQuery(entityDependentsQuery(workspaceId, entityId, transitive));
 };
 
 // Hook for fetching entity tree

@@ -1123,11 +1123,11 @@ const recursiveGenericRelationCte = (
     });
   }
 
-  // Owner occupies the 'out' endpoint for a forward hop (target is 'in'), and the 'in' endpoint
-  // for a backward hop (target is 'out') — mirrors `unboundTypedRelation`'s direction semantics
-  // in `fixedStepCte`.
+  // Direction follows the reference-field semantics above: a forward hop goes from the entity that
+  // "holds" the relation (the 'in' endpoint, which the entity-relations API reports as outgoing)
+  // to its target (the 'out' endpoint); a backward hop goes the other way.
   relationSchemaIds.forEach((relationSchemaId, index) => {
-    if (includeForward) {
+    if (includeBackward) {
       const ownerAlias = `${previousAlias}_tfo${index}`;
       const relAlias = `${previousAlias}_tfr${index}`;
       const childAlias = `${previousAlias}_tft${index}`;
@@ -1152,7 +1152,7 @@ const recursiveGenericRelationCte = (
           `WHERE ${ownerSchemaClause}`
       );
     }
-    if (includeBackward) {
+    if (includeForward) {
       const ownerAlias = `${previousAlias}_tbo${index}`;
       const relAlias = `${previousAlias}_tbr${index}`;
       const childAlias = `${previousAlias}_tbt${index}`;
@@ -1220,7 +1220,7 @@ const recursiveGenericRelationCte = (
       );
     }
     relationSchemaIds.forEach((relationSchemaId, index) => {
-      if (includeForward) {
+      if (includeBackward) {
         const ownerAlias = `${markerAlias}_${suffix}tfo${index}`;
         const relAlias = `${markerAlias}_${suffix}tfr${index}`;
         const childAlias = `${markerAlias}_${suffix}tft${index}`;
@@ -1237,7 +1237,7 @@ const recursiveGenericRelationCte = (
           `EXISTS (SELECT 1 FROM scoped_entity ${ownerAlias} JOIN scoped_relation ${relAlias} ON ${relAlias}.workspace = ${ownerAlias}.workspace AND ${relAlias}.schema_id = ${relationSchemaParam} AND ${relAlias}.out_record_id = ${ownerAlias}.id JOIN scoped_entity ${childAlias} ON ${childAlias}.id = ${relAlias}.in_record_id WHERE ${ownerAlias}.id = ${rootAlias}.current_id AND ${ownerSchemaClause} AND ${visitedClause(childAlias)})`
         );
       }
-      if (includeBackward) {
+      if (includeForward) {
         const ownerAlias = `${markerAlias}_${suffix}tbo${index}`;
         const relAlias = `${markerAlias}_${suffix}tbr${index}`;
         const childAlias = `${markerAlias}_${suffix}tbt${index}`;

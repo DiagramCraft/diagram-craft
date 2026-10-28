@@ -11,7 +11,6 @@ export type TabId =
   | 'relations'
   | 'future-plans'
   | 'related-content'
-  | 'dependents'
   | 'blast-radius'
   | 'assessments'
   | 'discussions'
@@ -34,7 +33,6 @@ export const API_TAB_IDS: readonly TabId[] = ['api'];
 export const CONTEXT_TAB_IDS: readonly TabId[] = [
   'topology',
   'graph',
-  'dependents',
   'blast-radius',
   'related-content'
 ];

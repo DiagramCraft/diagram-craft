@@ -530,12 +530,11 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
         />
       )}
 
-      {/* Context: Topology / Graph / Dependents / Related content */}
+      {/* Context: Topology / Graph / Blast radius / Related content */}
       {!contentFolder && CONTEXT_TAB_IDS.includes(tab) && (
         <EntityContextSection
           tab={tab}
           setTab={setTab}
-          dependentsCount={incoming.length}
           topologyProps={{
             workspaceId,
             entity,
@@ -553,12 +552,13 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
             rootEntityName: entity._name ?? entity._slug,
             rootEntitySchemaId: entity._schema.id,
             schemas,
+            layout: 'force',
+            maxDepth: 1,
             onEntityClick: id => navigateToEntity(id, 'graph')
           }}
-          dependentsProps={{ workspaceId, entityId, schemas, lifecycleStates }}
           blastRadiusProps={{
             workspaceId,
-            subject: { kind: 'entity', entityId: entity?._uid ?? entityId },
+            entityId: entity?._uid ?? entityId,
             schemas,
             lifecycleStates
           }}

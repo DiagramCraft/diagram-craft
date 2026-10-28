@@ -1,15 +1,19 @@
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { DependencyGraph } from '../../../components/DependencyGraph';
-import type { DependencyGraphNode, DependencyGraphEdge } from '../../../components/DependencyGraph';
+import type {
+  DependencyGraphNode,
+  DependencyGraphEdge,
+  LayoutAlgorithm
+} from '../../../components/DependencyGraph';
 import { TypeBadge } from '../../../components/TypeBadge';
-import { Button } from '@diagram-craft/app-components/Button';
-import { Select } from '@diagram-craft/app-components/Select';
-import { NumberInput } from '@diagram-craft/app-components/NumberInput';
-import { MultiSelect, type MultiSelectItem } from '@diagram-craft/app-components/MultiSelect';
+import { FilterDropdown } from '../../../components/FilterDropdown';
+import { ToolbarButton } from '../../../components/ToolbarButton';
+import type { MultiSelectItem } from '@diagram-craft/app-components/MultiSelect';
+import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { resolveSchemaColor } from '../../../lib/schemaPresentation';
-import { TbEyeOff, TbFileExport, TbPlus, TbVectorTriangle } from 'react-icons/tb';
+import { TbEyeOff, TbFileExport, TbFilter, TbPlus, TbVectorTriangle } from 'react-icons/tb';
 import styles from './EntityGraphView.module.css';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { SaveDiagramFromGraphDialog } from './SaveDiagramFromGraphDialog';
@@ -30,6 +34,7 @@ type Props = {
   onEntityClick: (id: string) => void;
   readOnly?: boolean;
   maxDepth?: number;
+  layout?: LayoutAlgorithm;
   direction?: EntityGraphDirection;
   fullGraphLink?: ReactNode;
 };
@@ -43,6 +48,7 @@ export const EntityGraphView = ({
   onEntityClick,
   readOnly = false,
   maxDepth: configuredMaxDepth,
+  layout: configuredLayout,
   direction,
   fullGraphLink
 }: Props) => {
@@ -52,6 +58,7 @@ export const EntityGraphView = ({
     rootEntityName,
     rootEntitySchemaId,
     maxDepth: configuredMaxDepth,
+    layout: configuredLayout,
     direction
   });
   const {
@@ -149,55 +156,72 @@ export const EntityGraphView = ({
           setLayoutOptions={setLayoutOptions}
         />
 
-        <span className={styles.eToolbarLabel}>Depth</span>
-        <NumberInput
-          value={maxDepth}
-          onChange={v => {
-            if (v !== undefined) setMaxDepth(v);
-          }}
-          min={1}
-          max={5}
-          step={1}
-          style={{ width: '50px' }}
+        <FilterDropdown
+          label="Depth"
+          value={String(maxDepth)}
+          onChange={value => setMaxDepth(Number(value))}
+          options={[1, 2, 3, 4, 5].map(depth => ({ value: String(depth), label: String(depth) }))}
         />
 
-        <span className={styles.eToolbarLabel}>Direction</span>
-        <Select.Root
+        <FilterDropdown
+          label="Direction"
           value={currentDirection}
-          onChange={v => {
-            if (v) setDirection(v as EntityGraphDirection);
-          }}
-          style={{ width: '70px' }}
-        >
-          <Select.Item value="both">Both</Select.Item>
-          <Select.Item value="upstream">In</Select.Item>
-          <Select.Item value="downstream">Out</Select.Item>
-        </Select.Root>
-
-        <span className={styles.eToolbarLabel}>Relation</span>
-        <MultiSelect
-          selectedValues={Array.from(relationSchemaFilter)}
-          availableItems={relationSchemaItems}
-          onSelectionChange={values => setRelationSchemaFilter(new Set(values))}
-          placeholder="All relation types"
-          style={{ width: '120px' }}
+          onChange={value => setDirection(value as EntityGraphDirection)}
+          options={[
+            { value: 'both', label: 'Both' },
+            { value: 'upstream', label: 'In' },
+            { value: 'downstream', label: 'Out' }
+          ]}
         />
+
+        <MenuButton.Root>
+          <MenuButton.Trigger
+            element={
+              <ToolbarButton
+                icon={<TbFilter size={13} />}
+                variant={relationSchemaFilter.size > 0 ? 'primary' : undefined}
+                aria-label="Filter relation types"
+                title="Filter relation types"
+              >
+                {relationSchemaFilter.size === 0
+                  ? 'All relation types'
+                  : `${relationSchemaFilter.size} relation type${relationSchemaFilter.size === 1 ? '' : 's'}`}
+              </ToolbarButton>
+            }
+          />
+          <MenuButton.Menu align="start">
+            {relationSchemaItems.length === 0 && <Menu.Item disabled>No relation types</Menu.Item>}
+            {relationSchemaItems.map(item => (
+              <Menu.CheckboxItem
+                key={item.value}
+                checked={relationSchemaFilter.has(item.value)}
+                onCheckedChange={checked => {
+                  const next = new Set(relationSchemaFilter);
+                  if (checked) next.add(item.value);
+                  else next.delete(item.value);
+                  setRelationSchemaFilter(next);
+                }}
+              >
+                {item.label}
+              </Menu.CheckboxItem>
+            ))}
+          </MenuButton.Menu>
+        </MenuButton.Root>
 
         {isAnyLoading && <span className={styles.eLoadingText}>Loading…</span>}
 
-        <Button
+        <ToolbarButton
           className={styles.eResetButton}
           disabled={excludedIds.size === 0 && manuallyExpanded.size === 0}
-          size={'sm'}
           onClick={resetGraph}
         >
           Reset
-        </Button>
+        </ToolbarButton>
 
-        <Button size={'sm'} onClick={createDiagram}>
+        <ToolbarButton onClick={createDiagram}>
           <TbFileExport size={14} />
           Create diagram
-        </Button>
+        </ToolbarButton>
       </div>
 
       <div className={styles.eCanvas}>

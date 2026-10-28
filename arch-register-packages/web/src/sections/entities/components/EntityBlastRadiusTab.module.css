@@ -1,0 +1,74 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px 24px 32px;
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  align-items: stretch;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  padding: 12px 14px 16px;
+}
+
+.panelTitle {
+  margin: 0 0 12px;
+  color: var(--cmp-fg);
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: 12px;
+}
+
+.depthGroups {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.depthLabel {
+  font-size: 10.5px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--base-fg-more-dim);
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.empty {
+  font-size: 11.5px;
+  color: var(--base-fg-more-dim);
+  padding: 4px 2px;
+}
+
+.cardList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.treeNode {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.treeChildren {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-left: 20px;
+}
