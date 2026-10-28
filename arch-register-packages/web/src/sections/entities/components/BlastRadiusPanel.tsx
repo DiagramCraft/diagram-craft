@@ -11,7 +11,7 @@ import { EntityNavigationLink } from '../../../components/EntityNavigationLink';
 import { EmptyState } from '../../../components/EmptyState';
 import { LoadingState } from '../../../components/LoadingState';
 import { Banner } from '../../../components/Banner';
-import { resolveSchemaColor } from '../../../lib/schemaPresentation';
+import { resolveSchemaPresentation } from '../../../lib/schemaPresentation';
 import { useTeams } from '../../../hooks/useWorkspaceConfig';
 import {
   useBlastRadius,
@@ -246,9 +246,7 @@ export const BlastRadiusItem = ({
   hopLookup: HopLookup;
   showVia?: boolean;
 }) => {
-  const schemaIdx = schemas.findIndex(s => s.id === entity.schemaId);
-  const schema = schemaIdx >= 0 ? schemas[schemaIdx] : null;
-  const color = schema ? resolveSchemaColor(schema, schemaIdx) : 'var(--accent-fg)';
+  const { schema, color } = resolveSchemaPresentation(schemas, entity.schemaId);
   const path = entity.paths[0];
   const intermediateHops = showVia && path ? path.provenance.slice(1, -1) : [];
   const publicId = hopLookup.get(entity.entityId)?.publicId;

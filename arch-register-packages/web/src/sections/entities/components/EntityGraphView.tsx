@@ -6,24 +6,15 @@ import type {
   LayoutAlgorithm
 } from '../../../components/DependencyGraph';
 import { TypeBadge } from '../../../components/TypeBadge';
-import { FilterDropdown } from '../../../components/FilterDropdown';
-import { ToolbarButton } from '../../../components/ToolbarButton';
-import type { MultiSelectItem } from '@diagram-craft/app-components/MultiSelect';
-import { MenuButton } from '@diagram-craft/app-components/MenuButton';
-import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
-import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { resolveSchemaColor } from '../../../lib/schemaPresentation';
-import { TbEyeOff, TbFileExport, TbFilter, TbPlus, TbVectorTriangle } from 'react-icons/tb';
+import { TbVectorTriangle } from 'react-icons/tb';
+import { EntityGraphOverlays } from './EntityGraphOverlays';
+import { EntityGraphToolbar } from './EntityGraphToolbar';
 import styles from './EntityGraphView.module.css';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
-import { SaveDiagramFromGraphDialog } from './SaveDiagramFromGraphDialog';
-import { RelationDetailPopover } from './RelationDetailPopover';
-import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 import { type EntityGraphDirection, type EntityNodeData } from './entityGraphState';
 import { useEntityGraphController } from './useEntityGraphController';
-import { useRelationSchemas } from '../../../hooks/useRelationSchemas';
 import { LoadingState } from '../../../components/LoadingState';
-import { GraphLayoutToolbar } from './GraphLayoutToolbar';
 
 type Props = {
   workspaceId: string;
@@ -61,39 +52,8 @@ export const EntityGraphView = ({
     layout: configuredLayout,
     direction
   });
-  const {
-    layout,
-    setLayout,
-    layoutOptions,
-    setLayoutOptions,
-    maxDepth,
-    setMaxDepth,
-    excludedIds,
-    manuallyExpanded,
-    direction: currentDirection,
-    setDirection,
-    relationSchemaFilter,
-    setRelationSchemaFilter,
-    contextMenu,
-    setContextMenu,
-    saveDiagramOpen,
-    setSaveDiagramOpen,
-    pendingDiagramContent,
-    nodes,
-    edges,
-    hiddenCountMap,
-    isAnyLoading,
-    resetGraph,
-    excludeEntity,
-    expandEntity,
-    createDiagram
-  } = controller;
-
-  const { data: relationSchemas } = useRelationSchemas(workspaceId);
-  const relationSchemaItems: MultiSelectItem[] = useMemo(
-    () => (relationSchemas ?? []).map(schema => ({ value: schema.id, label: schema.name })),
-    [relationSchemas]
-  );
+  const { layout, layoutOptions, setContextMenu, nodes, edges, hiddenCountMap, isAnyLoading } =
+    controller;
 
   const graphLayout = readOnly ? 'hierarchy' : layout;
   const graphLayoutOptions = layoutOptions;
@@ -148,81 +108,7 @@ export const EntityGraphView = ({
 
   return (
     <div className={`${styles.icEntityGraphView} ${readOnly ? styles.readOnly : ''}`}>
-      <div className={styles.eToolbar}>
-        <GraphLayoutToolbar
-          layout={layout}
-          setLayout={value => setLayout(value)}
-          layoutOptions={layoutOptions}
-          setLayoutOptions={setLayoutOptions}
-        />
-
-        <FilterDropdown
-          label="Depth"
-          value={String(maxDepth)}
-          onChange={value => setMaxDepth(Number(value))}
-          options={[1, 2, 3, 4, 5].map(depth => ({ value: String(depth), label: String(depth) }))}
-        />
-
-        <FilterDropdown
-          label="Direction"
-          value={currentDirection}
-          onChange={value => setDirection(value as EntityGraphDirection)}
-          options={[
-            { value: 'both', label: 'Both' },
-            { value: 'upstream', label: 'In' },
-            { value: 'downstream', label: 'Out' }
-          ]}
-        />
-
-        <MenuButton.Root>
-          <MenuButton.Trigger
-            element={
-              <ToolbarButton
-                icon={<TbFilter size={13} />}
-                variant={relationSchemaFilter.size > 0 ? 'primary' : undefined}
-                aria-label="Filter relation types"
-                title="Filter relation types"
-              >
-                {relationSchemaFilter.size === 0
-                  ? 'All relation types'
-                  : `${relationSchemaFilter.size} relation type${relationSchemaFilter.size === 1 ? '' : 's'}`}
-              </ToolbarButton>
-            }
-          />
-          <MenuButton.Menu align="start">
-            {relationSchemaItems.length === 0 && <Menu.Item disabled>No relation types</Menu.Item>}
-            {relationSchemaItems.map(item => (
-              <Menu.CheckboxItem
-                key={item.value}
-                checked={relationSchemaFilter.has(item.value)}
-                onCheckedChange={checked => {
-                  const next = new Set(relationSchemaFilter);
-                  if (checked) next.add(item.value);
-                  else next.delete(item.value);
-                  setRelationSchemaFilter(next);
-                }}
-              >
-                {item.label}
-              </Menu.CheckboxItem>
-            ))}
-          </MenuButton.Menu>
-        </MenuButton.Root>
-
-        {isAnyLoading && <span className={styles.eLoadingText}>Loading…</span>}
-
-        <ToolbarButton
-          className={styles.eResetButton}
-          disabled={excludedIds.size === 0 && manuallyExpanded.size === 0}
-          onClick={resetGraph}
-        >
-          Reset
-        </ToolbarButton>
-
-        <ToolbarButton onClick={createDiagram}>
-          <TbFileExport size={14} />
-          Create diagram
-        </ToolbarButton>
-      </div>
+      <EntityGraphToolbar workspaceId={workspaceId} controller={controller} />
 
       <div className={styles.eCanvas}>
         {isAnyLoading && nodes.length <= 1 ? (
@@ -255,50 +141,21 @@ export const EntityGraphView = ({
         )}
       </div>
 
-      {!readOnly && contextMenu && (
-        <ContextMenu.Imperative
-          x={contextMenu.x}
-          y={contextMenu.y}
-          onClose={() => setContextMenu(null)}
-        >
-          <Menu.Item
-            leftSlot={<TbEyeOff size={13} />}
-            disabled={contextMenu.id === rootEntityId}
-            onClick={() => excludeEntity(contextMenu.id)}
-          >
-            Exclude from graph
-          </Menu.Item>
-          <Menu.Item leftSlot={<TbPlus size={13} />} onClick={() => expandEntity(contextMenu.id)}>
-            Expand one level deeper
-          </Menu.Item>
-        </ContextMenu.Imperative>
-      )}
-
-      {relationPopover && (
-        <RelationDetailPopover
-          workspaceId={workspaceId}
-          relationId={relationPopover.relationId}
-          x={relationPopover.x}
-          y={relationPopover.y}
-          onClose={() => setRelationPopover(null)}
-        />
-      )}
-
-      {!readOnly && saveDiagramOpen && pendingDiagramContent && (
-        <SaveDiagramFromGraphDialog
-          open={saveDiagramOpen}
-          onClose={() => setSaveDiagramOpen(false)}
-          onCreated={(_file: ProjectFile) => setSaveDiagramOpen(false)}
-          workspaceId={workspaceId}
-          diagramContent={pendingDiagramContent}
-          defaultName={rootEntityName}
-          initialDestination={{
+      <EntityGraphOverlays
+        workspaceId={workspaceId}
+        controller={controller}
+        allowActions={!readOnly}
+        relationPopover={relationPopover}
+        onCloseRelationPopover={() => setRelationPopover(null)}
+        diagramDefaults={{
+          defaultName: rootEntityName,
+          initialDestination: {
             type: 'entity',
             entityId: rootEntityId,
             entityName: rootEntityName
-          }}
-        />
-      )}
+          }
+        }}
+      />
 
       {readOnly && hasHiddenRelations && !isAnyLoading && fullGraphLink && (
         <div className={styles.eReadOnlyFooter}>{fullGraphLink}</div>

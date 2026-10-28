@@ -10,6 +10,7 @@ import { formatDateTime } from '../../../utils/dateFormat';
 import { RestoreSnapshotDialog } from './RestoreSnapshotDialog';
 import { diffSnapshotState } from './entityTimelineHelpers';
 import styles from './EntityChangeHistoryTab.module.css';
+import { EntityTabPage } from './EntityTabPage';
 import { Table } from '../../../components/table/Table';
 import { DropdownMenu } from '../../../components/DropdownMenu';
 import { EmptyState } from '../../../components/EmptyState';
@@ -78,7 +79,7 @@ export const EntityChangeHistoryTab = ({
 
   return (
     <>
-      <div className={styles.changeHistory}>
+      <EntityTabPage>
         {savedVersions.length > 0 && (
           <Table.Root layout="fixed">
             <Table.Head>
@@ -118,7 +119,7 @@ export const EntityChangeHistoryTab = ({
             </Table.Body>
           </Table.Root>
         )}
-      </div>
+      </EntityTabPage>
 
       {restoreDialogVersion && entity && (
         <RestoreSnapshotDialog

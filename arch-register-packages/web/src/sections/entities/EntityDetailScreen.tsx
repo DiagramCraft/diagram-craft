@@ -270,7 +270,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   const outgoing: Relation[] = relations.outgoing;
   const incoming: Relation[] = relations.incoming;
   const relationCount = outgoing.length + incoming.length;
-  const futurePlansCount = flattenChangeCaseMembers(entityChangeCases).filter(
+  const plannedChangesCount = flattenChangeCaseMembers(entityChangeCases).filter(
     entry => entry.changeCase.status === 'planned'
   ).length;
 
@@ -575,8 +575,8 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
           tab={tab}
           setTab={setTab}
           assessmentsProps={{ workspaceId, entity, schema }}
-          futurePlansCount={futurePlansCount}
-          futurePlansProps={{
+          plannedChangesCount={plannedChangesCount}
+          plannedChangesProps={{
             workspaceId,
             entityProjects,
             changeCases: entityChangeCases

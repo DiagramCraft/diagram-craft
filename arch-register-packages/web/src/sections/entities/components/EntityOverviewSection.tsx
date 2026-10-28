@@ -7,7 +7,7 @@ import { EntityRelationsTab } from './EntityRelationsTab';
 import { EntityChangeHistoryTab } from './EntityChangeHistoryTab';
 import { EntityConformanceTab } from './EntityConformanceTab';
 import { EntityRelatedContentTab } from './EntityRelatedContentTab';
-import type { TabId } from '../types/entityDetailTypes';
+import { HOME_TAB_IDS, type TabId } from '../types/entityDetailTypes';
 
 type Props = {
   tab: TabId;
@@ -40,7 +40,7 @@ export const EntityOverviewSection = ({
   conformanceProps
 }: Props) => {
   const activeLayoutTab = layout.tabs.find(layoutTab => layoutTab.id === tab) ?? layout.tabs[0];
-  const nonLayoutTabIds = ['relations', 'related-content', 'conformance', 'changes'];
+  const nonLayoutTabIds = HOME_TAB_IDS.filter(id => id !== 'overview');
 
   return (
     <>

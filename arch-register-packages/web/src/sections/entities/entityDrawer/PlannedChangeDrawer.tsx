@@ -9,7 +9,7 @@ import { useEntity } from '../../../hooks/useEntities';
 import { useMilestones } from '../../../hooks/useMilestones';
 import { useProjects } from '../../../hooks/useProjects';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
-import { resolveSchemaColor } from '../../../lib/schemaPresentation';
+import { resolveSchemaPresentation } from '../../../lib/schemaPresentation';
 import { asProjectPublicId, projectDetailRoute } from '../../../routes/publicObjectRoutes';
 import { diffSnapshotState } from '../components/entityTimelineHelpers';
 import { SnapshotChangeList } from '../components/SnapshotChangeList';
@@ -81,8 +81,10 @@ export const PlannedChangeDrawer = ({
 
   const kase = changeCase.data;
   const entityRecord = entity.data;
-  const schemaIndex = schemas.findIndex(s => s.id === entityRecord?._schema.id);
-  const schema = schemaIndex >= 0 ? schemas[schemaIndex]! : null;
+  const { schema, color: schemaColor } = resolveSchemaPresentation(
+    schemas,
+    entityRecord?._schema.id
+  );
   const project = projects.find(p => p.id === kase.project_id);
   const dateLabel = getSnapshotDateLabel(kase, toMilestonesById(milestones));
   const changes = diffSnapshotState(
@@ -100,12 +102,7 @@ export const PlannedChangeDrawer = ({
       eyebrow={
         schema && (
           <>
-            <TypeBadge
-              color={resolveSchemaColor(schema, schemaIndex)}
-              name={schema.name}
-              icon={schema.icon}
-              size={18}
-            />
+            <TypeBadge color={schemaColor} name={schema.name} icon={schema.icon} size={18} />
             <span>{schema.name}</span>
           </>
         )

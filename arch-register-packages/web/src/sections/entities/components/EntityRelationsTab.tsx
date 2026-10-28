@@ -5,10 +5,11 @@ import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteCo
 import { TypeBadge } from '../../../components/TypeBadge';
 import { Chip } from '../../../components/Chip';
 import { getRelationDisplayLabel } from '../../../lib/entityRelations';
-import { resolveSchemaColor } from '../../../lib/schemaPresentation';
+import { resolveSchemaPresentation } from '../../../lib/schemaPresentation';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { Relation } from '../types/entityDetailTypes';
 import styles from './EntityRelationsTab.module.css';
+import { EntityTabPage } from './EntityTabPage';
 import sharedStyles from '../EntityDetailScreen.module.css';
 import { EntityNavigationLink } from '../../../components/EntityNavigationLink';
 import { useRelation, useDeleteRelation } from '../../../hooks/useRelations';
@@ -69,12 +70,10 @@ export const EntityRelationsTab = ({
   );
 
   return (
-    <div className={styles.relationsPage}>
+    <EntityTabPage>
       <div className={styles.relationColumns}>
         <section className={styles.relationPanel}>
-          <div className={`${sharedStyles.sectionTitle} ${styles.relationColumnTitle}`}>
-            Incoming
-          </div>
+          <div className={styles.relationColumnTitle}>Incoming</div>
           <div className={styles.relationsList}>
             {incoming.map((r, i) =>
               r.kind === 'typed' ? (
@@ -114,9 +113,7 @@ export const EntityRelationsTab = ({
           </div>
         </section>
         <section className={styles.relationPanel}>
-          <div className={`${sharedStyles.sectionTitle} ${styles.relationColumnTitle}`}>
-            Outgoing
-          </div>
+          <div className={styles.relationColumnTitle}>Outgoing</div>
           <div className={styles.relationsList}>
             {outgoing.map((r, i) =>
               r.kind === 'typed' ? (
@@ -195,7 +192,7 @@ export const EntityRelationsTab = ({
         }}
         onCancel={() => setDeleteTarget(null)}
       />
-    </div>
+    </EntityTabPage>
   );
 };
 
@@ -232,12 +229,10 @@ const TypedRelationRow = ({
   const record = initialRecord ?? fetchedRecord;
   const relationSchema = relationSchemas?.find(s => s.id === record?._schema.id);
 
-  const targetSchemaId = relation.entitySchemaId;
-  const schemaIdx = schemas.findIndex(s => s.id === targetSchemaId);
-  const targetSchema = schemaIdx >= 0 ? schemas[schemaIdx] : null;
-  const targetColor = targetSchema
-    ? resolveSchemaColor(targetSchema, schemaIdx)
-    : 'var(--accent-fg)';
+  const { schema: targetSchema, color: targetColor } = resolveSchemaPresentation(
+    schemas,
+    relation.entitySchemaId
+  );
 
   if (!expanded || !record) {
     return (
@@ -317,12 +312,10 @@ const RelationRow = ({
   direction: 'outgoing' | 'incoming';
   schemas: EntitySchema[];
 }) => {
-  const targetSchemaId = relation.entitySchemaId;
-  const schemaIdx = schemas.findIndex(s => s.id === targetSchemaId);
-  const targetSchema = schemaIdx >= 0 ? schemas[schemaIdx] : null;
-  const targetColor = targetSchema
-    ? resolveSchemaColor(targetSchema, schemaIdx)
-    : 'var(--accent-fg)';
+  const { schema: targetSchema, color: targetColor } = resolveSchemaPresentation(
+    schemas,
+    relation.entitySchemaId
+  );
 
   return (
     <EntityNavigationLink publicId={relation.publicId} className={styles.relation}>

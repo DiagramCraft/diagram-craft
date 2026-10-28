@@ -13,7 +13,7 @@ import {
 import styles from '../entities/components/EntityOverviewTab.module.css';
 
 // Planned changes (from project change cases) that include this relation.
-export const RelationFuturePlansSection = ({
+export const RelationPlannedChangesSection = ({
   workspaceSlug,
   relation,
   relationSchema

@@ -16,6 +16,7 @@ import {
   type BlastRadiusTreeNode
 } from '../../../lib/blastRadiusFilters';
 import { BlastRadiusItem, BlastRadiusToolbar } from './BlastRadiusPanel';
+import { EntityTabPage } from './EntityTabPage';
 import styles from './EntityBlastRadiusTab.module.css';
 
 type Props = {
@@ -154,7 +155,7 @@ export const EntityBlastRadiusTab = (props: Props) => {
   const ownerId = ownerFilter === 'all' ? null : ownerFilter;
 
   return (
-    <div className={styles.page}>
+    <EntityTabPage>
       <BlastRadiusToolbar
         depth={depth}
         setDepth={setDepth}
@@ -190,6 +191,6 @@ export const EntityBlastRadiusTab = (props: Props) => {
           {...props}
         />
       </div>
-    </div>
+    </EntityTabPage>
   );
 };

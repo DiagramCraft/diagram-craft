@@ -409,8 +409,6 @@ export const parseJsonConfig = <T>(value: string | undefined): T | null => {
   }
 };
 
-export const serializeConfig = <T>(value: T | null) => (value ? JSON.stringify(value) : undefined);
-
 export const parseViewConfigs = (value: string | undefined): BrowserViewConfigMap => {
   if (!value) return {};
   try {

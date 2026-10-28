@@ -2,7 +2,7 @@ import type { ComponentProps } from 'react';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import styles from '../EntityDetailScreen.module.css';
 import { EntityAssessmentsTab, useUnansweredAssessmentCount } from './EntityAssessmentsTab';
-import { EntityFuturePlansTab } from './EntityFuturePlansTab';
+import { EntityPlannedChangesTab } from './EntityPlannedChangesTab';
 import { EntityTimelineTab } from './EntityTimelineTab';
 import type { TabId } from '../types/entityDetailTypes';
 
@@ -10,8 +10,8 @@ type Props = {
   tab: TabId;
   setTab: (tab: TabId) => void;
   assessmentsProps: ComponentProps<typeof EntityAssessmentsTab>;
-  futurePlansProps: ComponentProps<typeof EntityFuturePlansTab>;
-  futurePlansCount: number;
+  plannedChangesProps: ComponentProps<typeof EntityPlannedChangesTab>;
+  plannedChangesCount: number;
   timelineProps: ComponentProps<typeof EntityTimelineTab>;
 };
 
@@ -19,8 +19,8 @@ export const EntityPlanningReviewSection = ({
   tab,
   setTab,
   assessmentsProps,
-  futurePlansProps,
-  futurePlansCount,
+  plannedChangesProps,
+  plannedChangesCount,
   timelineProps
 }: Props) => {
   const unansweredAssessments = useUnansweredAssessmentCount(
@@ -38,12 +38,14 @@ export const EntityPlanningReviewSection = ({
             <Tabs.Trigger value="assessments">
               Assessments{unansweredAssessments > 0 ? ` (${unansweredAssessments})` : ''}
             </Tabs.Trigger>
-            <Tabs.Trigger value="future-plans">Planned changes ({futurePlansCount})</Tabs.Trigger>
+            <Tabs.Trigger value="future-plans">
+              Planned changes ({plannedChangesCount})
+            </Tabs.Trigger>
           </Tabs.List>
         </Tabs.Root>
       </div>
       {tab === 'assessments' && <EntityAssessmentsTab {...assessmentsProps} />}
-      {tab === 'future-plans' && <EntityFuturePlansTab {...futurePlansProps} />}
+      {tab === 'future-plans' && <EntityPlannedChangesTab {...plannedChangesProps} />}
       {tab === 'timeline' && <EntityTimelineTab {...timelineProps} />}
     </>
   );

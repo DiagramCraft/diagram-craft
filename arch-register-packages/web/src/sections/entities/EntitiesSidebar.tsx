@@ -17,7 +17,11 @@ import {
   TbLayoutSidebarLeftExpand,
   TbArrowsRightLeft
 } from 'react-icons/tb';
-import { groupSchemasByCategory, resolveSchemaColor } from '../../lib/schemaPresentation';
+import {
+  groupSchemasByCategory,
+  resolveSchemaColor,
+  resolveSchemaPresentation
+} from '../../lib/schemaPresentation';
 import type { SavedView } from '@arch-register/api-types/viewContract';
 import { useSavedViews, useDeleteSavedView, useUpdateSavedView } from '../../hooks/useSavedViews';
 import { useDeletePinnedEntity, usePinnedEntities } from '../../hooks/useNotifications';
@@ -462,11 +466,7 @@ export const EntitiesSidebar = ({
               <div className={`${styles.emptyState} dim`}>No pinned entities yet.</div>
             )}
             {pinnedEntities.map(entity => {
-              const schemaIndex = schemas.findIndex(schema => schema.id === entity.schema_id);
-              const schema = schemas.find(item => item.id === entity.schema_id);
-              const color = schema
-                ? resolveSchemaColor(schema, Math.max(schemaIndex, 0))
-                : 'var(--accent-fg)';
+              const { schema, color } = resolveSchemaPresentation(schemas, entity.schema_id);
               return (
                 <TreeRow
                   key={entity.entity_id}

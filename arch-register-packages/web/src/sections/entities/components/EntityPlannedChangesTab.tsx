@@ -6,7 +6,7 @@ import { Table } from '../../../components/table/Table';
 import { useMilestones } from '../../../hooks/useMilestones';
 import { formatDate } from '../../../utils/dateFormat';
 import { useEntityDrawer } from '../entityDrawer/useEntityDrawer';
-import pageStyles from '../EntityDetailScreen.module.css';
+import { EntityTabPage } from './EntityTabPage';
 import {
   getSnapshotEffectiveDate,
   toMilestonesById,
@@ -15,7 +15,7 @@ import {
 
 type EntityProject = { project: Project; entity_type: ProjectEntity['entity_type'] };
 
-export const EntityFuturePlansTab = ({
+export const EntityPlannedChangesTab = ({
   workspaceId,
   entityProjects,
   changeCases
@@ -58,7 +58,7 @@ export const EntityFuturePlansTab = ({
   });
 
   return (
-    <div className={pageStyles.futurePlansPage}>
+    <EntityTabPage>
       <Table.Root>
         <Table.Head>
           <Table.Row>
@@ -101,6 +101,6 @@ export const EntityFuturePlansTab = ({
           })}
         </Table.Body>
       </Table.Root>
-    </div>
+    </EntityTabPage>
   );
 };

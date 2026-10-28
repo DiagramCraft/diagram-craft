@@ -6,6 +6,7 @@ import { EmptyState } from '../../../components/EmptyState';
 import { LoadingState } from '../../../components/LoadingState';
 import { Table } from '../../../components/table/Table';
 import { TypeBadge } from '../../../components/TypeBadge';
+import { EntityTabPage } from './EntityTabPage';
 import {
   asEntityPublicId,
   asProjectPublicId,
@@ -70,7 +71,7 @@ export const EntityRelatedContentTab = ({
     );
 
   return (
-    <div style={{ padding: '16px 24px 32px' }}>
+    <EntityTabPage>
       <Table.Root>
         <Table.Head>
           <Table.Row>
@@ -105,6 +106,6 @@ export const EntityRelatedContentTab = ({
           ))}
         </Table.Body>
       </Table.Root>
-    </div>
+    </EntityTabPage>
   );
 };

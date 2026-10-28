@@ -157,6 +157,7 @@ export const EntityTimelineTab = ({
   if (!hasData) {
     return (
       <EmptyState
+        dense
         title="No snapshot history yet"
         subtitle="Snapshots are created automatically when the entity is saved."
       />

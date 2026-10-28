@@ -102,6 +102,7 @@ export const EntityAssessmentsTab = ({
   if (relevant.length === 0) {
     return (
       <EmptyState
+        dense
         title="No open assessments"
         subtitle={`${schema?.name ?? 'This entity type'} isn't in scope for any open or closed assessment.`}
       />

@@ -5,7 +5,7 @@ import { EmptyState } from '../../../components/EmptyState';
 import { LoadingState } from '../../../components/LoadingState';
 import { Table } from '../../../components/table/Table';
 import { formatDateTime } from '../../../utils/dateFormat';
-import styles from './EntityConformanceTab.module.css';
+import { EntityTabPage } from './EntityTabPage';
 
 type Props = {
   workspaceId: string;
@@ -49,7 +49,7 @@ export const EntityConformanceTab = ({ workspaceId, entityId, canViewConformance
   }
 
   return (
-    <div className={styles.page}>
+    <EntityTabPage>
       <Table.Root>
         <Table.Head>
           <Table.Row>
@@ -76,6 +76,6 @@ export const EntityConformanceTab = ({ workspaceId, entityId, canViewConformance
           ))}
         </Table.Body>
       </Table.Root>
-    </div>
+    </EntityTabPage>
   );
 };

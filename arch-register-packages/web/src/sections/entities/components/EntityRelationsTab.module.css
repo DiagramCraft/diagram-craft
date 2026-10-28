@@ -1,7 +1,3 @@
-.relationsPage {
-  padding: 16px 24px 32px;
-}
-
 .relationColumns {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
