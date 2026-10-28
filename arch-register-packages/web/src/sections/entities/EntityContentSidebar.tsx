@@ -231,7 +231,7 @@ export const EntityContentSidebar = ({
           label="Planning & review"
           icon={<TbClipboardList size={13} />}
           active={!contentFolder && PLANNING_TAB_IDS.includes(tab)}
-          onClick={() => navigateTab('assessments')}
+          onClick={() => navigateTab('timeline')}
         />
         {apiCapable && (
           <>

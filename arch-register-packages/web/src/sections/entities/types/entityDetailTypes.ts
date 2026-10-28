@@ -26,14 +26,13 @@ export const HOME_TAB_IDS: readonly TabId[] = [
   'overview',
   'relations',
   'related-content',
-  'future-plans',
   'conformance',
   'changes'
 ];
 export const API_TAB_IDS: readonly TabId[] = ['api'];
 export const CONTEXT_TAB_IDS: readonly TabId[] = ['topology', 'graph', 'blast-radius'];
 export const COLLABORATION_TAB_IDS: readonly TabId[] = ['discussions'];
-export const PLANNING_TAB_IDS: readonly TabId[] = ['assessments', 'timeline'];
+export const PLANNING_TAB_IDS: readonly TabId[] = ['timeline', 'assessments', 'future-plans'];
 
 export type Relation = {
   entityId: string;

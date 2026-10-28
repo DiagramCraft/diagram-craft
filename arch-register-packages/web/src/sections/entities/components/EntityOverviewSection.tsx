@@ -5,7 +5,6 @@ import styles from '../EntityDetailScreen.module.css';
 import { EntityOverviewLayout } from './EntityOverviewLayout';
 import { EntityRelationsTab } from './EntityRelationsTab';
 import { EntityChangeHistoryTab } from './EntityChangeHistoryTab';
-import { EntityFuturePlansTab } from './EntityFuturePlansTab';
 import { EntityConformanceTab } from './EntityConformanceTab';
 import { EntityRelatedContentTab } from './EntityRelatedContentTab';
 import type { TabId } from '../types/entityDetailTypes';
@@ -15,43 +14,33 @@ type Props = {
   setTab: (tab: TabId) => void;
   layout: DetailLayoutConfig;
   relationCount: number;
-  futurePlansCount: number;
   activeViolationCount: number;
   canViewAudit: boolean;
   overviewProps: Omit<ComponentProps<typeof EntityOverviewLayout>, 'layout'>;
   relationsProps: ComponentProps<typeof EntityRelationsTab>;
   relatedContentProps: ComponentProps<typeof EntityRelatedContentTab>;
   changeHistoryProps: ComponentProps<typeof EntityChangeHistoryTab>;
-  futurePlansProps: ComponentProps<typeof EntityFuturePlansTab>;
   conformanceProps: ComponentProps<typeof EntityConformanceTab>;
 };
 
 // Folds the schema's configurable detail-layout tabs (e.g. "Details", "Technical") into the same
-// top-level tab bar as the fixed Relations/Related content/Conformance/Planned changes/Change history tabs, rather than
+// top-level tab bar as the fixed Relations/Related content/Conformance/Change history tabs, rather than
 // nesting them inside a single "Overview" tab.
 export const EntityOverviewSection = ({
   tab,
   setTab,
   layout,
   relationCount,
-  futurePlansCount,
   activeViolationCount,
   canViewAudit,
   overviewProps,
   relationsProps,
   relatedContentProps,
   changeHistoryProps,
-  futurePlansProps,
   conformanceProps
 }: Props) => {
   const activeLayoutTab = layout.tabs.find(layoutTab => layoutTab.id === tab) ?? layout.tabs[0];
-  const nonLayoutTabIds = [
-    'relations',
-    'related-content',
-    'future-plans',
-    'conformance',
-    'changes'
-  ];
+  const nonLayoutTabIds = ['relations', 'related-content', 'conformance', 'changes'];
 
   return (
     <>
@@ -72,7 +61,6 @@ export const EntityOverviewSection = ({
                 Conformance{activeViolationCount > 0 ? ` (${activeViolationCount})` : ''}
               </Tabs.Trigger>
             )}
-            <Tabs.Trigger value="future-plans">Planned changes ({futurePlansCount})</Tabs.Trigger>
             {canViewAudit && <Tabs.Trigger value="changes">Change history</Tabs.Trigger>}
           </Tabs.List>
         </Tabs.Root>
@@ -82,7 +70,6 @@ export const EntityOverviewSection = ({
       )}
       {tab === 'relations' && <EntityRelationsTab {...relationsProps} />}
       {tab === 'related-content' && <EntityRelatedContentTab {...relatedContentProps} />}
-      {tab === 'future-plans' && <EntityFuturePlansTab {...futurePlansProps} />}
       {tab === 'conformance' && <EntityConformanceTab {...conformanceProps} />}
       {tab === 'changes' && <EntityChangeHistoryTab {...changeHistoryProps} />}
     </>

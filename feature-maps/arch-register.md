@@ -1001,7 +1001,7 @@
         - @id:ar.entity-views.entity-detail Entity detail screens present metadata, project membership, and diagram
           membership in an accordion, with metadata open initially and project/diagram counts visible while their
           sections are collapsed. Valid typed relation schemas without projected fields have their own accordion
-          sections, and planned changes are available in a dedicated Planned changes tab beside Change history. A
+          sections, and planned changes are available in a dedicated Planned changes tab in the Planning & review section. A
           Conformance tab shows the entity's own violations (active, acknowledged, exempt) with severity and
           last-seen timestamps, or a conformant/not-yet-evaluated state when none apply, with its tab title counting
           active violations; it is gated by the same permission as the workspace Conformance section and links out

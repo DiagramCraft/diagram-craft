@@ -467,7 +467,6 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
           setTab={setTab}
           layout={layout}
           relationCount={relationCount}
-          futurePlansCount={futurePlansCount}
           activeViolationCount={activeViolationCount}
           canViewAudit={canViewAudit}
           overviewProps={{
@@ -517,11 +516,6 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
             lifecycleStates,
             teams,
             canViewAudit
-          }}
-          futurePlansProps={{
-            workspaceId,
-            entityProjects,
-            changeCases: entityChangeCases
           }}
           conformanceProps={{
             workspaceId,
@@ -575,12 +569,18 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
         />
       )}
 
-      {/* Planning & review: Assessments / Timeline */}
+      {/* Planning & review: Timeline / Assessments / Planned changes */}
       {!contentFolder && PLANNING_TAB_IDS.includes(tab) && (
         <EntityPlanningReviewSection
           tab={tab}
           setTab={setTab}
           assessmentsProps={{ workspaceId, entity, schema }}
+          futurePlansCount={futurePlansCount}
+          futurePlansProps={{
+            workspaceId,
+            entityProjects,
+            changeCases: entityChangeCases
+          }}
           timelineProps={{
             workspaceId,
             versions: entityVersions,
