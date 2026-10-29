@@ -90044,6 +90044,38 @@
                     "type": "string",
                     "description": "Parent run identifier"
                   },
+                  "resume": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "interruptId": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "enum": [
+                            "resolved",
+                            "cancelled"
+                          ],
+                          "type": "string"
+                        },
+                        "payload": {},
+                        "metadata": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {}
+                        }
+                      },
+                      "required": [
+                        "interruptId",
+                        "status"
+                      ],
+                      "additionalProperties": {}
+                    },
+                    "description": "AG-UI interrupt responses"
+                  },
                   "conversationId": {
                     "type": "string",
                     "description": "Conversation identifier"
@@ -90066,7 +90098,8 @@
                   }
                 },
                 "required": [
-                  "messages"
+                  "messages",
+                  "threadId"
                 ]
               }
             }

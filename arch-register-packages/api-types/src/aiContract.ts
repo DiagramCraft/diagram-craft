@@ -76,9 +76,7 @@ const aiUiMessageSchema = z
   })
   .passthrough();
 
-// TanStack AI 0.49 serializes UI messages using the AG-UI wire format. Keep
-// accepting the older model/UI shapes above for API compatibility, while also
-// validating the roles and content parts emitted by the upgraded client.
+// Accept the model, UI, and AG-UI message shapes emitted by TanStack AI clients.
 const aiAguiInputSourceSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('data'), value: z.string(), mimeType: z.string() }).passthrough(),
   z
@@ -153,6 +151,15 @@ const aiAguiMessageSchema = z.union([
     .passthrough(),
   z.object({ id: z.string(), role: z.literal('reasoning'), content: z.string() }).passthrough()
 ]);
+
+const aiResumeEntrySchema = z
+  .object({
+    interruptId: z.string(),
+    status: z.enum(['resolved', 'cancelled']),
+    payload: z.unknown().optional(),
+    metadata: z.record(z.string(), z.unknown()).optional()
+  })
+  .passthrough();
 
 export const aiChatMessageSchema = z.union([
   aiModelMessageSchema,
@@ -358,9 +365,10 @@ export const aiContract = oc.tag('AI').router({
           params: ws,
           body: z.object({
             messages: z.array(aiChatMessageSchema).describe('TanStack AI model or UI messages'),
-            threadId: z.string().optional().describe('Thread identifier for context'),
+            threadId: z.string().describe('Thread identifier for context'),
             runId: z.string().optional().describe('Run identifier'),
             parentRunId: z.string().optional().describe('Parent run identifier'),
+            resume: aiResumeEntrySchema.array().optional().describe('AG-UI interrupt responses'),
             conversationId: z.string().optional().describe('Conversation identifier'),
             forwardedProps: z
               .record(z.string(), z.unknown())

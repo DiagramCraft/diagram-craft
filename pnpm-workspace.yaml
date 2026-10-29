@@ -26,8 +26,6 @@ minimumReleaseAgeExclude:
   - electron-publish@26.13.0
 
 overrides:
-  # 0.12.6 requires @tanstack/ai ^0.66.0; keep the OpenAI adapter on its 0.65-compatible minimum.
-  '@tanstack/openai-base': 0.12.4
   '@types/node': 26.4.0
   ws: ^8.20.1
   braces: ^3.0.3
