@@ -81,7 +81,9 @@ runContractSuiteAgainstBothDrivers('DocumentDatabase', getDb => {
       updated_at: now
     });
     expect(untyped.document_type_id).toBeNull();
-    expect((await db.document.getDocumentTemplate(workspace, untyped.id))?.document_type_id).toBeNull();
+    expect(
+      (await db.document.getDocumentTemplate(workspace, untyped.id))?.document_type_id
+    ).toBeNull();
     const retyped = await db.document.updateDocumentTemplate(workspace, untyped.id, {
       project_id: null,
       name: 'Untyped template',

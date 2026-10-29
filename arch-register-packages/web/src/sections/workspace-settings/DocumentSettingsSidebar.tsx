@@ -71,7 +71,13 @@ export const DocumentSettingsSidebar = ({ workspaceSlug }: { workspaceSlug: stri
             />
           ) : undefined
         }
-        trailing={showType ? <span className="dim">{template.document_type_id === null ? 'Untyped' : (type?.name ?? 'Unknown')}</span> : undefined}
+        trailing={
+          showType ? (
+            <span className="dim">
+              {template.document_type_id === null ? 'Untyped' : (type?.name ?? 'Unknown')}
+            </span>
+          ) : undefined
+        }
       />
     );
   };

@@ -182,10 +182,10 @@ export const AddMarkdownDialog = ({
             {availableTemplates
               .filter(template => template.document_type_id === documentTypeId)
               .map(template => (
-              <Select.Item key={template.id} value={template.id}>
-                {template.name}
-              </Select.Item>
-            ))}
+                <Select.Item key={template.id} value={template.id}>
+                  {template.name}
+                </Select.Item>
+              ))}
           </Select.Root>
         </FormElement>
       </div>
