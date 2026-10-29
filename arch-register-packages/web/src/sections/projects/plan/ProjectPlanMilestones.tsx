@@ -21,7 +21,8 @@ import {
 import { EmptyState } from '../../../components/EmptyState';
 import { Table } from '../../../components/table/Table';
 import { useTableSort } from '../../../components/table/useTableSort';
-import { ToolbarFilterBar, ToolbarFilterSelect } from '../../../components/ToolbarFilter';
+import { ToolbarFilterBar } from '../../../components/ToolbarFilter';
+import { LabeledSelect } from '../../../components/LabeledSelect';
 
 type StatusFilter = 'default' | 'complete' | 'cancelled' | 'all';
 type MilestoneFormData = Omit<CreateMilestoneRequest, 'project_id'>;
@@ -91,7 +92,7 @@ export const ProjectPlanMilestones = ({
     <>
       <div className={styles.filterBar}>
         <ToolbarFilterBar noPadding>
-          <ToolbarFilterSelect
+          <LabeledSelect
             label="Status"
             value={statusFilter}
             onChange={value => setStatusFilter(value as StatusFilter)}

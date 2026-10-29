@@ -12,7 +12,7 @@ import { stripEmptyGroups } from '../../../sections/entities/components/entityBr
 import { useEntityBrowserLocalState } from '../../../sections/entities/components/useEntityBrowserLocalState';
 import { useEntityBrowserData } from '../../../sections/entities/components/useEntityBrowserData';
 import { useEntityBrowserPagination } from '../../../sections/entities/components/useEntityBrowserPagination';
-import { FilterDropdown } from '../../../components/FilterDropdown';
+import { LabeledSelect } from '../../../components/LabeledSelect';
 import type { ColumnRenderConfig } from '@arch-register/api-types/viewContract';
 import type { EntityBrowserEmbedConfig } from './EntityBrowserEmbedCodec';
 import {
@@ -321,7 +321,7 @@ export const EntityBrowserEmbedConfigForm = ({ config, onChange }: Props) => {
       </div>
       {isPagedBrowse && (
         <div className={styles.pagination}>
-          <FilterDropdown
+          <LabeledSelect
             label="Page Size"
             variant={'secondary'}
             value={String(pageSize)}

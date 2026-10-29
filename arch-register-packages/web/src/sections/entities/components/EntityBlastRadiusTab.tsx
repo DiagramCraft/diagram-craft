@@ -2,7 +2,7 @@ import { useMemo, useState, type ComponentProps } from 'react';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { Banner } from '../../../components/Banner';
-import { FilterDropdown } from '../../../components/FilterDropdown';
+import { LabeledSelect } from '../../../components/LabeledSelect';
 import { LoadingState } from '../../../components/LoadingState';
 import { useTeams } from '../../../hooks/useWorkspaceConfig';
 import {
@@ -163,7 +163,7 @@ export const EntityBlastRadiusTab = (props: Props) => {
         setOwnerFilter={setOwnerFilter}
         ownerOptions={ownerOptions}
       >
-        <FilterDropdown
+        <LabeledSelect
           label="View"
           value={viewMode}
           onChange={value => setViewMode(value as ViewMode)}

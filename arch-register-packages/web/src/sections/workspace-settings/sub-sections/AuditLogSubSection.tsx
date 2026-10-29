@@ -12,11 +12,8 @@ import {
 } from '../../../routes/publicObjectRoutes';
 import { useEntityDrawer } from '../../entities/entityDrawer/useEntityDrawer';
 import { formatRelativeTime } from '../../../utils/dateFormat';
-import {
-  ToolbarFilterBar,
-  ToolbarFilterDate,
-  ToolbarFilterSelect
-} from '../../../components/ToolbarFilter';
+import { ToolbarFilterBar, ToolbarFilterDate } from '../../../components/ToolbarFilter';
+import { LabeledSelect } from '../../../components/LabeledSelect';
 import { Table } from '../../../components/table/Table';
 import { EmptyState } from '../../../components/EmptyState';
 import { LoadingState } from '../../../components/LoadingState';
@@ -149,13 +146,13 @@ export const AuditLogSubSection = ({
   return (
     <div className={styles.blockList}>
       <ToolbarFilterBar>
-        <ToolbarFilterSelect
+        <LabeledSelect
           label="Object type"
           value={entityType}
           onChange={value => setEntityType(value as '' | AuditEntityType)}
           options={AUDIT_ENTITY_TYPES}
         />
-        <ToolbarFilterSelect
+        <LabeledSelect
           label="Action"
           value={operation}
           onChange={value => setOperation(value as '' | AuditOperation)}

@@ -1,6 +1,6 @@
 import { useWorkspaceContext } from '../layouts/WorkspaceContext';
 import { useEntityFacets } from '../hooks/useEntities';
-import { FilterDropdown } from './FilterDropdown';
+import { LabeledSelect } from './LabeledSelect';
 import styles from './EntityFilterPanel.module.css';
 
 export type EntityFilterValue = {
@@ -49,19 +49,19 @@ export const EntityFilterPanel = ({ value, onChange }: Props) => {
 
   return (
     <div className={styles.cEntityFilterPanel}>
-      <FilterDropdown
+      <LabeledSelect
         label="Type"
         value={value.schemaId}
         onChange={v => onChange({ schemaId: v })}
         options={schemaOptions}
       />
-      <FilterDropdown
+      <LabeledSelect
         label="Owner"
         value={value.owner}
         onChange={v => onChange({ owner: v })}
         options={ownerOptions}
       />
-      <FilterDropdown
+      <LabeledSelect
         label="Status"
         value={value.lifecycle}
         onChange={v => onChange({ lifecycle: v })}

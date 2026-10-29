@@ -46,7 +46,7 @@ import {
 import { textColorForFill } from './mapColorScales';
 import { useMapMetricRollup } from './useMapMetricRollup';
 import { useWorkspaceAuthorization } from '../../../auth/WorkspaceAuthorizationContext';
-import { FilterDropdown } from '../../../components/FilterDropdown';
+import { LabeledSelect } from '../../../components/LabeledSelect';
 import { MapLegend } from './MapLegend';
 import { computeHighlightedIds, NO_OVERLAY_ID, type MapOverlay } from './mapOverlays';
 import { MapConfigControls } from './MapConfigControls';
@@ -796,7 +796,7 @@ export const NestedMapView = ({
               onChange={e => setSearchText(e.target.value)}
             />
           </div>
-          <FilterDropdown
+          <LabeledSelect
             label="Overlay"
             value={overlayId}
             onChange={setOverlayId}

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQueries } from '@tanstack/react-query';
 import { TbChevronDown, TbPlus, TbTrash, TbX } from 'react-icons/tb';
-import { FilterDropdown } from '../../../components/FilterDropdown';
+import { LabeledSelect } from '../../../components/LabeledSelect';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import {
   MAX_PATH_HOPS,
@@ -484,7 +484,7 @@ export const TraceabilityView = ({
                       )}
                     </div>
 
-                    <FilterDropdown
+                    <LabeledSelect
                       label="Target"
                       value={
                         path.targetSchemaIds === 'any' ? 'any' : (path.targetSchemaIds[0] ?? 'any')

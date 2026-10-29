@@ -16,7 +16,7 @@ import filterStyles from '../entities/components/EntityBrowser.module.css';
 import { Chip } from '../../components/Chip';
 import { Pagination } from '../../components/Pagination';
 import { Title } from '../../components/Title';
-import { FilterDropdown } from '../../components/FilterDropdown';
+import { LabeledSelect } from '../../components/LabeledSelect';
 import { Table } from '../../components/table/Table';
 import { TypeBadge } from '../../components/TypeBadge';
 import { useTableSort } from '../../components/table/useTableSort';
@@ -361,7 +361,7 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
         />
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
           {view === 'table' && (
-            <FilterDropdown
+            <LabeledSelect
               label="Sort"
               value={sortValue}
               onChange={handleSortChange}
@@ -373,7 +373,7 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
               ]}
             />
           )}
-          <FilterDropdown
+          <LabeledSelect
             label="View"
             value={view}
             onChange={value => setView((value as RelationBrowserView) ?? 'table')}

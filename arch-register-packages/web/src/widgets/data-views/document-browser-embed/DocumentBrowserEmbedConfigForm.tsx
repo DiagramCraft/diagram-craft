@@ -8,7 +8,7 @@ import { TextInput } from '@diagram-craft/app-components/TextInput';
 import type { DocumentField, DocumentType } from '@arch-register/api-types/documentContract';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import { EmptyState } from '../../../components/EmptyState';
-import { FilterDropdown } from '../../../components/FilterDropdown';
+import { LabeledSelect } from '../../../components/LabeledSelect';
 import filterStyles from '../../../components/FilterBuilder.module.css';
 import { SearchInput } from '../../../components/SearchInput';
 import { useDocumentTypes } from '../../../hooks/useDocuments';
@@ -434,7 +434,7 @@ export const DocumentBrowserEmbedConfigForm = ({ config: value, onChange }: Prop
             </Popover.Content>
           </Popover.Root>
           <div className={styles.toolbarSpacer} />
-          <FilterDropdown
+          <LabeledSelect
             label="Sort"
             value={sortValue}
             onChange={sort => onChange({ ...value, sort })}

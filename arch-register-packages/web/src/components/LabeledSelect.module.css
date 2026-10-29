@@ -1,12 +1,12 @@
 /**
- *  FilterDropdown - .cFilterDropdown
+ *  LabeledSelect - .cLabeledSelect
  *  | Label   - .eLabel
  *  | Value   - .eValue
  *  | (chevron icon rendered inline)
  *  | Select  - .eSelect (invisible overlay, covers full pill)
  */
 
-.cFilterDropdown {
+.cLabeledSelect {
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -55,10 +55,6 @@
   &[data-disabled] {
     opacity: 0.5;
     cursor: default;
-
-    &:hover {
-      border-color: var(--panel-border);
-    }
 
     .eSelect {
       cursor: default;

@@ -3,7 +3,7 @@ import { TbSettings } from 'react-icons/tb';
 import { ToolbarButton } from '../../../components/ToolbarButton';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { Popover } from '@diagram-craft/app-components/Popover';
-import { FilterDropdown } from '../../../components/FilterDropdown';
+import { LabeledSelect } from '../../../components/LabeledSelect';
 import type { LayoutAlgorithm, LayoutOptions } from '../../../components/DependencyGraph';
 import styles from './EntityGraphView.module.css';
 
@@ -24,7 +24,7 @@ export const GraphLayoutToolbar = ({
 }: Props) => {
   return (
     <>
-      <FilterDropdown
+      <LabeledSelect
         label="Layout"
         value={layout}
         onChange={value => setLayout(value as LayoutAlgorithm)}

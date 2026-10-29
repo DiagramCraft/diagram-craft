@@ -3,7 +3,7 @@ import React from 'react';
 import styles from './ToolbarButton.module.css';
 
 /**
- * A small button sized and bordered to sit next to `FilterDropdown`s in a view's config bar (26px
+ * A small button sized and bordered to sit next to `LabeledSelect`s in a view's config bar (26px
  * tall in total, panel border).
  */
 export const ToolbarButton = React.forwardRef<HTMLButtonElement, Omit<Button.Props, 'size'>>(

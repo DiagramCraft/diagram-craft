@@ -9,7 +9,8 @@ import { Chip } from '../../../components/Chip';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { MemberAvatar, stableHue } from '../../../components/MemberAvatar';
 import { SearchInput } from '../../../components/SearchInput';
-import { ToolbarFilterBar, ToolbarFilterSelect } from '../../../components/ToolbarFilter';
+import { ToolbarFilterBar } from '../../../components/ToolbarFilter';
+import { LabeledSelect } from '../../../components/LabeledSelect';
 import { useAuth } from '../../../auth/AuthContext';
 import { useAuthConfig } from '../../../hooks/useAuthConfig';
 import { useWorkspaceAuthorization } from '../../../auth/WorkspaceAuthorizationContext';
@@ -134,7 +135,7 @@ export const MembersSubSection = ({ workspaceSlug }: { workspaceSlug: string }) 
               onChange={setQuery}
               onClear={() => setQuery('')}
             />
-            <ToolbarFilterSelect
+            <LabeledSelect
               label="Role"
               value={roleFilter}
               onChange={setRoleFilter}
@@ -143,7 +144,7 @@ export const MembersSubSection = ({ workspaceSlug }: { workspaceSlug: string }) 
                 ...roles.map(r => ({ value: r.id, label: r.name }))
               ]}
             />
-            <ToolbarFilterSelect
+            <LabeledSelect
               label="Team"
               value={teamFilter}
               onChange={setTeamFilter}

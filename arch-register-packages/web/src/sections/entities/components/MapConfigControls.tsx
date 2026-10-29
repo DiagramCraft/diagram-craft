@@ -28,7 +28,7 @@ import {
 import type { MetricSourceOption } from './mapMetricConfig';
 import type { MapConfig } from './mapViewConfig';
 import type { MapLevelConfig } from './mapViewState';
-import { FilterDropdown } from '../../../components/FilterDropdown';
+import { LabeledSelect } from '../../../components/LabeledSelect';
 import { MAP_COLOR_SCHEME_OPTIONS, type MapColorScheme } from './mapColorScales';
 import { HopPicker } from './pathBuilder/HopPicker';
 import { HopSequence } from './pathBuilder/HopSequence';
@@ -466,7 +466,7 @@ export const MapConfigControls = ({
           <div className={styles.axisPill}>
             <span className={styles.axisKicker}>Metric</span>
             <span className={styles.pathSummary}>{metricTerminalSchema?.name ?? 'Any schema'}</span>
-            <FilterDropdown
+            <LabeledSelect
               label="Field"
               value={metricConfig ? sourceKey(metricConfig.source) : ''}
               disabled={mapTraversalError != null}
@@ -518,7 +518,7 @@ export const MapConfigControls = ({
 
           {metricConfig && (
             <>
-              <FilterDropdown
+              <LabeledSelect
                 label="Aggregate"
                 value={metricConfig.aggregation}
                 onChange={value => {
@@ -638,7 +638,7 @@ export const MapConfigControls = ({
                 </Popover.Root>
               )}
 
-              <FilterDropdown
+              <LabeledSelect
                 label="Colors"
                 value={cfg.colorScheme ?? 'blue'}
                 onChange={value => notify({ colorScheme: value as MapColorScheme })}

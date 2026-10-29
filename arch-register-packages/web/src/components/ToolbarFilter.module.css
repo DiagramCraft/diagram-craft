@@ -11,27 +11,24 @@
   padding-bottom: 0;
 }
 
+/* Date filter - matches the LabeledSelect pill */
 .filter {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   height: 26px;
-  padding: 0 6px 0 8px;
-  border: 1px solid var(--cmp-border);
+  padding: 0 8px 0 10px;
+  border: 1px solid var(--panel-border);
   border-radius: var(--r);
-  background: var(--panel-bg);
-  font-size: 12px;
+  background: var(--cmp-bg);
   cursor: pointer;
-}
-
-.filter:hover {
-  border-color: var(--base-fg-more-dim);
+  white-space: nowrap;
 }
 
 .filterLabel {
-  color: var(--cmp-fg-disabled);
+  color: var(--base-fg-more-dim);
   font-size: 11px;
-  padding: 2px 5px 0 1px;
+  margin-right: 2px;
 }
 
 .filterControl {
@@ -40,8 +37,8 @@
   border: 0;
   outline: 0;
   color: var(--base-fg);
-  font-size: 12px;
+  font-size: 11px;
   font-family: inherit;
   cursor: pointer;
-  padding-right: 2px;
+  padding: 0;
 }
