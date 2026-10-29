@@ -54,7 +54,8 @@ test.describe('dashboard section', () => {
         await dialog.getByRole('tab', { name: 'Appearance' }).click();
         await dialog.getByRole('tabpanel').getByRole('textbox').first().fill(widget.title);
         await dialog.getByRole('button', { name: 'Save', exact: true }).click();
-        await expect(page.getByText(widget.title, { exact: true })).toBeVisible();
+        // The widget header renders its title in uppercase
+        await expect(page.getByText(new RegExp(`^${widget.title}$`, 'i'))).toBeVisible();
       }
 
       await homePage.saveDashboard();
