@@ -27,6 +27,7 @@ import { useMarkdownDiagramSession } from '../../../sections/markdown/MarkdownDi
 import { Banner } from '../../../components/Banner';
 import { EmptyState } from '../../../components/EmptyState';
 import { LoadingState } from '../../../components/LoadingState';
+import { useOpenDiagram } from '../../../sections/diagram/useOpenDiagram';
 import styles from './DiagramEmbed.module.css';
 import type { DiagramEmbedWidgetConfig } from './types';
 
@@ -60,6 +61,7 @@ export const DiagramEmbed = ({ config }: { config: DiagramEmbedWidgetConfig }) =
   const location = useLocation();
   const params = useParams({ strict: false });
   const { sessionId } = useMarkdownDiagramSession();
+  const { openDiagram, dialog: openDiagramDialog } = useOpenDiagram();
 
   useEffect(() => {
     if (!rawContent) return;
@@ -86,33 +88,38 @@ export const DiagramEmbed = ({ config }: { config: DiagramEmbedWidgetConfig }) =
       markdownSessionId: sessionId
     };
 
-    if (file.project_public_id) {
-      void navigate(
-        projectDiagramRoute(
-          workspaceSlug,
-          asProjectPublicId(file.project_public_id),
-          file.id,
+    void openDiagram(file.id, () => {
+      if (file.project_public_id) {
+        void navigate(
+          projectDiagramRoute(
+            workspaceSlug,
+            asProjectPublicId(file.project_public_id),
+            file.id,
+            search
+          )
+        );
+      } else if (params.entityId) {
+        void navigate(
+          entityDiagramRoute(workspaceSlug, asEntityPublicId(params.entityId), file.id, search)
+        );
+      } else {
+        void navigate({
+          to: '/$workspaceSlug/content/diagrams/$diagramId',
+          params: { workspaceSlug, diagramId: file.id },
           search
-        )
-      );
-    } else if (params.entityId) {
-      void navigate(
-        entityDiagramRoute(workspaceSlug, asEntityPublicId(params.entityId), file.id, search)
-      );
-    } else {
-      void navigate({
-        to: '/$workspaceSlug/content/diagrams/$diagramId',
-        params: { workspaceSlug, diagramId: file.id },
-        search
-      });
-    }
+        });
+      }
+    });
   };
 
   if (isLoading) {
     return (
-      <figure className={styles.container}>
-        <LoadingState text="Loading…" size="sm" />
-      </figure>
+      <>
+        {openDiagramDialog}
+        <figure className={styles.container}>
+          <LoadingState text="Loading…" size="sm" />
+        </figure>
+      </>
     );
   }
 
@@ -122,33 +129,45 @@ export const DiagramEmbed = ({ config }: { config: DiagramEmbedWidgetConfig }) =
 
   if (diagram) {
     return (
-      <figure className={`${styles.container} ${styles.clickable}`} onClick={handleClick}>
-        <Canvas<StaticCanvasComponent, StaticCanvasProps>
-          id={`diagram-embed-${fileId}`}
-          context={VIEWER_CONTEXT}
-          diagram={diagram}
-          viewbox={boundsViewbox(diagram)}
-          width="100%"
-          canvasFactory={() => new StaticCanvasComponent()}
-        />
-        {caption && <figcaption className={styles.caption}>{caption}</figcaption>}
-      </figure>
+      <>
+        {openDiagramDialog}
+        <figure className={`${styles.container} ${styles.clickable}`} onClick={handleClick}>
+          <Canvas<StaticCanvasComponent, StaticCanvasProps>
+            id={`diagram-embed-${fileId}`}
+            context={VIEWER_CONTEXT}
+            diagram={diagram}
+            viewbox={boundsViewbox(diagram)}
+            width="100%"
+            canvasFactory={() => new StaticCanvasComponent()}
+          />
+          {caption && <figcaption className={styles.caption}>{caption}</figcaption>}
+        </figure>
+      </>
     );
   }
 
   if (file.preview_svg) {
     return (
-      <figure className={`${styles.container} ${styles.clickable}`} onClick={handleClick}>
-        <div className={styles.svgWrapper} dangerouslySetInnerHTML={{ __html: file.preview_svg }} />
-        {caption && <figcaption className={styles.caption}>{caption}</figcaption>}
-      </figure>
+      <>
+        {openDiagramDialog}
+        <figure className={`${styles.container} ${styles.clickable}`} onClick={handleClick}>
+          <div
+            className={styles.svgWrapper}
+            dangerouslySetInnerHTML={{ __html: file.preview_svg }}
+          />
+          {caption && <figcaption className={styles.caption}>{caption}</figcaption>}
+        </figure>
+      </>
     );
   }
 
   return (
-    <figure className={`${styles.container} ${styles.clickable}`} onClick={handleClick}>
-      <EmptyState compact title="No preview available" />
-      {caption && <figcaption className={styles.caption}>{caption}</figcaption>}
-    </figure>
+    <>
+      {openDiagramDialog}
+      <figure className={`${styles.container} ${styles.clickable}`} onClick={handleClick}>
+        <EmptyState compact title="No preview available" />
+        {caption && <figcaption className={styles.caption}>{caption}</figcaption>}
+      </figure>
+    </>
   );
 };

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useOpenDiagram } from '../diagram/useOpenDiagram';
 import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
@@ -75,6 +76,7 @@ export const ProjectContentSidebar = ({
   const [tab, setTab] = useState<SidebarTab>('content');
   const baseline = useCreateProjectBaseline(project);
   const navigate = useNavigate();
+  const { openDiagram, dialog: openDiagramDialog } = useOpenDiagram();
   const params = useParams({ strict: false });
   const search = useSearch({ strict: false }) as ProjectSearchParams;
   useEffect(() => {
@@ -114,12 +116,15 @@ export const ProjectContentSidebar = ({
       navigate(projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), nextSearch));
     }
   };
-  const openFile = (file: ProjectFile) =>
-    navigate(
-      file.type === 'markdown'
-        ? projectMarkdownRoute(workspaceSlug, asProjectPublicId(projectId), file.id)
-        : projectDiagramRoute(workspaceSlug, asProjectPublicId(projectId), file.id)
-    );
+  const openFile = (file: ProjectFile) => {
+    if (file.type === 'markdown') {
+      navigate(projectMarkdownRoute(workspaceSlug, asProjectPublicId(projectId), file.id));
+    } else {
+      void openDiagram(file.id, () =>
+        navigate(projectDiagramRoute(workspaceSlug, asProjectPublicId(projectId), file.id))
+      );
+    }
+  };
   const download = (file: ProjectFile) => {
     downloadUrl(contentDownloadUrl(scope, file.path), file.original_filename ?? file.name);
   };
@@ -180,6 +185,7 @@ export const ProjectContentSidebar = ({
 
   return (
     <>
+      {openDiagramDialog}
       <SidebarHeader
         actions={
           tab === 'content' ? (

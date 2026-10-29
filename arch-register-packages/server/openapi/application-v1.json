@@ -75237,6 +75237,56 @@
         }
       }
     },
+    "/{workspace}/files/{fileId}/content/exists": {
+      "get": {
+        "operationId": "projects.hasDiagramContent",
+        "summary": "Check diagram content exists",
+        "description": "Checks whether the stored content of a diagram file exists, without reading it.",
+        "tags": [
+          "Projects",
+          "Projects"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fileId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "File identifier"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "exists": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "exists"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/{workspace}/markdown/{nodeId}": {
       "get": {
         "operationId": "projects.getMarkdownContent",

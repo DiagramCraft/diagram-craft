@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
+import { useOpenDiagram } from '../diagram/useOpenDiagram';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { TbFileText, TbFolderOpen, TbPlus, TbUpload } from 'react-icons/tb';
 import styles from './WorkspaceContentScreen.module.css';
@@ -36,6 +37,7 @@ type WorkspaceContentScreenProps = {
 
 export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceContentScreenProps) => {
   const navigate = useNavigate();
+  const { openDiagram, dialog: openDiagramDialog } = useOpenDiagram();
   const search = useSearch({ strict: false }) as WorkspaceContentSearchParams;
   const { workspace } = useWorkspaceContext();
   const scope: ContentScope = useMemo(
@@ -86,10 +88,12 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
   };
 
   const handleDiagramClick = (fileId: string) => {
-    navigate({
-      to: '/$workspaceSlug/content/diagrams/$diagramId',
-      params: { workspaceSlug, diagramId: fileId }
-    });
+    void openDiagram(fileId, () =>
+      navigate({
+        to: '/$workspaceSlug/content/diagrams/$diagramId',
+        params: { workspaceSlug, diagramId: fileId }
+      })
+    );
   };
 
   const handleMarkdownClick = (fileId: string, mode: 'edit' | 'preview' = 'preview') => {
@@ -147,6 +151,7 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
 
   return (
     <div className={styles.screen}>
+      {openDiagramDialog}
       <div className={styles.header}>
         <Title
           breadcrumb={[

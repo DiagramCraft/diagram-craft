@@ -764,6 +764,28 @@ export const getProjectFile = async (
   });
 };
 
+export const fileContentExistsById = async (
+  db: DatabaseAdapter,
+  storage: StorageAdapter,
+  workspace: string,
+  fileId: string,
+  event: AuthenticatedEvent
+): Promise<boolean> => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to check file content',
+    dbErrorMessages: projectDbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
+      const node = await db.project.contentNodes.getAnyContentNodeById(ws, fileId);
+      httpAssert.present(node, { status: 404, message: `File '${fileId}' not found` });
+      const resolved = await resolveContentScopeForNode(db, ws, authCtx, node, 'read');
+      return await storage.exists(ws, resolved.storageId, node.id);
+    }
+  });
+};
+
 export const getFileContentById = async (
   db: DatabaseAdapter,
   storage: StorageAdapter,

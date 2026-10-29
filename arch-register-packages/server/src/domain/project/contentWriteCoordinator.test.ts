@@ -20,6 +20,7 @@ const database = (transaction: DatabaseAdapter['core']['transaction']) =>
 
 const storageWith = (mutation: StagedStorageMutation): StorageAdapter => ({
   read: vi.fn(),
+  exists: vi.fn(),
   write: vi.fn(),
   delete: vi.fn(),
   deleteAll: vi.fn(),

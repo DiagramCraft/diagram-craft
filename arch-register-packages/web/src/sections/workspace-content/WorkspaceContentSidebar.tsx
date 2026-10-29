@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { useOpenDiagram } from '../diagram/useOpenDiagram';
 import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
@@ -67,6 +68,7 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
   const mounts = useExternalContentMounts(workspaceSlug, !!mountMenu);
   const externalOperations = useExternalContentOperations(workspaceSlug);
   const navigate = useNavigate();
+  const { openDiagram, dialog: openDiagramDialog } = useOpenDiagram();
   const params = useParams({ strict: false });
   const search = useSearch({ strict: false }) as WorkspaceContentSearchParams;
   const contentFolder = params._splat ?? null;
@@ -107,6 +109,7 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
 
   return (
     <>
+      {openDiagramDialog}
       <div className={`${styles.header} ${styles.tabHeader}`}>
         <Tabs.Root value="content" onValueChange={() => {}}>
           <Tabs.List>
@@ -183,20 +186,22 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
           }
           onFolderClick={navigateHome}
           onDownload={download}
-          onFileClick={file =>
-            navigate(
-              file.type === 'markdown'
-                ? {
-                    to: '/$workspaceSlug/content/wiki/$nodeId',
-                    params: { workspaceSlug, nodeId: file.id },
-                    search: file.read_only ? { mode: 'preview' } : undefined
-                  }
-                : {
-                    to: '/$workspaceSlug/content/diagrams/$diagramId',
-                    params: { workspaceSlug, diagramId: file.id }
-                  }
-            )
-          }
+          onFileClick={file => {
+            if (file.type === 'markdown') {
+              navigate({
+                to: '/$workspaceSlug/content/wiki/$nodeId',
+                params: { workspaceSlug, nodeId: file.id },
+                search: file.read_only ? { mode: 'preview' } : undefined
+              });
+            } else {
+              void openDiagram(file.id, () =>
+                navigate({
+                  to: '/$workspaceSlug/content/diagrams/$diagramId',
+                  params: { workspaceSlug, diagramId: file.id }
+                })
+              );
+            }
+          }}
           onCreateFolder={parent => setFolderDialog({ open: true, parent })}
           onCreateDiagram={setDiagramFolder}
           onCreateMarkdown={setMarkdownFolder}

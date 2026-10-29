@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
+import { useOpenDiagram } from '../diagram/useOpenDiagram';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { TbFileText, TbFolderOpen, TbPlus, TbUpload } from 'react-icons/tb';
@@ -39,6 +40,7 @@ type EntityContentViewProps = {
 
 export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityContentViewProps) => {
   const navigate = useNavigate();
+  const { openDiagram, dialog: openDiagramDialog } = useOpenDiagram();
   const search = useSearch({ strict: false }) as EntityDetailSearchParams;
   const scope: ContentScope = useMemo(
     () => ({ kind: 'entity', workspaceId: workspaceSlug, entityId }),
@@ -77,11 +79,13 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
   };
 
   const handleDiagramClick = (fileId: string, projectId: string | null) => {
-    if (projectId) {
-      navigate(projectDiagramRoute(workspaceSlug, asProjectPublicId(projectId), fileId));
-    } else {
-      navigate(entityDiagramRoute(workspaceSlug, asEntityPublicId(entityId), fileId));
-    }
+    void openDiagram(fileId, () => {
+      if (projectId) {
+        navigate(projectDiagramRoute(workspaceSlug, asProjectPublicId(projectId), fileId));
+      } else {
+        navigate(entityDiagramRoute(workspaceSlug, asEntityPublicId(entityId), fileId));
+      }
+    });
   };
 
   const handleMarkdownClick = (fileId: string, mode: 'edit' | 'preview' = 'preview') => {
@@ -110,6 +114,7 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
 
   return (
     <div className={styles.screen}>
+      {openDiagramDialog}
       <div className={styles.header}>
         <Title
           title={folderName}

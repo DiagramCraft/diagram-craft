@@ -11,7 +11,7 @@ import {
   saveMarkdownContent,
   saveNewMarkdownContent
 } from './markdownDocumentOperations';
-import { getFileContentById, getProjectFile } from './contentFileOperations';
+import { fileContentExistsById, getFileContentById, getProjectFile } from './contentFileOperations';
 import { createMarkdownDiagramAttachment } from './markdownAttachmentOperations';
 import { overrideDocumentWorkflow } from '../document/documentWorkflowOperations';
 import { projectRouter } from './projectRouter';
@@ -76,6 +76,20 @@ export const projectMarkdownHandlers = {
         input.params.fileId,
         context.event
       );
+    }
+  ),
+  hasDiagramContent: projectRouter.projects.hasDiagramContent.handler(
+    async ({ input, context }) => {
+      if (!context.storage) throw new Error('Storage adapter not available');
+      return {
+        exists: await fileContentExistsById(
+          context.db,
+          context.storage,
+          input.params.workspace,
+          input.params.fileId,
+          context.event
+        )
+      };
     }
   ),
   getMarkdownContent: projectRouter.projects.getMarkdownContent.handler(
