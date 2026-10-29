@@ -178,12 +178,12 @@ export const SearchScreen = () => {
               <div key={g.id} className={styles.group}>
                 <div className={styles.groupHead}>
                   <span className={styles.groupLabel}>{g.label}</span>
-                  <span className={styles.groupCount}>{g.rows.length}</span>
-                  {filter === 'all' && g.rows.length > 5 && (
+                  <span className={styles.groupCount}>{categoryCounts[g.id]}</span>
+                  {filter === 'all' && categoryCounts[g.id] > 5 && (
                     <button
                       type="button"
                       className={styles.viewAll}
-                      onClick={() => setFilter(g.id as SearchFilter)}
+                      onClick={() => setFilter(g.id)}
                     >
                       View all →
                     </button>

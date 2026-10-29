@@ -67,6 +67,7 @@ describe('getFileContextLabel', () => {
 describe('search result transformations', () => {
   const results = {
     query: 'payments',
+    totalCounts: { entities: 12, projects: 30, files: 14, schemas: 6, relations: 9 },
     entities: [{ entityId: 'entity-1', publicId: 'APP-1' }],
     projects: [{ id: 'project-1' }],
     files: [{ fileId: 'file-1' }],
@@ -91,14 +92,14 @@ describe('search result transformations', () => {
     ]);
   });
 
-  it('counts categories', () => {
+  it('uses full category totals instead of the capped returned rows', () => {
     expect(getSearchCategoryCounts(results)).toEqual({
-      all: 5,
-      entities: 1,
-      projects: 1,
-      files: 1,
-      schemas: 1,
-      relations: 1
+      all: 71,
+      entities: 12,
+      projects: 30,
+      files: 14,
+      schemas: 6,
+      relations: 9
     });
   });
 });

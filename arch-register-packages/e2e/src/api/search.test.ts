@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { test as baseTest, expect, createTestORPCClient } from '../helpers/fixtures';
 import { seedCatalogEntities, seedIds } from '../helpers/seedHelper';
 import { SEARCH_PROJ_ALPHA_ID, SEARCH_PROJ_BETA_ID } from '../helpers/testIds';
@@ -102,6 +103,7 @@ test.describe('search routes', () => {
     });
     expect(result).toEqual({
       query: '',
+      totalCounts: { projects: 0, files: 0, entities: 0, schemas: 0, relations: 0 },
       projects: [],
       files: [],
       entities: [],
@@ -317,6 +319,69 @@ test.describe('search routes', () => {
         path: 'wireframes/portal-diagram.dgc'
       })
     ]);
+  });
+
+  test('GET /api/:workspace/search returns exact totals before limiting results', async ({
+    server,
+    orpc,
+    seeded: _
+  }) => {
+    const projectIds = Array.from({ length: 30 }, () => randomUUID());
+    for (const [index, id] of projectIds.entries()) {
+      await server.db.project.projects.createProject({
+        id,
+        workspace: seedIds.workspace.default,
+        name: `issue-3699-count-project-${index}`,
+        description: '',
+        owner: seedIds.teams.design,
+        status: 'active',
+        color: null,
+        start_date: null,
+        target_date: null,
+        pinned: false,
+        created_at: now,
+        updated_at: now
+      });
+    }
+
+    await server.db.project.contentNodes.upsertContentNode({
+      workspace: seedIds.workspace.default,
+      project_id: projectIds[0]!,
+      path: 'issue-3699-count/file.dgc',
+      name: 'Issue 3699 count file',
+      size_bytes: 0,
+      comment_count: 0,
+      unresolved_comment_count: 0,
+      updated_at: now,
+      created_atIfNew: now
+    });
+
+    const allResults = await orpc.search.query({
+      params: { workspace: 'default' },
+      query: { q: 'issue-3699-count', limitPerType: 8 }
+    });
+    expect(allResults.projects).toHaveLength(8);
+    expect(allResults.files).toHaveLength(1);
+    expect(allResults.totalCounts).toEqual({
+      projects: 30,
+      files: 1,
+      entities: 0,
+      schemas: 0,
+      relations: 0
+    });
+
+    const filteredResults = await orpc.search.query({
+      params: { workspace: 'default' },
+      query: { q: 'issue-3699-count', types: 'projects', limitPerType: 24 }
+    });
+    expect(filteredResults.projects).toHaveLength(24);
+    expect(filteredResults.totalCounts).toEqual({
+      projects: 30,
+      files: 0,
+      entities: 0,
+      schemas: 0,
+      relations: 0
+    });
   });
 
   test('GET /api/:workspace/search returns 400 for invalid types', async ({ orpc, seeded: _ }) => {
