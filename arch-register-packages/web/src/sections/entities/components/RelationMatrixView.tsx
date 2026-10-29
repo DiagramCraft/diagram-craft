@@ -426,7 +426,7 @@ export const RelationMatrixView = ({
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <ViewControlsFrame fill>
+    <ViewControlsFrame>
       {/* Config bar */}
       {!hideToolbar && (
         <ViewControls variant="view">

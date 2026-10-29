@@ -40,12 +40,9 @@ describe('ViewControls', () => {
     expect(html).toContain('<hr');
   });
 
-  test('frame supports fill', () => {
-    expect(renderToStaticMarkup(<ViewControlsFrame fill>x</ViewControlsFrame>)).toContain(
-      'data-fill'
-    );
-    expect(renderToStaticMarkup(<ViewControlsFrame>x</ViewControlsFrame>)).not.toContain(
-      'data-fill'
+  test('frame renders its children', () => {
+    expect(renderToStaticMarkup(<ViewControlsFrame>content</ViewControlsFrame>)).toContain(
+      'content'
     );
   });
 });

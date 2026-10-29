@@ -35,18 +35,10 @@ export const ViewControlsSeparator = () => <hr className={styles.eSeparator} />;
 /** Bordered container for a view that has a `bar` ViewControls on top of its content. */
 export const ViewControlsFrame = ({
   children,
-  fill,
   className
 }: {
   children: ReactNode;
-  /** Grow to fill the remaining space of a flex column parent instead of using the full height. */
-  fill?: boolean;
   className?: string;
 }) => (
-  <div
-    className={[styles.cViewControlsFrame, className].filter(Boolean).join(' ')}
-    data-fill={fill ? '' : undefined}
-  >
-    {children}
-  </div>
+  <div className={[styles.cViewControlsFrame, className].filter(Boolean).join(' ')}>{children}</div>
 );

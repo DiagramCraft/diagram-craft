@@ -3,7 +3,7 @@ import styles from './TimelineView.module.css';
 import { ViewControls, ViewControlsSeparator } from '../../../components/ViewControls';
 import { SegmentedControl } from '../../../components/SegmentedControl';
 import { LabeledSelect } from '../../../components/LabeledSelect';
-import { Button } from '@diagram-craft/app-components/Button';
+import { ToolbarButton } from '../../../components/ToolbarButton';
 import type { FieldOption } from './entityFieldSources';
 import type { TimelineConfig } from './timelineViewTypes';
 
@@ -21,8 +21,6 @@ export const TimelineConfigBar = ({
   isEventMode: boolean;
 }) => (
   <ViewControls variant="view">
-    <span className={styles.configMeta}>Date</span>
-
     <LabeledSelect
       label="Start"
       value={cfg.startFieldId ?? ''}
@@ -45,8 +43,7 @@ export const TimelineConfigBar = ({
       ]}
     />
 
-    <Button
-      size="sm"
+    <ToolbarButton
       variant={cfg.includeUndated ? 'primary' : 'secondary'}
       icon={<TbCalendarOff size={13} />}
       title={cfg.includeUndated ? 'Hide entities without dates' : 'Show entities without dates'}
@@ -89,8 +86,7 @@ export const TimelineConfigBar = ({
       <>
         <ViewControlsSeparator />
         {(cfg.groupBy === 'snapshot' || cfg.groupBy === 'capability') && (
-          <Button
-            size="sm"
+          <ToolbarButton
             variant={cfg.showProjectLanes ? 'primary' : 'secondary'}
             icon={<TbBriefcase2 size={13} />}
             title={cfg.showProjectLanes ? 'Hide project lanes' : 'Show project lanes'}
@@ -99,8 +95,7 @@ export const TimelineConfigBar = ({
             onClick={() => onChange({ showProjectLanes: !cfg.showProjectLanes })}
           />
         )}
-        <Button
-          size="sm"
+        <ToolbarButton
           variant={cfg.showMilestones ? 'primary' : 'secondary'}
           icon={<TbFlag size={13} />}
           title={cfg.showMilestones ? 'Hide milestones' : 'Show milestones'}
@@ -108,8 +103,7 @@ export const TimelineConfigBar = ({
           aria-pressed={cfg.showMilestones}
           onClick={() => onChange({ showMilestones: !cfg.showMilestones })}
         />
-        <Button
-          size="sm"
+        <ToolbarButton
           variant={cfg.showAutosaves ? 'primary' : 'secondary'}
           icon={<TbGitCommit size={13} />}
           title={cfg.showAutosaves ? 'Hide autosave snapshots' : 'Show autosave snapshots'}
@@ -121,8 +115,7 @@ export const TimelineConfigBar = ({
     )}
 
     <ViewControlsSeparator />
-    <Button
-      size="sm"
+    <ToolbarButton
       variant={cfg.showHorizonBands ? 'primary' : 'secondary'}
       icon={<TbCalendarWeek size={13} />}
       title={cfg.showHorizonBands ? 'Hide horizon bands' : 'Show horizon bands'}

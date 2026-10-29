@@ -55,9 +55,4 @@
   overflow: hidden;
   border: 1px solid var(--panel-border);
   border-radius: var(--r-md);
-
-  &[data-fill] {
-    flex: 1;
-    height: auto;
-  }
 }

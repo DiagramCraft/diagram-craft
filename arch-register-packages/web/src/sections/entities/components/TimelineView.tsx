@@ -41,6 +41,7 @@ import { TimelineContent, type TimelineProjectEntityGroup } from './TimelineCont
 import { DetailPanel, SnapDetailPanel } from './TimelineDetailPanels';
 import { toChangeCaseEntries, type TimelineDot } from './TimelineSnapshotRows';
 import { toMilestonesById } from './snapshotDisplay';
+import { ViewControlsFrame } from '../../../components/ViewControls';
 
 const useDateFieldOptions = (schemas: EntitySchema[]): FieldOption[] =>
   useMemo(() => getDateFields(schemas, METADATA_DATE_FIELDS), [schemas]);
@@ -325,7 +326,7 @@ export const TimelineView = ({
   }, []);
 
   return (
-    <div className={styles.screen}>
+    <ViewControlsFrame className={styles.screen}>
       {!hideToolbar && (
         <TimelineConfigBar
           cfg={cfg}
@@ -410,6 +411,6 @@ export const TimelineView = ({
         onEntityClick={onEntityClick}
         onClose={() => setSnapDetail(null)}
       />
-    </div>
+    </ViewControlsFrame>
   );
 };

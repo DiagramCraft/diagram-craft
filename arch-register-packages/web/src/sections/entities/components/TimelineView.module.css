@@ -1,13 +1,6 @@
-/* Container */
+/* Container: anchors the absolutely positioned overlays; the frame itself comes from ViewControlsFrame */
 .screen {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
   position: relative;
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r-md);
-  min-height: 0;
 }
 
 /* Config bar */

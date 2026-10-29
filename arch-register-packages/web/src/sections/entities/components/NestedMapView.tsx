@@ -758,7 +758,7 @@ export const NestedMapView = ({
     : isLegacyError;
 
   return (
-    <ViewControlsFrame fill>
+    <ViewControlsFrame>
       <MapConfigControls
         hideToolbar={hideToolbar}
         cfg={cfg}

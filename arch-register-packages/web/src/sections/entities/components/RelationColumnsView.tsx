@@ -340,14 +340,14 @@ export const RelationColumnsView = ({
 
   if (rows.length === 0) {
     return (
-      <ViewControlsFrame fill>
+      <ViewControlsFrame>
         <EmptyState title="No entities found" subtitle="Try adjusting your search or filters." />
       </ViewControlsFrame>
     );
   }
 
   return (
-    <ViewControlsFrame fill>
+    <ViewControlsFrame>
       <div ref={scrollRef} className={styles.scroll}>
         <div
           ref={canvasRef}
