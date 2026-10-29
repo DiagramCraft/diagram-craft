@@ -25,7 +25,7 @@ const missingPageQueryClient = createStoryQueryClient();
 missingPageQueryClient.setQueryData(projectFileKeys.detail(WORKSPACE, 'page-missing'), null);
 
 const meta = {
-  title: 'Widgets/Content layout/Wiki page link',
+  title: 'Widgets/Content & layout/Wiki page link',
   tags: ['mdx', 'inline'],
   parameters: {
     layout: 'padded',
