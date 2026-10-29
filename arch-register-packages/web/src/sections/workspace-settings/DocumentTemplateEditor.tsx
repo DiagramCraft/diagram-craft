@@ -26,6 +26,7 @@ import { EmptyState } from '../../components/EmptyState';
 
 import { Title } from '../../components/Title';
 import { EditorActionsMenu } from './EditorActionsMenu';
+import { pruneDefaultsForType, TemplateMetadataDefaultsForm } from './TemplateMetadataDefaultsForm';
 import { resolveDocumentTypeColor } from '../../lib/schemaPresentation';
 
 import styles from './DocumentSettingsScreen.module.css';
@@ -80,19 +81,7 @@ export const DocumentTemplateEditor = ({
     }
   }, [isNew, selected, types]);
 
-  const selectedType = types.find(type => type.id === documentTypeId) ?? null;
-
-  const patchDefault = (fieldId: string, value: DocumentMetadata[string] | null | undefined) => {
-    setDefaults(current => {
-      if (value === undefined || value === null) {
-        const next = { ...current };
-        delete next[fieldId];
-        return next;
-      }
-      return { ...current, [fieldId]: value };
-    });
-    setDirty(true);
-  };
+  const selectedType = types.find(type => type.id === documentTypeId);
 
   const handleSave = async () => {
     if (!dirty || !documentTypeId) return;
@@ -214,6 +203,12 @@ export const DocumentTemplateEditor = ({
                   value={documentTypeId}
                   onChange={value => {
                     setDocumentTypeId(value ?? '');
+                    setDefaults(current =>
+                      pruneDefaultsForType(
+                        current,
+                        types.find(type => type.id === value)
+                      )
+                    );
                     setDirty(true);
                   }}
                   style={{ width: '100%' }}
@@ -243,36 +238,15 @@ export const DocumentTemplateEditor = ({
               style={{ width: '100%' }}
             />
 
-            <div className={styles.sectionLabel}>Structured metadata defaults</div>
-            {documentTypeId === UNTYPED ? (
-              <div className={styles.fieldEmpty}>Untyped Markdown has no metadata fields.</div>
-            ) : selectedType ? (
-              <div className={styles.defaultsGrid}>
-                {selectedType.fields.filter(field => !field.retired).length === 0 ? (
-                  <div className={styles.fieldEmpty}>This document type has no fields.</div>
-                ) : (
-                  selectedType.fields
-                    .filter(field => !field.retired)
-                    .map(field => (
-                      <div key={field.id} className={styles.defaultRow}>
-                        <div className={styles.defaultLabel}>
-                          <span>{field.name}</span>
-                          {field.requirement === 'optional' && (
-                            <span className={styles.optionalLabel}>(optional)</span>
-                          )}
-                        </div>
-                        <TemplateDefaultInput
-                          field={field}
-                          value={defaults[field.id]}
-                          onChange={value => patchDefault(field.id, value)}
-                        />
-                      </div>
-                    ))
-                )}
-              </div>
-            ) : (
-              <div className={styles.fieldEmpty}>Select a document type to set field defaults.</div>
-            )}
+            <TemplateMetadataDefaultsForm
+              documentTypeId={documentTypeId}
+              selectedType={selectedType}
+              defaults={defaults}
+              onChange={next => {
+                setDefaults(next);
+                setDirty(true);
+              }}
+            />
           </div>
         </div>
       ) : (
@@ -318,5 +292,3 @@ export const DocumentTemplateEditor = ({
     </>
   );
 };
-
-import { TemplateDefaultInput } from './TemplateDefaultInput';

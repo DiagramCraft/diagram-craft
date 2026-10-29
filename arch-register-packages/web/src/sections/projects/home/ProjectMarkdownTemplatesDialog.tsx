@@ -17,6 +17,10 @@ import {
 } from '../../../hooks/useDocuments';
 import type { DocumentMetadata } from '@arch-register/api-types/documentContract';
 import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectCrudContract';
+import {
+  pruneDefaultsForType,
+  TemplateMetadataDefaultsForm
+} from '../../workspace-settings/TemplateMetadataDefaultsForm';
 import styles from './ProjectMarkdownTemplatesDialog.module.css';
 
 const UNTYPED = '__untyped__';
@@ -31,7 +35,7 @@ type Props = {
 export const ProjectMarkdownTemplatesDialog = ({ open, project, workspaceId, onClose }: Props) => {
   const [templateName, setTemplateName] = useState('');
   const [templateBody, setTemplateBody] = useState('# {{title}}\n');
-  const [templateDefaults, setTemplateDefaults] = useState('{}');
+  const [templateDefaults, setTemplateDefaults] = useState<DocumentMetadata>({});
   const [templateTypeId, setTemplateTypeId] = useState('');
   const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
   // The editor stays hidden until a template is selected or "New template" is clicked.
@@ -54,14 +58,14 @@ export const ProjectMarkdownTemplatesDialog = ({ open, project, workspaceId, onC
     setTemplateName(template.name);
     setTemplateBody(template.body);
     setTemplateTypeId(template.document_type_id ?? UNTYPED);
-    setTemplateDefaults(JSON.stringify(template.metadata_defaults, null, 2));
+    setTemplateDefaults(template.metadata_defaults);
     setTemplateError('');
   };
 
   const resetTemplateForm = () => {
     setTemplateName('');
     setTemplateBody('# {{title}}\n');
-    setTemplateDefaults('{}');
+    setTemplateDefaults({});
     setTemplateTypeId('');
     setEditingTemplateId(null);
     setIsCreating(false);
@@ -82,19 +86,11 @@ export const ProjectMarkdownTemplatesDialog = ({ open, project, workspaceId, onC
     if (!templateName.trim() || (!selectedTemplateType && !isUntyped)) return;
     setTemplateError('');
     try {
-      const parsedDefaults: unknown = isUntyped ? {} : JSON.parse(templateDefaults);
-      if (
-        parsedDefaults === null ||
-        typeof parsedDefaults !== 'object' ||
-        Array.isArray(parsedDefaults)
-      ) {
-        throw new Error('Metadata defaults must be a JSON object');
-      }
       const body = {
         name: templateName.trim(),
         body: templateBody,
         document_type_id: selectedTemplateType?.id ?? null,
-        metadata_defaults: parsedDefaults as DocumentMetadata,
+        metadata_defaults: isUntyped ? {} : templateDefaults,
         project_id: project.id
       };
       if (editingTemplateId) await updateTemplate.mutateAsync({ id: editingTemplateId, body });
@@ -167,7 +163,15 @@ export const ProjectMarkdownTemplatesDialog = ({ open, project, workspaceId, onC
                 <FormElement label="Document type" required>
                   <Select.Root
                     value={templateTypeId || undefined}
-                    onChange={value => setTemplateTypeId(value ?? '')}
+                    onChange={value => {
+                      setTemplateTypeId(value ?? '');
+                      setTemplateDefaults(current =>
+                        pruneDefaultsForType(
+                          current,
+                          documentTypes.find(type => type.id === value)
+                        )
+                      );
+                    }}
                     placeholder="Select a document type"
                   >
                     <Select.Item value={UNTYPED}>Untyped Markdown</Select.Item>
@@ -188,16 +192,12 @@ export const ProjectMarkdownTemplatesDialog = ({ open, project, workspaceId, onC
                     onChange={value => setTemplateBody(value ?? '')}
                   />
                 </FormElement>
-                {!isUntyped && (
-                  <FormElement label="Metadata defaults (JSON)" required={false}>
-                    <TextArea
-                      rows={4}
-                      value={templateDefaults}
-                      onChange={value => setTemplateDefaults(value ?? '')}
-                      placeholder="{}"
-                    />
-                  </FormElement>
-                )}
+                <TemplateMetadataDefaultsForm
+                  documentTypeId={templateTypeId}
+                  selectedType={selectedTemplateType}
+                  defaults={templateDefaults}
+                  onChange={setTemplateDefaults}
+                />
                 {templateError && <Banner variant="error">{templateError}</Banner>}
               </div>
               <div className={styles.editorActions}>
