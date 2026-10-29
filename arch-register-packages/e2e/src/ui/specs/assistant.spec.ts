@@ -26,7 +26,9 @@ test.describe('assistant section', () => {
     await expect(page).toHaveURL(new RegExp(`conversation=${secondConversation}`));
   });
 
-  test('renders a v1 stream and restores the persisted transcript after reload', async ({ page }) => {
+  test('renders a v1 stream and restores the persisted transcript after reload', async ({
+    page
+  }) => {
     let requestBody: Record<string, unknown> | undefined;
     let transcriptAvailable = false;
 
