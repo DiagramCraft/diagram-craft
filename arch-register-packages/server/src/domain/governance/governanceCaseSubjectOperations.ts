@@ -66,28 +66,25 @@ export const resolveGovernanceCaseSubjects = async (
       .filter(c => c.caseKind === ENTITY_CHANGE_CASE_KIND && c.subjectType === 'entity')
       .map(c => c.subjectId)
   );
-  const documentIds = unique(
-    cases.filter(c => c.subjectType === 'document').map(c => c.subjectId)
-  );
+  const documentIds = unique(cases.filter(c => c.subjectType === 'document').map(c => c.subjectId));
 
   const [bulkResults, changeResults, documentResults] = await Promise.all([
     Promise.all(
-      bulkIds.map(async id => [
-        id,
-        await orUndefined(getBulkEntityChangeApproval(db, workspace, id, event))
-      ] as const)
+      bulkIds.map(
+        async id =>
+          [id, await orUndefined(getBulkEntityChangeApproval(db, workspace, id, event))] as const
+      )
     ),
     Promise.all(
-      changeEntityIds.map(async id => [
-        id,
-        await orUndefined(getEntityChangeApproval(db, workspace, id, event))
-      ] as const)
+      changeEntityIds.map(
+        async id =>
+          [id, await orUndefined(getEntityChangeApproval(db, workspace, id, event))] as const
+      )
     ),
     Promise.all(
-      documentIds.map(async id => [
-        id,
-        await orUndefined(getProjectFile(db, workspace, id, event))
-      ] as const)
+      documentIds.map(
+        async id => [id, await orUndefined(getProjectFile(db, workspace, id, event))] as const
+      )
     )
   ]);
   const bulkById = new Map(bulkResults);
