@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildSearchGroups,
-  findSearchPreview,
   getFileContextLabel,
   getFileFolder,
   getSearchCategoryCounts,
@@ -92,7 +91,7 @@ describe('search result transformations', () => {
     ]);
   });
 
-  it('counts categories and resolves selected previews', () => {
+  it('counts categories', () => {
     expect(getSearchCategoryCounts(results)).toEqual({
       all: 5,
       entities: 1,
@@ -101,10 +100,5 @@ describe('search result transformations', () => {
       schemas: 1,
       relations: 1
     });
-    expect(findSearchPreview({ kind: 'project', id: 'project-1' }, results)).toEqual({
-      type: 'project',
-      data: results.projects[0]
-    });
-    expect(findSearchPreview(null, results)).toBeNull();
   });
 });
