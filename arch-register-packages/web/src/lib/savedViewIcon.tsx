@@ -14,7 +14,8 @@ import {
   TbMap,
   TbRoute,
   TbTable,
-  TbVectorTriangle
+  TbVectorTriangle,
+  TbShieldCheck
 } from 'react-icons/tb';
 
 /** Sidebar icon for a saved view, by its view mode. */
@@ -38,6 +39,8 @@ export const savedViewIcon = (mode: string, size = 12): ReactElement => {
       return <TbGrid3X3 size={size} />;
     case 'compare-dates':
       return <TbGitCompare size={size} />;
+    case 'conformance':
+      return <TbShieldCheck size={size} />;
     case 'trail':
       return <TbRoute size={size} />;
     case 'relation-columns':

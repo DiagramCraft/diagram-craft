@@ -99308,7 +99308,8 @@
                           "compare-dates",
                           "graph",
                           "traceability",
-                          "trail"
+                          "trail",
+                          "conformance"
                         ],
                         "type": "string",
                         "description": "View display mode"
@@ -106827,7 +106828,8 @@
                       "compare-dates",
                       "graph",
                       "traceability",
-                      "trail"
+                      "trail",
+                      "conformance"
                     ],
                     "type": "string",
                     "description": "View display mode"
@@ -113301,7 +113303,8 @@
                         "compare-dates",
                         "graph",
                         "traceability",
-                        "trail"
+                        "trail",
+                        "conformance"
                       ],
                       "type": "string",
                       "description": "View display mode"
@@ -121742,7 +121745,8 @@
                       "compare-dates",
                       "graph",
                       "traceability",
-                      "trail"
+                      "trail",
+                      "conformance"
                     ],
                     "type": "string",
                     "description": "View display mode"
@@ -128211,7 +128215,8 @@
                         "compare-dates",
                         "graph",
                         "traceability",
-                        "trail"
+                        "trail",
+                        "conformance"
                       ],
                       "type": "string",
                       "description": "View display mode"
