@@ -112,3 +112,22 @@ describe('FilesystemStorage staged mutations', () => {
     await expect(storage.deleteAll('..', 'outside')).rejects.toThrow('Path traversal detected');
   });
 });
+
+describe('FilesystemStorage exists', () => {
+  it('reports whether content is present without reading it', async () => {
+    const { storage } = await makeStorage();
+    expect(await storage.exists('ws', 'project', 'node')).toBe(false);
+    await storage.write('ws', 'project', 'node', Buffer.from('content'));
+    expect(await storage.exists('ws', 'project', 'node')).toBe(true);
+  });
+
+  it('finds content in a fallback directory', async () => {
+    const { root } = await makeStorage();
+    const fallbackRoot = await mkdtemp(join(tmpdir(), 'arch-register-fallback-'));
+    roots.push(fallbackRoot);
+    await mkdir(join(fallbackRoot, 'ws', 'project'), { recursive: true });
+    await writeFile(join(fallbackRoot, 'ws', 'project', 'node'), 'legacy');
+    const storage = new FilesystemStorage(root, [fallbackRoot]);
+    expect(await storage.exists('ws', 'project', 'node')).toBe(true);
+  });
+});

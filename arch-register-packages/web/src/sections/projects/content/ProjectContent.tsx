@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
+import { useOpenDiagram } from '../../diagram/useOpenDiagram';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbFileText, TbFolderOpen, TbPlus, TbUpload } from 'react-icons/tb';
@@ -45,6 +46,7 @@ export const ProjectContent = ({
   folderCount: number;
 }) => {
   const navigate = useNavigate();
+  const { openDiagram, dialog: openDiagramDialog } = useOpenDiagram();
   const { workspaceSlug } = useWorkspaceContext();
   const projectId = useParams({ strict: false }).projectId!;
   const search = useSearch({ strict: false }) as ProjectSearchParams;
@@ -105,138 +107,149 @@ export const ProjectContent = ({
     navigate(projectMarkdownRoute(workspaceSlug, publicProjectId, nodeId, { mode }));
 
   return (
-    <ProjectScreenLayout
-      projectName={project.name}
-      trailingBreadcrumbs={[{ label: folderPath }]}
-      title={folderPath}
-      actions={
-        project.canManageFiles ? (
-          <MenuButton.Root>
-            <MenuButton.Trigger
-              element={
-                <Button variant="primary" icon={<TbPlus size={12} />}>
-                  New
-                </Button>
-              }
-            />
-            <MenuButton.Menu align="end">
-              <Menu.Item leftSlot={<TbFolderOpen size={13} />} onClick={() => setDialog('folder')}>
-                New folder
-              </Menu.Item>
-              <Menu.Item
-                leftSlot={<TbUpload size={13} />}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                Upload file
-              </Menu.Item>
-              <Menu.Item leftSlot={<TbPlus size={13} />} onClick={() => setDialog('diagram')}>
-                New diagram
-              </Menu.Item>
-              <Menu.Item leftSlot={<TbFileText size={13} />} onClick={() => setDialog('markdown')}>
-                New wiki page
-              </Menu.Item>
-            </MenuButton.Menu>
-          </MenuButton.Root>
-        ) : null
-      }
-      meta={
-        <>
-          <ProjectMetaItem
-            label="Items"
-            value={<span className="mono tabular">{allFilesCount}</span>}
-          />
-          <ProjectMetaItem
-            label="Folders"
-            value={<span className="mono tabular">{folderCount}</span>}
-          />
-          <ProjectMetaItem label="Owner" value={project.owner?.name ?? '—'} />
-          <ProjectMetaItem label="Last edit" value={formatDate(project.updated_at)} />
-        </>
-      }
-      toolbar={
-        <DiagramBrowserToolbar
-          label={
-            <div
-              className={styles.sectionLabel}
-              style={{ margin: 0 }}
-            >{`Content (${visibleFiles.length})`}</div>
-          }
-          filter={filter}
-          onFilterChange={setFilter}
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-        />
-      }
-    >
-      <ProjectDiagramsView
-        project={project}
-        visibleFiles={visibleFiles}
-        folderFilter={folderPath}
-        filter={filter}
-        viewMode={viewMode}
-        onOpenDiagram={diagramId =>
-          navigate(projectDiagramRoute(workspaceSlug, publicProjectId, diagramId))
+    <>
+      {openDiagramDialog}
+      <ProjectScreenLayout
+        projectName={project.name}
+        trailingBreadcrumbs={[{ label: folderPath }]}
+        title={folderPath}
+        actions={
+          project.canManageFiles ? (
+            <MenuButton.Root>
+              <MenuButton.Trigger
+                element={
+                  <Button variant="primary" icon={<TbPlus size={12} />}>
+                    New
+                  </Button>
+                }
+              />
+              <MenuButton.Menu align="end">
+                <Menu.Item
+                  leftSlot={<TbFolderOpen size={13} />}
+                  onClick={() => setDialog('folder')}
+                >
+                  New folder
+                </Menu.Item>
+                <Menu.Item
+                  leftSlot={<TbUpload size={13} />}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  Upload file
+                </Menu.Item>
+                <Menu.Item leftSlot={<TbPlus size={13} />} onClick={() => setDialog('diagram')}>
+                  New diagram
+                </Menu.Item>
+                <Menu.Item
+                  leftSlot={<TbFileText size={13} />}
+                  onClick={() => setDialog('markdown')}
+                >
+                  New wiki page
+                </Menu.Item>
+              </MenuButton.Menu>
+            </MenuButton.Root>
+          ) : null
         }
-        onOpenMarkdown={nodeId => openMarkdown(nodeId)}
-        onDownloadFile={triggerDownload}
-        onContextMenu={project.canManageFiles ? fileMenu.open : undefined}
-      />
+        meta={
+          <>
+            <ProjectMetaItem
+              label="Items"
+              value={<span className="mono tabular">{allFilesCount}</span>}
+            />
+            <ProjectMetaItem
+              label="Folders"
+              value={<span className="mono tabular">{folderCount}</span>}
+            />
+            <ProjectMetaItem label="Owner" value={project.owner?.name ?? '—'} />
+            <ProjectMetaItem label="Last edit" value={formatDate(project.updated_at)} />
+          </>
+        }
+        toolbar={
+          <DiagramBrowserToolbar
+            label={
+              <div
+                className={styles.sectionLabel}
+                style={{ margin: 0 }}
+              >{`Content (${visibleFiles.length})`}</div>
+            }
+            filter={filter}
+            onFilterChange={setFilter}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+          />
+        }
+      >
+        <ProjectDiagramsView
+          project={project}
+          visibleFiles={visibleFiles}
+          folderFilter={folderPath}
+          filter={filter}
+          viewMode={viewMode}
+          onOpenDiagram={diagramId =>
+            void openDiagram(diagramId, () =>
+              navigate(projectDiagramRoute(workspaceSlug, publicProjectId, diagramId))
+            )
+          }
+          onOpenMarkdown={nodeId => openMarkdown(nodeId)}
+          onDownloadFile={triggerDownload}
+          onContextMenu={project.canManageFiles ? fileMenu.open : undefined}
+        />
 
-      {project.canManageFiles && (
-        <>
-          <AddContentFolderDialog
-            scope={scope}
-            open={dialog === 'folder'}
-            onClose={() => setDialog(null)}
-            onCreated={() => {}}
-            parentFolder={folderPath}
-          />
-          <AddDiagramDialog
-            open={dialog === 'diagram'}
-            onClose={() => setDialog(null)}
-            onCreated={() => {}}
-            workspaceId={workspaceSlug}
-            context="project"
-            projectId={projectId}
-            projectName={project.name}
-            folder={folderPath}
-          />
-          <AddMarkdownDialog
-            open={dialog === 'markdown'}
-            onClose={() => setDialog(null)}
-            workspaceSlug={workspaceSlug}
-            projectId={projectId}
-            scope={scope}
-            folder={folderPath || null}
-            onCreated={file => openMarkdown(file.id, 'edit')}
-            onOpenDraft={draft =>
-              navigate(
-                projectMarkdownDraftRoute(workspaceSlug, publicProjectId, {
-                  draftName: draft.name,
-                  draftFolder: folderPath,
-                  draftType: draft.documentTypeId ?? undefined,
-                  draftTemplate: draft.templateId ?? undefined
-                })
-              )
-            }
-            onCreate={name =>
-              contentOperations.createMarkdown.mutateAsync({ name, folder: folderPath })
-            }
-            isPending={contentOperations.createMarkdown.isPending}
-          />
-          <input
-            ref={fileInputRef}
-            type="file"
-            style={{ display: 'none' }}
-            onChange={e => {
-              const file = e.target.files?.[0];
-              if (file) contentOperations.upload.mutate({ file, folder: folderPath });
-              e.target.value = '';
-            }}
-          />
-        </>
-      )}
-      {fileMenu.element}
-    </ProjectScreenLayout>
+        {project.canManageFiles && (
+          <>
+            <AddContentFolderDialog
+              scope={scope}
+              open={dialog === 'folder'}
+              onClose={() => setDialog(null)}
+              onCreated={() => {}}
+              parentFolder={folderPath}
+            />
+            <AddDiagramDialog
+              open={dialog === 'diagram'}
+              onClose={() => setDialog(null)}
+              onCreated={() => {}}
+              workspaceId={workspaceSlug}
+              context="project"
+              projectId={projectId}
+              projectName={project.name}
+              folder={folderPath}
+            />
+            <AddMarkdownDialog
+              open={dialog === 'markdown'}
+              onClose={() => setDialog(null)}
+              workspaceSlug={workspaceSlug}
+              projectId={projectId}
+              scope={scope}
+              folder={folderPath || null}
+              onCreated={file => openMarkdown(file.id, 'edit')}
+              onOpenDraft={draft =>
+                navigate(
+                  projectMarkdownDraftRoute(workspaceSlug, publicProjectId, {
+                    draftName: draft.name,
+                    draftFolder: folderPath,
+                    draftType: draft.documentTypeId ?? undefined,
+                    draftTemplate: draft.templateId ?? undefined
+                  })
+                )
+              }
+              onCreate={name =>
+                contentOperations.createMarkdown.mutateAsync({ name, folder: folderPath })
+              }
+              isPending={contentOperations.createMarkdown.isPending}
+            />
+            <input
+              ref={fileInputRef}
+              type="file"
+              style={{ display: 'none' }}
+              onChange={e => {
+                const file = e.target.files?.[0];
+                if (file) contentOperations.upload.mutate({ file, folder: folderPath });
+                e.target.value = '';
+              }}
+            />
+          </>
+        )}
+        {fileMenu.element}
+      </ProjectScreenLayout>
+    </>
   );
 };

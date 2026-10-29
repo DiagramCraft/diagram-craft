@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { useOpenDiagram } from '../diagram/useOpenDiagram';
 import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
@@ -90,6 +91,7 @@ export const EntityContentSidebar = ({
   const [diagramFolder, setDiagramFolder] = useState<string | null | undefined>(undefined);
   const [markdownFolder, setMarkdownFolder] = useState<string | null | undefined>(undefined);
   const navigate = useNavigate();
+  const { openDiagram, dialog: openDiagramDialog } = useOpenDiagram();
   const params = useParams({ strict: false });
   const search = useSearch({ strict: false }) as EntityDetailSearchParams;
   const contentFolder = params._splat ?? null;
@@ -149,22 +151,27 @@ export const EntityContentSidebar = ({
   };
   const openFile = (file: ProjectFile) => {
     const projectId = file.project_public_id ?? file.project_id;
-    if (projectId)
-      navigate(
-        file.type === 'markdown'
-          ? projectMarkdownRoute(workspaceSlug, asProjectPublicId(projectId), file.id)
-          : projectDiagramRoute(workspaceSlug, asProjectPublicId(projectId), file.id)
-      );
-    else
-      navigate(
-        file.type === 'markdown'
-          ? entityMarkdownRoute(workspaceSlug, asEntityPublicId(entityId), file.id)
-          : entityDiagramRoute(workspaceSlug, asEntityPublicId(entityId), file.id)
-      );
+    const go = () => {
+      if (projectId)
+        navigate(
+          file.type === 'markdown'
+            ? projectMarkdownRoute(workspaceSlug, asProjectPublicId(projectId), file.id)
+            : projectDiagramRoute(workspaceSlug, asProjectPublicId(projectId), file.id)
+        );
+      else
+        navigate(
+          file.type === 'markdown'
+            ? entityMarkdownRoute(workspaceSlug, asEntityPublicId(entityId), file.id)
+            : entityDiagramRoute(workspaceSlug, asEntityPublicId(entityId), file.id)
+        );
+    };
+    if (file.type === 'markdown') go();
+    else void openDiagram(file.id, go);
   };
 
   return (
     <>
+      {openDiagramDialog}
       <div
         className={`${styles.header} ${localStyles.header}`}
         style={{ '--fold-accent': accentColor } as React.CSSProperties}

@@ -47,6 +47,7 @@ const expectedProjectOperations = [
   'createWorkspaceMarkdown',
   'getFile',
   'getDiagramContent',
+  'hasDiagramContent',
   'getMarkdownContent',
   'saveMarkdownContent',
   'migrateMarkdownContent',
