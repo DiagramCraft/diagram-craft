@@ -15,7 +15,6 @@ import { TbArrowsExchange, TbChevronDown, TbEyeOff, TbTrash } from 'react-icons/
 import styles from './NestedMapView.module.css';
 import type { PopoverActions } from '@diagram-craft/app-components/Popover';
 import { Popover } from '@diagram-craft/app-components/Popover';
-import { Button } from '@diagram-craft/app-components/Button';
 import { ToolbarButton } from '../../../components/ToolbarButton';
 import { FilterBuilder } from '../../../components/FilterBuilder';
 import {
@@ -444,7 +443,7 @@ export const MapConfigControls = ({
 
       {!hideToolbar && (
         <ViewControls variant="view">
-          <div className={styles.axisPill}>
+          <div className={styles.fieldGroup}>
             <LabeledValue label="Type" value={metricTerminalSchema?.name ?? 'Any'} />
             <LabeledSelect
               label="Field"
@@ -534,65 +533,47 @@ export const MapConfigControls = ({
               />
 
               {(metricConfig.aggregation === 'worst' || metricConfig.aggregation === 'best') && (
-                <div className={styles.selectWrap}>
-                  <select
-                    className={styles.select}
-                    value={metricConfig.worstDirection ?? 'high'}
-                    onChange={e =>
-                      setMetricConfig({
-                        ...metricConfig,
-                        worstDirection: e.target.value as 'low' | 'high'
-                      })
-                    }
-                  >
-                    {isChoiceSource(metricConfig.source) ? (
-                      <>
-                        <option value="high">Last option is worst</option>
-                        <option value="low">First option is worst</option>
-                      </>
-                    ) : (
-                      <>
-                        <option value="high">High is worse</option>
-                        <option value="low">Low is worse</option>
-                      </>
-                    )}
-                  </select>
-                  <TbChevronDown size={11} />
-                </div>
+                <LabeledSelect
+                  label="Direction"
+                  value={metricConfig.worstDirection ?? 'high'}
+                  onChange={value =>
+                    setMetricConfig({ ...metricConfig, worstDirection: value as 'low' | 'high' })
+                  }
+                  options={
+                    isChoiceSource(metricConfig.source)
+                      ? [
+                          { value: 'high', label: 'Last option is worst' },
+                          { value: 'low', label: 'First option is worst' }
+                        ]
+                      : [
+                          { value: 'high', label: 'High is worse' },
+                          { value: 'low', label: 'Low is worse' }
+                        ]
+                  }
+                />
               )}
 
               {isCurrencyMetric(metricConfig, metricSourceSchema) && (
-                <div className={styles.selectWrap}>
-                  <select
-                    className={styles.select}
-                    value={metricConfig.targetCurrency ?? currencies.default_currency}
-                    onChange={e =>
-                      setMetricConfig({
-                        ...metricConfig,
-                        targetCurrency: e.target.value
-                      })
-                    }
-                  >
-                    {currencies.currencies.map(currency => (
-                      <option key={currency.code} value={currency.code}>
-                        {currency.code} — {currency.label}
-                      </option>
-                    ))}
-                  </select>
-                  <TbChevronDown size={11} />
-                </div>
+                <LabeledSelect
+                  label="Currency"
+                  value={metricConfig.targetCurrency ?? currencies.default_currency}
+                  onChange={value => setMetricConfig({ ...metricConfig, targetCurrency: value })}
+                  options={currencies.currencies.map(currency => ({
+                    value: currency.code,
+                    label: `${currency.code} — ${currency.label}`
+                  }))}
+                />
               )}
 
               {metricConfig.aggregation === 'percentage' && metricTerminalEntitySchema && (
                 <Popover.Root actionsRef={numeratorConditionPopoverRef}>
                   <Popover.Trigger
                     element={
-                      <Button
-                        size="sm"
-                        variant={metricConfig.numeratorCondition ? 'primary' : 'secondary'}
+                      <ToolbarButton
+                        variant={metricConfig.numeratorCondition ? 'primary' : undefined}
                       >
                         {metricConfig.numeratorCondition ? 'Numerator: 1 condition' : 'Numerator…'}
-                      </Button>
+                      </ToolbarButton>
                     }
                   />
                   <Popover.Content sideOffset={4} align="start" arrow={false} closeButton={false}>
