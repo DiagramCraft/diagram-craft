@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getRouteApi } from '@tanstack/react-router';
 import { Button } from '@diagram-craft/app-components/Button';
-import { TbCalendarEvent, TbCheck, TbCopy, TbDots, TbPlus } from 'react-icons/tb';
+import { TbCalendarEvent, TbCheck, TbCopy, TbPlus } from 'react-icons/tb';
 import type { ChangeCase } from '@arch-register/api-types/changeCaseContract';
 import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectCrudContract';
 import type { ProjectEntity } from '@arch-register/api-types/projectEntityContract';
 import type { BrowserView } from '@arch-register/api-types/viewContract';
-import { DropdownMenu, type MenuItem } from '../../../components/DropdownMenu';
+import { type MenuItem } from '../../../components/DropdownMenu';
+import { TitleMenu } from '../../../components/TitleMenu';
 import { useMilestones } from '../../../hooks/useMilestones';
 import {
   useCreateSavedView,
@@ -244,12 +245,7 @@ export const ProjectEntities = ({
       }
       menu={
         dotsMenuItems.length > 0 ? (
-          <DropdownMenu
-            trigger={
-              <Button aria-label="Project entity view actions" icon={<TbDots size={14} />} />
-            }
-            items={dotsMenuItems}
-          />
+          <TitleMenu label="Project entity view actions" items={dotsMenuItems} />
         ) : undefined
       }
     >

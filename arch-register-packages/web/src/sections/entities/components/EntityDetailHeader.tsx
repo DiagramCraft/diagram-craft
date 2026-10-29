@@ -4,7 +4,6 @@ import { TypeBadge } from '../../../components/TypeBadge';
 import { StatusChip } from '../../../components/StatusChip';
 import {
   TbEdit,
-  TbDots,
   TbTrash,
   TbCopy,
   TbBell,
@@ -12,7 +11,8 @@ import {
   TbBookmark,
   TbGitMerge
 } from 'react-icons/tb';
-import { DropdownMenu, type MenuItem } from '../../../components/DropdownMenu';
+import { type MenuItem } from '../../../components/DropdownMenu';
+import { TitleMenu } from '../../../components/TitleMenu';
 import type { EntityChangeApproval } from '@arch-register/api-types/entityChangeContract';
 import type { DeprecationCase } from '@arch-register/api-types/entityDeprecationContract';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
@@ -205,14 +205,7 @@ export const EntityDetailHeader = ({
         }
         menu={
           menuItems.length > 0 ? (
-            <DropdownMenu
-              trigger={
-                <button type="button" className={styles.iconBtn} aria-label="Entity actions">
-                  <TbDots size={14} />
-                </button>
-              }
-              items={menuItems}
-            />
+            <TitleMenu label="Entity actions" items={menuItems} />
           ) : undefined
         }
       />

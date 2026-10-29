@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@diagram-craft/app-components/Button';
-import { MenuButton } from '@diagram-craft/app-components/MenuButton';
-import { Menu } from '@diagram-craft/app-components/src/Menu';
-import { TbBookmark, TbDots, TbFileText, TbPencil, TbStar } from 'react-icons/tb';
+import { TitleMenu } from '../../../components/TitleMenu';
+import { TbBookmark, TbFileText, TbPencil, TbStar } from 'react-icons/tb';
 import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectCrudContract';
 import { ProjectMetaItem, ProjectScreenLayout } from '../shared/ProjectScreenLayout';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
@@ -89,30 +88,26 @@ export const ProjectHome = ({ project, allFilesCount, folderCount }: Props) => {
       menu={
         project.canEdit &&
         !isEditing && (
-          <MenuButton.Root>
-            <MenuButton.Trigger
-              element={
-                <Button variant="ghost" aria-label="Project actions" icon={<TbDots size={16} />} />
+          <TitleMenu
+            label="Project actions"
+            items={[
+              {
+                label: 'Edit Markdown Templates',
+                icon: <TbFileText size={13} />,
+                onClick: () => setMarkdownTemplatesOpen(true)
+              },
+              {
+                label: 'Create project baseline',
+                icon: <TbBookmark size={13} />,
+                onClick: baseline.open
+              },
+              {
+                label: 'Edit project',
+                icon: <TbPencil size={13} />,
+                onClick: () => setIsEditingSettings(true)
               }
-            />
-            <MenuButton.Menu align="end">
-              <Menu.Item
-                leftSlot={<TbFileText size={13} />}
-                onClick={() => setMarkdownTemplatesOpen(true)}
-              >
-                Edit Markdown Templates
-              </Menu.Item>
-              <Menu.Item leftSlot={<TbBookmark size={13} />} onClick={baseline.open}>
-                Create project baseline
-              </Menu.Item>
-              <Menu.Item
-                leftSlot={<TbPencil size={13} />}
-                onClick={() => setIsEditingSettings(true)}
-              >
-                Edit project
-              </Menu.Item>
-            </MenuButton.Menu>
-          </MenuButton.Root>
+            ]}
+          />
         )
       }
       meta={

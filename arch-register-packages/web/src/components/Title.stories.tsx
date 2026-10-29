@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Title } from './Title';
-import { TbSettings, TbDots, TbPlus, TbDownload } from 'react-icons/tb';
+import { TbSettings, TbPlus, TbDownload } from 'react-icons/tb';
 import { Chip } from './Chip';
+import { TitleMenu } from './TitleMenu';
 import { TypeBadge } from './TypeBadge';
 import { Button } from '@diagram-craft/app-components/Button';
 
@@ -91,9 +92,7 @@ export const WithMenu: Story = {
   args: {
     title: 'Settings',
     menu: (
-      <Button variant="secondary">
-        <TbDots size={16} />
-      </Button>
+      <TitleMenu items={[{ label: 'Rename', onClick: () => {} }]} />
     )
   }
 };
@@ -131,9 +130,7 @@ export const FullFeatured: Story = {
       </>
     ),
     menu: (
-      <Button variant="secondary">
-        <TbDots size={16} />
-      </Button>
+      <TitleMenu items={[{ label: 'Rename', onClick: () => {} }]} />
     )
   }
 };

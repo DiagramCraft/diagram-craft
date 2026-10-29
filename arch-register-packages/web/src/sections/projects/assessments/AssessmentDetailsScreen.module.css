@@ -55,21 +55,3 @@
   min-height: 0;
   overflow-y: auto;
 }
-
-.iconBtn {
-  width: 28px;
-  height: 28px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: 1px solid transparent;
-  border-radius: var(--r);
-  color: var(--base-fg-more-dim);
-  cursor: pointer;
-}
-
-.iconBtn:hover {
-  background: var(--cmp-bg);
-  color: var(--base-fg);
-}
