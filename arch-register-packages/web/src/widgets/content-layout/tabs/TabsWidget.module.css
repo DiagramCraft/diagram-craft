@@ -6,7 +6,7 @@
 
 /* The widget frame is unpadded so the tab list reaches the edges; inset the tab content instead. */
 [data-framed="true"] .root {
-  padding: 0 12px;
+  padding: 0 var(--widget-inset-x, 10px);
 }
 
 /* Mirrors the dashboard grid geometry (11px rows, 12px gaps) so nested widgets size the same way. */
