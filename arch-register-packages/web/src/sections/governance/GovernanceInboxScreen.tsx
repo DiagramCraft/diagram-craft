@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ViewControls } from '../../components/ViewControls';
 import { useParams, useSearch } from '@tanstack/react-router';
 import { LabeledSelect } from '../../components/LabeledSelect';
 import { Title } from '../../components/Title';
@@ -90,7 +91,7 @@ export const GovernanceInboxScreen = () => {
         }
       />
 
-      <div className={styles.toolbar}>
+      <ViewControls padding="none" className={styles.toolbar}>
         {scope === 'assigned' ? (
           <>
             <LabeledSelect
@@ -151,7 +152,7 @@ export const GovernanceInboxScreen = () => {
             ]}
           />
         )}
-      </div>
+      </ViewControls>
 
       <div className={styles.summary}>
         {isLoading

@@ -12,7 +12,8 @@ import {
 } from '../../../routes/publicObjectRoutes';
 import { useEntityDrawer } from '../../entities/entityDrawer/useEntityDrawer';
 import { formatRelativeTime } from '../../../utils/dateFormat';
-import { ToolbarFilterBar, ToolbarFilterDate } from '../../../components/ToolbarFilter';
+import { ToolbarFilterDate } from '../../../components/ToolbarFilterDate';
+import { ViewControls } from '../../../components/ViewControls';
 import { LabeledSelect } from '../../../components/LabeledSelect';
 import { Table } from '../../../components/table/Table';
 import { EmptyState } from '../../../components/EmptyState';
@@ -145,7 +146,7 @@ export const AuditLogSubSection = ({
 
   return (
     <div className={styles.blockList}>
-      <ToolbarFilterBar>
+      <ViewControls>
         <LabeledSelect
           label="Object type"
           value={entityType}
@@ -160,7 +161,7 @@ export const AuditLogSubSection = ({
         />
         <ToolbarFilterDate label="From" value={startDate} onChange={setStartDate} />
         <ToolbarFilterDate label="To" value={endDate} onChange={setEndDate} />
-      </ToolbarFilterBar>
+      </ViewControls>
 
       {loading ? (
         <LoadingState text="Loading activity..." size="sm" />

@@ -1,5 +1,6 @@
 import { TbBriefcase2, TbCalendarOff, TbCalendarWeek, TbFlag, TbGitCommit } from 'react-icons/tb';
 import styles from './TimelineView.module.css';
+import { ViewControls, ViewControlsSeparator } from '../../../components/ViewControls';
 import { LabeledSelect } from '../../../components/LabeledSelect';
 import { Button } from '@diagram-craft/app-components/Button';
 import type { FieldOption } from './entityFieldSources';
@@ -18,7 +19,7 @@ export const TimelineConfigBar = ({
   dateFields: FieldOption[];
   isEventMode: boolean;
 }) => (
-  <div className={styles.configBar}>
+  <ViewControls variant="bar">
     <span className={styles.configMeta}>Date</span>
 
     <LabeledSelect
@@ -55,7 +56,7 @@ export const TimelineConfigBar = ({
       onClick={() => onChange({ includeUndated: !cfg.includeUndated })}
     />
 
-    <div className={styles.configSep} />
+    <ViewControlsSeparator />
 
     <LabeledSelect
       label="Group"
@@ -71,7 +72,7 @@ export const TimelineConfigBar = ({
       ]}
     />
 
-    <div className={styles.configSep} />
+    <ViewControlsSeparator />
 
     <div className={styles.segmented}>
       {(['month', 'quarter', 'year'] as const).map(z => (
@@ -89,7 +90,7 @@ export const TimelineConfigBar = ({
 
     {isEventMode && (
       <>
-        <div className={styles.configSep} />
+        <ViewControlsSeparator />
         {(cfg.groupBy === 'snapshot' || cfg.groupBy === 'capability') && (
           <Button
             size="sm"
@@ -122,7 +123,7 @@ export const TimelineConfigBar = ({
       </>
     )}
 
-    <div className={styles.configSep} />
+    <ViewControlsSeparator />
     <Button
       size="sm"
       variant={cfg.showHorizonBands ? 'primary' : 'secondary'}
@@ -132,5 +133,5 @@ export const TimelineConfigBar = ({
       aria-pressed={cfg.showHorizonBands}
       onClick={() => onChange({ showHorizonBands: !cfg.showHorizonBands })}
     />
-  </div>
+  </ViewControls>
 );

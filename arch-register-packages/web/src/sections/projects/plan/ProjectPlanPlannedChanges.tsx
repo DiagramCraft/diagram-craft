@@ -21,7 +21,7 @@ import { Chip } from '../../../components/Chip';
 import { DropdownMenu } from '../../../components/DropdownMenu';
 import { TypeBadge } from '../../../components/TypeBadge';
 import { EmptyState } from '../../../components/EmptyState';
-import { ToolbarFilterBar } from '../../../components/ToolbarFilter';
+import { ViewControls } from '../../../components/ViewControls';
 import { LabeledSelect } from '../../../components/LabeledSelect';
 import { formatDate } from '../../../utils/dateFormat';
 import {
@@ -98,7 +98,7 @@ export const ProjectPlanPlannedChanges = ({
 
   const toolbar = (
     <div className={styles.plannedToolbar}>
-      <ToolbarFilterBar noPadding>
+      <ViewControls padding="none">
         <LabeledSelect
           label="Show"
           value={show}
@@ -121,7 +121,7 @@ export const ProjectPlanPlannedChanges = ({
             ]}
           />
         </div>
-      </ToolbarFilterBar>
+      </ViewControls>
     </div>
   );
 

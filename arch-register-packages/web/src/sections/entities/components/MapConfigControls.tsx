@@ -32,6 +32,7 @@ import { LabeledSelect } from '../../../components/LabeledSelect';
 import { MAP_COLOR_SCHEME_OPTIONS, type MapColorScheme } from './mapColorScales';
 import { HopPicker } from './pathBuilder/HopPicker';
 import { HopSequence } from './pathBuilder/HopSequence';
+import { ViewControls } from '../../../components/ViewControls';
 import {
   pathStepContextWithFallbackDirection,
   pathStepOptions,
@@ -462,7 +463,7 @@ export const MapConfigControls = ({
       )}
 
       {!hideToolbar && (
-        <div className={styles.config}>
+        <ViewControls variant="bar">
           <div className={styles.axisPill}>
             <span className={styles.axisKicker}>Metric</span>
             <span className={styles.pathSummary}>{metricTerminalSchema?.name ?? 'Any schema'}</span>
@@ -670,7 +671,7 @@ export const MapConfigControls = ({
               />
             </>
           )}
-        </div>
+        </ViewControls>
       )}
     </>
   );

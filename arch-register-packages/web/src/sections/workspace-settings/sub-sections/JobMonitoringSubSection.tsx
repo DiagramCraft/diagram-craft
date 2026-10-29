@@ -23,7 +23,8 @@ import {
 } from '../../../hooks/useJobs';
 import { useWorkspaceAuthorization } from '../../../auth/WorkspaceAuthorizationContext';
 import { DropdownMenu, type MenuItem } from '../../../components/DropdownMenu';
-import { ToolbarFilterBar, ToolbarFilterDate } from '../../../components/ToolbarFilter';
+import { ToolbarFilterDate } from '../../../components/ToolbarFilterDate';
+import { ViewControls } from '../../../components/ViewControls';
 import { LabeledSelect } from '../../../components/LabeledSelect';
 import { Table } from '../../../components/table/Table';
 import { Chip } from '../../../components/Chip';
@@ -543,7 +544,7 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
 
         {tab === 'history' && (
           <>
-            <ToolbarFilterBar noPadding>
+            <ViewControls padding="none">
               <LabeledSelect
                 label="Schedule"
                 value={scheduleId}
@@ -569,7 +570,7 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
                 value={plannedTo}
                 onChange={value => updateFilter(() => setPlannedTo(value))}
               />
-            </ToolbarFilterBar>
+            </ViewControls>
             <section className={styles.section}>
               <QueryState
                 isLoading={runsLoading}

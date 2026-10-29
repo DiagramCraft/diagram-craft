@@ -68,6 +68,7 @@ export type { MapConfig } from './mapViewConfig';
 import type { JoinedAssessmentContext } from './entityFieldSources';
 import type { EntityHoverCardRow } from '../../../components/EntityHoverCardBody';
 import type { PopoverActions } from '@diagram-craft/app-components/Popover';
+import { ViewControlsFrame } from '../../../components/ViewControls';
 
 type NestedMapViewProps = {
   workspaceId: string;
@@ -757,7 +758,7 @@ export const NestedMapView = ({
     : isLegacyError;
 
   return (
-    <div className={styles.wrap}>
+    <ViewControlsFrame fill>
       <MapConfigControls
         hideToolbar={hideToolbar}
         cfg={cfg}
@@ -857,6 +858,6 @@ export const NestedMapView = ({
             lifecycleStates={lifecycleStates}
           />
         ))}
-    </div>
+    </ViewControlsFrame>
   );
 };

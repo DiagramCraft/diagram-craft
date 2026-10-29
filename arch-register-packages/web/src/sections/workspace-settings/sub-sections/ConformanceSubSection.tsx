@@ -36,7 +36,7 @@ import {
 } from '../../../components/ConformanceBadges';
 import { DropdownMenu, type MenuItem } from '../../../components/DropdownMenu';
 import { Drawer } from '../../../components/Drawer';
-import { ToolbarFilterBar } from '../../../components/ToolbarFilter';
+import { ViewControls } from '../../../components/ViewControls';
 import { LabeledSelect } from '../../../components/LabeledSelect';
 import { LoadingState } from '../../../components/LoadingState';
 import { QueryState } from '../QueryState';
@@ -617,7 +617,7 @@ export const ConformanceSubSection = ({
 
         {tab === 'violations' && (
           <section className={styles.section}>
-            <ToolbarFilterBar noPadding>
+            <ViewControls padding="none">
               <LabeledSelect
                 label="Status"
                 value={status}
@@ -672,7 +672,7 @@ export const ConformanceSubSection = ({
                   ...teams.map(team => ({ value: team.id, label: team.name }))
                 ]}
               />
-            </ToolbarFilterBar>
+            </ViewControls>
             <div style={{ height: '8px' }}></div>
             {!violations ? (
               <LoadingState text="Loading violations…" size="sm" />

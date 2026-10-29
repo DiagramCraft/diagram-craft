@@ -21,7 +21,7 @@ import {
 import { EmptyState } from '../../../components/EmptyState';
 import { Table } from '../../../components/table/Table';
 import { useTableSort } from '../../../components/table/useTableSort';
-import { ToolbarFilterBar } from '../../../components/ToolbarFilter';
+import { ViewControls } from '../../../components/ViewControls';
 import { LabeledSelect } from '../../../components/LabeledSelect';
 
 type StatusFilter = 'default' | 'complete' | 'cancelled' | 'all';
@@ -91,7 +91,7 @@ export const ProjectPlanMilestones = ({
   return (
     <>
       <div className={styles.filterBar}>
-        <ToolbarFilterBar noPadding>
+        <ViewControls padding="none">
           <LabeledSelect
             label="Status"
             value={statusFilter}
@@ -103,7 +103,7 @@ export const ProjectPlanMilestones = ({
               { value: 'all', label: `All (${count('all')})` }
             ]}
           />
-        </ToolbarFilterBar>
+        </ViewControls>
       </div>
       {filtered.length === 0 ? (
         <div className={styles.list}>

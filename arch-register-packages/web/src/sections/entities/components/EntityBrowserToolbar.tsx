@@ -1,4 +1,5 @@
 import { TbHistory } from 'react-icons/tb';
+import { ViewControls } from '../../../components/ViewControls';
 import { Button } from '@diagram-craft/app-components/Button';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type {
@@ -14,7 +15,6 @@ import type {
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import type { Assessment } from '@arch-register/api-types/assessmentContract';
 import { LabeledSelect } from '../../../components/LabeledSelect';
-import styles from './EntityBrowser.module.css';
 import { ManageFieldsPopover } from './ManageFieldsPopover';
 import { AssessmentJoinPicker } from './AssessmentJoinPicker';
 import { BROWSER_VIEW_OPTIONS, groupViewOptions } from './browserViewMeta';
@@ -105,7 +105,7 @@ export const EntityBrowserToolbar = ({
   allowedViews
 }: EntityBrowserToolbarProps) => {
   return (
-    <div className={styles.toolbar}>
+    <ViewControls spaced compactButtons>
       <QueryModeControls
         workspaceId={workspaceId}
         q={q}
@@ -179,6 +179,6 @@ export const EntityBrowserToolbar = ({
           onClick={onToggleTimeline}
         />
       )}
-    </div>
+    </ViewControls>
   );
 };

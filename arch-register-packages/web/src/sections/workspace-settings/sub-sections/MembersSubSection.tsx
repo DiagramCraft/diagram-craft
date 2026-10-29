@@ -9,7 +9,7 @@ import { Chip } from '../../../components/Chip';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { MemberAvatar, stableHue } from '../../../components/MemberAvatar';
 import { SearchInput } from '../../../components/SearchInput';
-import { ToolbarFilterBar } from '../../../components/ToolbarFilter';
+import { ViewControls } from '../../../components/ViewControls';
 import { LabeledSelect } from '../../../components/LabeledSelect';
 import { useAuth } from '../../../auth/AuthContext';
 import { useAuthConfig } from '../../../hooks/useAuthConfig';
@@ -127,7 +127,7 @@ export const MembersSubSection = ({ workspaceSlug }: { workspaceSlug: string }) 
       {header}
       <SettingsPage stacked={false}>
         {!isLoading && members.length > 0 && (
-          <ToolbarFilterBar>
+          <ViewControls>
             <SearchInput
               size="sm"
               placeholder="Search by name or email…"
@@ -153,7 +153,7 @@ export const MembersSubSection = ({ workspaceSlug }: { workspaceSlug: string }) 
                 ...teams.map(t => ({ value: t.id, label: t.name }))
               ]}
             />
-          </ToolbarFilterBar>
+          </ViewControls>
         )}
         {isLoading ? (
           <LoadingState text="Loading members…" size="sm" />

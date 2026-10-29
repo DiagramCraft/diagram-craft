@@ -11,23 +11,6 @@
 }
 
 /* Config bar */
-.configBar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  border-bottom: 1px solid var(--panel-border);
-  flex-shrink: 0;
-  flex-wrap: wrap;
-}
-
-.configSep {
-  width: 1px;
-  height: 16px;
-  background: var(--panel-border);
-  flex-shrink: 0;
-}
-
 .configArrow {
   font-size: 11px;
   color: var(--base-fg-more-dim);

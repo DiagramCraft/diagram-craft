@@ -1,0 +1,74 @@
+/**
+ *  ViewControls - .cViewControls
+ *  | Spacer    - .eSpacer
+ *  | Separator - .eSeparator
+ *  ViewControlsFrame - .cViewControlsFrame
+ */
+
+.cViewControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 8px 0;
+
+  &[data-variant="bar"] {
+    padding: 6px 10px;
+    min-height: 42px;
+    border-bottom: 1px solid var(--panel-border);
+    flex-shrink: 0;
+  }
+
+  &[data-padding="none"] {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  &[data-nowrap] {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+
+  &[data-spaced] {
+    margin-bottom: 8px;
+  }
+
+  /* Wins over Button's own styling, including buttons rendered by child components */
+  &[data-compact-buttons] button {
+    height: 24px !important;
+    border-radius: var(--r) !important;
+
+    &:not([data-variant="primary"]) {
+      background: var(--cmp-bg) !important;
+      border: 1px solid var(--panel-border) !important;
+    }
+  }
+
+  .eSpacer {
+    flex: 1;
+  }
+
+  .eSeparator {
+    width: 1px;
+    height: 16px;
+    margin: 0;
+    border: 0;
+    background: var(--panel-border);
+    flex-shrink: 0;
+  }
+}
+
+.cViewControlsFrame {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+
+  &[data-fill] {
+    flex: 1;
+    height: auto;
+  }
+}
