@@ -122,15 +122,10 @@
   flex-shrink: 0;
 }
 
-.empty,
 .error {
   padding: 48px 24px;
-  color: var(--cmp-fg-disabled);
   text-align: center;
   border: 1px dashed var(--cmp-border);
   border-radius: var(--r-md);
-}
-
-.error {
   color: var(--accent-fg);
 }

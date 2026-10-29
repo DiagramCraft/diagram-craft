@@ -12,6 +12,7 @@ import {
 } from '../../hooks/useGovernance';
 import { useEntity } from '../../hooks/useEntities';
 import { useEntityDrawer } from '../../sections/entities/entityDrawer/useEntityDrawer';
+import { REQUEST_CHANGES_CASE_KINDS } from '../../utils/governanceCaseKinds';
 import { caseKindLabel, humanizeCaseKind } from '../../utils/governanceCaseLabels';
 import { dueLabel, dueTone } from '../../utils/assessmentDueTone';
 import { formatDateTime } from '../../utils/dateFormat';
@@ -33,17 +34,6 @@ const PRIORITY_TONE: Record<NeedsAttentionPriority, string> = {
   medium: 'var(--cmp-fg-warning, #eab308)',
   low: 'var(--cmp-fg-dim, #9ca3af)'
 };
-
-// Cases of these kinds can be sent back for revision rather than only approved/rejected outright —
-// mirrors `GovernanceInboxScreen.tsx`'s own `requestChanges` affordance exactly (same case kinds,
-// same "only on an 'approve' action" gate), so a request-changes case initiated here behaves
-// identically wherever it's later reviewed.
-const REQUEST_CHANGES_CASE_KINDS = new Set([
-  'entity.change-case',
-  'entity.change-case.bulk',
-  'relation.change-case',
-  'document.status'
-]);
 
 const capitalize = (value: string): string => value.charAt(0).toUpperCase() + value.slice(1);
 
