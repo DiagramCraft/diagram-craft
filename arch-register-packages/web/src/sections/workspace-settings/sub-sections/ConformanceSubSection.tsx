@@ -40,6 +40,10 @@ import { ViewControls } from '../../../components/ViewControls';
 import { LabeledSelect } from '../../../components/LabeledSelect';
 import { LoadingState } from '../../../components/LoadingState';
 import { QueryState } from '../QueryState';
+import {
+  CONFORMANCE_SEVERITY_OPTIONS,
+  CONFORMANCE_STATUS_OPTIONS
+} from '../../../components/conformanceOptions';
 import { Pagination } from '../../../components/Pagination';
 import { formatDateTime } from '../../../utils/dateFormat';
 import { useAiStatus } from '../../../hooks/useAiConfig';
@@ -72,20 +76,6 @@ const RUN_STATUS_META: Record<ConformanceEvaluationRun['status'], { tone: string
     running: { tone: 'var(--accent-fg)', label: 'Running…' },
     failed: { tone: 'var(--error-fg)', label: 'Failed' }
   };
-
-const STATUS_OPTIONS: Array<{ value: '' | ConformanceCheckStatus; label: string }> = [
-  { value: '', label: 'Current and historical' },
-  { value: 'active', label: 'Active' },
-  { value: 'acknowledged', label: 'Acknowledged' },
-  { value: 'exempt', label: 'Exempt' },
-  { value: 'resolved', label: 'Resolved' }
-];
-
-const SEVERITY_OPTIONS: Array<{ value: '' | ConformanceSeverity; label: string }> = [
-  { value: '', label: 'All severities' },
-  { value: 'error', label: 'Errors' },
-  { value: 'warning', label: 'Warnings' }
-];
 
 const AddCheckMenu = ({
   aiConfigured,
@@ -624,7 +614,7 @@ export const ConformanceSubSection = ({
                     setStatus(value as '' | ConformanceCheckStatus);
                     setOffset(0);
                   }}
-                  options={STATUS_OPTIONS}
+                  options={CONFORMANCE_STATUS_OPTIONS}
                 />
                 <LabeledSelect
                   label="Severity"
@@ -633,7 +623,7 @@ export const ConformanceSubSection = ({
                     setSeverity(value as '' | ConformanceSeverity);
                     setOffset(0);
                   }}
-                  options={SEVERITY_OPTIONS}
+                  options={CONFORMANCE_SEVERITY_OPTIONS}
                 />
                 <LabeledSelect
                   label="Check"

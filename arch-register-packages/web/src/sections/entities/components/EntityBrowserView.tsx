@@ -10,6 +10,7 @@ import { useMemo, type ReactNode } from 'react';
 import { BubbleChartView } from './BubbleChartView';
 import { CardsView } from './CardsView';
 import { EntityBrowserGraphView } from './EntityBrowserGraphView';
+import { ConformanceView } from './ConformanceView';
 import { CompareDatesView } from './CompareDatesView';
 import { RelationColumnsView } from './RelationColumnsView';
 import { HeatmapView } from './HeatmapView';
@@ -384,6 +385,10 @@ export const EntityBrowserView = ({
           responsesByEntity={responsesByEntity}
           onCountChange={onCountChange}
         />
+      );
+    case 'conformance':
+      return (
+        <ConformanceView rows={rows} onEntityClick={onEntityClick} hideToolbar={hideToolbar} />
       );
     case 'cards':
       return (

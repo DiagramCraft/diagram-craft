@@ -29,7 +29,8 @@ export const BROWSER_VIEWS = [
   'compare-dates',
   'graph',
   'traceability',
-  'trail'
+  'trail',
+  'conformance'
 ] as const;
 
 export const browserViewSchema = z

@@ -27,7 +27,9 @@ const HELP: Record<BrowserView, string> = {
   traceability:
     'Follows configured relationship paths from the matching entities, to show what each one traces to and where coverage has gaps.',
   trail:
-    'Walk a chain of relations one column at a time. Select an entity, choose a relation on the arrow, and the next column lists the entities it leads to.'
+    'Walk a chain of relations one column at a time. Select an entity, choose a relation on the arrow, and the next column lists the entities it leads to.',
+  conformance:
+    'The conformance violations of the matching entities, one row per violation, joined with the entity. Filter by status, severity and check; click a row to open the entity.'
 };
 
 const LABELS: Record<BrowserView, string> = {
@@ -44,12 +46,13 @@ const LABELS: Record<BrowserView, string> = {
   'compare-dates': 'Compare dates',
   graph: 'Graph',
   traceability: 'Traceability',
-  trail: 'Trail'
+  trail: 'Trail',
+  conformance: 'Conformance'
 };
 
 /** The groups, and the order within them, the views are offered in the view dropdown. */
 export const BROWSER_VIEW_GROUPS: Array<{ label: string; views: BrowserView[] }> = [
-  { label: 'Lists', views: ['table', 'cards', 'tree'] },
+  { label: 'Lists', views: ['table', 'cards', 'tree', 'conformance'] },
   { label: 'Charts', views: ['radar', 'bubble-chart', 'heatmap', 'nested-map'] },
   { label: 'Time', views: ['timeline', 'compare-dates'] },
   {
