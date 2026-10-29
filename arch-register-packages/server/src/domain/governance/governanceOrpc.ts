@@ -6,6 +6,7 @@ import { createOrpcHandler } from '../../utils/orpcHandler';
 import { orpcErrorMiddleware } from '../../utils/orpcErrors';
 import {
   cancelGovernanceCase,
+  countMySubmittedGovernanceCases,
   decideGovernanceAssignment,
   getGovernanceCase,
   listGovernanceCaseEvents,
@@ -125,6 +126,13 @@ export const createGovernanceORPCRouter = (registry: GovernanceRegistry) =>
             context.event,
             input.query,
             registry
+          );
+        }),
+        count: governanceRouter.governance.submissions.count.handler(async ({ input, context }) => {
+          return await countMySubmittedGovernanceCases(
+            context.db,
+            input.params.workspace,
+            context.event
           );
         })
       }

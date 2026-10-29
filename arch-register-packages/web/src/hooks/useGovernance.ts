@@ -9,6 +9,7 @@ import {
   governanceCaseEventsQuery,
   governanceCaseQuery,
   governanceCasesQuery,
+  governanceSubmissionCountQuery,
   governanceSubmissionsQuery,
   governanceTaskCountQuery,
   governanceTasksQuery,
@@ -45,6 +46,9 @@ export const useGovernanceSubmissions = (
   query: ListGovernanceSubmissionsQuery = {},
   enabled = true
 ) => useQuery(governanceSubmissionsQuery(workspaceId, query, enabled));
+
+export const useGovernanceSubmissionCount = (workspaceId: string, enabled = true) =>
+  useQuery(governanceSubmissionCountQuery(workspaceId, enabled));
 
 export const useWithdrawGovernanceCase = (workspaceId: string) => {
   const queryClient = useQueryClient();

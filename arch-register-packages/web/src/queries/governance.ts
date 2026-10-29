@@ -25,6 +25,8 @@ export const governanceKeys = {
     [...governanceKeys.all, 'submissions', workspaceId, query] as const,
   submissionsWorkspace: (workspaceId: string) =>
     [...governanceKeys.all, 'submissions', workspaceId] as const,
+  submissionCount: (workspaceId: string) =>
+    [...governanceKeys.submissionsWorkspace(workspaceId), 'count'] as const,
   events: (workspaceId: string, caseId: string) =>
     [...governanceKeys.all, 'events', workspaceId, caseId] as const,
   eventsWorkspace: (workspaceId: string) => [...governanceKeys.all, 'events', workspaceId] as const
@@ -95,6 +97,15 @@ export const governanceSubmissionsQuery = (
     queryKey: governanceKeys.submissions(workspaceId, query),
     queryFn: () =>
       orpcClient.governance.submissions.mine({ params: { workspace: workspaceId }, query }),
+    enabled: enabled && !!workspaceId,
+    staleTime: 5 * 1000,
+    refetchInterval: 10 * 1000
+  });
+
+export const governanceSubmissionCountQuery = (workspaceId: string, enabled = true) =>
+  queryOptions({
+    queryKey: governanceKeys.submissionCount(workspaceId),
+    queryFn: () => orpcClient.governance.submissions.count({ params: { workspace: workspaceId } }),
     enabled: enabled && !!workspaceId,
     staleTime: 5 * 1000,
     refetchInterval: 10 * 1000

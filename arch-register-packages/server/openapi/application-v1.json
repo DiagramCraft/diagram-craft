@@ -160599,6 +160599,47 @@
         }
       }
     },
+    "/{workspace}/governance/submissions/mine/count": {
+      "get": {
+        "operationId": "governance.submissions.count",
+        "summary": "Count the current user's submissions needing attention",
+        "description": "Counts open submissions and submissions with a request-changes outcome, excluding withdrawn entity change proposals.",
+        "tags": [
+          "Governance",
+          "Governance"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "count": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "count"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/{workspace}/governance/workflow-config": {
       "get": {
         "operationId": "governanceWorkflowConfig.list",

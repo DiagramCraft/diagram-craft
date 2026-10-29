@@ -359,7 +359,19 @@ export const governanceContract = oc.tag('Governance').router({
           tags: ['Governance']
         })
         .input(z.object({ params: ws, query: listGovernanceSubmissionsQuerySchema }))
-        .output(z.array(governanceSubmissionSchema))
+        .output(z.array(governanceSubmissionSchema)),
+      count: oc
+        .route({
+          method: 'GET',
+          path: '/{workspace}/governance/submissions/mine/count',
+          inputStructure: 'detailed',
+          summary: "Count the current user's submissions needing attention",
+          description:
+            'Counts open submissions and submissions with a request-changes outcome, excluding withdrawn entity change proposals.',
+          tags: ['Governance']
+        })
+        .input(z.object({ params: ws }))
+        .output(z.object({ count: z.number() }))
     }
   }
 });

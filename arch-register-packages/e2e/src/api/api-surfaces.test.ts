@@ -127,6 +127,7 @@ test.describe('versioned API surface aliases', () => {
     expect(applicationSpec.paths['/{workspace}/notification-preferences']).toBeDefined();
     expect(applicationSpec.paths['/{workspace}/discussions']).toBeDefined();
     expect(applicationSpec.paths['/{workspace}/governance/cases']).toBeDefined();
+    expect(applicationSpec.paths['/{workspace}/governance/submissions/mine/count']).toBeDefined();
     expect(applicationSpec.paths['/{workspace}/governance/workflow-config']).toBeDefined();
     expect(applicationSpec.paths['/{workspace}/governance/reminder-config']).toBeUndefined();
     expect(

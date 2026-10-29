@@ -30,6 +30,7 @@ import { createGovernanceInAppNotifications } from './governanceNotifications';
 import { enqueueGovernanceWebhookDeliveries } from '../webhook/webhookDelivery';
 import { resolveGovernanceWorkflowConfig } from './governanceWorkflowConfig';
 import { resolveGovernanceInitiationFields } from './governanceInitiationFields';
+import { ENTITY_CHANGE_POLICY_CASE_KIND } from './schemaGovernancePolicy';
 import type {
   GovernanceAssignment,
   GovernanceCase,
@@ -577,6 +578,46 @@ export const listMySubmittedGovernanceCases = async (
       listMySubmittedGovernanceCasesForContext(db, ws, event, authCtx, query, registry)
   });
 
+const countMySubmittedGovernanceCasesForContext = async (
+  db: DatabaseAdapter,
+  ws: string,
+  event: AuthenticatedEvent,
+  authCtx: WorkspaceAuthorizationContext
+): Promise<{ count: number }> => {
+  requireWorkspaceCapability(authCtx, 'ws.view');
+
+  const cases = await db.governance.listCases(ws, {
+    initiatorUserId: event.context.user.id
+  });
+  const needsAttention = cases.filter(
+    caseRow => caseRow.status === 'open' || caseRow.outcome === 'request_changes'
+  );
+  const withdrawnProposalStatuses = await Promise.all(
+    needsAttention.map(async caseRow => {
+      if (caseRow.case_kind !== ENTITY_CHANGE_POLICY_CASE_KIND) return false;
+      const proposalId = caseRow.payload['proposalId'];
+      if (typeof proposalId !== 'string') return false;
+      const proposal = await db.entityChange.getApproval(ws, proposalId);
+      return proposal?.status === 'withdrawn';
+    })
+  );
+
+  return { count: withdrawnProposalStatuses.filter(isWithdrawn => !isWithdrawn).length };
+};
+
+export const countMySubmittedGovernanceCases = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  event: AuthenticatedEvent
+): Promise<{ count: number }> =>
+  runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'workspace', workspace },
+    operation: ({ ws, authCtx }) =>
+      countMySubmittedGovernanceCasesForContext(db, ws, event, authCtx)
+  });
+
 const listGovernanceCaseEventsForContext = async (
   db: DatabaseAdapter,
   ws: string,
@@ -651,13 +692,7 @@ const listMyGovernanceAssignmentsForContext = async (
         return null;
       }
 
-      const state =
-        caseRow.status === 'cancelled'
-          ? 'cancelled'
-          : caseRow.status === 'completed' &&
-              (assignment.status === 'completed' || assignment.status === 'superseded')
-            ? 'completed'
-            : assignment.status;
+      const state = caseRow.status === 'open' ? assignment.status : caseRow.status;
       if (query.state && state !== query.state) return null;
       if (!query.state && state !== 'open') return null;
       if (caseRow.initiator_user_id === userId && !caseRow.self_approval_allowed) return null;
