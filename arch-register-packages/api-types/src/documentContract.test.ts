@@ -148,6 +148,20 @@ describe('document response schemas', () => {
         updated_at: '2026-07-16T12:00:00.000Z'
       })
     ).toMatchObject({ project_id: null, document_type_id: 'type-1' });
+    expect(
+      documentTemplateSchema.parse({
+        id: 'template-2',
+        workspace: 'workspace-1',
+        project_id: null,
+        name: 'Untyped',
+        body: '# {{title}}',
+        document_type_id: null,
+        metadata_defaults: {},
+        archived: false,
+        created_at: '2026-07-16T12:00:00.000Z',
+        updated_at: '2026-07-16T12:00:00.000Z'
+      })
+    ).toMatchObject({ document_type_id: null });
   });
 
   it('accepts interactive and metadata-generator action definitions', () => {

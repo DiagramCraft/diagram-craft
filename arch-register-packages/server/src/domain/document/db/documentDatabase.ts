@@ -58,7 +58,7 @@ export type DocumentTemplateDbResult = {
   project_id: string | null;
   name: string;
   body: string;
-  document_type_id: string;
+  document_type_id: string | null;
   metadata_defaults: DocumentMetadata;
   archived: boolean;
   created_at: Date;

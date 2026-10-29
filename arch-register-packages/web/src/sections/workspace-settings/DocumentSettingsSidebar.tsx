@@ -71,23 +71,35 @@ export const DocumentSettingsSidebar = ({ workspaceSlug }: { workspaceSlug: stri
             />
           ) : undefined
         }
-        trailing={showType ? <span className="dim">{type?.name ?? 'Unknown'}</span> : undefined}
+        trailing={
+          showType ? (
+            <span className="dim">
+              {template.document_type_id === null ? 'Untyped' : (type?.name ?? 'Unknown')}
+            </span>
+          ) : undefined
+        }
       />
     );
   };
 
   const templateGroups = [
+    { id: '__untyped__', name: 'Untyped Markdown' },
     ...activeTypes.map(type => ({ id: type.id, name: type.name })),
-    ...(activeTemplates.some(t => !activeTypes.some(type => type.id === t.document_type_id))
+    ...(activeTemplates.some(
+      t => t.document_type_id !== null && !activeTypes.some(type => type.id === t.document_type_id)
+    )
       ? [{ id: '__unknown__', name: 'Unknown type' }]
       : [])
   ]
     .map(group => ({
       ...group,
       templates: activeTemplates.filter(t =>
-        group.id === '__unknown__'
-          ? !activeTypes.some(type => type.id === t.document_type_id)
-          : t.document_type_id === group.id
+        group.id === '__untyped__'
+          ? t.document_type_id === null
+          : group.id === '__unknown__'
+            ? t.document_type_id !== null &&
+              !activeTypes.some(type => type.id === t.document_type_id)
+            : t.document_type_id === group.id
       )
     }))
     .filter(group => group.templates.length > 0);

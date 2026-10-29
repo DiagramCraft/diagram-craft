@@ -31,6 +31,7 @@ import { resolveDocumentTypeColor } from '../../lib/schemaPresentation';
 import styles from './DocumentSettingsScreen.module.css';
 
 const NEW_DOCUMENT_TEMPLATE_ID = 'new';
+const UNTYPED = '__untyped__';
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/documents');
 export const DocumentTemplateEditor = ({
   workspaceSlug,
@@ -55,6 +56,7 @@ export const DocumentTemplateEditor = ({
   const deleteTemplate = useDeleteDocumentTemplate(workspaceSlug);
 
   const [name, setName] = useState('');
+  // '' = not chosen yet, UNTYPED = template for untyped Markdown
   const [documentTypeId, setDocumentTypeId] = useState('');
   const [body, setBody] = useState('# {{title}}\n');
   const [defaults, setDefaults] = useState<DocumentMetadata>({});
@@ -65,7 +67,7 @@ export const DocumentTemplateEditor = ({
   useEffect(() => {
     if (selected) {
       setName(selected.name);
-      setDocumentTypeId(selected.document_type_id);
+      setDocumentTypeId(selected.document_type_id ?? UNTYPED);
       setBody(selected.body);
       setDefaults(selected.metadata_defaults);
       setDirty(false);
@@ -94,12 +96,13 @@ export const DocumentTemplateEditor = ({
 
   const handleSave = async () => {
     if (!dirty || !documentTypeId) return;
+    const isUntyped = documentTypeId === UNTYPED;
     try {
       const templateBody = {
         name,
         body,
-        document_type_id: documentTypeId,
-        metadata_defaults: defaults,
+        document_type_id: isUntyped ? null : documentTypeId,
+        metadata_defaults: isUntyped ? {} : defaults,
         project_id: null
       };
       if (isNew) {
@@ -189,7 +192,7 @@ export const DocumentTemplateEditor = ({
                 ) : undefined
               }
               title={name ?? 'New template'}
-              description={`For ${selectedType ? selectedType.name : 'an unknown type'}${selectedType?.archived ? ' · archived type' : ''}`}
+              description={`For ${documentTypeId === UNTYPED ? 'untyped Markdown' : selectedType ? selectedType.name : 'an unknown type'}${selectedType?.archived ? ' · archived type' : ''}`}
             />
           </div>
           <div className={styles.editor}>
@@ -215,6 +218,7 @@ export const DocumentTemplateEditor = ({
                   }}
                   style={{ width: '100%' }}
                 >
+                  <Select.Item value={UNTYPED}>Untyped Markdown</Select.Item>
                   {types
                     .filter(type => !type.archived || type.id === documentTypeId)
                     .map(type => (
@@ -240,7 +244,9 @@ export const DocumentTemplateEditor = ({
             />
 
             <div className={styles.sectionLabel}>Structured metadata defaults</div>
-            {selectedType ? (
+            {documentTypeId === UNTYPED ? (
+              <div className={styles.fieldEmpty}>Untyped Markdown has no metadata fields.</div>
+            ) : selectedType ? (
               <div className={styles.defaultsGrid}>
                 {selectedType.fields.filter(field => !field.retired).length === 0 ? (
                   <div className={styles.fieldEmpty}>This document type has no fields.</div>

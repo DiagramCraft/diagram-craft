@@ -58,15 +58,13 @@ const typeVersionMapper = (row: DatabaseRow): DocumentTypeVersionDbResult => ({
   created_at: databaseDate(row['created_at'])
 });
 const templateMapper = (row: DatabaseRow): DocumentTemplateDbResult => {
-  if (row['document_type_id'] == null)
-    throw new Error('Document template is missing a document type');
   return {
     id: String(row['id']),
     workspace: String(row['workspace']),
     project_id: row['project_id'] == null ? null : String(row['project_id']),
     name: String(row['name']),
     body: String(row['body']),
-    document_type_id: String(row['document_type_id']),
+    document_type_id: row['document_type_id'] == null ? null : String(row['document_type_id']),
     metadata_defaults: parseDatabaseJson(
       row['metadata_defaults'],
       {},

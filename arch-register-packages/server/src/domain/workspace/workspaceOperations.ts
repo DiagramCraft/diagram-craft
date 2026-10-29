@@ -875,13 +875,13 @@ export const createWorkspace = async (
                 if (template.project_id != null && !projectId) continue;
                 const documentTypeId = resolveMappedIdOrNull(typeMap, template.document_type_id);
                 const sourceType = sourceTypes.find(type => type.id === template.document_type_id);
-                if (!documentTypeId) continue;
+                if (template.document_type_id != null && !documentTypeId) continue;
                 const copiedTemplate = await db.document.createDocumentTemplate({
                   ...template,
                   id: randomUUID(),
                   workspace: row.id,
                   project_id: projectId ?? null,
-                  document_type_id: documentTypeId,
+                  document_type_id: documentTypeId ?? null,
                   metadata_defaults: sourceType
                     ? remapDocumentMetadataValues(sourceType.fields, template.metadata_defaults, {
                         entityMap,

@@ -5956,8 +5956,11 @@ export const instantiateTemplateComposition = (
       result.documentTypes.push({ ...documentType, name });
     }
     for (const documentTemplate of module.documentTemplates) {
-      const documentTypeId = documentTypeIdMap.get(documentTemplate.document_type_id);
-      if (!documentTypeId) continue;
+      const documentTypeId =
+        documentTemplate.document_type_id === null
+          ? null
+          : documentTypeIdMap.get(documentTemplate.document_type_id);
+      if (documentTypeId === undefined) continue;
       result.documentTemplates.push({
         ...documentTemplate,
         document_type_id: documentTypeId,
