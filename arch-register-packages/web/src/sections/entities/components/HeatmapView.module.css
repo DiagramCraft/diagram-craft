@@ -10,7 +10,7 @@
 
 .noFields {
   font-size: 11px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }
 
 /* Body */
@@ -52,7 +52,7 @@
   justify-content: center;
   font-size: 10.5px;
   font-weight: 600;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   padding: 4px;
   text-align: center;
 }
@@ -120,13 +120,13 @@
 
 .unmapped {
   font-size: 11px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   flex-shrink: 0;
 }
 
 .legendNote {
   font-size: 11px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   flex-shrink: 0;
 }
 

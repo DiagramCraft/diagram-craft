@@ -32,7 +32,7 @@ const DummyPreview = () => (
       height="20"
       rx="2"
       fill="var(--cmp-bg)"
-      stroke="var(--base-fg-more-dim)"
+      stroke="var(--base-fg-dimmed)"
       strokeWidth="1"
     />
     <rect
@@ -42,7 +42,7 @@ const DummyPreview = () => (
       height="20"
       rx="2"
       fill="var(--cmp-bg)"
-      stroke="var(--base-fg-more-dim)"
+      stroke="var(--base-fg-dimmed)"
       strokeWidth="1"
     />
     <rect
@@ -52,7 +52,7 @@ const DummyPreview = () => (
       height="20"
       rx="2"
       fill="var(--cmp-bg)"
-      stroke="var(--base-fg-more-dim)"
+      stroke="var(--base-fg-dimmed)"
       strokeWidth="1"
     />
     <rect

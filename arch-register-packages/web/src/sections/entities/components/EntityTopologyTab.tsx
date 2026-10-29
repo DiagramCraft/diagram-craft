@@ -313,7 +313,7 @@ export const EntityTopologyTab = ({
           <path
             key={edge.key}
             d={edge.d}
-            stroke="var(--base-fg-more-dim)"
+            stroke="var(--base-fg-dimmed)"
             strokeWidth={1.2}
             fill="none"
             opacity={0.7}
@@ -344,7 +344,7 @@ export const EntityTopologyTab = ({
             <svg width="12" height="18" viewBox="0 3 12 18" className={styles.topoParentArrow}>
               <path
                 d="M 6 18 L 6 4 M 2 8 L 6 4 L 10 8"
-                stroke="var(--base-fg-more-dim)"
+                stroke="var(--base-fg-dimmed)"
                 strokeWidth="1.2"
                 fill="none"
               />

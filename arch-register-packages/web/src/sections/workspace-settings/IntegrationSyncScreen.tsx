@@ -193,7 +193,7 @@ export const IntegrationSyncScreen = () => {
         }
       />
 
-      <p style={{ color: 'var(--base-fg-more-dim)', maxWidth: 760 }}>
+      <p style={{ color: 'var(--base-fg-dimmed)', maxWidth: 760 }}>
         Sources are configured and approved here by workspace administrators. Integration clients
         can start runs only for configured sources that are active or degraded; paused sources are
         blocked.

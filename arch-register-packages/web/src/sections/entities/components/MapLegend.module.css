@@ -10,7 +10,7 @@
 .title {
   font-size: 10.5px;
   font-weight: 600;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }
 
 .row {
@@ -45,6 +45,6 @@
 
 .rangeLabel {
   font-size: 11px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   font-variant-numeric: tabular-nums;
 }

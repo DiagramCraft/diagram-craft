@@ -100,7 +100,7 @@
 
 .addTab:hover {
   color: var(--base-fg);
-  border-color: var(--base-fg-more-dim);
+  border-color: var(--base-fg-dimmed);
 }
 
 .canvas {
@@ -301,7 +301,7 @@
 
 .addPanelBtn:hover {
   color: var(--base-fg);
-  border-color: var(--base-fg-more-dim);
+  border-color: var(--base-fg-dimmed);
 }
 
 .menu {
@@ -358,7 +358,7 @@
   appearance: none;
   width: 14px;
   height: 14px;
-  border: 1px solid var(--base-fg-more-dim);
+  border: 1px solid var(--base-fg-dimmed);
   border-radius: 3px;
   background: transparent;
   cursor: pointer;

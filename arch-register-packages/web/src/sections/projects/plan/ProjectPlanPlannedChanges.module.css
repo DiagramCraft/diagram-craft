@@ -83,7 +83,7 @@
 
 .plannedRowNote {
   font-size: 12px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -117,7 +117,7 @@
   align-items: center;
   gap: 4px;
   font-size: 11px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   margin-bottom: 4px;
 }
 

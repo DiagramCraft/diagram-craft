@@ -17,7 +17,7 @@ const SURFACES: Surface[] = [
   {
     name: 'base',
     bg: '--base-bg',
-    fgs: ['--base-fg', '--base-fg-secondary', '--base-fg-tertiary', '--base-fg-more-dim']
+    fgs: ['--base-fg', '--base-fg-secondary', '--base-fg-tertiary', '--base-fg-dimmed']
   },
   {
     name: 'panel',

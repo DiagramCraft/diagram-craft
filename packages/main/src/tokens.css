@@ -52,7 +52,7 @@
   --base-fg: var(--theme-dark-base-fg, var(--gray-12));
   --base-fg-tertiary: var(--theme-dark-base-fg-secondary, var(--gray-10));
   --base-fg-secondary: var(--theme-dark-base-fg-dim, var(--gray-11));
-  --base-fg-more-dim: var(--theme-dark-base-fg-more-dim, var(--gray-8));
+  --base-fg-dimmed: var(--theme-dark-base-fg-more-dim, var(--gray-8));
 
   --panel-bg: var(--theme-dark-panel-bg, var(--gray-2));
   --panel-fg: var(--theme-dark-panel-fg, var(--gray-12));
@@ -100,6 +100,11 @@
   --green: var(--theme-dark-green, var(--green-9));
   --error-fg: var(--theme-dark-error-fg, var(--red-9));
   --warning-fg: var(--theme-dark-warning-fg, var(--orange-9));
+
+  --fg: var(--base-fg);
+  --fg-secondary: var(--base-fg-secondary);
+  --fg-tertiary: var(--base-fg-tertiary);
+  --fg-dim: var(--base-fg-dimmed);
 }
 
 /*noinspection CssUnresolvedCustomProperty*/
@@ -124,7 +129,7 @@
   --base-fg: var(--theme-light-base-fg, var(--gray-12));
   --base-fg-tertiary: var(--theme-light-base-fg-secondary, var(--gray-10));
   --base-fg-secondary: var(--theme-light-base-fg-dim, var(--gray-11));
-  --base-fg-more-dim: var(--theme-light-base-fg-more-dim, var(--gray-9));
+  --base-fg-dimmed: var(--theme-light-base-fg-more-dim, var(--gray-9));
 
   --panel-bg: var(--theme-light-panel-bg, var(--gray-2));
   --panel-fg: var(--theme-light-panel-fg, var(--gray-12));
@@ -172,4 +177,37 @@
   --green: var(--theme-light-green, var(--green-9));
   --error-fg: var(--theme-light-error-fg, var(--red-9));
   --warning-fg: var(--theme-light-warning-fg, var(--orange-9));
+
+  --fg: var(--base-fg);
+  --fg-secondary: var(--base-fg-secondary);
+  --fg-tertiary: var(--base-fg-tertiary);
+  --fg-dim: var(--base-fg-dimmed);
+}
+
+/** This is to achieve nesting of surfaces */
+
+.surface,
+.surface .surface .surface,
+.surface .surface .surface .surface .surface {
+  --fg: var(--panel-fg);
+  --fg-secondary: var(--panel-fg-secondary);
+  --fg-tertiary: var(--panel-fg-tertiary);
+  --fg-dim: var(--panel-fg-dimmed);
+
+  background-color: var(--panel-bg);
+}
+
+.surface .surface,
+.surface .surface .surface .surface {
+  --fg: var(--base-fg);
+  --fg-secondary: var(--base-fg-secondary);
+  --fg-tertiary: var(--base-fg-tertiary);
+  --fg-dim: var(--base-fg-dimmed);
+
+  background-color: var(--base-bg);
+}
+
+/* Debug sentinel to clearly see the limits of panel nesting */
+.surface .surface .surface .surface .surface .surface {
+  background-color: hotpink !important;
 }

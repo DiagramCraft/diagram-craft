@@ -11,7 +11,7 @@
     padding-right: 0.25rem;
     z-index: 100;
 
-    color: var(--base-fg-more-dim);
+    color: var(--base-fg-dimmed);
 
     > * {
       color: var(--base-fg-secondary);

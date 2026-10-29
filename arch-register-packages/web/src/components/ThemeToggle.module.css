@@ -29,7 +29,7 @@
   gap: 6px;
   height: 26px;
   border-radius: var(--r-sm);
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   font-size: 12px;
   border: 1px solid transparent;
   background: transparent;

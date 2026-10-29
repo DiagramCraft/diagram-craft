@@ -159,7 +159,7 @@
   min-width: 130px;
   padding: 4px;
   background: var(--cmp-bg);
-  border: 1px solid var(--base-fg-more-dim);
+  border: 1px solid var(--base-fg-dimmed);
   border-radius: var(--r-md, 8px);
   box-shadow: 0 12px 30px -8px oklch(0 0 0 / 0.6);
   display: flex;
@@ -224,7 +224,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   border: 1px solid var(--cmp-border);
 }
 
@@ -692,7 +692,7 @@ ol.mdList li::before {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   border-bottom: 2px solid var(--cmp-border);
   white-space: nowrap;
 }

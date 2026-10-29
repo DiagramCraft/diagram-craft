@@ -10,7 +10,7 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { useConfiguration } from '../../context/ConfigurationContext';
 import { DEFAULT_GUIDE_COLOR, type Guide } from '@diagram-craft/model/guides';
 
-const SECTION_LABEL_COLOR = 'var(--base-fg-more-dim)';
+const SECTION_LABEL_COLOR = 'var(--base-fg-dimmed)';
 
 interface GuideRowProps {
   guide: Guide;

@@ -33,7 +33,7 @@
 
 .meta {
   margin-top: 4px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   font-size: 11px;
   display: flex;
   align-items: center;
@@ -99,14 +99,14 @@
 }
 
 .ackOutstanding {
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   font-weight: 600;
 }
 
 .hint {
   margin: 0;
   padding: 4px 16px 12px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   font-size: 11px;
 }
 

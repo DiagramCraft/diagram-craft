@@ -16,7 +16,7 @@
 }
 
 .loading {
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   padding: 32px 0;
   font-size: 13px;
 }
@@ -83,7 +83,7 @@
 }
 
 .issueMeta {
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.45px;

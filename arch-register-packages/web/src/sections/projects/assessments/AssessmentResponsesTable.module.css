@@ -38,7 +38,7 @@
   border: none;
   border-right: 1px solid var(--panel-border);
   font-size: 12px;
-  color: var(--base-fg-more-dim, var(--base-fg-secondary));
+  color: var(--base-fg-dimmed, var(--base-fg-secondary));
   white-space: nowrap;
 }
 

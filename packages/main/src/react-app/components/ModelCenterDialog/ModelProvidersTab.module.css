@@ -77,7 +77,7 @@
     justify-content: center;
     padding: 48px 24px;
     gap: 16px;
-    color: var(--base-fg-more-dim);
+    color: var(--base-fg-dimmed);
 
     p {
       margin: 0;

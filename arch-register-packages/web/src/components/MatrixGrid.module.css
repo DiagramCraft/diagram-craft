@@ -13,7 +13,7 @@
 
 .corner {
   font-size: 10.5px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   display: flex;
   align-items: flex-end;
   padding-bottom: 4px;
@@ -30,7 +30,7 @@
 
 .columnHeader {
   font-size: 10.5px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   text-align: center;
   align-self: end;
   padding-bottom: 4px;
@@ -43,7 +43,7 @@
 
 .rowHeader {
   font-size: 10.5px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -98,7 +98,7 @@
   right: 6px;
   bottom: 4px;
   font-size: 9px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }
 
 .foot {
@@ -116,7 +116,7 @@
   gap: 12px;
   flex-wrap: wrap;
   font-size: 10.5px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }
 
 .legendItem {
@@ -135,5 +135,5 @@
 
 .footNote {
   font-size: 10.5px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }

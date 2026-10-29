@@ -22,7 +22,7 @@
 
 .hopDir:disabled {
   cursor: not-allowed;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }
 
 /* The relation <select> is a form control, so it follows the same tokens / sizing as the

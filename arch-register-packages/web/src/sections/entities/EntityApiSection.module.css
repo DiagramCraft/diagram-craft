@@ -74,7 +74,7 @@
 }
 
 .statusNeutral {
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }
 
 .metadataGrid {
@@ -169,7 +169,7 @@
 .sourcePickerHint,
 .sourceKind,
 .sourceEmpty {
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   font-size: 11px;
 }
 
@@ -333,7 +333,7 @@
 
 .catalogMeta {
   margin-top: 4px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }
 
 .filters {
@@ -465,7 +465,7 @@
 .itemMeta {
   gap: 12px;
   flex-wrap: wrap;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   font-size: 11px;
 }
 
@@ -499,7 +499,7 @@
 
 .pagination {
   padding: 11px 16px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   font-size: 11px;
 }
 

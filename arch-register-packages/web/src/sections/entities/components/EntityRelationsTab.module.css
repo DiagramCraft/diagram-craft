@@ -60,7 +60,7 @@
 }
 
 .relation:hover {
-  border-color: var(--base-fg-more-dim);
+  border-color: var(--base-fg-dimmed);
 }
 
 .relationLead {

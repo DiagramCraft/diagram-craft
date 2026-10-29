@@ -47,7 +47,7 @@ div[data-frame="true"] .card .number {
 div[data-frame="true"] .card .label {
   order: 0;
   font-size: 11px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -69,7 +69,7 @@ div[data-frame="true"] .card .sub {
 
 .sub {
   font-size: 11.5px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }
 
 div[data-frame="true"] .card .viewLink {

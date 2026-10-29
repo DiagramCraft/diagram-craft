@@ -12,8 +12,8 @@
     padding: 4px;
     font-size: 11px;
     color: var(--base-fg-secondary);
-    border-top: 1px solid var(--base-fg-more-dim);
-    border-bottom: 1px solid var(--base-fg-more-dim);
+    border-top: 1px solid var(--base-fg-dimmed);
+    border-bottom: 1px solid var(--base-fg-dimmed);
     margin-bottom: 0.25rem;
 
     .ePaginationButton {

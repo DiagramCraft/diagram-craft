@@ -206,7 +206,7 @@
   white-space: nowrap;
   font-size: 10.5px;
   font-variant-numeric: tabular-nums;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }
 
 .duplicateBadge {
@@ -223,7 +223,7 @@
 .metricError {
   padding: 8px 10px;
   border-top: 1px solid var(--panel-border);
-  color: var(--red-fg, var(--base-fg-more-dim));
+  color: var(--red-fg, var(--base-fg-dimmed));
   font-size: 11px;
 }
 

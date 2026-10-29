@@ -235,7 +235,7 @@
   border-radius: var(--cmp-radius, 3px);
   background: var(--base-bg);
   font-size: 10px;
-  color: var(--base-fg-more-dim, var(--cmp-fg-dimmed));
+  color: var(--base-fg-dimmed, var(--cmp-fg-dimmed));
   font-family: var(--font-mono, monospace);
   line-height: 1;
 }

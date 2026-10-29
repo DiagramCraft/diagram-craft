@@ -95,7 +95,7 @@
 
 .entityPaneRowChanges {
   font-size: 10.5px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   margin-top: 2px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -106,7 +106,7 @@
   all: unset;
   box-sizing: border-box;
   flex-shrink: 0;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   cursor: pointer;
   padding: 2px;
   display: flex;
@@ -186,7 +186,7 @@
   padding: 18px 12px;
   text-align: center;
   font-size: 12px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }
 
 .editorPane {
@@ -201,7 +201,7 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   font-size: 12.5px;
   text-align: center;
 }

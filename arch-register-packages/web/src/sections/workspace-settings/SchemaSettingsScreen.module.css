@@ -59,7 +59,7 @@
 
 .formLabel {
   font-size: 11px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 6px;

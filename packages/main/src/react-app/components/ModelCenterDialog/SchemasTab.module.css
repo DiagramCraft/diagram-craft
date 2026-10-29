@@ -38,7 +38,7 @@
     justify-content: center;
     padding: 48px 24px;
     gap: 8px;
-    color: var(--base-fg-more-dim);
+    color: var(--base-fg-dimmed);
 
     .eEmptyTitle {
       font-size: 14px;
@@ -68,7 +68,7 @@
     cursor: pointer;
 
     &:hover {
-      border-color: var(--base-fg-more-dim);
+      border-color: var(--base-fg-dimmed);
     }
 
     .eFilterLabel {

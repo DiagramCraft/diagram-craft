@@ -186,7 +186,7 @@
   appearance: none;
   width: 14px;
   height: 14px;
-  border: 1px solid var(--base-fg-more-dim);
+  border: 1px solid var(--base-fg-dimmed);
   border-radius: 3px;
   background: transparent;
   margin: 0;
@@ -250,7 +250,7 @@
 }
 
 .nameMuted {
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }
 
 .nameSub {
@@ -259,7 +259,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 340px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }
 
 /* Actions */
@@ -311,7 +311,7 @@
 /* Empty row */
 .emptyRow .td {
   text-align: center;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   padding: 24px 10px;
 }
 

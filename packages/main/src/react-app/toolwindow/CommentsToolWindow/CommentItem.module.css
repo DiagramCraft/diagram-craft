@@ -85,7 +85,7 @@
     background: none;
     border: none;
     cursor: pointer;
-    color: var(--base-fg-more-dim);
+    color: var(--base-fg-dimmed);
     border-radius: var(--r);
     margin-left: auto;
     margin-top: -1px;
@@ -139,7 +139,7 @@
 
       .eTime {
         font-size: 11px;
-        color: var(--base-fg-more-dim);
+        color: var(--base-fg-dimmed);
         margin-top: 1px;
       }
 
@@ -229,7 +229,7 @@
 
         .eReplyTime {
           font-size: 10.5px;
-          color: var(--base-fg-more-dim);
+          color: var(--base-fg-dimmed);
           white-space: nowrap;
           margin-top: 1px;
         }
@@ -268,7 +268,7 @@
         transition: border-color 120ms;
 
         &::placeholder {
-          color: var(--base-fg-more-dim);
+          color: var(--base-fg-dimmed);
         }
 
         &:focus {
@@ -286,7 +286,7 @@
         background: none;
         border: none;
         cursor: pointer;
-        color: var(--base-fg-more-dim);
+        color: var(--base-fg-dimmed);
         border-radius: var(--r);
         padding: 0;
         transition:

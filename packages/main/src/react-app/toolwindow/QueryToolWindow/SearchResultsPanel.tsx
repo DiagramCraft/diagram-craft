@@ -62,7 +62,7 @@ export const SearchResultsPanel = ({
           <a
             onClick={() => setViewMode(viewMode === 'text' ? 'preview' : 'text')}
             style={{
-              color: viewMode === 'preview' ? 'var(--accent-fg)' : 'var(--base-fg-more-dim)'
+              color: viewMode === 'preview' ? 'var(--accent-fg)' : 'var(--base-fg-dimmed)'
             }}
             title={viewMode === 'text' ? 'Switch to preview mode' : 'Switch to text mode'}
           >

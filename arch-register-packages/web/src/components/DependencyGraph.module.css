@@ -41,8 +41,8 @@
     }
 
     &[data-node-kind="category"] {
-      fill: color-mix(in oklch, var(--base-fg-more-dim) 10%, var(--panel-bg));
-      stroke: var(--base-fg-more-dim);
+      fill: color-mix(in oklch, var(--base-fg-dimmed) 10%, var(--panel-bg));
+      stroke: var(--base-fg-dimmed);
       stroke-width: 1.5;
       stroke-dasharray: 3 3;
     }
@@ -63,7 +63,7 @@
   }
 
   .eEdge {
-    stroke: var(--edge-color, var(--base-fg-more-dim));
+    stroke: var(--edge-color, var(--base-fg-dimmed));
     stroke-width: 1.5;
     stroke-dasharray: 4 3;
     fill: none;
@@ -85,7 +85,7 @@
   }
 
   .eArcEdge {
-    stroke: var(--edge-color, var(--base-fg-more-dim));
+    stroke: var(--edge-color, var(--base-fg-dimmed));
     stroke-width: 1.5;
     stroke-dasharray: 4 3;
     fill: none;

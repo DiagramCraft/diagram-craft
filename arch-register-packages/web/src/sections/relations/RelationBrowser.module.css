@@ -22,7 +22,7 @@
 }
 
 .count {
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }

@@ -99,7 +99,7 @@ export const Ruler = ({ orientation, id }: Props) => {
 
     // Read colors from CSS custom properties set on the canvas element
     const cs = getComputedStyle(canvas);
-    const tickColor = cs.getPropertyValue('--base-fg-more-dim').trim() || '#666';
+    const tickColor = cs.getPropertyValue('--base-fg-dimmed').trim() || '#666';
     const textColor = cs.getPropertyValue('--base-fg-secondary').trim() || '#999';
     const accentColor = cs.getPropertyValue('--accent-fg').trim() || '#4af';
 

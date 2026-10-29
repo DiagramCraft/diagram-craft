@@ -17,7 +17,7 @@
 }
 
 .toggle:hover:not(:disabled) {
-  border-color: var(--cmp-border-hover, var(--base-fg-more-dim));
+  border-color: var(--cmp-border-hover, var(--base-fg-dimmed));
 }
 
 .toggle:disabled {
@@ -34,7 +34,7 @@
   height: 14px;
   border-radius: 8px;
   background: var(--base-bg);
-  border: 1px solid var(--base-fg-more-dim);
+  border: 1px solid var(--base-fg-dimmed);
   position: relative;
   flex: none;
   transition:
@@ -50,7 +50,7 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: var(--base-fg-more-dim);
+  background: var(--base-fg-dimmed);
   transition:
     transform 120ms,
     background 120ms;
@@ -70,7 +70,7 @@
 .mapIntro {
   margin: 0 0 10px;
   font-size: 11.5px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   text-wrap: pretty;
 }
 
@@ -91,7 +91,7 @@
   font-size: 10px;
   letter-spacing: 0.8px;
   text-transform: uppercase;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }
 
 .grp {
@@ -123,7 +123,7 @@
 }
 
 .grpIcon {
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   flex: none;
 }
 
@@ -140,7 +140,7 @@
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.7px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   flex: none;
 }
 
@@ -203,7 +203,7 @@
 
 .optional {
   font-size: 10.5px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   flex: none;
 }
 
@@ -213,7 +213,7 @@
 
 .note {
   font-size: 11.5px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }
 
 .issues {

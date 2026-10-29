@@ -34,7 +34,7 @@
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   display: flex;
   align-items: baseline;
   gap: 6px;
@@ -43,7 +43,7 @@
 
 .empty {
   font-size: 11.5px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   padding: 4px 2px;
 }
 

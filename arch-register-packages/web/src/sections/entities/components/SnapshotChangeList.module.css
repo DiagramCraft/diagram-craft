@@ -11,7 +11,7 @@
 
 .cardRow .field {
   font-weight: 500;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }
 
 .cardRow .from {
@@ -49,11 +49,11 @@
 }
 
 .gridRow .from {
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }
 
 .gridRow .arrow {
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }
 
 .gridRow .to {
@@ -62,5 +62,5 @@
 
 .gridEmpty {
   font-size: 11px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }

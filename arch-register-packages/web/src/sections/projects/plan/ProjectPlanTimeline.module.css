@@ -624,7 +624,7 @@
 
 .ptlDetailSiblingNoChanges {
   font-size: 11px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }
 
 /* Empty state */

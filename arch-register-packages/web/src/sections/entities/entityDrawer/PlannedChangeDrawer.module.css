@@ -15,7 +15,7 @@
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.4px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }
 
 .value {

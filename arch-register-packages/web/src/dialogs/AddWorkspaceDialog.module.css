@@ -145,7 +145,7 @@
   margin-top: 8px;
   padding: 8px 10px;
   font-size: 11.5px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   background: var(--base-bg);
   border: 1px dashed var(--cmp-border);
   border-radius: var(--r);
@@ -221,7 +221,7 @@
 
 .templateCardDesc {
   font-size: 11.5px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   line-height: 1.4;
 }
 
@@ -242,7 +242,7 @@
 }
 
 .sectionHint {
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   font-size: 11.5px;
   margin-top: 3px;
 }
@@ -264,7 +264,7 @@
 .dependencyMappingDescription,
 .dependencyMappingRequirement,
 .dependencyTargetTemplate {
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   font-size: 11px;
 }
 
@@ -312,7 +312,7 @@
   appearance: none;
   width: 14px;
   height: 14px;
-  border: 1px solid var(--base-fg-more-dim);
+  border: 1px solid var(--base-fg-dimmed);
   border-radius: 3px;
   background: transparent;
   cursor: pointer;
@@ -373,6 +373,6 @@
   border-radius: var(--r-sm);
   background: var(--base-bg);
   font-size: 10px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   font-family: var(--font-mono);
 }

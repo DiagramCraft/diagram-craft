@@ -56,7 +56,7 @@
   border: 1px solid var(--cmp-border);
   border-radius: 4px;
   cursor: pointer;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   transition: all 0.2s ease;
 }
 

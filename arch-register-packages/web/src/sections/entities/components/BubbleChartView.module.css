@@ -10,7 +10,7 @@
 
 .noFields {
   font-size: 11px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }
 
 .quadrantsPopover {
@@ -50,7 +50,7 @@
   flex-direction: column;
   gap: 4px;
   font-size: 10px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }
 
 .quadrantInput input {
@@ -68,7 +68,7 @@
   }
 
   text {
-    fill: var(--base-fg-more-dim);
+    fill: var(--base-fg-dimmed);
     font-size: 10px;
     font-weight: 400;
     letter-spacing: 0.3px;
@@ -174,7 +174,7 @@
 }
 
 .legendCount {
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   font-family: var(--font-mono);
 }
 

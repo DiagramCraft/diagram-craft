@@ -38,7 +38,7 @@
   .eIcon {
     flex-shrink: 0;
     transition: transform 100ms;
-    color: var(--base-fg-more-dim);
+    color: var(--base-fg-dimmed);
 
     &[data-open="false"] {
       transform: rotate(-90deg);
@@ -51,7 +51,7 @@
     font-weight: 600;
     letter-spacing: 0.6px;
     text-transform: uppercase;
-    color: var(--base-fg-more-dim);
+    color: var(--base-fg-dimmed);
   }
 
   .eActions {

@@ -89,7 +89,7 @@
       }
 
       .eTextIcon {
-        color: var(--base-fg-more-dim);
+        color: var(--base-fg-dimmed);
       }
 
       .eAction {
@@ -119,7 +119,7 @@
       }
 
       .eTextIcon {
-        color: var(--base-fg-more-dim);
+        color: var(--base-fg-dimmed);
       }
 
       .eAction {

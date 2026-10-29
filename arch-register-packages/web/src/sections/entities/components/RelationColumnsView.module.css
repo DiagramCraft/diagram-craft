@@ -60,7 +60,7 @@
 }
 
 .connectorTooltipSep {
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }
 
 .connectorTooltipField {
@@ -108,7 +108,7 @@
 
 .columnMeta {
   font-size: 11px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }
 
 .columnBody {
@@ -121,7 +121,7 @@
   padding: 14px;
   border: 1px dashed var(--panel-border);
   border-radius: var(--r);
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   font-size: 12px;
   background: color-mix(in oklch, var(--cmp-bg) 80%, transparent);
 }
@@ -140,7 +140,7 @@
   text-align: left;
 
   &:hover {
-    border-color: var(--base-fg-more-dim);
+    border-color: var(--base-fg-dimmed);
   }
 }
 
@@ -173,7 +173,7 @@
 
 .entitySlug {
   font-size: 11px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

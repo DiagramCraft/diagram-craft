@@ -52,7 +52,7 @@
     justify-content: center;
     padding: 48px 24px;
     gap: 8px;
-    color: var(--base-fg-more-dim);
+    color: var(--base-fg-dimmed);
 
     .eEmptyTitle {
       font-size: 14px;
@@ -82,7 +82,7 @@
     cursor: pointer;
 
     &:hover {
-      border-color: var(--base-fg-more-dim);
+      border-color: var(--base-fg-dimmed);
     }
 
     .eFilterLabel {
@@ -153,7 +153,7 @@
         appearance: none;
         width: 14px;
         height: 14px;
-        border: 1px solid var(--base-fg-more-dim);
+        border: 1px solid var(--base-fg-dimmed);
         border-radius: 3px;
         background: transparent;
         cursor: pointer;
@@ -190,7 +190,7 @@
       }
 
       &[data-status="na"] {
-        color: var(--base-fg-more-dim);
+        color: var(--base-fg-dimmed);
       }
     }
 

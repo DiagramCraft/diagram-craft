@@ -16,7 +16,7 @@
 }
 
 .count {
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
@@ -63,7 +63,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   border-right: 1px solid var(--panel-border);
 }
 
@@ -110,7 +110,7 @@
 }
 
 .card:hover {
-  border-color: var(--base-fg-more-dim);
+  border-color: var(--base-fg-dimmed);
 }
 
 .cardBar {
@@ -146,7 +146,7 @@
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }
 
 .cardMeta {
@@ -199,7 +199,7 @@
   appearance: none;
   width: 14px;
   height: 14px;
-  border: 1px solid var(--base-fg-more-dim);
+  border: 1px solid var(--base-fg-dimmed);
   border-radius: 3px;
   background: transparent;
   margin: 0;

@@ -5,7 +5,7 @@
   justify-content: center;
   padding: 64px 24px;
   gap: 8px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   flex: 1;
 }
 
@@ -30,7 +30,7 @@
 
 .compact {
   padding: 18px 16px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   font-size: 13px;
 }
 
@@ -54,7 +54,7 @@
   align-items: center;
   justify-content: center;
   background: var(--cmp-bg);
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   margin-bottom: 10px;
 }
 

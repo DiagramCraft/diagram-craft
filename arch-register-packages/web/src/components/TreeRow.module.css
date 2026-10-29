@@ -52,7 +52,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   width: 16px;
   height: 16px;
 }
