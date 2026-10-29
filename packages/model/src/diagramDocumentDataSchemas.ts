@@ -20,6 +20,11 @@ export type DataSchemaField =
   | {
       id: string;
       name: string;
+      type: 'number';
+    }
+  | {
+      id: string;
+      name: string;
       type: 'select';
       options: Array<{ value: string; label: string }>;
     }
