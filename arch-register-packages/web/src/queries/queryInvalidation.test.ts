@@ -22,7 +22,11 @@ import {
   jobKeys,
   invalidateJobQueries
 } from './jobs';
-import { governanceKeys, invalidateGovernanceQueries } from './governance';
+import {
+  governanceKeys,
+  governanceSubmissionCountQuery,
+  invalidateGovernanceQueries
+} from './governance';
 import {
   addPinnedEntityToCache,
   invalidateNotificationQueries,
@@ -75,6 +79,12 @@ describe('domain query definitions', () => {
     expect(contentScopeQuery(entityScope).queryKey).toEqual(contentScopeKey(entityScope));
     expect(hydratedEntitiesBySchemaQuery('ws-1', 'schema-1').queryKey).toEqual(
       entityKeys.list('ws-1', { schemaId: 'schema-1', view: 'full' })
+    );
+    expect(governanceSubmissionCountQuery('ws-1').queryKey).toEqual(
+      governanceKeys.submissionCount('ws-1')
+    );
+    expect(governanceKeys.submissionCount('ws-1').slice(0, 3)).toEqual(
+      governanceKeys.submissionsWorkspace('ws-1')
     );
   });
 });

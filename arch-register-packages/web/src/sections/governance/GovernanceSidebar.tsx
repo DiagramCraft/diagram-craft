@@ -3,7 +3,7 @@ import { TbInbox, TbSend } from 'react-icons/tb';
 import styles from '../../shell/SidePanel.module.css';
 import { TreeRow } from '../../components/TreeRow';
 import { SidebarTitleHeader } from '../../components/sidebar/SidebarPrimitives';
-import { useGovernanceSubmissions, useGovernanceTaskCount } from '../../hooks/useGovernance';
+import { useGovernanceSubmissionCount, useGovernanceTaskCount } from '../../hooks/useGovernance';
 
 const SCOPES = [
   { value: 'assigned', label: 'Assigned to me', icon: <TbInbox size={12} /> },
@@ -16,16 +16,13 @@ export const GovernanceSidebar = ({ workspaceSlug }: { workspaceSlug: string }) 
     scope?: 'assigned' | 'submitted';
   };
 
-  // Open tasks, same count as the rail badge; submissions needing attention mirror the screen's
-  // default "Needs attention" filter (the unfiltered submissions query is shared via the cache)
+  // Open tasks, same count as the rail badge; submitted work mirrors the screen's default
+  // "Needs attention" filter.
   const { data: taskCount } = useGovernanceTaskCount(workspaceSlug);
-  const { data: submissions } = useGovernanceSubmissions(workspaceSlug);
+  const { data: submissionCount } = useGovernanceSubmissionCount(workspaceSlug);
   const counts = {
     assigned: taskCount?.count,
-    submitted: submissions?.filter(
-      submission =>
-        submission.case.status === 'open' || submission.case.outcome === 'request_changes'
-    ).length
+    submitted: submissionCount?.count
   };
 
   return (

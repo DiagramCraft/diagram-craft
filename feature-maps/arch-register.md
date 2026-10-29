@@ -1361,10 +1361,13 @@
               only affect future notifications, not existing Inbox items.
 
         - @id:ar.collaboration.governance-inbox Users can find open governance tasks, review completed task history,
-          filter work by task and due-date attributes, and navigate to governed cases.
+          filter work by task and due-date attributes, navigate to governed cases, and see sidebar counts that match
+          the default needs-attention and open-task lists.
 
             - @id:ar.collaboration.governance-inbox.my-submissions Users can review governance work they have submitted,
-              see what or who is currently blocking it, and withdraw an open submission where permitted. For an open
+              see what or who is currently blocking it, and withdraw an open submission where permitted. The sidebar
+              count includes open requests and requests awaiting changes, except proposals withdrawn in the entity
+              change workflow. For an open
               case with outstanding assignments, the initiator can also send an out-of-band reminder to the remaining
               assignees on demand, rate-limited to prevent spamming them.
 

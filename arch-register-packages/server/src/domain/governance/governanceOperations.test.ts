@@ -13,6 +13,7 @@ import type { GovernanceCaseListFilter } from './db/governanceDatabase';
 import {
   decideGovernanceAssignment,
   createGovernanceCaseInTransaction,
+  countMySubmittedGovernanceCases,
   listMyGovernanceAssignments,
   listMySubmittedGovernanceCases,
   sendGovernanceCaseReminder,
@@ -258,11 +259,15 @@ const makeDb = (
     enabled: boolean;
     created_at: Date;
     updated_at: Date;
-  }> = []
+  }> = [],
+  proposals: Record<string, { status: string }> = {}
 ): DatabaseAdapter =>
   ({
     catalog: {},
     governance,
+    entityChange: {
+      getApproval: vi.fn(async (_workspace: string, id: string) => proposals[id] ?? null)
+    },
     auth: {
       getUser: vi.fn(async (id: string) => ({
         id,
@@ -305,7 +310,9 @@ const makeDb = (
       transaction: async (callback: (db: DatabaseAdapter) => Promise<unknown>) => {
         const snapshot = governance._snapshot();
         try {
-          return await callback(makeDb(governance, inAppOverrideUserIds, configRows, webhooks));
+          return await callback(
+            makeDb(governance, inAppOverrideUserIds, configRows, webhooks, proposals)
+          );
         } catch (error) {
           governance._restore(snapshot);
           throw error;
@@ -723,6 +730,24 @@ describe('listMyGovernanceAssignments', () => {
 
     expect(tasks.map(t => t.case.id).sort()).toEqual(['case-a', 'case-b']);
   });
+
+  it('uses the completed case state when an assignment is still open', async () => {
+    const caseRow = makeCase({ status: 'completed', outcome: 'approve' });
+    const assignment = makeAssignment({ status: 'open' });
+    const db = makeDb(makeGovernanceDouble(caseRow, assignment));
+
+    const openTasks = await listMyGovernanceAssignments(db, 'ws-1', event, { state: 'open' });
+    const completedTasks = await listMyGovernanceAssignments(db, 'ws-1', event, {
+      state: 'completed'
+    });
+
+    expect(openTasks).toHaveLength(0);
+    expect(completedTasks).toHaveLength(1);
+    expect(completedTasks[0]).toMatchObject({
+      assignment: { status: 'open' },
+      requiresAction: false
+    });
+  });
 });
 
 describe('listMySubmittedGovernanceCases', () => {
@@ -790,6 +815,55 @@ describe('listMySubmittedGovernanceCases', () => {
     const result = await listMySubmittedGovernanceCases(db, 'ws-1', event, {});
 
     expect(result).toHaveLength(1);
+  });
+});
+
+describe('countMySubmittedGovernanceCases', () => {
+  it('counts needs-attention submissions and excludes withdrawn entity change proposals', async () => {
+    const open = makeCase({ id: 'case-open', initiator_user_id: 'user-1' });
+    const requestChanges = makeCase({
+      id: 'case-request-changes',
+      initiator_user_id: 'user-1',
+      status: 'completed',
+      outcome: 'request_changes'
+    });
+    const withdrawn = makeCase({
+      id: 'case-withdrawn-proposal',
+      case_kind: 'entity.change-case',
+      initiator_user_id: 'user-1',
+      status: 'completed',
+      outcome: 'request_changes',
+      payload: { proposalId: 'proposal-withdrawn' }
+    });
+    const completed = makeCase({
+      id: 'case-completed',
+      initiator_user_id: 'user-1',
+      status: 'completed',
+      outcome: 'approve'
+    });
+    const cancelled = makeCase({
+      id: 'case-cancelled',
+      initiator_user_id: 'user-1',
+      status: 'cancelled'
+    });
+    const otherUser = makeCase({ id: 'case-other-user', initiator_user_id: 'user-2' });
+    const db = makeDb(
+      makeGovernanceDouble(
+        open,
+        makeAssignment({ case_id: open.id }),
+        [],
+        [requestChanges, withdrawn, completed, cancelled, otherUser]
+      ),
+      [],
+      [],
+      [],
+      { 'proposal-withdrawn': { status: 'withdrawn' } }
+    );
+
+    const result = await countMySubmittedGovernanceCases(db, 'ws-1', event);
+
+    expect(result).toEqual({ count: 2 });
+    expect(db.entityChange.getApproval).toHaveBeenCalledWith('ws-1', 'proposal-withdrawn');
   });
 });
 
