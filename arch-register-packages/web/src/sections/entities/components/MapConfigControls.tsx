@@ -32,6 +32,8 @@ import { LabeledSelect } from '../../../components/LabeledSelect';
 import { MAP_COLOR_SCHEME_OPTIONS, type MapColorScheme } from './mapColorScales';
 import { HopPicker } from './pathBuilder/HopPicker';
 import { HopSequence } from './pathBuilder/HopSequence';
+import { CollapsibleSection } from '../../../components/CollapsibleSection';
+import { LabeledValue } from '../../../components/LabeledValue';
 import { ViewControls } from '../../../components/ViewControls';
 import {
   pathStepContextWithFallbackDirection,
@@ -314,159 +316,136 @@ export const MapConfigControls = ({
   return (
     <>
       {!hideToolbar && (
-        <div className={styles.hierarchyConfig}>
-          <button
-            type="button"
-            className={styles.hierarchyToggle}
-            onClick={() => setHierarchyOpen(open => !open)}
-          >
-            <TbChevronDown
-              size={12}
-              className={styles.hierarchyToggleIcon}
-              data-open={hierarchyOpen ? 'true' : 'false'}
-            />
-            <span className={styles.axisKicker}>Hierarchy</span>
-          </button>
-          {hierarchyOpen && (
-            <div className={styles.hierarchyBody}>
-              <HopSequence
-                items={cfg.levelConfigs}
-                getItemKey={(_level, index) => index}
-                onAdd={() =>
-                  notify({
-                    levelConfigs: [
-                      ...cfg.levelConfigs,
-                      { schemaId: null, columns: 3, hidden: false }
-                    ]
-                  })
-                }
-                addLabel="Add level"
-                addDisabled={
-                  !(
-                    cfg.levelConfigs.at(-1)?.schemaId != null ||
-                    (useIncludePathTraversal && cfg.levelConfigs.length === 1)
-                  )
-                }
-                renderItem={(level, index) => {
-                  const { useHopPicker, stepContext, resolvedStep } = levelStepContexts[index]!;
+        <CollapsibleSection title="Hierarchy" open={hierarchyOpen} onOpenChange={setHierarchyOpen}>
+          <HopSequence
+            items={cfg.levelConfigs}
+            getItemKey={(_level, index) => index}
+            onAdd={() =>
+              notify({
+                levelConfigs: [...cfg.levelConfigs, { schemaId: null, columns: 3, hidden: false }]
+              })
+            }
+            addLabel="Add level"
+            addDisabled={
+              !(
+                cfg.levelConfigs.at(-1)?.schemaId != null ||
+                (useIncludePathTraversal && cfg.levelConfigs.length === 1)
+              )
+            }
+            renderItem={(level, index) => {
+              const { useHopPicker, stepContext, resolvedStep } = levelStepContexts[index]!;
 
-                  return (
-                    <div className={styles.levelControl}>
-                      {index === 0 && useIncludePathTraversal ? (
-                        <div className={styles.axisPill}>
-                          <span className={styles.pathSummary}>Root</span>
-                        </div>
-                      ) : useHopPicker && stepContext ? (
-                        <MapLevelHop
-                          index={index}
-                          step={resolvedStep}
-                          stepContext={stepContext}
-                          hasSavedStep={level.step != null}
-                          schemas={schemas}
-                          relationSchemas={relationSchemas}
-                          getFieldGroupAccess={getFieldGroupAccess}
-                          onChangeStep={(step, targetSchemaIds) => {
-                            const nextLevels = cfg.levelConfigs
-                              .slice(0, index + 1)
-                              .map((candidate, candidateIndex) =>
-                                candidateIndex === index
-                                  ? {
-                                      ...candidate,
-                                      schemaId: targetSchemaIds?.[0] ?? candidate.schemaId,
-                                      step
-                                    }
-                                  : candidate
-                              );
-                            notify({ levelConfigs: nextLevels });
-                          }}
-                          isLastLevel={index === cfg.levelConfigs.length - 1}
-                          targetSchemaId={level.targetSchemaId ?? null}
-                          onChangeTargetSchemaId={targetSchemaId => {
-                            const nextLevels = cfg.levelConfigs.map((candidate, candidateIndex) =>
-                              candidateIndex === index
-                                ? { ...candidate, targetSchemaId }
-                                : candidate
-                            );
-                            notify({ levelConfigs: nextLevels });
-                          }}
-                        />
-                      ) : (
-                        <SchemaSelect
-                          value={level.schemaId}
-                          options={levelSchemaOptions[index] ?? []}
-                          onChange={id => {
-                            const nextLevels = cfg.levelConfigs
-                              .slice(0, index + 1)
-                              .map((candidate, candidateIndex) =>
-                                candidateIndex === index
-                                  ? { ...candidate, schemaId: id, step: undefined }
-                                  : candidate
-                              );
-                            notify({ levelConfigs: nextLevels });
-                          }}
-                        />
-                      )}
-                      <ColsSelect
-                        value={level.columns}
-                        onChange={columns => {
+              return (
+                <div className={styles.levelControl}>
+                  {index === 0 && useIncludePathTraversal ? (
+                    <div className={styles.axisPill}>
+                      <span className={styles.pathSummary}>Root</span>
+                    </div>
+                  ) : useHopPicker && stepContext ? (
+                    <MapLevelHop
+                      index={index}
+                      step={resolvedStep}
+                      stepContext={stepContext}
+                      hasSavedStep={level.step != null}
+                      schemas={schemas}
+                      relationSchemas={relationSchemas}
+                      getFieldGroupAccess={getFieldGroupAccess}
+                      onChangeStep={(step, targetSchemaIds) => {
+                        const nextLevels = cfg.levelConfigs
+                          .slice(0, index + 1)
+                          .map((candidate, candidateIndex) =>
+                            candidateIndex === index
+                              ? {
+                                  ...candidate,
+                                  schemaId: targetSchemaIds?.[0] ?? candidate.schemaId,
+                                  step
+                                }
+                              : candidate
+                          );
+                        notify({ levelConfigs: nextLevels });
+                      }}
+                      isLastLevel={index === cfg.levelConfigs.length - 1}
+                      targetSchemaId={level.targetSchemaId ?? null}
+                      onChangeTargetSchemaId={targetSchemaId => {
+                        const nextLevels = cfg.levelConfigs.map((candidate, candidateIndex) =>
+                          candidateIndex === index ? { ...candidate, targetSchemaId } : candidate
+                        );
+                        notify({ levelConfigs: nextLevels });
+                      }}
+                    />
+                  ) : (
+                    <SchemaSelect
+                      value={level.schemaId}
+                      options={levelSchemaOptions[index] ?? []}
+                      onChange={id => {
+                        const nextLevels = cfg.levelConfigs
+                          .slice(0, index + 1)
+                          .map((candidate, candidateIndex) =>
+                            candidateIndex === index
+                              ? { ...candidate, schemaId: id, step: undefined }
+                              : candidate
+                          );
+                        notify({ levelConfigs: nextLevels });
+                      }}
+                    />
+                  )}
+                  <ColsSelect
+                    value={level.columns}
+                    onChange={columns => {
+                      const nextLevels = cfg.levelConfigs.map((candidate, candidateIndex) =>
+                        candidateIndex === index ? { ...candidate, columns } : candidate
+                      );
+                      notify({ levelConfigs: nextLevels });
+                    }}
+                  />
+                  {index > 0 && (
+                    <>
+                      <button
+                        type="button"
+                        className={`${styles.levelAction} ${level.hidden ? styles.levelHidden : ''}`}
+                        aria-label={`${level.hidden ? 'Show' : 'Hide'} level ${index + 1}`}
+                        aria-pressed={level.hidden === true}
+                        title={`${level.hidden ? 'Show' : 'Hide'} level ${index + 1}`}
+                        onClick={() => {
                           const nextLevels = cfg.levelConfigs.map((candidate, candidateIndex) =>
-                            candidateIndex === index ? { ...candidate, columns } : candidate
+                            candidateIndex === index
+                              ? { ...candidate, hidden: candidate.hidden !== true }
+                              : candidate
                           );
                           notify({ levelConfigs: nextLevels });
                         }}
-                      />
-                      {index > 0 && (
-                        <>
-                          <button
-                            type="button"
-                            className={`${styles.levelAction} ${level.hidden ? styles.levelHidden : ''}`}
-                            aria-label={`${level.hidden ? 'Show' : 'Hide'} level ${index + 1}`}
-                            aria-pressed={level.hidden === true}
-                            title={`${level.hidden ? 'Show' : 'Hide'} level ${index + 1}`}
-                            onClick={() => {
-                              const nextLevels = cfg.levelConfigs.map(
-                                (candidate, candidateIndex) =>
-                                  candidateIndex === index
-                                    ? { ...candidate, hidden: candidate.hidden !== true }
-                                    : candidate
-                              );
-                              notify({ levelConfigs: nextLevels });
-                            }}
-                          >
-                            <TbEyeOff size={13} />
-                          </button>
-                          {index === cfg.levelConfigs.length - 1 && (
-                            <button
-                              type="button"
-                              className={styles.levelAction}
-                              aria-label={`Remove level ${index + 1}`}
-                              onClick={() =>
-                                notify({
-                                  levelConfigs: cfg.levelConfigs.filter(
-                                    (_, candidateIndex) => candidateIndex !== index
-                                  )
-                                })
-                              }
-                            >
-                              <TbTrash size={13} />
-                            </button>
-                          )}
-                        </>
+                      >
+                        <TbEyeOff size={13} />
+                      </button>
+                      {index === cfg.levelConfigs.length - 1 && (
+                        <button
+                          type="button"
+                          className={styles.levelAction}
+                          aria-label={`Remove level ${index + 1}`}
+                          onClick={() =>
+                            notify({
+                              levelConfigs: cfg.levelConfigs.filter(
+                                (_, candidateIndex) => candidateIndex !== index
+                              )
+                            })
+                          }
+                        >
+                          <TbTrash size={13} />
+                        </button>
                       )}
-                    </div>
-                  );
-                }}
-              />
-            </div>
-          )}
-        </div>
+                    </>
+                  )}
+                </div>
+              );
+            }}
+          />
+        </CollapsibleSection>
       )}
 
       {!hideToolbar && (
         <ViewControls variant="view">
           <div className={styles.axisPill}>
-            <span className={styles.axisKicker}>Metric</span>
-            <span className={styles.pathSummary}>{metricTerminalSchema?.name ?? 'Any schema'}</span>
+            <LabeledValue label="Type" value={metricTerminalSchema?.name ?? 'Any'} />
             <LabeledSelect
               label="Field"
               value={metricConfig ? sourceKey(metricConfig.source) : ''}
