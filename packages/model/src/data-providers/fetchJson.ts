@@ -33,6 +33,7 @@ function assertDataSchemaField(value: unknown): asserts value is DataSchemaField
     case 'text':
     case 'longtext':
     case 'boolean':
+    case 'number':
       return;
     case 'select':
       if (!Array.isArray(field.options)) {
