@@ -328,9 +328,11 @@ const evaluateAiPrompt = async (
       result = await chat({
         adapter,
         messages: [{ role: 'user', content: prompt }],
+        threadId: `${runId}:${check.id}:${entity.id}`,
         tools,
         modelOptions: { temperature: aiConfig.temperature },
         outputSchema: aiResultSchema,
+        stream: false,
         abortController: linkedAbort.controller
       });
     } finally {

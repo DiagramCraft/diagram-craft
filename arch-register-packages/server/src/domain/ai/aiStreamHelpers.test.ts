@@ -54,7 +54,7 @@ describe('createAiToolCallAccumulator', () => {
       streamChunk({
         type: 'TOOL_CALL_START',
         toolCallId: 'call-1',
-        toolName: 'delete_entity'
+        toolCallName: 'delete_entity'
       })
     );
     accumulator.consume(

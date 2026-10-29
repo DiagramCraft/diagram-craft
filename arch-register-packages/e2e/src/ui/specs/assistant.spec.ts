@@ -26,11 +26,43 @@ test.describe('assistant section', () => {
     await expect(page).toHaveURL(new RegExp(`conversation=${secondConversation}`));
   });
 
-  test('renders an AG-UI SSE response from the upgraded chat client', async ({ page }) => {
+  test('renders a v1 stream and restores the persisted transcript after reload', async ({ page }) => {
     let requestBody: Record<string, unknown> | undefined;
+    let transcriptAvailable = false;
+
+    await page.route('**/ai/conversations/*/messages', async route => {
+      if (!transcriptAvailable) {
+        await route.fulfill({ json: [] });
+        return;
+      }
+
+      const path = new URL(route.request().url()).pathname.split('/');
+      const conversationId = path.at(-2);
+      await route.fulfill({
+        json: [
+          {
+            id: 'saved-user-message',
+            conversation_id: conversationId,
+            role: 'user',
+            content: 'Say hello',
+            metadata: {},
+            created_at: '2026-10-29T10:00:00.000Z'
+          },
+          {
+            id: 'saved-assistant-message',
+            conversation_id: conversationId,
+            role: 'assistant',
+            content: 'Mock UI reply',
+            metadata: {},
+            created_at: '2026-10-29T10:00:01.000Z'
+          }
+        ]
+      });
+    });
 
     await page.route('**/api/application/v1/default/ai/chat', async route => {
       requestBody = route.request().postDataJSON() as Record<string, unknown>;
+      transcriptAvailable = true;
       const threadId = String(requestBody['threadId']);
       const runId = String(requestBody['runId']);
       const messageId = 'mock-assistant-message';
@@ -60,10 +92,14 @@ test.describe('assistant section', () => {
     await expect(page.getByText('Mock UI reply', { exact: true })).toBeVisible();
     expect(requestBody).toMatchObject({
       threadId: conversationId,
-      forwardedProps: { conversationId },
-      data: { conversationId },
-      messages: [{ role: 'user', content: 'Say hello' }]
+      forwardedProps: { conversationId }
     });
+    expect(requestBody).not.toHaveProperty('data');
+    expect(JSON.stringify(requestBody?.['messages'])).toContain('Say hello');
+
+    await page.reload();
+    await expect(page.getByText('Say hello', { exact: true })).toBeVisible();
+    await expect(page.getByText('Mock UI reply', { exact: true })).toBeVisible();
   });
 
   test('shows and responds to a streamed tool approval', async ({ page }) => {
@@ -79,7 +115,6 @@ test.describe('assistant section', () => {
         requestBodies.length === 1
           ? [
               { type: 'RUN_STARTED', threadId, runId },
-              { type: 'TEXT_MESSAGE_START', messageId, role: 'assistant' },
               {
                 type: 'TOOL_CALL_START',
                 messageId,
@@ -89,12 +124,32 @@ test.describe('assistant section', () => {
               {
                 type: 'TOOL_CALL_ARGS',
                 toolCallId: 'approval-call-1',
-                delta: '{"name":"Review Service"}'
+                delta: '{"schemaId":"schema-1","name":"Review Service"}'
               },
               {
                 type: 'TOOL_CALL_END',
                 toolCallId: 'approval-call-1',
-                input: { name: 'Review Service' }
+                input: { schemaId: 'schema-1', name: 'Review Service' }
+              },
+              {
+                type: 'MESSAGES_SNAPSHOT',
+                messages: [
+                  { id: 'user-message', role: 'user', content: 'Create a service' },
+                  {
+                    id: messageId,
+                    role: 'assistant',
+                    toolCalls: [
+                      {
+                        id: 'approval-call-1',
+                        type: 'function',
+                        function: {
+                          name: 'create_entity',
+                          arguments: '{"schemaId":"schema-1","name":"Review Service"}'
+                        }
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 type: 'RUN_FINISHED',
@@ -104,19 +159,64 @@ test.describe('assistant section', () => {
                   type: 'interrupt',
                   interrupts: [
                     {
-                      id: 'approval-1',
-                      reason: 'approval_required',
-                      message: 'Approval required to create this entity.',
+                      id: 'approval_approval-call-1',
+                      reason: 'tool_call',
+                      message: 'Approval required to run create_entity',
                       toolCallId: 'approval-call-1',
                       responseSchema: {
-                        type: 'object',
-                        properties: { approved: { type: 'boolean' } },
-                        required: ['approved']
+                        oneOf: [
+                          {
+                            type: 'object',
+                            properties: {
+                              approved: { const: true },
+                              editedArgs: {
+                                type: 'object',
+                                properties: {
+                                  schemaId: { type: 'string' },
+                                  name: { type: 'string' },
+                                  slug: { type: 'string' },
+                                  namespace: { type: 'string' },
+                                  description: { type: 'string' },
+                                  owner: { type: ['string', 'null'] },
+                                  lifecycle: { type: ['string', 'null'] },
+                                  tags: { type: 'array', items: { type: 'string' } },
+                                  fields: { type: 'object', additionalProperties: true }
+                                },
+                                required: ['schemaId'],
+                                additionalProperties: false
+                              }
+                            },
+                            required: ['approved'],
+                            additionalProperties: false
+                          },
+                          {
+                            type: 'object',
+                            properties: { approved: { const: false } },
+                            required: ['approved'],
+                            additionalProperties: false
+                          }
+                        ]
                       },
                       metadata: {
                         kind: 'approval',
                         toolName: 'create_entity',
-                        input: { name: 'Review Service' }
+                        input: { schemaId: 'schema-1', name: 'Review Service' },
+                        'tanstack:interruptBinding': {
+                          v: 1,
+                          kind: 'tool-approval',
+                          interruptId: 'approval_approval-call-1',
+                          toolName: 'create_entity',
+                          toolCallId: 'approval-call-1',
+                          originalArgs: { schemaId: 'schema-1', name: 'Review Service' },
+                          inputSchemaHash:
+                            'sha256:a8ffcd8cd04fa5b99e1ee5554e36dc417780fc64cbbcee8292c2fe51e74a4e11',
+                          approvalSchemaHash:
+                            'sha256:22f76d9a1c618a3cfaa891208a14f6e5e6ab1be4ff1c38cc8a8cd1e8fd0c0e4e',
+                          responseSchemaHash:
+                            'sha256:f59c82b0a786943eac6d3a6a5d50701b4114b4f7e76ad5551ae9c61282e98724',
+                          interruptedRunId: runId,
+                          generation: 0
+                        }
                       }
                     }
                   ]
@@ -124,7 +224,14 @@ test.describe('assistant section', () => {
               }
             ]
           : [
-              { type: 'RUN_STARTED', threadId, runId },
+              {
+                type: 'RUN_STARTED',
+                threadId,
+                runId,
+                ...(typeof requestBody['parentRunId'] === 'string'
+                  ? { parentRunId: requestBody['parentRunId'] }
+                  : {})
+              },
               { type: 'TEXT_MESSAGE_START', messageId, role: 'assistant' },
               { type: 'TEXT_MESSAGE_CONTENT', messageId, delta: 'Entity created.' },
               { type: 'TEXT_MESSAGE_END', messageId },
@@ -151,5 +258,18 @@ test.describe('assistant section', () => {
     await expect(page.getByText('Approved', { exact: true })).toBeVisible();
     await expect(page.getByText('Entity created.', { exact: true })).toBeVisible();
     await expect.poll(() => requestBodies.length).toBe(2);
+    expect(requestBodies[1]).toMatchObject({
+      threadId: requestBodies[0]?.['threadId'],
+      parentRunId: requestBodies[0]?.['runId'],
+      forwardedProps: { conversationId: requestBodies[0]?.['threadId'] },
+      resume: [
+        {
+          interruptId: 'approval_approval-call-1',
+          status: 'resolved',
+          payload: { approved: true }
+        }
+      ]
+    });
+    expect(requestBodies[1]).not.toHaveProperty('data');
   });
 });

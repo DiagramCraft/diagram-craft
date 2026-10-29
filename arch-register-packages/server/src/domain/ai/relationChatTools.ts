@@ -1,4 +1,9 @@
 import { toolDefinition } from '@tanstack/ai';
+import {
+  createRelationChatToolInputSchema,
+  deleteRelationChatToolInputSchema,
+  updateRelationChatToolInputSchema
+} from '@arch-register/api-types/aiChatApprovalToolSchemas';
 import { randomUUID } from 'node:crypto';
 import { requireNoRestrictedFieldWrites } from '../auth/fieldGroupAccessControl';
 import { requireWorkspaceCapability } from '../auth/authorization';
@@ -97,17 +102,7 @@ const createRelationTool = toolDefinition({
   name: 'create_relation',
   description: 'Create a typed relation instance between two entities; requires explicit approval.',
   needsApproval: true,
-  inputSchema: {
-    type: 'object',
-    properties: {
-      schemaId: { type: 'string' },
-      inEntityId: { type: 'string' },
-      outEntityId: { type: 'string' },
-      fields: { type: 'object', additionalProperties: true }
-    },
-    required: ['schemaId', 'inEntityId', 'outEntityId'],
-    additionalProperties: false
-  },
+  inputSchema: createRelationChatToolInputSchema,
   outputSchema: relationOutputSchema
 });
 
@@ -115,15 +110,7 @@ const updateRelationTool = toolDefinition({
   name: 'update_relation',
   description: 'Update typed relation fields; requires explicit approval.',
   needsApproval: true,
-  inputSchema: {
-    type: 'object',
-    properties: {
-      relationId: { type: 'string' },
-      fields: { type: 'object', additionalProperties: true }
-    },
-    required: ['relationId', 'fields'],
-    additionalProperties: false
-  },
+  inputSchema: updateRelationChatToolInputSchema,
   outputSchema: relationOutputSchema
 });
 
@@ -131,12 +118,7 @@ const deleteRelationTool = toolDefinition({
   name: 'delete_relation',
   description: 'Delete a typed relation instance; requires explicit approval.',
   needsApproval: true,
-  inputSchema: {
-    type: 'object',
-    properties: { relationId: { type: 'string' } },
-    required: ['relationId'],
-    additionalProperties: false
-  },
+  inputSchema: deleteRelationChatToolInputSchema,
   outputSchema: {
     type: 'object',
     properties: { success: { type: 'boolean' } },
