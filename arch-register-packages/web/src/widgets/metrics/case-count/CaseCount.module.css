@@ -2,7 +2,8 @@
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);
   border-radius: var(--r-md);
-  padding: 14px 16px 16px;
+  padding: calc(var(--widget-inset-y, 8px) + 6px) var(--widget-inset-x, 10px)
+    calc(var(--widget-inset-y, 8px) + 8px);
   display: flex;
   flex-direction: column;
   gap: 2px;

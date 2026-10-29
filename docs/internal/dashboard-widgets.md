@@ -24,6 +24,10 @@ naming/breakpoint conventions to use, so individual widgets don't each invent th
 - `.body` also carries `data-frame="true"`, for the (rarer) cases where a plain descendant-combinator
   override reads better than a container query — e.g. unconditionally stripping a component's own
   chrome whenever it's rendered inside a frame, with no width threshold involved.
+- `.body` defines `--widget-inset-x` / `--widget-inset-y` (currently `10px` / `8px`) as the shared
+  content inset. It is applied as body padding when `padded`; widgets with `padded: false` (stat
+  tiles, tabs) must use these tokens for their own inset (with fallbacks, e.g.
+  `var(--widget-inset-x, 10px)`) so changing the token moves all widgets together.
 - `.body` exposes its own padding as `--_frame-top-padding` / `--_frame-left-padding` custom
   properties (currently `8px` / `10px`). Content that wants to bleed past the frame's padding to the
   container's edge can cancel it locally, e.g.:

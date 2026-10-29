@@ -90,9 +90,13 @@
   text-overflow: ellipsis;
 }
 
+/* --widget-inset-x/y are the shared content inset for all dashboard widgets. Padded frames apply
+   them as body padding; unpadded widgets (stat tiles, tabs) apply them themselves. */
 .body {
-  --_frame-top-padding: 8px;
-  --_frame-left-padding: 10px;
+  --widget-inset-x: 10px;
+  --widget-inset-y: 8px;
+  --_frame-top-padding: var(--widget-inset-y);
+  --_frame-left-padding: var(--widget-inset-x);
   padding: var(--_frame-top-padding) var(--_frame-left-padding);
   flex: 1;
   min-height: 0;
