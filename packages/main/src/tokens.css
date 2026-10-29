@@ -50,11 +50,15 @@
 
   --base-bg: var(--theme-dark-base-bg, var(--gray-1));
   --base-fg: var(--theme-dark-base-fg, var(--gray-12));
+  --base-fg-secondary: var(--theme-dark-base-fg-secondary, var(--gray-10));
   --base-fg-dim: var(--theme-dark-base-fg-dim, var(--gray-11));
   --base-fg-more-dim: var(--theme-dark-base-fg-more-dim, var(--gray-8));
 
   --panel-bg: var(--theme-dark-panel-bg, var(--gray-2));
   --panel-fg: var(--theme-dark-panel-fg, var(--gray-12));
+  --panel-fg-secondary: var(--theme-dark-panel-fg-secondary, var(--gray-11));
+  --panel-fg-tertiary: var(--theme-dark-panel-fg-tertiary, var(--gray-10));
+  --panel-fg-dimmed: var(--theme-dark-panel-fg-dimmed, var(--gray-7));
   --panel-border: var(--theme-dark-panel-border, var(--gray-4));
 
   --accent-bg: var(--theme-dark-accent-bg, var(--blue-4));
@@ -66,6 +70,7 @@
   --accent-chroma: var(--theme-dark-accent-chroma, var(--blue-9));
 
   --cmp-fg: var(--theme-dark-cmp-fg, var(--gray-12));
+  --cmp-fg-secondary: var(--theme-dark-cmp-fg-secondary, var(--gray-10));
   --cmp-fg-disabled: var(--theme-dark-cmp-fg-disabled, var(--gray-8));
   --cmp-fg-dimmed: var(--theme-dark-cmp-fg-dimmed, var(--gray-6));
   --cmp-bg: var(--theme-dark-cmp-bg, var(--gray-3));
@@ -117,11 +122,15 @@
 
   --base-bg: var(--theme-light-base-bg, var(--gray-1));
   --base-fg: var(--theme-light-base-fg, var(--gray-12));
+  --base-fg-secondary: var(--theme-light-base-fg-secondary, var(--gray-10));
   --base-fg-dim: var(--theme-light-base-fg-dim, var(--gray-11));
   --base-fg-more-dim: var(--theme-light-base-fg-more-dim, var(--gray-9));
 
   --panel-bg: var(--theme-light-panel-bg, var(--gray-2));
   --panel-fg: var(--theme-light-panel-fg, var(--gray-12));
+  --panel-fg-secondary: var(--theme-light-panel-fg-secondary, var(--gray-11));
+  --panel-fg-tertiary: var(--theme-light-panel-fg-tertiary, var(--gray-10));
+  --panel-fg-dimmed: var(--theme-light-panel-fg-dimmed, var(--gray-8));
   --panel-border: var(--theme-light-panel-border, var(--gray-4));
 
   --accent-bg: var(--theme-light-accent-bg, var(--blue-4));
@@ -133,6 +142,7 @@
   --accent-chroma: var(--theme-light-accent-chroma, var(--blue-9));
 
   --cmp-fg: var(--theme-light-cmp-fg, var(--gray-12));
+  --cmp-fg-secondary: var(--theme-dark-cmp-fg-secondary, var(--gray-10));
   --cmp-fg-disabled: var(--theme-light-cmp-fg-disabled, var(--gray-8));
   --cmp-fg-dimmed: var(--theme-light-cmp-fg-dimmed, var(--gray-6));
   --cmp-bg: var(--theme-light-cmp-bg, var(--gray-3));

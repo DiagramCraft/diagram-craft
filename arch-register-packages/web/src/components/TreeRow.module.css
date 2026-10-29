@@ -67,14 +67,17 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: var(--panel-fg);
 }
 
 .trailing {
-  color: var(--cmp-fg-disabled);
+  color: var(--panel-fg-dimmed);
   font-size: 11px;
   display: inline-flex;
   align-items: center;
   gap: 4px;
+
+  font-family: var(--font-mono);
 }
 
 .tag {

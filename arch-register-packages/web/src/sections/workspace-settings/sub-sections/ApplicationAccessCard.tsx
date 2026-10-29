@@ -118,7 +118,7 @@ export const ApplicationAccessCard = ({
         style={{
           margin: 0,
           fontSize: '11.5px',
-          color: 'var(--base-fg-more-dim)',
+          color: 'var(--base-fg-secondary)',
           textWrap: 'pretty'
         }}
       >

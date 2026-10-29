@@ -422,7 +422,7 @@
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--cmp-fg-disabled);
+  color: var(--cmp-fg-secondary);
   padding: 6px 8px 4px;
 }
 
@@ -653,7 +653,7 @@
 
 .acctEmail {
   font-size: 11px;
-  color: var(--cmp-fg-disabled);
+  color: var(--cmp-fg-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
