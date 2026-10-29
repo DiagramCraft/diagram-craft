@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { type CSSProperties, useCallback, useState } from 'react';
 import { getRouteApi } from '@tanstack/react-router';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
@@ -20,6 +20,15 @@ import { ProjectPlanMilestones } from './ProjectPlanMilestones';
 import { ProjectPlanTimeline } from './ProjectPlanTimeline';
 import { usePlanChanges } from './usePlanChanges';
 import styles from './ProjectPlan.module.css';
+
+// Panels fill the space below the tab bar; Tabs.Content defaults to a fixed height.
+const TAB_CONTENT_STYLE: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  flex: 1,
+  minHeight: 0,
+  height: 'auto'
+};
 
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/projects/$projectId');
 
@@ -111,9 +120,10 @@ export const ProjectPlan = ({
         ) : undefined
       }
       menu={menuItems.length > 0 ? <TitleMenu label="Plan actions" items={menuItems} /> : undefined}
-      toolbar={
-        <div className={styles.tabBar}>
-          <Tabs.Root value={activeTab} onValueChange={value => setActiveTab(value as PlanTab)}>
+    >
+      <div className={styles.tabs}>
+        <Tabs.Root value={activeTab} onValueChange={value => setActiveTab(value as PlanTab)}>
+          <div className={styles.tabBar}>
             <Tabs.List>
               <Tabs.Trigger value="timeline">Timeline</Tabs.Trigger>
               <Tabs.Trigger value="planned-changes">
@@ -124,53 +134,61 @@ export const ProjectPlan = ({
               )}
               <Tabs.Trigger value="milestones">Milestones</Tabs.Trigger>
             </Tabs.List>
-          </Tabs.Root>
-        </div>
-      }
-    >
-      {activeTab === 'timeline' ? (
-        <div className={styles.tab}>
-          <ProjectPlanTimeline
-            project={project}
-            projectEntities={projectEntities}
-            entityEntries={entityEntries}
-            entityTypeColorMap={entityTypeColorMap}
-            milestonesById={milestonesById}
-            canEdit={project.canEdit}
-            onApplySnapshot={onApplySnapshot}
-            onEditSnapshot={onEditSnapshot}
-            onDeleteSnapshot={setDeleteTarget}
-          />
-        </div>
-      ) : activeTab === 'planned-changes' ? (
-        <ProjectPlanPlannedChanges
-          project={project}
-          changeEntries={changeEntries}
-          relationNameById={relationNameById}
-          relationSchemaById={relationSchemaById}
-          relationSchemaIdByRelationId={relationSchemaIdByRelationId}
-          projectEntities={projectEntities}
-          milestonesById={milestonesById}
-          onApplySnapshot={onApplySnapshot}
-          onEditSnapshot={onEditSnapshot}
-          onDeleteSnapshot={setDeleteTarget}
-        />
-      ) : activeTab === 'milestones' ? (
-        <ProjectPlanMilestones
-          project={project}
-          editorTarget={milestoneEditorTarget}
-          onEditorTargetChange={setMilestoneEditorTarget}
-        />
-      ) : (
-        <div className={styles.tab}>
-          <ProjectPlanDiff
-            workspaceId={workspaceSlug}
-            project={project}
-            projects={projects}
-            targetDate={diffTargetDate}
-          />
-        </div>
-      )}
+          </div>
+
+          <Tabs.Content value="timeline" style={TAB_CONTENT_STYLE}>
+            <div className={styles.tab}>
+              <ProjectPlanTimeline
+                project={project}
+                projectEntities={projectEntities}
+                entityEntries={entityEntries}
+                entityTypeColorMap={entityTypeColorMap}
+                milestonesById={milestonesById}
+                canEdit={project.canEdit}
+                onApplySnapshot={onApplySnapshot}
+                onEditSnapshot={onEditSnapshot}
+                onDeleteSnapshot={setDeleteTarget}
+              />
+            </div>
+          </Tabs.Content>
+
+          <Tabs.Content value="planned-changes" style={TAB_CONTENT_STYLE}>
+            <ProjectPlanPlannedChanges
+              project={project}
+              changeEntries={changeEntries}
+              relationNameById={relationNameById}
+              relationSchemaById={relationSchemaById}
+              relationSchemaIdByRelationId={relationSchemaIdByRelationId}
+              projectEntities={projectEntities}
+              milestonesById={milestonesById}
+              onApplySnapshot={onApplySnapshot}
+              onEditSnapshot={onEditSnapshot}
+              onDeleteSnapshot={setDeleteTarget}
+            />
+          </Tabs.Content>
+
+          {diffTargetDate != null && (
+            <Tabs.Content value="project-diff" style={TAB_CONTENT_STYLE}>
+              <div className={styles.tab}>
+                <ProjectPlanDiff
+                  workspaceId={workspaceSlug}
+                  project={project}
+                  projects={projects}
+                  targetDate={diffTargetDate}
+                />
+              </div>
+            </Tabs.Content>
+          )}
+
+          <Tabs.Content value="milestones" style={TAB_CONTENT_STYLE}>
+            <ProjectPlanMilestones
+              project={project}
+              editorTarget={milestoneEditorTarget}
+              onEditorTargetChange={setMilestoneEditorTarget}
+            />
+          </Tabs.Content>
+        </Tabs.Root>
+      </div>
       <DeleteConfirmationDialog
         open={!!deleteTarget}
         title="Delete planned change"

@@ -97,32 +97,30 @@ export const ProjectPlanPlannedChanges = ({
   });
 
   const toolbar = (
-    <div className={styles.plannedToolbar}>
-      <ViewControls variant="tab">
+    <ViewControls variant="tab">
+      <LabeledSelect
+        label="Show"
+        value={show}
+        onChange={value => setShow(value as ShowFilter)}
+        options={[
+          { value: 'all', label: 'All' },
+          { value: 'planned', label: 'Planned' },
+          { value: 'applied', label: 'Applied' },
+          { value: 'overdue', label: 'Overdue' }
+        ]}
+      />
+      <div className={styles.toolbarEnd}>
         <LabeledSelect
-          label="Show"
-          value={show}
-          onChange={value => setShow(value as ShowFilter)}
+          label="Group by"
+          value={groupBy}
+          onChange={value => setGroupBy(value as GroupBy)}
           options={[
-            { value: 'all', label: 'All' },
-            { value: 'planned', label: 'Planned' },
-            { value: 'applied', label: 'Applied' },
-            { value: 'overdue', label: 'Overdue' }
+            { value: 'date', label: 'Date' },
+            { value: 'entity', label: 'Entity' }
           ]}
         />
-        <div className={styles.toolbarEnd}>
-          <LabeledSelect
-            label="Group by"
-            value={groupBy}
-            onChange={value => setGroupBy(value as GroupBy)}
-            options={[
-              { value: 'date', label: 'Date' },
-              { value: 'entity', label: 'Entity' }
-            ]}
-          />
-        </div>
-      </ViewControls>
-    </div>
+      </div>
+    </ViewControls>
   );
 
   if (visibleEntries.length === 0) {

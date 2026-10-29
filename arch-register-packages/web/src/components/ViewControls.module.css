@@ -14,8 +14,10 @@
   margin-bottom: 8px;
 
   &[data-variant="tab"] {
-    padding: 0;
-    margin-bottom: 0;
+    padding: 8px;
+    margin-top: -8px;
+    background-color: var(--panel-bg);
+    border-bottom: 1px solid var(--panel-border);
   }
 
   &[data-variant="view"] {

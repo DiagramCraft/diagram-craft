@@ -404,146 +404,146 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
             <Tabs.Trigger value="history">Run history</Tabs.Trigger>
             <Tabs.Trigger value="servers">Servers ({servers.length})</Tabs.Trigger>
           </Tabs.List>
-        </Tabs.Root>
-
-        {tab === 'servers' && (
-          <section className={styles.section}>
-            <QueryState
-              isLoading={serversLoading}
-              error={serversError}
-              isEmpty={servers.length === 0}
-              subject="job servers"
-              empty={{ compact: true, title: 'No job servers have registered yet.' }}
-            >
-              <div className={styles.tableWrap}>
-                <Table.Root layout="fixed" bordered={false}>
-                  <Table.Head>
-                    <Table.Row>
-                      <Table.HeaderCell>Name</Table.HeaderCell>
-                      <Table.HeaderCell width={130}>Status</Table.HeaderCell>
-                      <Table.HeaderCell width={180}>Last seen</Table.HeaderCell>
-                    </Table.Row>
-                  </Table.Head>
-                  <Table.Body>
-                    {servers.map(server => (
-                      <Table.Row key={server.id}>
-                        <Table.Cell>
-                          <div>{server.name}</div>
-                          <div className={styles.muted}>{server.id}</div>
-                        </Table.Cell>
-                        <Table.Cell>
-                          <Chip
-                            dot={server.status === 'available' ? 'var(--green)' : 'var(--error-fg)'}
-                            tone="ghost"
-                          >
-                            {server.status === 'available' ? 'Available' : 'Unavailable'}
-                          </Chip>
-                        </Table.Cell>
-                        <Table.Cell>{formatDateTime(server.last_seen_at)}</Table.Cell>
+          <Tabs.Content value="servers" style={{ height: 'auto' }}>
+            <section className={styles.section}>
+              <QueryState
+                isLoading={serversLoading}
+                error={serversError}
+                isEmpty={servers.length === 0}
+                subject="job servers"
+                empty={{ compact: true, title: 'No job servers have registered yet.' }}
+              >
+                <div className={styles.tableWrap}>
+                  <Table.Root layout="fixed" bordered={false}>
+                    <Table.Head>
+                      <Table.Row>
+                        <Table.HeaderCell>Name</Table.HeaderCell>
+                        <Table.HeaderCell width={130}>Status</Table.HeaderCell>
+                        <Table.HeaderCell width={180}>Last seen</Table.HeaderCell>
                       </Table.Row>
-                    ))}
-                  </Table.Body>
-                </Table.Root>
-              </div>
-            </QueryState>
-          </section>
-        )}
+                    </Table.Head>
+                    <Table.Body>
+                      {servers.map(server => (
+                        <Table.Row key={server.id}>
+                          <Table.Cell>
+                            <div>{server.name}</div>
+                            <div className={styles.muted}>{server.id}</div>
+                          </Table.Cell>
+                          <Table.Cell>
+                            <Chip
+                              dot={
+                                server.status === 'available' ? 'var(--green)' : 'var(--error-fg)'
+                              }
+                              tone="ghost"
+                            >
+                              {server.status === 'available' ? 'Available' : 'Unavailable'}
+                            </Chip>
+                          </Table.Cell>
+                          <Table.Cell>{formatDateTime(server.last_seen_at)}</Table.Cell>
+                        </Table.Row>
+                      ))}
+                    </Table.Body>
+                  </Table.Root>
+                </div>
+              </QueryState>
+            </section>
+          </Tabs.Content>
 
-        {tab === 'schedules' && (
-          <section className={styles.section}>
-            {runNowError && <Banner variant="error">{runNowError}</Banner>}
-            <QueryState
-              isLoading={schedulesLoading}
-              error={schedulesError}
-              isEmpty={schedules.length === 0}
-              subject="schedules"
-              empty={{ compact: true, title: 'No recurring schedules exist for this workspace.' }}
-            >
-              <div className={styles.tableWrap}>
-                <Table.Root layout="fixed" bordered={false}>
-                  <Table.Head>
-                    <Table.Row>
-                      <Table.HeaderCell>Job type</Table.HeaderCell>
-                      <Table.HeaderCell>Target schema</Table.HeaderCell>
-                      <Table.HeaderCell>Recurrence</Table.HeaderCell>
-                      <Table.HeaderCell width={70} numeric>
-                        Priority
-                      </Table.HeaderCell>
-                      <Table.HeaderCell width={90}>State</Table.HeaderCell>
-                      <Table.HeaderCell width={170}>Next planned run</Table.HeaderCell>
-                      <Table.HeaderCell width={48} />
-                    </Table.Row>
-                  </Table.Head>
-                  <Table.Body>
-                    {schedules.map(schedule => (
-                      <Table.Row
-                        key={schedule.id}
-                        selected={schedule.id === scheduleId}
-                        onClick={() =>
-                          canManageJobs ? setEditTarget(schedule) : showScheduleHistory(schedule)
-                        }
-                      >
-                        <Table.Cell>
-                          <div className={styles.name}>{schedule.job_type}</div>
-                          <div className={styles.muted}>{schedule.system_identity}</div>
-                        </Table.Cell>
-                        <Table.Cell>
-                          {schedule.target_schema_name ?? <span className={styles.muted}>—</span>}
-                        </Table.Cell>
-                        <Table.Cell>{formatRecurrence(schedule.recurrence)}</Table.Cell>
-                        <Table.Cell numeric>{schedule.priority}</Table.Cell>
-                        <Table.Cell>
-                          <Chip
-                            dot={schedule.enabled ? 'var(--green)' : 'var(--cmp-fg-disabled)'}
-                            tone="ghost"
-                          >
-                            {schedule.enabled ? 'Enabled' : 'Disabled'}
-                          </Chip>
-                        </Table.Cell>
-                        <Table.Cell>{formatDateTime(schedule.next_occurrence_at)}</Table.Cell>
-                        <Table.ActionsCell>
-                          <DropdownMenu
-                            trigger={
-                              <Table.DotsButton aria-label={`Actions for ${schedule.job_type}`} />
-                            }
-                            items={
-                              [
-                                ...(canManageJobs
-                                  ? [
-                                      {
-                                        label: 'Edit',
-                                        icon: <TbEdit size={14} />,
-                                        onClick: () => setEditTarget(schedule)
-                                      },
-                                      {
-                                        label:
-                                          runNowTarget === schedule.id ? 'Starting…' : 'Run now',
-                                        icon: <TbPlayerPlay size={14} />,
-                                        disabled: !schedule.enabled || runNowTarget === schedule.id,
-                                        onClick: () => handleRunNow(schedule)
-                                      }
-                                    ]
-                                  : []),
-                                {
-                                  label: 'View run history',
-                                  icon: <TbHistory size={14} />,
-                                  onClick: () => showScheduleHistory(schedule)
-                                }
-                              ] satisfies MenuItem[]
-                            }
-                          />
-                        </Table.ActionsCell>
+          <Tabs.Content value="schedules" style={{ height: 'auto' }}>
+            <section className={styles.section}>
+              {runNowError && <Banner variant="error">{runNowError}</Banner>}
+              <QueryState
+                isLoading={schedulesLoading}
+                error={schedulesError}
+                isEmpty={schedules.length === 0}
+                subject="schedules"
+                empty={{ compact: true, title: 'No recurring schedules exist for this workspace.' }}
+              >
+                <div className={styles.tableWrap}>
+                  <Table.Root layout="fixed" bordered={false}>
+                    <Table.Head>
+                      <Table.Row>
+                        <Table.HeaderCell>Job type</Table.HeaderCell>
+                        <Table.HeaderCell>Target schema</Table.HeaderCell>
+                        <Table.HeaderCell>Recurrence</Table.HeaderCell>
+                        <Table.HeaderCell width={70} numeric>
+                          Priority
+                        </Table.HeaderCell>
+                        <Table.HeaderCell width={90}>State</Table.HeaderCell>
+                        <Table.HeaderCell width={170}>Next planned run</Table.HeaderCell>
+                        <Table.HeaderCell width={48} />
                       </Table.Row>
-                    ))}
-                  </Table.Body>
-                </Table.Root>
-              </div>
-            </QueryState>
-          </section>
-        )}
+                    </Table.Head>
+                    <Table.Body>
+                      {schedules.map(schedule => (
+                        <Table.Row
+                          key={schedule.id}
+                          selected={schedule.id === scheduleId}
+                          onClick={() =>
+                            canManageJobs ? setEditTarget(schedule) : showScheduleHistory(schedule)
+                          }
+                        >
+                          <Table.Cell>
+                            <div className={styles.name}>{schedule.job_type}</div>
+                            <div className={styles.muted}>{schedule.system_identity}</div>
+                          </Table.Cell>
+                          <Table.Cell>
+                            {schedule.target_schema_name ?? <span className={styles.muted}>—</span>}
+                          </Table.Cell>
+                          <Table.Cell>{formatRecurrence(schedule.recurrence)}</Table.Cell>
+                          <Table.Cell numeric>{schedule.priority}</Table.Cell>
+                          <Table.Cell>
+                            <Chip
+                              dot={schedule.enabled ? 'var(--green)' : 'var(--cmp-fg-disabled)'}
+                              tone="ghost"
+                            >
+                              {schedule.enabled ? 'Enabled' : 'Disabled'}
+                            </Chip>
+                          </Table.Cell>
+                          <Table.Cell>{formatDateTime(schedule.next_occurrence_at)}</Table.Cell>
+                          <Table.ActionsCell>
+                            <DropdownMenu
+                              trigger={
+                                <Table.DotsButton aria-label={`Actions for ${schedule.job_type}`} />
+                              }
+                              items={
+                                [
+                                  ...(canManageJobs
+                                    ? [
+                                        {
+                                          label: 'Edit',
+                                          icon: <TbEdit size={14} />,
+                                          onClick: () => setEditTarget(schedule)
+                                        },
+                                        {
+                                          label:
+                                            runNowTarget === schedule.id ? 'Starting…' : 'Run now',
+                                          icon: <TbPlayerPlay size={14} />,
+                                          disabled:
+                                            !schedule.enabled || runNowTarget === schedule.id,
+                                          onClick: () => handleRunNow(schedule)
+                                        }
+                                      ]
+                                    : []),
+                                  {
+                                    label: 'View run history',
+                                    icon: <TbHistory size={14} />,
+                                    onClick: () => showScheduleHistory(schedule)
+                                  }
+                                ] satisfies MenuItem[]
+                              }
+                            />
+                          </Table.ActionsCell>
+                        </Table.Row>
+                      ))}
+                    </Table.Body>
+                  </Table.Root>
+                </div>
+              </QueryState>
+            </section>
+          </Tabs.Content>
 
-        {tab === 'history' && (
-          <>
+          <Tabs.Content value="history" style={{ height: 'auto' }}>
             <ViewControls variant="tab">
               <LabeledSelect
                 label="Schedule"
@@ -666,8 +666,8 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
                 </div>
               </QueryState>
             </section>
-          </>
-        )}
+          </Tabs.Content>
+        </Tabs.Root>
 
         <ScheduleEditorDialog
           schedule={editTarget}

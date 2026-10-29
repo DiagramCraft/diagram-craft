@@ -90,21 +90,19 @@ export const ProjectPlanMilestones = ({
 
   return (
     <>
-      <div className={styles.filterBar}>
-        <ViewControls variant="tab">
-          <LabeledSelect
-            label="Status"
-            value={statusFilter}
-            onChange={value => setStatusFilter(value as StatusFilter)}
-            options={[
-              { value: 'default', label: `Planned / Active (${count('default')})` },
-              { value: 'complete', label: `Complete (${count('complete')})` },
-              { value: 'cancelled', label: `Cancelled (${count('cancelled')})` },
-              { value: 'all', label: `All (${count('all')})` }
-            ]}
-          />
-        </ViewControls>
-      </div>
+      <ViewControls variant="tab">
+        <LabeledSelect
+          label="Status"
+          value={statusFilter}
+          onChange={value => setStatusFilter(value as StatusFilter)}
+          options={[
+            { value: 'default', label: `Planned / Active (${count('default')})` },
+            { value: 'complete', label: `Complete (${count('complete')})` },
+            { value: 'cancelled', label: `Cancelled (${count('cancelled')})` },
+            { value: 'all', label: `All (${count('all')})` }
+          ]}
+        />
+      </ViewControls>
       {filtered.length === 0 ? (
         <div className={styles.list}>
           <EmptyState

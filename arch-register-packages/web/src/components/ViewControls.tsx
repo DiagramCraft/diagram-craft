@@ -16,12 +16,7 @@ type ViewControlsProps = {
 };
 
 /** Shared layout for rows of filters, selects and buttons above a table, list or view. */
-export const ViewControls = ({
-  children,
-  variant,
-  nowrap,
-  className
-}: ViewControlsProps) => (
+export const ViewControls = ({ children, variant, nowrap, className }: ViewControlsProps) => (
   <div
     className={[styles.cViewControls, className].filter(Boolean).join(' ')}
     data-variant={variant}
