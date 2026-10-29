@@ -33,3 +33,9 @@
 .attributeLabel {
   color: var(--text-muted);
 }
+
+.footerActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

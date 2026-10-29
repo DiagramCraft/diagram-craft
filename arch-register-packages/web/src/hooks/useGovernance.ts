@@ -85,7 +85,8 @@ export const useDecideGovernanceAssignment = (workspaceId: string) => {
           idempotencyKey: crypto.randomUUID()
         }
       }),
-    onSuccess: async () => {
+    // Also on failure: a 409 means the case/assignment changed underneath us, so the lists are stale
+    onSettled: async () => {
       await Promise.all([
         invalidateGovernanceQueries(queryClient, workspaceId),
         invalidateNotificationQueries(queryClient, workspaceId)
