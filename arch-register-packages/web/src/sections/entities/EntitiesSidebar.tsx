@@ -11,7 +11,6 @@ import {
   TbPencil,
   TbTrash,
   TbPinned,
-  TbPinnedOff,
   TbBookmark,
   TbLayoutSidebarLeftCollapse,
   TbLayoutSidebarLeftExpand,
@@ -24,7 +23,11 @@ import {
 } from '../../lib/schemaPresentation';
 import type { SavedView } from '@arch-register/api-types/viewContract';
 import { useSavedViews, useDeleteSavedView, useUpdateSavedView } from '../../hooks/useSavedViews';
-import { useDeletePinnedEntity, usePinnedEntities } from '../../hooks/useNotifications';
+import { usePinnedEntities } from '../../hooks/useNotifications';
+import type { PinnedEntity } from '@arch-register/api-types/watchContract';
+import { useEntityContextMenu } from '../../components/EntityContextMenu';
+import { buildEntityMenuItems, type EntityRef } from './components/entityMenu';
+import { useEntityCommonActions } from './components/useEntityCommonActions';
 import { useEntityFacets } from '../../hooks/useEntities';
 import {
   useCollections,
@@ -100,6 +103,14 @@ const FacetRow = ({
   />
 );
 
+const pinnedEntityRef = (entity: PinnedEntity): EntityRef => ({
+  _uid: entity.entity_id,
+  _publicId: entity.entity_public_id,
+  _name: entity.entity_name,
+  _slug: entity.entity_slug,
+  _schema: { id: entity.schema_id }
+});
+
 export const EntitiesSidebar = ({
   schemas,
   lifecycleStates,
@@ -150,12 +161,11 @@ export const EntitiesSidebar = ({
     undefined,
     { enabled: sidebarTab === 'bookmarks' }
   );
-  const unpinEntityMutation = useDeletePinnedEntity(workspaceSlug);
-  const [pinnedMenu, setPinnedMenu] = useState<{
-    x: number;
-    y: number;
-    entityId: string;
-  } | null>(null);
+  const commonActions = useEntityCommonActions();
+  const { onContextMenu: onPinnedContextMenu, menu: pinnedContextMenu } = useEntityContextMenu(
+    (entity: PinnedEntity) =>
+      buildEntityMenuItems(pinnedEntityRef(entity), { actions: commonActions })
+  );
   const deleteViewMutation = useDeleteSavedView(workspaceSlug);
   const updateViewMutation = useUpdateSavedView(workspaceSlug);
   const updateCollectionMutation = useUpdateCollection(workspaceSlug);
@@ -485,15 +495,7 @@ export const EntitiesSidebar = ({
                       entityDetailRoute(workspaceSlug, asEntityPublicId(entity.entity_public_id))
                     )
                   }
-                  onContextMenu={event => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    setPinnedMenu({
-                      x: event.clientX,
-                      y: event.clientY,
-                      entityId: entity.entity_id
-                    });
-                  }}
+                  onContextMenu={event => onPinnedContextMenu(event, entity)}
                   trailing={<TbPinned size={12} className="dim" />}
                   tagColor={color}
                 />
@@ -547,20 +549,7 @@ export const EntitiesSidebar = ({
         onCancel={() => setDeleteViewTarget(null)}
       />
 
-      {pinnedMenu && (
-        <ContextMenu.Imperative
-          x={pinnedMenu.x}
-          y={pinnedMenu.y}
-          onClose={() => setPinnedMenu(null)}
-        >
-          <Menu.Item
-            leftSlot={<TbPinnedOff size={13} />}
-            onClick={() => unpinEntityMutation.mutate(pinnedMenu.entityId)}
-          >
-            Unpin
-          </Menu.Item>
-        </ContextMenu.Imperative>
-      )}
+      {pinnedContextMenu}
 
       {viewMenu && (
         <ContextMenu.Imperative x={viewMenu.x} y={viewMenu.y} onClose={() => setViewMenu(null)}>

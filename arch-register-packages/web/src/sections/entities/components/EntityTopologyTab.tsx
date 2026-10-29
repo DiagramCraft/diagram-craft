@@ -13,6 +13,9 @@ import sharedStyles from '../EntityDetailScreen.module.css';
 import { EmptyState } from '../../../components/EmptyState';
 import { groupRelationsByField, groupRelationsByRelationSchema } from './entityTopologyState';
 import { RelationDetailPopover } from './RelationDetailPopover';
+import { useEntityContextMenu } from '../../../components/EntityContextMenu';
+import { buildEntityMenuItems } from './entityMenu';
+import { useEntityCommonActions } from './useEntityCommonActions';
 
 type EdgePath = {
   key: string;
@@ -38,6 +41,7 @@ type GridShared = {
   setCardRef: (key: string) => (element: HTMLElement | null) => void;
   onEntityClick: (entityId: string) => void;
   onTypedRelationClick: (relationId: string, event: React.MouseEvent) => void;
+  onEntityContextMenu: (event: React.MouseEvent, relation: Relation) => void;
 };
 
 // One column of cards (incoming or outgoing) grouped by field (references) or by relation schema
@@ -50,7 +54,8 @@ const TopologyColumn = ({
   resolveRelColor,
   setCardRef,
   onEntityClick,
-  onTypedRelationClick
+  onTypedRelationClick,
+  onEntityContextMenu
 }: {
   side: 'in' | 'out';
   kind: 'reference' | 'typed';
@@ -87,6 +92,7 @@ const TopologyColumn = ({
                   ) as React.Ref<HTMLButtonElement>
                 }
                 className={styles.topoRefCard}
+                onContextMenu={event => !typed && onEntityContextMenu(event, r)}
                 onClick={event =>
                   typed
                     ? r.relationId && onTypedRelationClick(r.relationId, event)
@@ -164,6 +170,20 @@ export const EntityTopologyTab = ({
   const typedOutgoing = useMemo(() => outgoing.filter(r => r.kind === 'typed'), [outgoing]);
   const typedIncoming = useMemo(() => incoming.filter(r => r.kind === 'typed'), [incoming]);
 
+  const commonActions = useEntityCommonActions();
+  const { onContextMenu: onEntityContextMenu, menu: entityContextMenu } = useEntityContextMenu(
+    (relation: Relation) =>
+      buildEntityMenuItems(
+        {
+          _uid: relation.entityId,
+          _publicId: relation.publicId,
+          _name: relation.entityName,
+          _slug: relation.entitySlug,
+          _schema: { id: relation.entitySchemaId }
+        },
+        { actions: commonActions, pin: false }
+      )
+  );
   const [relationPopover, setRelationPopover] = useState<{
     relationId: string;
     x: number;
@@ -282,7 +302,8 @@ export const EntityTopologyTab = ({
     resolveRelColor,
     setCardRef,
     onEntityClick,
-    onTypedRelationClick: handleTypedRelationClick
+    onTypedRelationClick: handleTypedRelationClick,
+    onEntityContextMenu
   };
 
   return (
@@ -310,6 +331,7 @@ export const EntityTopologyTab = ({
                   key={i}
                   type="button"
                   className={styles.topoParentChip}
+                  onContextMenu={event => onEntityContextMenu(event, p)}
                   onClick={() => onEntityClick(p.publicId)}
                 >
                   <TypeBadge color={pc} name={ps?.name} icon={ps?.icon} size={14} />
@@ -361,6 +383,7 @@ export const EntityTopologyTab = ({
                     key={i}
                     type="button"
                     className={styles.topoChildCard}
+                    onContextMenu={event => onEntityContextMenu(event, c)}
                     onClick={() => onEntityClick(c.publicId)}
                   >
                     <span className={styles.topoCardBar} style={{ background: cc }} />
@@ -413,6 +436,8 @@ export const EntityTopologyTab = ({
           subtitle="Add reference or containment fields to see the topology."
         />
       )}
+
+      {entityContextMenu}
 
       {relationPopover && (
         <RelationDetailPopover

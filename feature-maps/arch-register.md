@@ -754,6 +754,13 @@
           Entity saves return validation warnings and reject blocking validation rules atomically, including rules that
           evaluate direct dependent entities through the same bounded JSON context.
 
+        - @id:ar.entities.actions-menu Users get one consistent set of entity actions — open, open in new tab, copy
+          link, pin or unpin — in the same order wherever an entity appears: the "..." menus of table, cards and tree views
+          and the entity detail header, and the right-click menus of the pinned sidebar section, relation columns, graph
+          views and the topology tab. Each place layers its own entries on top, such as collections, clone, merge, delete and
+          project actions in lists, or exclude, focus and expand in graphs. Pin is offered where the full entity record
+          is available.
+
         - @id:ar.entities.json-view Users can open "View JSON" from an entity's details menu to inspect the
           depth-1 JSON projection used by entity derived fields, including metadata, direct references, and typed
           relation targets.

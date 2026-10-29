@@ -11,7 +11,12 @@ import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { Title } from '../../../components/Title';
-import { getEntityDetailMenuActions } from './entityDetailHeaderHelpers';
+import { buildEntityMenuItems } from './entityMenu';
+import { useEntityCommonActions } from './useEntityCommonActions';
+import {
+  getEntityDetailMenuActions,
+  type EntityDetailMenuAction
+} from './entityDetailHeaderHelpers';
 import styles from '../EntityDetailScreen.module.css';
 
 type Props = {
@@ -75,6 +80,7 @@ export const EntityDetailHeader = ({
   onClone,
   onMergeInto
 }: Props) => {
+  const commonActions = useEntityCommonActions();
   const menuActions = getEntityDetailMenuActions({
     canEdit: entity.canEdit,
     canCreateChild: entity.canCreateChild,
@@ -82,25 +88,41 @@ export const EntityDetailHeader = ({
     deprecationPolicyRequired: schema?.deprecation_policy === 'required',
     hasDeprecation: deprecation != null
   });
-  const menuItems: MenuItem[] = menuActions.map(action => {
-    switch (action) {
-      case 'viewJson':
-        return { label: 'View JSON', onClick: onViewJson };
-      case 'collections':
-        return {
-          label: 'Collections…',
-          icon: <TbBookmark size={14} />,
-          onClick: onOpenCollections
-        };
-      case 'proposeDeprecation':
-        return { label: 'Propose deprecation…', onClick: onProposeDeprecation };
-      case 'clone':
-        return { label: 'Clone', icon: <TbCopy size={14} />, onClick: onClone };
-      case 'mergeInto':
-        return { label: 'Merge…', icon: <TbGitMerge size={14} />, onClick: onMergeInto };
-      case 'delete':
-        return { label: 'Delete', icon: <TbTrash size={14} />, danger: true, onClick: onDelete };
+  const actionItems: Record<EntityDetailMenuAction, MenuItem> = {
+    viewJson: { id: 'view-json', label: 'View JSON', onClick: onViewJson },
+    collections: {
+      id: 'collections',
+      label: 'Collections…',
+      icon: <TbBookmark size={14} />,
+      onClick: onOpenCollections
+    },
+    proposeDeprecation: {
+      id: 'propose-deprecation',
+      label: 'Propose deprecation…',
+      onClick: onProposeDeprecation
+    },
+    clone: { id: 'clone', label: 'Clone', icon: <TbCopy size={14} />, onClick: onClone },
+    mergeInto: {
+      id: 'merge',
+      label: 'Merge…',
+      icon: <TbGitMerge size={14} />,
+      onClick: onMergeInto
+    },
+    delete: {
+      id: 'delete',
+      label: 'Delete',
+      icon: <TbTrash size={14} />,
+      danger: true,
+      onClick: onDelete
     }
+  };
+  const itemsFor = (...group: EntityDetailMenuAction[]) =>
+    group.filter(action => menuActions.includes(action)).map(action => actionItems[action]);
+  const menuItems: MenuItem[] = buildEntityMenuItems(entity, {
+    actions: commonActions,
+    edit: itemsFor('collections', 'proposeDeprecation', 'clone'),
+    extra: itemsFor('viewJson'),
+    danger: itemsFor('mergeInto', 'delete')
   });
 
   const chips: ReactNode =

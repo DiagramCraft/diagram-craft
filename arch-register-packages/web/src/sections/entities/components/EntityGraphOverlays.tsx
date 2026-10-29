@@ -1,5 +1,6 @@
-import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
-import { Menu } from '@diagram-craft/app-components/src/Menu';
+import { EntityContextMenuView } from '../../../components/EntityContextMenu';
+import { buildEntityMenuItems, type EntityRef } from './entityMenu';
+import { useEntityCommonActions } from './useEntityCommonActions';
 import { TbEyeOff, TbPlus } from 'react-icons/tb';
 import type { ComponentProps } from 'react';
 import { RelationDetailPopover } from './RelationDetailPopover';
@@ -7,6 +8,18 @@ import { SaveDiagramFromGraphDialog } from './SaveDiagramFromGraphDialog';
 import type { useEntityGraphController } from './useEntityGraphController';
 
 type Controller = ReturnType<typeof useEntityGraphController>;
+
+// Graph nodes carry only the public id, name and schema, which is all the non-pin actions need.
+const graphNodeRef = (id: string, controller: Controller): EntityRef => {
+  const data = controller.nodes.find(node => node.id === id)?.data;
+  return {
+    _uid: id,
+    _publicId: id,
+    _name: data?.entityName ?? id,
+    _slug: id,
+    _schema: { id: data?.entitySchemaId ?? '' }
+  };
+};
 
 /** The node context menu, relation popover and save-as-diagram dialog shared by the entity graphs. */
 export const EntityGraphOverlays = ({
@@ -28,6 +41,7 @@ export const EntityGraphOverlays = ({
     'defaultName' | 'initialDestination'
   >;
 }) => {
+  const commonActions = useEntityCommonActions();
   const {
     contextMenu,
     setContextMenu,
@@ -42,22 +56,30 @@ export const EntityGraphOverlays = ({
   return (
     <>
       {allowActions && contextMenu && (
-        <ContextMenu.Imperative
+        <EntityContextMenuView
           x={contextMenu.x}
           y={contextMenu.y}
           onClose={() => setContextMenu(null)}
-        >
-          <Menu.Item
-            leftSlot={<TbEyeOff size={13} />}
-            disabled={rootEntityIds.has(contextMenu.id)}
-            onClick={() => excludeEntity(contextMenu.id)}
-          >
-            Exclude from graph
-          </Menu.Item>
-          <Menu.Item leftSlot={<TbPlus size={13} />} onClick={() => expandEntity(contextMenu.id)}>
-            Expand one level deeper
-          </Menu.Item>
-        </ContextMenu.Imperative>
+          items={buildEntityMenuItems(graphNodeRef(contextMenu.id, controller), {
+            actions: commonActions,
+            pin: false,
+            extra: [
+              {
+                id: 'exclude',
+                label: 'Exclude',
+                icon: <TbEyeOff size={14} />,
+                disabled: rootEntityIds.has(contextMenu.id),
+                onClick: () => excludeEntity(contextMenu.id)
+              },
+              {
+                id: 'expand',
+                label: 'Expand one level deeper',
+                icon: <TbPlus size={14} />,
+                onClick: () => expandEntity(contextMenu.id)
+              }
+            ]
+          })}
+        />
       )}
 
       {relationPopover && (
