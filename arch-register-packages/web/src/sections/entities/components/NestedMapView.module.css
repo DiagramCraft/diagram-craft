@@ -1,5 +1,11 @@
 /* ── Config bar ──────────────────────────────────────────────── */
 
+.fieldGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .axisPill {
   display: flex;
   align-items: center;
