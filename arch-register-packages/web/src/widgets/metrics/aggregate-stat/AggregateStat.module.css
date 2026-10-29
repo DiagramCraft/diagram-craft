@@ -18,7 +18,8 @@ div[data-frame="true"] .card {
   width: auto;
   height: 100%;
   margin: 0;
-  padding: calc(var(--widget-inset-y, 8px) + 6px) var(--widget-inset-x, 10px) calc(var(--widget-inset-y, 8px) + 8px);
+  padding: calc(var(--widget-inset-y, 8px) + 6px) var(--widget-inset-x, 10px)
+    calc(var(--widget-inset-y, 8px) + 8px);
   gap: 2px;
   min-width: 0;
 }
