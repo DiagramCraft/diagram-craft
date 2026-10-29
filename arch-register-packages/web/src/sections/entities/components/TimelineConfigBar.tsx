@@ -1,6 +1,7 @@
 import { TbBriefcase2, TbCalendarOff, TbCalendarWeek, TbFlag, TbGitCommit } from 'react-icons/tb';
 import styles from './TimelineView.module.css';
 import { ViewControls, ViewControlsSeparator } from '../../../components/ViewControls';
+import { SegmentedControl } from '../../../components/SegmentedControl';
 import { LabeledSelect } from '../../../components/LabeledSelect';
 import { Button } from '@diagram-craft/app-components/Button';
 import type { FieldOption } from './entityFieldSources';
@@ -74,19 +75,15 @@ export const TimelineConfigBar = ({
 
     <ViewControlsSeparator />
 
-    <div className={styles.segmented}>
-      {(['month', 'quarter', 'year'] as const).map(z => (
-        <button
-          key={z}
-          type="button"
-          className={cfg.zoom === z ? styles.segmentedActive : ''}
-          onClick={() => onChange({ zoom: z })}
-          title={z.charAt(0).toUpperCase() + z.slice(1)}
-        >
-          {z === 'month' ? 'Mo' : z === 'quarter' ? 'Qr' : 'Yr'}
-        </button>
-      ))}
-    </div>
+    <SegmentedControl
+      value={cfg.zoom}
+      onChange={zoom => onChange({ zoom })}
+      options={[
+        { value: 'month', label: 'Mo', title: 'Month' },
+        { value: 'quarter', label: 'Qr', title: 'Quarter' },
+        { value: 'year', label: 'Yr', title: 'Year' }
+      ]}
+    />
 
     {isEventMode && (
       <>

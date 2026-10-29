@@ -23,7 +23,7 @@ import {
 } from '../../../hooks/useJobs';
 import { useWorkspaceAuthorization } from '../../../auth/WorkspaceAuthorizationContext';
 import { DropdownMenu, type MenuItem } from '../../../components/DropdownMenu';
-import { ToolbarFilterDate } from '../../../components/ToolbarFilterDate';
+import { LabeledDateInput } from '../../../components/LabeledDateInput';
 import { ViewControls } from '../../../components/ViewControls';
 import { LabeledSelect } from '../../../components/LabeledSelect';
 import { Table } from '../../../components/table/Table';
@@ -560,12 +560,12 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
                 onChange={value => updateFilter(() => setStatus(value as '' | JobRunStatus))}
                 options={STATUS_OPTIONS}
               />
-              <ToolbarFilterDate
+              <LabeledDateInput
                 label="Planned from"
                 value={plannedFrom}
                 onChange={value => updateFilter(() => setPlannedFrom(value))}
               />
-              <ToolbarFilterDate
+              <LabeledDateInput
                 label="Planned to"
                 value={plannedTo}
                 onChange={value => updateFilter(() => setPlannedTo(value))}

@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { LabeledSelect } from './LabeledSelect';
 import { ToolbarButton } from './ToolbarButton';
-import { ToolbarFilterDate } from './ToolbarFilterDate';
+import { LabeledDateInput } from './LabeledDateInput';
 import { ViewControls, ViewControlsSeparator, ViewControlsSpacer } from './ViewControls';
 
 const meta = {
@@ -25,7 +25,7 @@ const Controls = () => {
   return (
     <>
       <LabeledSelect label="Status" value={status} onChange={setStatus} options={options} />
-      <ToolbarFilterDate label="From" value={date} onChange={setDate} />
+      <LabeledDateInput label="From" value={date} onChange={setDate} />
       <ViewControlsSeparator />
       <ToolbarButton>Reset</ToolbarButton>
       <ViewControlsSpacer />

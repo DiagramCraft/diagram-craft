@@ -1,6 +1,6 @@
 /**
- *  LabeledSelect - .cLabeledSelect
- *  | Label   - .eLabel
+ *  LabeledSelect - .cLabeledSelect (pill look from LabeledControl.module.css)
+ *  | Label   - shared .eLabel (LabeledControl.module.css)
  *  | Value   - .eValue
  *  | (chevron icon rendered inline)
  *  | Select  - .eSelect (invisible overlay, covers full pill)
@@ -8,16 +8,6 @@
 
 .cLabeledSelect {
   position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  height: 26px;
-  padding: 0 8px 0 10px;
-  background: var(--cmp-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r);
-  cursor: pointer;
-  white-space: nowrap;
 
   &[data-variant="secondary"] {
     background: none;
@@ -26,12 +16,6 @@
     &:hover {
       background: var(--cmp-bg);
     }
-  }
-
-  .eLabel {
-    font-size: 11px;
-    color: var(--base-fg-more-dim);
-    margin-right: 2px;
   }
 
   .eValue {

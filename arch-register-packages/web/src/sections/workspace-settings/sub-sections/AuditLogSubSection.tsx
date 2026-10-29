@@ -12,7 +12,7 @@ import {
 } from '../../../routes/publicObjectRoutes';
 import { useEntityDrawer } from '../../entities/entityDrawer/useEntityDrawer';
 import { formatRelativeTime } from '../../../utils/dateFormat';
-import { ToolbarFilterDate } from '../../../components/ToolbarFilterDate';
+import { LabeledDateInput } from '../../../components/LabeledDateInput';
 import { ViewControls } from '../../../components/ViewControls';
 import { LabeledSelect } from '../../../components/LabeledSelect';
 import { Table } from '../../../components/table/Table';
@@ -159,8 +159,8 @@ export const AuditLogSubSection = ({
           onChange={value => setOperation(value as '' | AuditOperation)}
           options={AUDIT_OPERATIONS}
         />
-        <ToolbarFilterDate label="From" value={startDate} onChange={setStartDate} />
-        <ToolbarFilterDate label="To" value={endDate} onChange={setEndDate} />
+        <LabeledDateInput label="From" value={startDate} onChange={setStartDate} />
+        <LabeledDateInput label="To" value={endDate} onChange={setEndDate} />
       </ViewControls>
 
       {loading ? (

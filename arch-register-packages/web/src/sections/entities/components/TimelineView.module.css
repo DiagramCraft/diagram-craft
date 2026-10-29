@@ -22,41 +22,6 @@
   white-space: nowrap;
 }
 
-/* Segmented zoom control */
-.segmented {
-  display: inline-flex;
-  background: var(--cmp-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r);
-  overflow: hidden;
-}
-
-.segmented button {
-  height: 24px;
-  padding: 0 8px;
-  font-size: 11px;
-  color: var(--base-fg-more-dim);
-  background: transparent;
-  border: none;
-  border-right: 1px solid var(--panel-border);
-  cursor: pointer;
-  font-family: inherit;
-}
-
-.segmented button:last-child {
-  border-right: none;
-}
-
-.segmented button:hover {
-  background: var(--cmp-bg-hover);
-  color: var(--base-fg);
-}
-
-.segmented .segmentedActive {
-  background: var(--cmp-bg-active);
-  color: var(--base-fg);
-}
-
 /* Scroll area */
 .scrollWrap {
   flex: 1;

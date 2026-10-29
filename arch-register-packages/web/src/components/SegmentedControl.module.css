@@ -1,0 +1,43 @@
+/**
+ *  SegmentedControl - .cSegmentedControl
+ *  | Segment - .eSegment (button, [aria-pressed=true] when active)
+ */
+
+.cSegmentedControl {
+  display: inline-flex;
+  height: 26px;
+  box-sizing: border-box;
+  background: var(--cmp-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  overflow: hidden;
+
+  .eSegment {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 0 8px;
+    font-size: 11px;
+    font-family: inherit;
+    color: var(--base-fg-more-dim);
+    background: transparent;
+    border: none;
+    border-right: 1px solid var(--panel-border);
+    cursor: pointer;
+
+    &:last-child {
+      border-right: none;
+    }
+
+    &:hover {
+      background: var(--cmp-bg-hover);
+      color: var(--base-fg);
+    }
+
+    &[aria-pressed="true"] {
+      background: var(--cmp-bg-active);
+      color: var(--base-fg);
+    }
+  }
+}

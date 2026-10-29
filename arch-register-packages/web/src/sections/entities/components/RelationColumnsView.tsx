@@ -32,7 +32,7 @@ import {
   getDisplayFieldIds,
   type EntityDisplayField
 } from './entityDisplayFields';
-import { ViewControls, ViewControlsFrame } from '../../../components/ViewControls';
+import { ViewControlsFrame } from '../../../components/ViewControls';
 
 type RelationColumnsViewProps = EntityBrowserRowViewProps & {
   config: unknown;
@@ -341,11 +341,6 @@ export const RelationColumnsView = ({
   if (rows.length === 0) {
     return (
       <ViewControlsFrame fill>
-        {!hideToolbar && (
-          <ViewControls variant="bar">
-            <span className={styles.emptyToggle}>No relations available</span>
-          </ViewControls>
-        )}
         <EmptyState title="No entities found" subtitle="Try adjusting your search or filters." />
       </ViewControlsFrame>
     );

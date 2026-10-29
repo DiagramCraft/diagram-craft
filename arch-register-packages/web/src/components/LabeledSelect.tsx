@@ -1,4 +1,5 @@
 import { TbChevronDown } from 'react-icons/tb';
+import controlStyles from './LabeledControl.module.css';
 import styles from './LabeledSelect.module.css';
 
 type Option = { value: string; label: string };
@@ -31,11 +32,11 @@ export const LabeledSelect = ({
   const allOptions = options ?? groups.flatMap(g => g.options);
   return (
     <div
-      className={styles.cLabeledSelect}
+      className={`${controlStyles.cLabeledControl} ${styles.cLabeledSelect}`}
       data-variant={variant ?? 'default'}
       data-disabled={disabled || undefined}
     >
-      <span className={styles.eLabel}>{label}</span>
+      <span className={controlStyles.eLabel}>{label}</span>
       <span className={styles.eValue}>
         {allOptions.find(o => o.value === value)?.label ?? value}
       </span>
