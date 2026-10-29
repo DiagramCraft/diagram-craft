@@ -17,7 +17,7 @@ import { FilterDropdown } from '../../../components/FilterDropdown';
 import styles from './EntityBrowser.module.css';
 import { ManageFieldsPopover } from './ManageFieldsPopover';
 import { AssessmentJoinPicker } from './AssessmentJoinPicker';
-import { BROWSER_VIEW_OPTIONS } from './browserViewMeta';
+import { BROWSER_VIEW_OPTIONS, groupViewOptions } from './browserViewMeta';
 import { ViewHelpPopover } from './ViewHelpPopover';
 import { QueryModeControls } from './QueryModeControls';
 import type { EntityDisplayField } from './entityDisplayFields';
@@ -153,7 +153,7 @@ export const EntityBrowserToolbar = ({
               label="View"
               value={view}
               onChange={v => setView(v as BrowserView)}
-              options={viewOptions}
+              groups={groupViewOptions(viewOptions)}
             />
             <ViewHelpPopover
               view={view}

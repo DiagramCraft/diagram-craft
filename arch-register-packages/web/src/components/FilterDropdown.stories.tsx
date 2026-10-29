@@ -63,6 +63,30 @@ export const SortDropdown: Story = {
   }
 };
 
+export const GroupedOptions: Story = {
+  args: {
+    label: 'View',
+    value: 'table',
+    onChange: value => console.log('Selected:', value),
+    groups: [
+      {
+        label: 'Lists',
+        options: [
+          { value: 'table', label: 'Table' },
+          { value: 'cards', label: 'Cards' }
+        ]
+      },
+      {
+        label: 'Charts',
+        options: [
+          { value: 'radar', label: 'Radar' },
+          { value: 'heatmap', label: 'Heat map' }
+        ]
+      }
+    ]
+  }
+};
+
 export const Interactive = {
   render: () => {
     const [status, setStatus] = useState('all');

@@ -978,6 +978,9 @@
         - @id:ar.entity-views.help Users can click a "?" icon beside the View dropdown to see a short description of how
           the currently selected view works.
 
+        - @id:ar.entity-views.grouped Users can pick a view from a View dropdown grouped under Lists, Charts, Time and
+          Relationships headings.
+
         - @id:ar.entity-views.cards Users can inspect entities as cards for quick scanning of record summaries.
 
         - @id:ar.entity-views.tree Users can inspect hierarchical entity structure in a tree-oriented view.

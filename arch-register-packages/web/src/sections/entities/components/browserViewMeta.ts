@@ -47,23 +47,18 @@ const LABELS: Record<BrowserView, string> = {
   trail: 'Trail'
 };
 
-/** The order the views are offered in the view dropdown. */
-const DISPLAY_ORDER: BrowserView[] = [
-  'table',
-  'cards',
-  'tree',
-  'radar',
-  'bubble-chart',
-  'heatmap',
-  'timeline',
-  'relation-matrix',
-  'relation-columns',
-  'nested-map',
-  'compare-dates',
-  'graph',
-  'traceability',
-  'trail'
+/** The groups, and the order within them, the views are offered in the view dropdown. */
+export const BROWSER_VIEW_GROUPS: Array<{ label: string; views: BrowserView[] }> = [
+  { label: 'Lists', views: ['table', 'cards', 'tree'] },
+  { label: 'Charts', views: ['radar', 'bubble-chart', 'heatmap', 'nested-map'] },
+  { label: 'Time', views: ['timeline', 'compare-dates'] },
+  {
+    label: 'Relationships',
+    views: ['relation-matrix', 'graph', 'relation-columns', 'trail', 'traceability']
+  }
 ];
+
+const DISPLAY_ORDER: BrowserView[] = BROWSER_VIEW_GROUPS.flatMap(g => g.views);
 
 export const BROWSER_VIEW_META = Object.fromEntries(
   BROWSER_VIEWS.map(view => [view, { label: LABELS[view], help: HELP[view] }])
@@ -73,3 +68,10 @@ export const BROWSER_VIEW_OPTIONS = DISPLAY_ORDER.map(view => ({
   value: view,
   label: LABELS[view]
 }));
+
+/** Buckets view options into the dropdown groups, dropping groups without any allowed view. */
+export const groupViewOptions = (options: Array<{ value: string; label: string }>) =>
+  BROWSER_VIEW_GROUPS.map(g => ({
+    label: g.label,
+    options: g.views.flatMap(v => options.filter(o => o.value === v))
+  })).filter(g => g.options.length > 0);
