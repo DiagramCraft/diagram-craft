@@ -107,7 +107,7 @@ export const DocumentBacklinksSection = ({
                   {group.typeName !== null && (
                     <>
                       <TypeBadge
-                        color={group.typeColor ?? 'var(--base-fg-dim)'}
+                        color={group.typeColor ?? 'var(--base-fg-secondary)'}
                         name={group.typeName}
                         icon={group.typeIcon}
                         size={18}

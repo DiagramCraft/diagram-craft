@@ -284,7 +284,7 @@
 }
 
 .dotsBtn:hover {
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   background: var(--cmp-bg);
 }
 
@@ -319,7 +319,7 @@
 .groupHeaderCell {
   background: var(--panel-bg);
   font-weight: 600;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.04em;

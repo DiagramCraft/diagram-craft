@@ -206,7 +206,7 @@ export const DocumentBrowserEmbed = ({ config }: Props) => {
                   {document.document_type_name ? (
                     <span className={styles.typeCell}>
                       <TypeBadge
-                        color={document.document_type_color ?? 'var(--base-fg-dim)'}
+                        color={document.document_type_color ?? 'var(--base-fg-secondary)'}
                         name={document.document_type_name}
                         icon={document.document_type_icon}
                         size={18}

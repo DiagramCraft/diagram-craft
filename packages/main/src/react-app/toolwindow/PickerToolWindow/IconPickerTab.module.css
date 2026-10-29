@@ -11,7 +11,7 @@
     justify-content: space-between;
     padding: 4px;
     font-size: 11px;
-    color: var(--base-fg-dim);
+    color: var(--base-fg-secondary);
     border-top: 1px solid var(--base-fg-more-dim);
     border-bottom: 1px solid var(--base-fg-more-dim);
     margin-bottom: 0.25rem;
@@ -75,7 +75,7 @@
 .icLoadingMessage {
   padding: 8px;
   font-size: 11px;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
 }
 
 .icIconSearchResults {

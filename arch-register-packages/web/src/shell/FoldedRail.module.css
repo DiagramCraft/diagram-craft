@@ -39,7 +39,7 @@
   writing-mode: vertical-rl;
   transform: rotate(180deg);
   font-size: 11px;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   letter-spacing: 0.3px;
   white-space: nowrap;
   overflow: hidden;

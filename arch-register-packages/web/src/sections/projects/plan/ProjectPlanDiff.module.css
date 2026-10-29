@@ -21,7 +21,7 @@
 
 .headerCounts {
   font-size: 12px;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
 }
 
 .comparisonControls {

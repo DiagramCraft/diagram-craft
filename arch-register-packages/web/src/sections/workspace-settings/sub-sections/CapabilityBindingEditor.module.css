@@ -11,7 +11,7 @@
   border: 1px solid var(--cmp-border);
   border-radius: var(--r);
   background: var(--cmp-bg);
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   font-size: 12px;
   white-space: nowrap;
 }
@@ -185,7 +185,7 @@
 
 .rowName {
   font-size: 12px;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

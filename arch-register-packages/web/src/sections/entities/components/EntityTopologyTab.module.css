@@ -46,7 +46,7 @@
   border: 1px dashed var(--cmp-border);
   border-radius: var(--r);
   background: var(--panel-bg);
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   font-size: 12px;
   cursor: pointer;
 }
@@ -164,7 +164,7 @@
   border: 1px solid var(--cmp-border);
   border-radius: var(--r);
   text-align: left;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   min-width: 0;
   cursor: pointer;
 }
@@ -257,7 +257,7 @@
   border: 1px solid var(--panel-border);
   border-radius: var(--r);
   text-align: left;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   width: 240px;
   position: relative;
   cursor: pointer;

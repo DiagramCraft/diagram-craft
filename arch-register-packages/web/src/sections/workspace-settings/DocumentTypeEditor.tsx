@@ -76,7 +76,7 @@ export const DocumentTypeEditor = ({
                   color={
                     draft.color ??
                     (selected ? typeColor.get(selected.id) : undefined) ??
-                    'var(--base-fg-dim)'
+                    'var(--base-fg-secondary)'
                   }
                   name={draft.name || 'New document type'}
                   icon={draft.icon}

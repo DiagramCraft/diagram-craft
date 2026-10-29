@@ -62,7 +62,7 @@
 
 .clearButton:hover:not(:disabled) {
   background: var(--cmp-bg);
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
 }
 
 .clearButton:disabled {

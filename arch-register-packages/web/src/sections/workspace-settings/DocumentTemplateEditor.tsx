@@ -139,7 +139,7 @@ export const DocumentTemplateEditor = ({
                   color={
                     selectedType
                       ? resolveDocumentTypeColor(selectedType, types.indexOf(selectedType))
-                      : 'var(--base-fg-dim)'
+                      : 'var(--base-fg-secondary)'
                   }
                   name={selectedType?.name}
                   icon={selectedType?.icon}

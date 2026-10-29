@@ -31,7 +31,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   font-size: 13px;
 }
 
@@ -43,7 +43,7 @@
 
 .groupTitle {
   margin: 0;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   font-size: 13px;
   font-weight: 600;
 }
@@ -64,7 +64,7 @@
 }
 
 .issueIcon {
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   flex: 0 0 auto;
   padding-top: 1px;
 }
@@ -90,7 +90,7 @@
 }
 
 .mitigation {
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   font-size: 12px;
   line-height: 1.45;
 }
@@ -109,7 +109,7 @@
   padding: 0;
   border: 0;
   background: none;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   cursor: pointer;
   font: inherit;
   font-size: 11px;

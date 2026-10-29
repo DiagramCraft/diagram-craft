@@ -135,7 +135,7 @@
 }
 
 .metaPropValue {
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   display: flex;
   align-items: center;
   gap: 4px;
@@ -151,7 +151,7 @@
 }
 
 .projectLink {
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;

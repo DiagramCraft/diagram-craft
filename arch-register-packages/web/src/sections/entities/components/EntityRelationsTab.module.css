@@ -51,7 +51,7 @@
   padding: 6px 8px;
   border-radius: var(--r);
   text-align: left;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   background: var(--base-bg);
   border: 1px solid var(--panel-border);
   cursor: pointer;

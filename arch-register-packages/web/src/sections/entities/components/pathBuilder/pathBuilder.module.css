@@ -8,7 +8,7 @@
   height: 22px;
   flex-shrink: 0;
   font-size: 12px;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   background: transparent;
   border: 1px solid var(--panel-border);
   border-radius: var(--r);
@@ -47,7 +47,7 @@
 }
 
 .selectWrap svg {
-  stroke: var(--base-fg-dim);
+  stroke: var(--base-fg-secondary);
   flex-shrink: 0;
 }
 

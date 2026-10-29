@@ -64,7 +64,7 @@ export const DocumentSettingsSidebar = ({ workspaceSlug }: { workspaceSlug: stri
         icon={
           type ? (
             <TypeBadge
-              color={typeColor.get(type.id) ?? 'var(--base-fg-dim)'}
+              color={typeColor.get(type.id) ?? 'var(--base-fg-secondary)'}
               name={type.name}
               icon={type.icon}
               size={14}
@@ -129,7 +129,7 @@ export const DocumentSettingsSidebar = ({ workspaceSlug }: { workspaceSlug: stri
               testId={`document-type-${type.name}`}
               icon={
                 <TypeBadge
-                  color={typeColor.get(type.id) ?? 'var(--base-fg-dim)'}
+                  color={typeColor.get(type.id) ?? 'var(--base-fg-secondary)'}
                   name={type.name}
                   icon={type.icon}
                   size={14}
@@ -154,7 +154,7 @@ export const DocumentSettingsSidebar = ({ workspaceSlug }: { workspaceSlug: stri
                   key={type.id}
                   icon={
                     <TypeBadge
-                      color={typeColor.get(type.id) ?? 'var(--base-fg-dim)'}
+                      color={typeColor.get(type.id) ?? 'var(--base-fg-secondary)'}
                       name={type.name}
                       icon={type.icon}
                       size={14}

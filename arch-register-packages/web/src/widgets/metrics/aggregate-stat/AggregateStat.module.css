@@ -64,7 +64,7 @@ div[data-frame="true"] .card .sub {
 
 .label {
   font-size: 13px;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
 }
 
 .sub {

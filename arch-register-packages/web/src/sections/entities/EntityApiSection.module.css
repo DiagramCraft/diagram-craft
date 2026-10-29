@@ -97,7 +97,7 @@
 .catalogMeta,
 .contextRow,
 .restricted {
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   font-size: 12px;
   overflow-wrap: anywhere;
 }
@@ -266,7 +266,7 @@
 }
 
 .versionLabel {
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   font-size: 11px;
 }
 
@@ -437,7 +437,7 @@
 }
 
 .itemIdentifier {
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   font-size: 12px;
 }
 
@@ -457,7 +457,7 @@
 .itemSummary,
 .description {
   margin: 0 0 8px;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   font-size: 12px;
   line-height: 1.5;
 }
@@ -489,7 +489,7 @@
   max-height: 280px;
   margin: 7px 0 0;
   overflow: auto;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   font-family: var(--font-mono, monospace);
   font-size: 11px;
   line-height: 1.45;

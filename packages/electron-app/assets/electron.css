@@ -63,7 +63,7 @@
 
   .cToolbar > div > button,
   .cToolbar > button {
-    color: var(--base-fg-dim) !important;
+    color: var(--base-fg-secondary) !important;
   }
 }
 

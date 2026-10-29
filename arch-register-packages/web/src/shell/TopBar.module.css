@@ -272,7 +272,7 @@
 }
 
 .notificationOp {
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
 }
 
 .notificationWhen {
@@ -438,7 +438,7 @@
   width: 100%;
   padding: 6px 8px;
   border-radius: var(--r);
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   text-align: left;
 }
 

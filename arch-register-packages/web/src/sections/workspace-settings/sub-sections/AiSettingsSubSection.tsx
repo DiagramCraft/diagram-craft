@@ -129,7 +129,7 @@ export const AiSettingsSubSection = ({ workspaceSlug }: { workspaceSlug: string 
                   }}
                 />
               </span>
-              <span style={{ fontSize: 12, color: 'var(--base-fg-dim)' }}>
+              <span style={{ fontSize: 12, color: 'var(--base-fg-secondary)' }}>
                 {enabled ? 'Enabled' : 'Disabled'}
               </span>
             </label>

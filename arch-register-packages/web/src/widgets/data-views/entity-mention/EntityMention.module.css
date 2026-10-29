@@ -55,12 +55,12 @@
 }
 
 .schema {
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   font-size: 0.9em;
   font-weight: 400;
 }
 
 .separator {
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   font-weight: 400;
 }

@@ -255,7 +255,7 @@
   padding: 0 8px;
   border: 1px solid var(--panel-border);
   border-radius: var(--r-md);
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
 }
 
 .searchBox input {

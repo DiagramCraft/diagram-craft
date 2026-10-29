@@ -566,7 +566,7 @@ export const BubbleChartView = ({
                         textAnchor="middle"
                         style={{
                           fontSize: 9,
-                          fill: 'var(--base-fg-dim)',
+                          fill: 'var(--base-fg-secondary)',
                           pointerEvents: 'none',
                           userSelect: 'none'
                         }}

@@ -57,7 +57,7 @@
     .eEmptyTitle {
       font-size: 14px;
       font-weight: 500;
-      color: var(--base-fg-dim);
+      color: var(--base-fg-secondary);
     }
   }
 
@@ -77,7 +77,7 @@
     background: var(--panel-bg);
     border: 1px solid var(--panel-border);
     border-radius: var(--cmp-radius);
-    color: var(--base-fg-dim);
+    color: var(--base-fg-secondary);
     font-size: 12px;
     cursor: pointer;
 
@@ -208,7 +208,7 @@
       padding: 0;
 
       &:hover {
-        color: var(--base-fg-dim);
+        color: var(--base-fg-secondary);
         background: var(--cmp-bg);
       }
     }

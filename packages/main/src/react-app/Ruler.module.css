@@ -12,7 +12,7 @@
     image-rendering: crisp-edges;
 
     .eSvgLbl {
-      fill: var(--base-fg-dim);
+      fill: var(--base-fg-secondary);
       font-size: 6px;
       text-anchor: middle;
       dominant-baseline: mathematical;

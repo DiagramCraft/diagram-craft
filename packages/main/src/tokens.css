@@ -50,8 +50,8 @@
 
   --base-bg: var(--theme-dark-base-bg, var(--gray-1));
   --base-fg: var(--theme-dark-base-fg, var(--gray-12));
-  --base-fg-secondary: var(--theme-dark-base-fg-secondary, var(--gray-10));
-  --base-fg-dim: var(--theme-dark-base-fg-dim, var(--gray-11));
+  --base-fg-tertiary: var(--theme-dark-base-fg-secondary, var(--gray-10));
+  --base-fg-secondary: var(--theme-dark-base-fg-dim, var(--gray-11));
   --base-fg-more-dim: var(--theme-dark-base-fg-more-dim, var(--gray-8));
 
   --panel-bg: var(--theme-dark-panel-bg, var(--gray-2));
@@ -122,8 +122,8 @@
 
   --base-bg: var(--theme-light-base-bg, var(--gray-1));
   --base-fg: var(--theme-light-base-fg, var(--gray-12));
-  --base-fg-secondary: var(--theme-light-base-fg-secondary, var(--gray-10));
-  --base-fg-dim: var(--theme-light-base-fg-dim, var(--gray-11));
+  --base-fg-tertiary: var(--theme-light-base-fg-secondary, var(--gray-10));
+  --base-fg-secondary: var(--theme-light-base-fg-dim, var(--gray-11));
   --base-fg-more-dim: var(--theme-light-base-fg-more-dim, var(--gray-9));
 
   --panel-bg: var(--theme-light-panel-bg, var(--gray-2));

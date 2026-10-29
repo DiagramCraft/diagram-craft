@@ -30,7 +30,7 @@
   padding: 10px 14px 10px 0;
   width: 100%;
   text-align: left;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   background: transparent;
   border: none;
   cursor: pointer;
@@ -73,7 +73,7 @@
   align-items: center;
   gap: 6px;
   font-size: 11.5px;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
 }
 
 .teamCount {

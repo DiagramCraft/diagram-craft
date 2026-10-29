@@ -59,7 +59,7 @@ body {
 }
 
 .ar-app {
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   font-family: var(--font-sans);
   font-size: 12.5px;
   line-height: 1.4;

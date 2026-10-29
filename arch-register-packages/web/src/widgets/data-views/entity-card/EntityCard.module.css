@@ -91,7 +91,7 @@ div[data-frame="true"][data-framed="true"] {
 
 .description {
   font-size: 12px;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   margin: 0;
   line-height: 1.5;
 }
@@ -108,7 +108,7 @@ div[data-frame="true"][data-framed="true"] {
   border-radius: 999px;
   background: var(--cmp-bg);
   border: 1px solid var(--panel-border);
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
 }
 
 .schemaFields {

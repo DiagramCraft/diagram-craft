@@ -76,7 +76,7 @@
   display: flex;
   align-items: center;
   flex-shrink: 0;
-  color: var(--base-fg-secondary, var(--base-fg));
+  color: var(--base-fg-tertiary, var(--base-fg));
 }
 
 .headerText {

@@ -3,7 +3,7 @@
   flex-direction: column;
   min-height: 0;
   height: 100%;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   border-left: 1px solid var(--panel-border);
   overflow: hidden;
 }
@@ -414,7 +414,7 @@
 }
 
 .tocItem:hover {
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   border-left-color: var(--accent-fg);
 }
 

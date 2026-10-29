@@ -39,7 +39,7 @@
       height: 35px;
       outline: none;
       border-radius: 4px;
-      color: var(--base-fg-dim);
+      color: var(--base-fg-secondary);
       background-color: var(--panel-bg);
       border: 1px solid var(--cmp-border);
     }

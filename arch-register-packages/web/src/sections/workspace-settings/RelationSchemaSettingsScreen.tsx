@@ -100,7 +100,7 @@ export const RelationSchemaSettingsScreen = () => {
             <TypeBadge
               color={
                 draft.color ??
-                (selected ? resolveSchemaColor(selected, selectedIndex) : 'var(--base-fg-dim)')
+                (selected ? resolveSchemaColor(selected, selectedIndex) : 'var(--base-fg-secondary)')
               }
               name={selected?.name ?? draft.name}
               icon={draft.icon}

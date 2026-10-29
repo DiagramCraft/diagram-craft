@@ -95,7 +95,7 @@ export const EntityRelatedContentTab = ({
               <Table.Cell>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                   <TypeBadge
-                    color={item.document_type_color ?? 'var(--base-fg-dim)'}
+                    color={item.document_type_color ?? 'var(--base-fg-secondary)'}
                     name={typeName}
                     icon={item.document_type_icon}
                     size={16}

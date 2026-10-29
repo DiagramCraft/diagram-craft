@@ -47,7 +47,7 @@
 }
 
 .legendLabel {
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   flex: 1;
 }
 
@@ -64,7 +64,7 @@
 
 .barLabel {
   font-size: 11px;
-  fill: var(--base-fg-dim);
+  fill: var(--base-fg-secondary);
 }
 
 .barCount {

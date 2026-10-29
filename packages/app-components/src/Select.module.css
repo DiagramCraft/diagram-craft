@@ -40,12 +40,12 @@
 
   .eIcon {
     flex-shrink: 0;
-    color: var(--base-fg-dim);
+    color: var(--base-fg-secondary);
     margin-left: auto;
   }
 
   svg {
-    stroke: var(--base-fg-dim);
+    stroke: var(--base-fg-secondary);
   }
 
   &:hover:not(:disabled),

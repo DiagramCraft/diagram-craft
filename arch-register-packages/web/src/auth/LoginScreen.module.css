@@ -9,7 +9,7 @@
   grid-template-rows: 1fr 24px;
   height: 100vh;
   background: var(--base-bg);
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   font-family: var(--font-sans);
   font-size: 12.5px;
   line-height: 1.4;
@@ -172,7 +172,7 @@
 }
 
 .inputWrap:focus-within .inputIcon {
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
 }
 
 .input {

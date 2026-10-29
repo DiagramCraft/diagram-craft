@@ -153,7 +153,7 @@
 }
 
 .note strong {
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   font-weight: 600;
 }
 
@@ -304,7 +304,7 @@
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   cursor: pointer;
 }
 
