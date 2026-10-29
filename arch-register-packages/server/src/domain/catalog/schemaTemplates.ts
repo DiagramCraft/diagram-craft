@@ -1145,7 +1145,7 @@ const strategySchemas: TemplateSchema[] = [
           'Calculated: the depth of the capability in the hierarchy, where L1 is top-level.',
         type: 'derived',
         expression:
-          "entity.parent == null ? 'L1' : 'L' + ((entity.parent.capability_level |> replace('L', '') |> toNumber) + 1)",
+          "entity.parent == null ? 'L1' : `L${toNumber(entity.parent.capability_level.replace('L', '')) + 1}`",
         resultType: 'text'
       },
       {
@@ -2229,7 +2229,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             description: "Calculated: this system's share of the annual cost of its contracts.",
             type: 'derived',
             expression:
-              'entity.contracts.map(.allocation * .entity.annual_cost.amount / 100) |> sum',
+              'entity.contracts.map(.allocation * .entity.annual_cost.amount / 100).sum()',
             resultType: 'number'
           }
         ],
@@ -2391,7 +2391,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             description:
               'Calculated: the total share of the contract that has been assigned to systems.',
             type: 'derived',
-            expression: 'entity.system.map(.allocation) |> sum',
+            expression: 'entity.system.map(.allocation).sum()',
             resultType: 'number'
           },
           {
@@ -2558,9 +2558,9 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             expression:
               'isBlank(entity.security_risk) || isBlank(entity.concentration_risk) || ' +
               'isBlank(entity.financial_risk) || isBlank(entity.compliance_risk) ? null : ' +
-              '(((entity.security_risk * 0.34 + entity.concentration_risk * 0.28 + ' +
+              'clamp(round((entity.security_risk * 0.34 + entity.concentration_risk * 0.28 + ' +
               'entity.financial_risk * 0.22 + entity.compliance_risk * 0.16) * ' +
-              '(1 + ((entity.criticality ?? 3) - 3) * 0.06)) |> round |> clamp(1, 5))',
+              '(1 + ((entity.criticality ?? 3) - 3) * 0.06)), 1, 5)',
             resultType: 'rating'
           },
           {
@@ -4064,7 +4064,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
               'Calculated: the combined percentage of the risk covered by its mitigating controls.',
             type: 'derived',
             expression:
-              "entity.mitigating_controls.filter(.coverage != null && (.effectiveness == 'none' || .effectiveness == 'partial' || .effectiveness == 'substantial' || .effectiveness == 'full')) |> count == 0 ? null : ((entity.mitigating_controls.filter(.coverage != null && (.effectiveness == 'none' || .effectiveness == 'partial' || .effectiveness == 'substantial' || .effectiveness == 'full')).map(.coverage * (.effectiveness == 'none' ? 0 : .effectiveness == 'partial' ? 0.5 : .effectiveness == 'substantial' ? 0.75 : 1) / -100 + 1) |> product) * -100 + 100) |> round",
+              "entity.mitigating_controls.filter(.coverage != null && (.effectiveness == 'none' || .effectiveness == 'partial' || .effectiveness == 'substantial' || .effectiveness == 'full')).count() == 0 ? null : round(entity.mitigating_controls.filter(.coverage != null && (.effectiveness == 'none' || .effectiveness == 'partial' || .effectiveness == 'substantial' || .effectiveness == 'full')).map(.coverage * (.effectiveness == 'none' ? 0 : .effectiveness == 'partial' ? 0.5 : .effectiveness == 'substantial' ? 0.75 : 1) / -100 + 1).product() * -100 + 100)",
             resultType: 'number'
           },
           {

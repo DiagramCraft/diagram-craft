@@ -1,5 +1,4 @@
-import { bonsai, type ASTNode, type CompiledExpression } from 'bonsai-js';
-import { arrays, math } from 'bonsai-js/stdlib';
+import { bonsai, forEachChild, type Node, type Program } from 'bonsai-js';
 import type { ValidationRule } from '@arch-register/api-types/schemaContract';
 import { httpAssert } from '../../utils/httpAssert';
 import type { DatabaseAdapter } from '../../db/database';
@@ -46,36 +45,28 @@ export type RelationValidationResult = {
 
 type ValidationPlan = {
   rules: ValidationRule[];
-  compiled: Map<string, CompiledExpression>;
+  compiled: Map<string, Program>;
 };
 
-const engine = bonsai<Record<string, unknown>>({ timeout: 50, maxDepth: 50 }).use(arrays).use(math);
-
-const collectObjectLiteralKeys = (node: ASTNode, keys: Set<string>) => {
-  const property = node as unknown as {
-    type: string;
-    computed?: boolean;
-    key?: { type: string; name?: string };
-  };
-  if (
-    property.type === 'ObjectProperty' &&
-    !property.computed &&
-    property.key?.type === 'Identifier' &&
-    property.key.name
-  ) {
-    keys.add(property.key.name);
+const engine = bonsai({
+  strict: false,
+  limits: {
+    timeout: 50,
+    maxDepth: 50,
+    maxValueDepth: 50,
+    maxListLength: 100_000,
+    maxStringLength: 100_000,
+    maxSteps: 1_000_000
   }
-  for (const value of Object.values(node)) {
-    if (Array.isArray(value)) {
-      value.forEach(item => {
-        if (item && typeof item === 'object' && 'type' in item) {
-          collectObjectLiteralKeys(item as ASTNode, keys);
-        }
-      });
-    } else if (value && typeof value === 'object' && 'type' in value) {
-      collectObjectLiteralKeys(value as ASTNode, keys);
+});
+
+const collectObjectLiteralKeys = (node: Node, keys: Set<string>) => {
+  if (node.type === 'Map') {
+    for (const entry of node.entries) {
+      if (entry.type === 'Entry' && typeof entry.key === 'string') keys.add(entry.key);
     }
   }
+  forEachChild(node, child => collectObjectLiteralKeys(child, keys));
 };
 
 export const normalizeValidationRules = (
@@ -142,19 +133,20 @@ export const buildValidationPlan = (
   rules: ValidationRule[],
   root: 'entity' | 'relation' = 'entity'
 ): ValidationPlan => {
-  const compiled = new Map<string, CompiledExpression>();
+  const compiled = new Map<string, Program>();
   for (const rule of rules) {
-    const validation = engine.validate(rule.expression);
-    if (!validation.valid) {
+    const validation = engine.check(rule.expression);
+    if (!validation.ok) {
       throw new Error(
-        `Invalid expression for validation rule '${rule.id}': ${validation.errors
-          .map(error => error.formatted ?? error.message)
+        `Invalid expression for validation rule '${rule.id}': ${validation.diagnostics
+          .map(diagnostic => diagnostic.formatted)
           .join('; ')}`
       );
     }
+    const program = validation.program;
     const objectLiteralKeys = new Set<string>();
-    collectObjectLiteralKeys(validation.ast, objectLiteralKeys);
-    const unsupportedIdentifiers = validation.references.identifiers.filter(
+    collectObjectLiteralKeys(program.ast, objectLiteralKeys);
+    const unsupportedIdentifiers = program.references.variables.filter(
       identifier => identifier !== root && !objectLiteralKeys.has(identifier)
     );
     if (unsupportedIdentifiers.length > 0) {
@@ -162,7 +154,7 @@ export const buildValidationPlan = (
         `Validation rule '${rule.id}' may only reference fields through ${root} — found ${unsupportedIdentifiers.join(', ')}`
       );
     }
-    compiled.set(rule.id, engine.compile(rule.expression));
+    compiled.set(rule.id, program);
   }
   return { rules, compiled };
 };

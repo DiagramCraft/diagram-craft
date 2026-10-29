@@ -92,7 +92,7 @@ describe('derived fields', () => {
         name: 'Total cost',
         type: 'derived',
         requirementLevel: 'optional',
-        expression: "{ amount: entity.contracts.map(.annual_cost.amount) |> sum, currency: 'USD' }",
+        expression: "{ amount: entity.contracts.map(.annual_cost.amount).sum(), currency: 'USD' }",
         resultType: 'currency'
       }
     ];
@@ -149,7 +149,7 @@ describe('derived fields', () => {
         type: 'derived',
         requirementLevel: 'optional',
         expression:
-          "entity.mitigating_controls.filter(.coverage != null && (.effectiveness == 'none' || .effectiveness == 'partial' || .effectiveness == 'substantial' || .effectiveness == 'full')) |> count == 0 ? null : ((entity.mitigating_controls.filter(.coverage != null && (.effectiveness == 'none' || .effectiveness == 'partial' || .effectiveness == 'substantial' || .effectiveness == 'full')).map(.coverage * (.effectiveness == 'none' ? 0 : .effectiveness == 'partial' ? 0.5 : .effectiveness == 'substantial' ? 0.75 : 1) / -100 + 1) |> product) * -100 + 100) |> round",
+          "entity.mitigating_controls.filter(.coverage != null && (.effectiveness == 'none' || .effectiveness == 'partial' || .effectiveness == 'substantial' || .effectiveness == 'full')).count() == 0 ? null : round(entity.mitigating_controls.filter(.coverage != null && (.effectiveness == 'none' || .effectiveness == 'partial' || .effectiveness == 'substantial' || .effectiveness == 'full')).map(.coverage * (.effectiveness == 'none' ? 0 : .effectiveness == 'partial' ? 0.5 : .effectiveness == 'substantial' ? 0.75 : 1) / -100 + 1).product() * -100 + 100)",
         resultType: 'number'
       }
     ];
@@ -192,7 +192,7 @@ describe('derived fields', () => {
         type: 'derived',
         requirementLevel: 'optional',
         expression:
-          "entity.parent == null ? 'L1' : 'L' + ((entity.parent.capability_level |> replace('L', '') |> toNumber) + 1)",
+          "entity.parent == null ? 'L1' : `L${toNumber(entity.parent.capability_level.replace('L', '')) + 1}`",
         resultType: 'text'
       }
     ];
@@ -230,7 +230,7 @@ describe('derived fields', () => {
         type: 'derived',
         requirementLevel: 'optional',
         expression:
-          "entity.parent == null ? 'L1' : 'L' + ((entity.parent.capability_level |> replace('L', '') |> toNumber) + 1)",
+          "entity.parent == null ? 'L1' : `L${toNumber(entity.parent.capability_level.replace('L', '')) + 1}`",
         resultType: 'text'
       }
     ];

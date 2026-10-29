@@ -129,14 +129,14 @@ expanded target has the same JSON shape, with nested relations left at depth 0:
 entity.dataFlowsIn
   .filter(.entity.metadata.schemaId == 'system')
   .map(.entity.annual_cost.amount)
-  |> sum
+  .sum()
 ```
 
 To return a currency value, combine the aggregate with an explicit currency code:
 
 ```text
 {
-  amount: entity.contracts.map(.entity.annual_cost.amount) |> sum,
+  amount: entity.contracts.map(.entity.annual_cost.amount).sum(),
   currency: 'USD'
 }
 ```
@@ -166,7 +166,7 @@ Numeric arrays can be combined multiplicatively with the `product` transform. It
 an empty array, matching the multiplicative identity:
 
 ```text
-entity.layers.map(.coverage) |> product
+entity.layers.map(.coverage).product()
 ```
 
 ## Evaluation behavior
@@ -221,7 +221,7 @@ entities:
   "name": "Annual contract cost",
   "type": "derived",
   "requirementLevel": "optional",
-  "expression": "entity.contracts.map(.entity.annual_cost.amount) |> sum",
+  "expression": "entity.contracts.map(.entity.annual_cost.amount).sum()",
   "resultType": "number"
 }
 ```

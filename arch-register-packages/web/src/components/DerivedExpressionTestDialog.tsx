@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { bonsai } from 'bonsai-js';
-import { arrays, math } from 'bonsai-js/stdlib';
+import { bonsai, isBonsaiError } from 'bonsai-js';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 
@@ -22,12 +21,17 @@ type Props = {
   onSave: (expression: string) => void;
 };
 
-const engine = bonsai<{
-  entity?: Record<string, unknown>;
-  assessment?: Record<string, unknown>;
-}>({ timeout: 50, maxDepth: 50 })
-  .use(arrays)
-  .use(math);
+const engine = bonsai({
+  strict: false,
+  limits: {
+    timeout: 50,
+    maxDepth: 50,
+    maxValueDepth: 50,
+    maxListLength: 100_000,
+    maxStringLength: 100_000,
+    maxSteps: 1_000_000
+  }
+});
 
 const formatValue = (value: unknown) => {
   if (value === undefined || value === null || value === '') return 'Empty';
@@ -55,10 +59,10 @@ export const DerivedExpressionTestDialog = ({
 
   const result = useMemo(() => {
     if (!open) return null;
-    const validation = engine.validate(expression);
-    if (!validation.valid) {
+    const validation = engine.check(expression);
+    if (!validation.ok) {
       return {
-        error: validation.errors.map(error => error.formatted ?? error.message).join('; ')
+        error: validation.diagnostics.map(diagnostic => diagnostic.formatted).join('; ')
       };
     }
     try {
@@ -66,10 +70,15 @@ export const DerivedExpressionTestDialog = ({
       if (rootValue == null || typeof rootValue !== 'object' || Array.isArray(rootValue)) {
         throw new Error(`${root} JSON must be an object`);
       }
-      const compiled = engine.compile(expression);
-      return { value: compiled.evaluateSync({ [root]: rootValue }) };
+      return { value: validation.program.evaluateSync({ [root]: rootValue }) };
     } catch (error) {
-      return { error: error instanceof Error ? error.message : String(error) };
+      return {
+        error: isBonsaiError(error)
+          ? error.formatted
+          : error instanceof Error
+            ? error.message
+            : String(error)
+      };
     }
   }, [expression, open, root, rootJson]);
 
