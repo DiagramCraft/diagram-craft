@@ -26,10 +26,7 @@ import { EmptyState } from '../../components/EmptyState';
 
 import { Title } from '../../components/Title';
 import { EditorActionsMenu } from './EditorActionsMenu';
-import {
-  pruneDefaultsForType,
-  TemplateMetadataDefaultsForm
-} from './TemplateMetadataDefaultsForm';
+import { pruneDefaultsForType, TemplateMetadataDefaultsForm } from './TemplateMetadataDefaultsForm';
 import { resolveDocumentTypeColor } from '../../lib/schemaPresentation';
 
 import styles from './DocumentSettingsScreen.module.css';
