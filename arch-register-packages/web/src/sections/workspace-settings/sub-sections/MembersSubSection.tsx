@@ -127,7 +127,7 @@ export const MembersSubSection = ({ workspaceSlug }: { workspaceSlug: string }) 
       {header}
       <SettingsPage stacked={false}>
         {!isLoading && members.length > 0 && (
-          <ViewControls>
+          <ViewControls variant="page">
             <SearchInput
               size="sm"
               placeholder="Search by name or email…"

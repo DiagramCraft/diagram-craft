@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { TbFilter } from 'react-icons/tb';
-import { Button } from '@diagram-craft/app-components/Button';
+import { ToolbarButton } from '../../../components/ToolbarButton';
 import { Popover, type PopoverActions } from '@diagram-craft/app-components/Popover';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import type { EntityQueryParseError } from '@arch-register/api-types/entityContract';
@@ -174,15 +174,14 @@ export const QueryModeControls = (props: QueryModeControlsProps) => {
   const conditionCount = countConditions(canonical);
 
   const filterButton = (badgeCount: number) => (
-    <Button
-      size="sm"
+    <ToolbarButton
       variant={badgeCount > 0 ? 'primary' : 'secondary'}
       icon={<TbFilter size={12} />}
       aria-label="Filter"
       title="Filter"
     >
       {badgeCount > 0 && <span className={styles.filterCount}>{badgeCount}</span>}
-    </Button>
+    </ToolbarButton>
   );
 
   // Legacy fallback for surfaces that don't track a structured query (the markdown embed): the
@@ -264,9 +263,9 @@ export const QueryModeControls = (props: QueryModeControlsProps) => {
       <Popover.Root open={advancedOpen} onOpenChange={setAdvancedOpen}>
         <Popover.Trigger
           element={
-            <Button size="sm" variant="secondary" title="Edit the query as text">
+            <ToolbarButton variant="secondary" title="Edit the query as text">
               Advanced
-            </Button>
+            </ToolbarButton>
           }
         />
         <Popover.Content

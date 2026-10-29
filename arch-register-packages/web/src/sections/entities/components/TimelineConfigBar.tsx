@@ -20,7 +20,7 @@ export const TimelineConfigBar = ({
   dateFields: FieldOption[];
   isEventMode: boolean;
 }) => (
-  <ViewControls variant="bar">
+  <ViewControls variant="view">
     <span className={styles.configMeta}>Date</span>
 
     <LabeledSelect

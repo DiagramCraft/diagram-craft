@@ -34,19 +34,28 @@ const Controls = () => {
   );
 };
 
-export const Inline: Story = {
-  args: { children: null },
+export const Page: Story = {
+  args: { children: null, variant: 'page' },
   render: () => (
-    <ViewControls>
+    <ViewControls variant="page">
       <Controls />
     </ViewControls>
   )
 };
 
-export const Bar: Story = {
-  args: { children: null },
+export const Tab: Story = {
+  args: { children: null, variant: 'tab' },
   render: () => (
-    <ViewControls variant="bar">
+    <ViewControls variant="tab">
+      <Controls />
+    </ViewControls>
+  )
+};
+
+export const View: Story = {
+  args: { children: null, variant: 'view' },
+  render: () => (
+    <ViewControls variant="view">
       <Controls />
     </ViewControls>
   )

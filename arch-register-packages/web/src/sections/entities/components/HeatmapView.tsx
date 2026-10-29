@@ -208,7 +208,7 @@ export const HeatmapView = ({
   return (
     <ViewControlsFrame>
       {!hideToolbar && (
-        <ViewControls variant="bar">
+        <ViewControls variant="view">
           <LabeledSelect
             label="Row"
             value={config?.likelihoodFieldId ?? ''}

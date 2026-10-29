@@ -91,7 +91,7 @@ export const ProjectPlanMilestones = ({
   return (
     <>
       <div className={styles.filterBar}>
-        <ViewControls padding="none">
+        <ViewControls variant="tab">
           <LabeledSelect
             label="Status"
             value={statusFilter}

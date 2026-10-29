@@ -1,6 +1,6 @@
 import { TbHistory } from 'react-icons/tb';
 import { ViewControls } from '../../../components/ViewControls';
-import { Button } from '@diagram-craft/app-components/Button';
+import { ToolbarButton } from '../../../components/ToolbarButton';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type {
   WorkspaceLifecycleState,
@@ -105,7 +105,7 @@ export const EntityBrowserToolbar = ({
   allowedViews
 }: EntityBrowserToolbarProps) => {
   return (
-    <ViewControls spaced compactButtons>
+    <ViewControls variant="page">
       <QueryModeControls
         workspaceId={workspaceId}
         q={q}
@@ -172,8 +172,7 @@ export const EntityBrowserToolbar = ({
         disabled={!displayFields || !selectedDisplayFieldIds || !onDisplayFieldsChange}
       />
       {onToggleTimeline && (
-        <Button
-          size="sm"
+        <ToolbarButton
           variant={tlOpen || asOf ? 'primary' : 'secondary'}
           icon={<TbHistory size={12} />}
           onClick={onToggleTimeline}

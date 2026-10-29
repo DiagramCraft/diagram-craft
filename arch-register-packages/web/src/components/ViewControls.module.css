@@ -11,37 +11,24 @@
   gap: 8px;
   flex-wrap: wrap;
   padding: 8px 0;
+  margin-bottom: 8px;
 
-  &[data-variant="bar"] {
-    padding: 6px 10px;
-    min-height: 42px;
-    border-bottom: 1px solid var(--panel-border);
-    flex-shrink: 0;
+  &[data-variant="tab"] {
+    padding: 0;
+    margin-bottom: 0;
   }
 
-  &[data-padding="none"] {
-    padding-top: 0;
-    padding-bottom: 0;
+  &[data-variant="view"] {
+    padding: 6px 10px;
+    min-height: 42px;
+    margin-bottom: 0;
+    border-bottom: 1px solid var(--panel-border);
+    flex-shrink: 0;
   }
 
   &[data-nowrap] {
     flex-wrap: nowrap;
     overflow-x: auto;
-  }
-
-  &[data-spaced] {
-    margin-bottom: 8px;
-  }
-
-  /* Wins over Button's own styling, including buttons rendered by child components */
-  &[data-compact-buttons] button {
-    height: 24px !important;
-    border-radius: var(--r) !important;
-
-    &:not([data-variant="primary"]) {
-      background: var(--cmp-bg) !important;
-      border: 1px solid var(--panel-border) !important;
-    }
   }
 
   .eSpacer {

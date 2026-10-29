@@ -65,7 +65,7 @@ export const ProjectAssessments = ({
           ) : undefined
         }
         toolbar={
-          <ViewControls>
+          <ViewControls variant="page">
             <LabeledSelect
               label="Status"
               value={statusFilter}

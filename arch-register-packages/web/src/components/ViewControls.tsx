@@ -3,36 +3,29 @@ import styles from './ViewControls.module.css';
 
 type ViewControlsProps = {
   children: ReactNode;
-  /** `inline` for page-level toolbars, `bar` for the bordered config bar of a view. */
-  variant?: 'inline' | 'bar';
-  /** Remove the vertical padding, e.g. when the parent already provides spacing. */
-  padding?: 'default' | 'none';
+  /**
+   * Where the controls are placed:
+   * - `page`: below a page's title and description
+   * - `tab`: at the top of a tab's contents (the tab provides the spacing)
+   * - `view`: bordered config bar at the top of a view
+   */
+  variant: 'page' | 'tab' | 'view';
   /** Keep everything on one row and scroll horizontally instead of wrapping. */
   nowrap?: boolean;
-  /** Add space below the controls, separating them from the content that follows. */
-  spaced?: boolean;
-  /** Size every nested button (including those inside child components) to match LabeledSelect. */
-  compactButtons?: boolean;
   className?: string;
 };
 
 /** Shared layout for rows of filters, selects and buttons above a table, list or view. */
 export const ViewControls = ({
   children,
-  variant = 'inline',
-  padding = 'default',
+  variant,
   nowrap,
-  spaced,
-  compactButtons,
   className
 }: ViewControlsProps) => (
   <div
     className={[styles.cViewControls, className].filter(Boolean).join(' ')}
     data-variant={variant}
-    data-padding={padding}
     data-nowrap={nowrap ? '' : undefined}
-    data-spaced={spaced ? '' : undefined}
-    data-compact-buttons={compactButtons ? '' : undefined}
   >
     {children}
   </div>

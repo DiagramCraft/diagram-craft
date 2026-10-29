@@ -617,7 +617,7 @@ export const ConformanceSubSection = ({
 
         {tab === 'violations' && (
           <section className={styles.section}>
-            <ViewControls padding="none">
+            <ViewControls variant="tab">
               <LabeledSelect
                 label="Status"
                 value={status}

@@ -348,7 +348,7 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
         />
       </div>
 
-      <ViewControls spaced compactButtons>
+      <ViewControls variant="page">
         <RelationQueryModeControls
           workspaceId={workspaceId}
           relationQuery={relationQuery}

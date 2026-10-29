@@ -429,7 +429,7 @@ export const RelationMatrixView = ({
     <ViewControlsFrame fill>
       {/* Config bar */}
       {!hideToolbar && (
-        <ViewControls variant="bar">
+        <ViewControls variant="view">
           <LabeledSelect
             label="Columns"
             value={colMode}

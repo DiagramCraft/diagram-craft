@@ -290,7 +290,7 @@ export const BubbleChartView = ({
   return (
     <ViewControlsFrame>
       {!hideToolbar && (
-        <ViewControls variant="bar">
+        <ViewControls variant="view">
           <LabeledSelect
             label="X axis"
             value={config?.xFieldId ?? ''}

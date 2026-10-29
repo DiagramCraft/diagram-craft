@@ -91,7 +91,7 @@ export const GovernanceInboxScreen = () => {
         }
       />
 
-      <ViewControls padding="none" className={styles.toolbar}>
+      <ViewControls variant="tab" className={styles.toolbar}>
         {scope === 'assigned' ? (
           <>
             <LabeledSelect

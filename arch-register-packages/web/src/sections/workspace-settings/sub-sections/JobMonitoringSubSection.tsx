@@ -544,7 +544,7 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
 
         {tab === 'history' && (
           <>
-            <ViewControls padding="none">
+            <ViewControls variant="tab">
               <LabeledSelect
                 label="Schedule"
                 value={scheduleId}

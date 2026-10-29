@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { TbChevronDown, TbChevronRight, TbColumns3, TbSettings } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
+import { ToolbarButton } from '../../../components/ToolbarButton';
 import { Popover, type PopoverActions } from '@diagram-craft/app-components/Popover';
 import type { ColumnRenderConfig } from '@arch-register/api-types/viewContract';
 import { ColumnRendererEditor } from './ColumnRendererEditor';
@@ -65,8 +66,7 @@ export const ManageFieldsPopover = ({
     >
       <Popover.Trigger
         element={
-          <Button
-            size="sm"
+          <ToolbarButton
             variant="secondary"
             icon={<TbColumns3 size={12} />}
             aria-label="Manage fields"

@@ -55,7 +55,7 @@ export const EntityGraphToolbar = ({
   );
 
   return (
-    <ViewControls variant="bar" nowrap className={styles.eToolbar}>
+    <ViewControls variant="view" nowrap className={styles.eToolbar}>
       <GraphLayoutToolbar
         layout={layout}
         setLayout={setLayout}

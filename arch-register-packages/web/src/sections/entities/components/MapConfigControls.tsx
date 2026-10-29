@@ -463,7 +463,7 @@ export const MapConfigControls = ({
       )}
 
       {!hideToolbar && (
-        <ViewControls variant="bar">
+        <ViewControls variant="view">
           <div className={styles.axisPill}>
             <span className={styles.axisKicker}>Metric</span>
             <span className={styles.pathSummary}>{metricTerminalSchema?.name ?? 'Any schema'}</span>

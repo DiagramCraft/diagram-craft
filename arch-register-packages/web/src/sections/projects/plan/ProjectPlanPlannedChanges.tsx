@@ -98,7 +98,7 @@ export const ProjectPlanPlannedChanges = ({
 
   const toolbar = (
     <div className={styles.plannedToolbar}>
-      <ViewControls padding="none">
+      <ViewControls variant="tab">
         <LabeledSelect
           label="Show"
           value={show}

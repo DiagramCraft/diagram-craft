@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { TbFilter } from 'react-icons/tb';
-import { Button } from '@diagram-craft/app-components/Button';
+import { ToolbarButton } from '../../components/ToolbarButton';
 import { Popover, type PopoverActions } from '@diagram-craft/app-components/Popover';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import type { EntityQueryParseError } from '@arch-register/api-types/entityContract';
@@ -129,8 +129,7 @@ export const RelationQueryModeControls = ({
       <Popover.Root actionsRef={filterPopoverRef}>
         <Popover.Trigger
           element={
-            <Button
-              size="sm"
+            <ToolbarButton
               variant={conditionCount > 0 ? 'primary' : 'secondary'}
               icon={<TbFilter size={12} />}
               aria-label="Filter"
@@ -139,7 +138,7 @@ export const RelationQueryModeControls = ({
               {conditionCount > 0 && (
                 <span className={filterStyles.filterCount}>{conditionCount}</span>
               )}
-            </Button>
+            </ToolbarButton>
           }
         />
         <Popover.Content
@@ -168,9 +167,9 @@ export const RelationQueryModeControls = ({
       <Popover.Root open={advancedOpen} onOpenChange={setAdvancedOpen}>
         <Popover.Trigger
           element={
-            <Button size="sm" variant="secondary" title="Edit the query as text">
+            <ToolbarButton variant="secondary" title="Edit the query as text">
               Advanced
-            </Button>
+            </ToolbarButton>
           }
         />
         <Popover.Content

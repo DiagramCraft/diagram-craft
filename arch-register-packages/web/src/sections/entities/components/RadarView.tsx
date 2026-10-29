@@ -307,7 +307,7 @@ export const RadarView = ({
   return (
     <ViewControlsFrame>
       {!hideToolbar && (
-        <ViewControls variant="bar">
+        <ViewControls variant="view">
           {!soleSchemaId && (
             <LabeledSelect
               label="Schema"
@@ -467,7 +467,7 @@ export const RadarView = ({
         ) : (
           <>
             {!hideToolbar && (
-              <ViewControls spaced>
+              <ViewControls variant="page">
                 <span className={styles.pillsLabel}>Ring</span>
                 <div className={styles.pills}>
                   {rings.map((ring, ringIndex) => (
