@@ -379,9 +379,7 @@ export const EntityBrowserScreen = () => {
               </Button>
             ) : undefined
           }
-          menu={
-            <TitleMenu label="Entity browser actions" items={menuItems} />
-          }
+          menu={<TitleMenu label="Entity browser actions" items={menuItems} />}
         />
       </div>
 

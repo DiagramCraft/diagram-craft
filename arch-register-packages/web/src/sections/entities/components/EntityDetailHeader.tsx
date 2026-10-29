@@ -2,15 +2,7 @@ import type { ReactNode } from 'react';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TypeBadge } from '../../../components/TypeBadge';
 import { StatusChip } from '../../../components/StatusChip';
-import {
-  TbEdit,
-  TbTrash,
-  TbCopy,
-  TbBell,
-  TbPinned,
-  TbBookmark,
-  TbGitMerge
-} from 'react-icons/tb';
+import { TbEdit, TbTrash, TbCopy, TbBell, TbPinned, TbBookmark, TbGitMerge } from 'react-icons/tb';
 import { type MenuItem } from '../../../components/DropdownMenu';
 import { TitleMenu } from '../../../components/TitleMenu';
 import type { EntityChangeApproval } from '@arch-register/api-types/entityChangeContract';
@@ -204,9 +196,7 @@ export const EntityDetailHeader = ({
           )
         }
         menu={
-          menuItems.length > 0 ? (
-            <TitleMenu label="Entity actions" items={menuItems} />
-          ) : undefined
+          menuItems.length > 0 ? <TitleMenu label="Entity actions" items={menuItems} /> : undefined
         }
       />
     </div>

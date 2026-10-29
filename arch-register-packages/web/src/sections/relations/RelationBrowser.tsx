@@ -343,9 +343,7 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
             'Browse and filter typed relation instances across the workspace.'
           }
           menu={
-            menuItems.length > 0 && (
-              <TitleMenu label="Relation browser actions" items={menuItems} />
-            )
+            menuItems.length > 0 && <TitleMenu label="Relation browser actions" items={menuItems} />
           }
         />
       </div>

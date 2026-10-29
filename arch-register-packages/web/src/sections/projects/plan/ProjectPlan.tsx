@@ -110,11 +110,7 @@ export const ProjectPlan = ({
           </Button>
         ) : undefined
       }
-      menu={
-        menuItems.length > 0 ? (
-          <TitleMenu label="Plan actions" items={menuItems} />
-        ) : undefined
-      }
+      menu={menuItems.length > 0 ? <TitleMenu label="Plan actions" items={menuItems} /> : undefined}
       toolbar={
         <div className={styles.tabBar}>
           <Tabs.Root value={activeTab} onValueChange={value => setActiveTab(value as PlanTab)}>

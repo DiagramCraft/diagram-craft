@@ -91,9 +91,7 @@ export const WithButtons: Story = {
 export const WithMenu: Story = {
   args: {
     title: 'Settings',
-    menu: (
-      <TitleMenu items={[{ label: 'Rename', onClick: () => {} }]} />
-    )
+    menu: <TitleMenu items={[{ label: 'Rename', onClick: () => {} }]} />
   }
 };
 
@@ -129,9 +127,7 @@ export const FullFeatured: Story = {
         </Button>
       </>
     ),
-    menu: (
-      <TitleMenu items={[{ label: 'Rename', onClick: () => {} }]} />
-    )
+    menu: <TitleMenu items={[{ label: 'Rename', onClick: () => {} }]} />
   }
 };
 
