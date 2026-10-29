@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { ProgressBar } from '../../../components/ProgressBar';
 import { ASSESSMENT_STATUS_LABEL } from '../../../lib/assessmentStatus';
-import { TbEdit, TbDots, TbTrash, TbDownload } from 'react-icons/tb';
+import { TbEdit, TbTrash, TbDownload } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
@@ -15,7 +15,8 @@ import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { exportAssessmentResponsesToCSV } from '../../../lib/assessmentCsv';
 import { downloadBlob } from '../../../lib/browserDownload';
 import { Chip } from '../../../components/Chip';
-import { DropdownMenu, type MenuItem } from '../../../components/DropdownMenu';
+import { type MenuItem } from '../../../components/DropdownMenu';
+import { TitleMenu } from '../../../components/TitleMenu';
 import { MemberAvatar } from '../../../components/MemberAvatar';
 import { DiscussionThread } from '../../discussions/DiscussionThread';
 import {
@@ -170,14 +171,7 @@ export const AssessmentDetailsScreen = ({
         }
         menu={
           menuItems.length > 0 ? (
-            <DropdownMenu
-              trigger={
-                <button type="button" className={styles.iconBtn}>
-                  <TbDots size={14} />
-                </button>
-              }
-              items={menuItems}
-            />
+            <TitleMenu label="Assessment actions" items={menuItems} />
           ) : undefined
         }
         meta={

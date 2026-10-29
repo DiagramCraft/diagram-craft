@@ -3,8 +3,9 @@ import { getRouteApi } from '@tanstack/react-router';
 import styles from './EntityBrowserScreen.module.css';
 import { Title } from '../../components/Title';
 import { Button } from '@diagram-craft/app-components/Button';
-import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
-import { TbPlus, TbDownload, TbUpload, TbDots, TbCheck, TbCopy, TbBookmark } from 'react-icons/tb';
+import { type MenuItem } from '../../components/DropdownMenu';
+import { TitleMenu } from '../../components/TitleMenu';
+import { TbPlus, TbDownload, TbUpload, TbCheck, TbCopy, TbBookmark } from 'react-icons/tb';
 import { useSavedViews, useCreateSavedView, useUpdateSavedView } from '../../hooks/useSavedViews';
 import { useDevConfig } from '../../hooks/useDevConfig';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
@@ -378,12 +379,7 @@ export const EntityBrowserScreen = () => {
               </Button>
             ) : undefined
           }
-          menu={
-            <DropdownMenu
-              trigger={<Button aria-label="Entity browser actions" icon={<TbDots size={14} />} />}
-              items={menuItems}
-            />
-          }
+          menu={<TitleMenu label="Entity browser actions" items={menuItems} />}
         />
       </div>
 

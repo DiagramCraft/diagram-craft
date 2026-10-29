@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { TbDots, TbTrash } from 'react-icons/tb';
-import { Button } from '@diagram-craft/app-components/Button';
+import { TbTrash } from 'react-icons/tb';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
-import { DropdownMenu } from '../../../components/DropdownMenu';
+import { TitleMenu } from '../../../components/TitleMenu';
 import { useApplications, useDeleteApplication } from '../../../hooks/useApplications';
 
 /** Overflow (…) menu for the screen header with application-level actions, currently "Delete application". */
@@ -24,10 +23,8 @@ export const ApplicationAuxMenu = ({
 
   return (
     <>
-      <DropdownMenu
-        trigger={
-          <Button aria-label="Application actions" variant="ghost" icon={<TbDots size={14} />} />
-        }
+      <TitleMenu
+        label="Application actions"
         items={[
           {
             label: 'Delete application',

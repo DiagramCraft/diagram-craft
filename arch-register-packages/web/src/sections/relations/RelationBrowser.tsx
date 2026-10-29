@@ -2,7 +2,6 @@ import { useCallback, useMemo, useState } from 'react';
 import { relationLabel } from '../../lib/relationLabel';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import {
-  TbDots,
   TbCheck,
   TbCopy,
   TbPencil,
@@ -11,7 +10,6 @@ import {
   TbUpload,
   TbAffiliate
 } from 'react-icons/tb';
-import { Button } from '@diagram-craft/app-components/Button';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import styles from './RelationBrowser.module.css';
 import filterStyles from '../entities/components/EntityBrowser.module.css';
@@ -23,6 +21,7 @@ import { Table } from '../../components/table/Table';
 import { TypeBadge } from '../../components/TypeBadge';
 import { useTableSort } from '../../components/table/useTableSort';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
+import { TitleMenu } from '../../components/TitleMenu';
 import { useEntityDrawer } from '../entities/entityDrawer/useEntityDrawer';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useTeams, useLifecycleStates } from '../../hooks/useWorkspaceConfig';
@@ -344,14 +343,7 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
             'Browse and filter typed relation instances across the workspace.'
           }
           menu={
-            menuItems.length > 0 && (
-              <DropdownMenu
-                trigger={
-                  <Button aria-label="Relation browser actions" icon={<TbDots size={14} />} />
-                }
-                items={menuItems}
-              />
-            )
+            menuItems.length > 0 && <TitleMenu label="Relation browser actions" items={menuItems} />
           }
         />
       </div>

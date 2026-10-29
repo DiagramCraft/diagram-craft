@@ -4,11 +4,12 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import type { Milestone } from '@arch-register/api-types/milestoneContract';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
-import { TbCalendarEvent, TbDots, TbFlag } from 'react-icons/tb';
+import { TbCalendarEvent, TbFlag } from 'react-icons/tb';
 import type { ChangeCase } from '@arch-register/api-types/changeCaseContract';
 import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectCrudContract';
 import type { ProjectEntity } from '@arch-register/api-types/projectEntityContract';
-import { DropdownMenu, type MenuItem } from '../../../components/DropdownMenu';
+import { type MenuItem } from '../../../components/DropdownMenu';
+import { TitleMenu } from '../../../components/TitleMenu';
 import { useWithdrawChangeCase } from '../../../hooks/useChangeCases';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { type ChangeCaseMemberEntry } from '../../entities/components/snapshotDisplay';
@@ -109,14 +110,7 @@ export const ProjectPlan = ({
           </Button>
         ) : undefined
       }
-      menu={
-        menuItems.length > 0 ? (
-          <DropdownMenu
-            trigger={<Button aria-label="Plan actions" icon={<TbDots size={14} />} />}
-            items={menuItems}
-          />
-        ) : undefined
-      }
+      menu={menuItems.length > 0 ? <TitleMenu label="Plan actions" items={menuItems} /> : undefined}
       toolbar={
         <div className={styles.tabBar}>
           <Tabs.Root value={activeTab} onValueChange={value => setActiveTab(value as PlanTab)}>
