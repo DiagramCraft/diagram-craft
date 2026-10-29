@@ -41,10 +41,8 @@ describe('assessment templates', () => {
           { value: 'eliminate', label: 'Eliminate' }
         ],
         expression:
-          '(assessment.business_fit>=6 && assessment.technical_fit>=6 && "invest") || ' +
-          '(assessment.business_fit>=6 && assessment.technical_fit<6 && "migrate") || ' +
-          '(assessment.business_fit<6 && assessment.technical_fit>=6 && "tolerate") || ' +
-          '"eliminate"'
+          "assessment.business_fit >= 6 ? assessment.technical_fit >= 6 ? 'invest' : 'migrate' : " +
+          "assessment.technical_fit >= 6 ? 'tolerate' : 'eliminate'"
       }
     ]);
   });
@@ -55,9 +53,16 @@ describe('assessment templates', () => {
     const quadrantField = template.values.fields.find(f => f.id === 'time_quadrant');
     if (quadrantField?.type !== 'derived') throw new Error('expected a derived field');
 
-    const engine = bonsai<{ assessment: Record<string, unknown> }>({
-      timeout: 50,
-      maxDepth: 50
+    const engine = bonsai({
+      strict: false,
+      limits: {
+        timeout: 50,
+        maxDepth: 50,
+        maxValueDepth: 50,
+        maxListLength: 100_000,
+        maxStringLength: 100_000,
+        maxSteps: 1_000_000
+      }
     });
 
     const cases: [number, number, string][] = [

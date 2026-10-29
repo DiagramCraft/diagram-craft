@@ -234,7 +234,7 @@ describe('business capability strategy seed data', () => {
           id: 'capability_level',
           type: 'derived',
           expression:
-            "entity.parent == null ? 'L1' : 'L' + ((entity.parent.capability_level |> replace('L', '') |> toNumber) + 1)",
+            "entity.parent == null ? 'L1' : `L${toNumber(entity.parent.capability_level.replace('L', '')) + 1}`",
           resultType: 'text'
         }),
         expect.objectContaining({
@@ -328,7 +328,7 @@ describe('contract allocation seed data', () => {
       expect.objectContaining({
         id: 'budget',
         type: 'derived',
-        expression: 'entity.contracts.map(.allocation * .entity.annual_cost.amount / 100) |> sum'
+        expression: 'entity.contracts.map(.allocation * .entity.annual_cost.amount / 100).sum()'
       })
     );
     expect(system?.fields).toContainEqual(
@@ -342,7 +342,7 @@ describe('contract allocation seed data', () => {
       expect.objectContaining({
         id: 'allocated',
         type: 'derived',
-        expression: 'entity.system.map(.allocation) |> sum'
+        expression: 'entity.system.map(.allocation).sum()'
       })
     );
     expect(contract?.fields).toContainEqual(

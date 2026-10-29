@@ -94,7 +94,7 @@ describe('derived recalculation', () => {
           name: 'Total',
           type: 'derived',
           requirementLevel: 'optional',
-          expression: 'entity.contracts.map(.entity.annual_cost.amount) |> sum',
+          expression: 'entity.contracts.map(.entity.annual_cost.amount).sum()',
           resultType: 'number'
         }
       ]),

@@ -12,10 +12,25 @@ import {
   evaluateDerivedFields,
   validateDerivedFieldGroupAccess
 } from '../derived/derivedFields';
+import { buildValidationPlan } from './entityValidationRules';
 import { compileRelationSchemaWithSharedGroups } from './relationSchemaHelpers';
 import { VENDOR_CAPABILITIES_FUNDED_PLACEHOLDER_MESSAGE } from '@arch-register/api-types/entityDrawerConfiguration';
 
 describe('instantiateTemplate', () => {
+  it('checks every shipped schema and relation expression with Bonsai 1.x', () => {
+    for (const template of SCHEMA_TEMPLATES) {
+      const definitions = instantiateTemplateDefinitions('ws-expression-compat', template.id);
+      for (const schema of definitions.schemas) {
+        expect(() => buildDerivedPlan(schema.fields, 'entity')).not.toThrow();
+        expect(() => buildValidationPlan(schema.validation_rules ?? [], 'entity')).not.toThrow();
+      }
+      for (const schema of definitions.relationSchemas) {
+        expect(() => buildDerivedPlan(schema.fields, 'relation')).not.toThrow();
+        expect(() => buildValidationPlan(schema.validation_rules ?? [], 'relation')).not.toThrow();
+      }
+    }
+  });
+
   it('assigns a presentation category to every built-in entity and relation schema', () => {
     for (const template of SCHEMA_TEMPLATES) {
       expect(template.schemas.every(schema => schema.category.trim().length > 0)).toBe(true);
@@ -184,7 +199,7 @@ describe('instantiateTemplate', () => {
           name: 'Capability Level',
           type: 'derived',
           expression:
-            "entity.parent == null ? 'L1' : 'L' + ((entity.parent.capability_level |> replace('L', '') |> toNumber) + 1)",
+            "entity.parent == null ? 'L1' : `L${toNumber(entity.parent.capability_level.replace('L', '')) + 1}`",
           resultType: 'text'
         }),
         expect.objectContaining({
