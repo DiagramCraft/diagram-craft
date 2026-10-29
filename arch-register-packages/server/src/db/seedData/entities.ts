@@ -665,7 +665,7 @@ const seedRiskComplianceEntities: SeedEntityInput[] = [
     slug: 'soc2-cc6-1-logical-access',
     namespace: 'default',
     name: 'CC6.1 Logical Access Controls',
-    description: 'Restricts logical access to authorized users and processes.',
+    description: 'The entity implements logical access security measures.',
     owner: TEAM_IDS.security,
     lifecycle: LIFECYCLE_IDS.production,
     target_lifecycle: null,
@@ -675,7 +675,6 @@ const seedRiskComplianceEntities: SeedEntityInput[] = [
     schema_id: '00000000-0000-0000-0000-000000000016',
     data: {
       requirement_code: 'CC6.1',
-      description: 'The entity implements logical access security measures.',
       status: 'met',
       framework: ['00000000-0000-0000-0017-000000000001']
     },
@@ -690,7 +689,7 @@ const seedRiskComplianceEntities: SeedEntityInput[] = [
     slug: 'soc2-cc7-2-monitoring',
     namespace: 'default',
     name: 'CC7.2 System Monitoring',
-    description: 'Monitors system components for anomalies indicative of security events.',
+    description: 'The entity monitors system components for anomalous behavior.',
     owner: TEAM_IDS.security,
     lifecycle: LIFECYCLE_IDS.production,
     target_lifecycle: null,
@@ -700,7 +699,6 @@ const seedRiskComplianceEntities: SeedEntityInput[] = [
     schema_id: '00000000-0000-0000-0000-000000000016',
     data: {
       requirement_code: 'CC7.2',
-      description: 'The entity monitors system components for anomalous behavior.',
       status: 'in-progress',
       framework: ['00000000-0000-0000-0017-000000000001']
     },
@@ -715,7 +713,7 @@ const seedRiskComplianceEntities: SeedEntityInput[] = [
     slug: 'iso27001-a-8-24-cryptography',
     namespace: 'default',
     name: 'A.8.24 Use of Cryptography',
-    description: 'Rules for effective use of cryptography, including key management.',
+    description: 'The entity defines and implements rules for cryptography.',
     owner: TEAM_IDS.security,
     lifecycle: LIFECYCLE_IDS.production,
     target_lifecycle: null,
@@ -725,7 +723,6 @@ const seedRiskComplianceEntities: SeedEntityInput[] = [
     schema_id: '00000000-0000-0000-0000-000000000016',
     data: {
       requirement_code: 'A.8.24',
-      description: 'The entity defines and implements rules for cryptography.',
       status: 'not-started',
       framework: ['00000000-0000-0000-0017-000000000002']
     },
