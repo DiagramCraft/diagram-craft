@@ -3,42 +3,59 @@ import styles from './FilterDropdown.module.css';
 
 type Option = { value: string; label: string };
 
+export type OptionGroup = { label: string; options: Option[] };
+
 type FilterDropdownProps = {
   label: string;
   value: string;
   onChange: (v: string) => void;
-  options: Option[];
   variant?: 'default' | 'secondary';
   disabled?: boolean;
-};
+} & ({ options: Option[]; groups?: never } | { groups: OptionGroup[]; options?: never });
+
+const renderOption = (o: Option) => (
+  <option key={o.value} value={o.value}>
+    {o.label}
+  </option>
+);
 
 export const FilterDropdown = ({
   label,
   value,
   onChange,
   options,
+  groups,
   variant,
   disabled = false
-}: FilterDropdownProps) => (
-  <div
-    className={styles.cFilterDropdown}
-    data-variant={variant ?? 'default'}
-    data-disabled={disabled || undefined}
-  >
-    <span className={styles.eLabel}>{label}</span>
-    <span className={styles.eValue}>{options.find(o => o.value === value)?.label ?? value}</span>
-    <TbChevronDown size={10} />
-    <select
-      className={styles.eSelect}
-      value={value}
-      disabled={disabled}
-      onChange={e => onChange(e.target.value)}
+}: FilterDropdownProps) => {
+  const allOptions = options ?? groups.flatMap(g => g.options);
+  return (
+    <div
+      className={styles.cFilterDropdown}
+      data-variant={variant ?? 'default'}
+      data-disabled={disabled || undefined}
     >
-      {options.map(o => (
-        <option key={o.value} value={o.value}>
-          {o.label}
-        </option>
-      ))}
-    </select>
-  </div>
-);
+      <span className={styles.eLabel}>{label}</span>
+      <span className={styles.eValue}>
+        {allOptions.find(o => o.value === value)?.label ?? value}
+      </span>
+      <TbChevronDown size={10} />
+      <select
+        className={styles.eSelect}
+        value={value}
+        disabled={disabled}
+        onChange={e => onChange(e.target.value)}
+      >
+        {options
+          ? options.map(renderOption)
+          : groups
+              .filter(g => g.options.length > 0)
+              .map(g => (
+                <optgroup key={g.label} label={g.label}>
+                  {g.options.map(renderOption)}
+                </optgroup>
+              ))}
+      </select>
+    </div>
+  );
+};
