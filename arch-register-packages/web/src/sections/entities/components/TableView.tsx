@@ -11,11 +11,11 @@ import { TypeBadge } from '../../../components/TypeBadge';
 import { resolveSchemaColor } from '../../../lib/schemaPresentation';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import {
-  entityMenuItems,
+  browserEntityMenuItems,
   entityName,
-  type EntityBrowserBaseViewProps,
-  projectEntityMenuItems
+  type EntityBrowserBaseViewProps
 } from './entityBrowserViewShared';
+import { useEntityCommonActions } from './useEntityCommonActions';
 import { nextSort, parseSort } from './entityBrowserSort';
 import { formatDate } from '../../../utils/dateFormat';
 import { useDateTimeFormatPreference } from '../../../hooks/useDateTimeFormatPreference';
@@ -74,6 +74,7 @@ export const TableView = ({
 }: TableViewProps) => {
   const navigate = useNavigate();
   const { workspaceSlug } = useWorkspaceContext();
+  const commonActions = useEntityCommonActions();
   const dateTimeFormatPreference = useDateTimeFormatPreference();
   const allSelected = !readOnly && rows.length > 0 && selectedIds?.size === rows.length;
   const someSelected =
@@ -145,10 +146,11 @@ export const TableView = ({
             : undefined;
           const menuItems = readOnly
             ? []
-            : [
-                ...entityMenuItems(entity, onClone, onDelete, onManageCollections, onMerge),
-                ...projectEntityMenuItems(entity, projectContext)
-              ];
+            : browserEntityMenuItems(
+                entity,
+                { onClone, onDelete, onManageCollections, onMerge, projectContext },
+                commonActions
+              );
 
           return (
             <Table.Row

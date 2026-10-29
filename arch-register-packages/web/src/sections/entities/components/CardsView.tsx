@@ -5,11 +5,11 @@ import { StatusChip } from '../../../components/StatusChip';
 import { TypeBadge } from '../../../components/TypeBadge';
 import { resolveSchemaColor } from '../../../lib/schemaPresentation';
 import {
-  entityMenuItems,
+  browserEntityMenuItems,
   entityName,
-  type EntityBrowserBaseViewProps,
-  projectEntityMenuItems
+  type EntityBrowserBaseViewProps
 } from './entityBrowserViewShared';
+import { useEntityCommonActions } from './useEntityCommonActions';
 import styles from '../EntityBrowserScreen.module.css';
 import {
   findEntityDisplayField,
@@ -38,6 +38,7 @@ export const CardsView = ({
   config,
   displayFields
 }: CardsViewProps) => {
+  const commonActions = useEntityCommonActions();
   const fieldIds = getDisplayFieldIds('cards', config);
   return (
     <div className={styles.cardGrid}>
@@ -48,10 +49,11 @@ export const CardsView = ({
           : 'var(--accent-fg)';
         const menuItems = readOnly
           ? []
-          : [
-              ...entityMenuItems(entity, onClone, onDelete, onManageCollections, onMerge),
-              ...projectEntityMenuItems(entity, projectContext)
-            ];
+          : browserEntityMenuItems(
+              entity,
+              { onClone, onDelete, onManageCollections, onMerge, projectContext },
+              commonActions
+            );
 
         return (
           <div

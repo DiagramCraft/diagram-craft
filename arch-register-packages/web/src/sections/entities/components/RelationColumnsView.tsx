@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
 import { TbDots, TbEyeOff, TbFilter, TbFocus2 } from 'react-icons/tb';
-import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
+import { EntityContextMenuView } from '../../../components/EntityContextMenu';
+import { buildEntityMenuItems } from './entityMenu';
+import { useEntityCommonActions } from './useEntityCommonActions';
 import { TypeBadge } from '../../../components/TypeBadge';
 import { Chip } from '../../../components/Chip';
 import { useMultipleEntityRelations } from '../../../hooks/useEntities';
@@ -93,6 +95,7 @@ export const RelationColumnsView = ({
   // column is remembered so that column's Reset can undo it.
   const [excludedFromColumn, setExcludedFromColumn] = useState<Map<string, number>>(new Map());
   const excludedEntityIds = useMemo(() => new Set(excludedFromColumn.keys()), [excludedFromColumn]);
+  const commonActions = useEntityCommonActions();
   const [contextMenu, setContextMenu] = useState<{
     entity: ExploreEntity;
     columnIndex: number;
@@ -770,18 +773,33 @@ export const RelationColumnsView = ({
       </div>
 
       {contextMenu && (
-        <ContextMenu.Imperative
+        <EntityContextMenuView
           x={contextMenu.x}
           y={contextMenu.y}
           onClose={() => setContextMenu(null)}
-        >
-          <Menu.Item leftSlot={<TbEyeOff size={13} />} onClick={excludeEntity}>
-            Exclude
-          </Menu.Item>
-          <Menu.Item leftSlot={<TbFocus2 size={13} />} onClick={focusEntity}>
-            Focus
-          </Menu.Item>
-        </ContextMenu.Imperative>
+          items={buildEntityMenuItems(
+            {
+              _uid: contextMenu.entity.entityId,
+              _publicId: contextMenu.entity.publicId,
+              _name: contextMenu.entity.name,
+              _slug: contextMenu.entity.slug,
+              _schema: { id: contextMenu.entity.schemaId }
+            },
+            {
+              actions: commonActions,
+              pin: false,
+              extra: [
+                {
+                  id: 'exclude',
+                  label: 'Exclude',
+                  icon: <TbEyeOff size={14} />,
+                  onClick: excludeEntity
+                },
+                { id: 'focus', label: 'Focus', icon: <TbFocus2 size={14} />, onClick: focusEntity }
+              ]
+            }
+          )}
+        />
       )}
     </div>
   );
