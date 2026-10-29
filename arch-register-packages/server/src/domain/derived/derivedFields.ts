@@ -98,9 +98,7 @@ const engine = bonsai({
       run: (from, to) => {
         const a = Date.parse(String(from));
         const b = Date.parse(String(to));
-        return Number.isNaN(a) || Number.isNaN(b)
-          ? null
-          : Math.round((b - a) / 86_400_000);
+        return Number.isNaN(a) || Number.isNaN(b) ? null : Math.round((b - a) / 86_400_000);
       }
     }),
     // Earliest ISO date in `dates` on or after `from`; invalid entries are ignored.
