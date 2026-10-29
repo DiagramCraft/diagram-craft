@@ -4207,12 +4207,6 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             type: 'text'
           },
           {
-            id: 'description',
-            name: 'Description',
-            description: 'A short summary of what this is and why it matters.',
-            type: 'longtext'
-          },
-          {
             id: 'status',
             name: 'Status',
             description: 'How far the requirement has been met.',

@@ -112,7 +112,7 @@ export const demoComplianceRequirementEntities: SeedEntityInput[] = [
     slug: 'soc2-cc6-1-logical-access',
     namespace: 'default',
     name: 'CC6.1 Logical Access Controls',
-    description: 'Restricts logical access to authorized users and processes.',
+    description: 'The entity implements logical access security measures.',
     owner: TEAM_IDS.security,
     lifecycle: LIFECYCLE_IDS.production,
     target_lifecycle: null,
@@ -122,7 +122,6 @@ export const demoComplianceRequirementEntities: SeedEntityInput[] = [
     schema_id: SEED_SCHEMA_IDS.complianceRequirement,
     data: {
       requirement_code: 'CC6.1',
-      description: 'The entity implements logical access security measures.',
       status: 'met',
       framework: [DEMO_RISK_COMPLIANCE_IDS.frameworks.soc2TypeIi]
     },
@@ -137,7 +136,7 @@ export const demoComplianceRequirementEntities: SeedEntityInput[] = [
     slug: 'soc2-cc7-2-monitoring',
     namespace: 'default',
     name: 'CC7.2 System Monitoring',
-    description: 'Monitors system components for anomalies indicative of security events.',
+    description: 'The entity monitors system components for anomalous behavior.',
     owner: TEAM_IDS.security,
     lifecycle: LIFECYCLE_IDS.production,
     target_lifecycle: null,
@@ -147,7 +146,6 @@ export const demoComplianceRequirementEntities: SeedEntityInput[] = [
     schema_id: SEED_SCHEMA_IDS.complianceRequirement,
     data: {
       requirement_code: 'CC7.2',
-      description: 'The entity monitors system components for anomalous behavior.',
       status: 'in-progress',
       framework: [DEMO_RISK_COMPLIANCE_IDS.frameworks.soc2TypeIi]
     },
@@ -162,7 +160,7 @@ export const demoComplianceRequirementEntities: SeedEntityInput[] = [
     slug: 'iso27001-a-8-24-cryptography',
     namespace: 'default',
     name: 'A.8.24 Use of Cryptography',
-    description: 'Rules for effective use of cryptography, including key management.',
+    description: 'Rules for the effective use of cryptography are defined and implemented.',
     owner: TEAM_IDS.security,
     lifecycle: LIFECYCLE_IDS.production,
     target_lifecycle: null,
@@ -172,7 +170,6 @@ export const demoComplianceRequirementEntities: SeedEntityInput[] = [
     schema_id: SEED_SCHEMA_IDS.complianceRequirement,
     data: {
       requirement_code: 'A.8.24',
-      description: 'Rules for the effective use of cryptography are defined and implemented.',
       status: 'met',
       framework: [DEMO_RISK_COMPLIANCE_IDS.frameworks.iso27001]
     },
@@ -187,7 +184,7 @@ export const demoComplianceRequirementEntities: SeedEntityInput[] = [
     slug: 'iso27001-a-5-19-supplier-security',
     namespace: 'default',
     name: 'A.5.19 Supplier Relationships Security',
-    description: 'Manages information security risks associated with supplier relationships.',
+    description: 'Security requirements are agreed with suppliers and periodically reviewed.',
     owner: TEAM_IDS.security,
     lifecycle: LIFECYCLE_IDS.production,
     target_lifecycle: null,
@@ -197,7 +194,6 @@ export const demoComplianceRequirementEntities: SeedEntityInput[] = [
     schema_id: SEED_SCHEMA_IDS.complianceRequirement,
     data: {
       requirement_code: 'A.5.19',
-      description: 'Security requirements are agreed with suppliers and periodically reviewed.',
       status: 'in-progress',
       framework: [DEMO_RISK_COMPLIANCE_IDS.frameworks.iso27001]
     },
@@ -212,7 +208,7 @@ export const demoComplianceRequirementEntities: SeedEntityInput[] = [
     slug: 'pci-req-3-protect-cardholder-data',
     namespace: 'default',
     name: 'Req 3 - Protect Stored Cardholder Data',
-    description: 'Stored cardholder data is rendered unreadable wherever it is stored.',
+    description: 'Stored cardholder data is protected through tokenization or encryption.',
     owner: TEAM_IDS.security,
     lifecycle: LIFECYCLE_IDS.production,
     target_lifecycle: null,
@@ -222,7 +218,6 @@ export const demoComplianceRequirementEntities: SeedEntityInput[] = [
     schema_id: SEED_SCHEMA_IDS.complianceRequirement,
     data: {
       requirement_code: 'PCI-3',
-      description: 'Stored cardholder data is protected through tokenization or encryption.',
       status: 'met',
       framework: [DEMO_RISK_COMPLIANCE_IDS.frameworks.pciDss]
     },
@@ -237,7 +232,7 @@ export const demoComplianceRequirementEntities: SeedEntityInput[] = [
     slug: 'pci-req-10-track-monitor-access',
     namespace: 'default',
     name: 'Req 10 - Track and Monitor Access to Cardholder Data',
-    description: 'All access to network resources and cardholder data is tracked and monitored.',
+    description: 'Access to cardholder data systems is logged and reviewed regularly.',
     owner: TEAM_IDS.security,
     lifecycle: LIFECYCLE_IDS.production,
     target_lifecycle: null,
@@ -247,7 +242,6 @@ export const demoComplianceRequirementEntities: SeedEntityInput[] = [
     schema_id: SEED_SCHEMA_IDS.complianceRequirement,
     data: {
       requirement_code: 'PCI-10',
-      description: 'Access to cardholder data systems is logged and reviewed regularly.',
       status: 'met',
       framework: [DEMO_RISK_COMPLIANCE_IDS.frameworks.pciDss]
     },
@@ -262,7 +256,8 @@ export const demoComplianceRequirementEntities: SeedEntityInput[] = [
     slug: 'gdpr-art-32-security-of-processing',
     namespace: 'default',
     name: 'Art. 32 - Security of Processing',
-    description: 'Appropriate technical and organisational measures protect personal data.',
+    description:
+      'Technical and organisational measures ensure a level of security appropriate to the risk.',
     owner: TEAM_IDS.security,
     lifecycle: LIFECYCLE_IDS.production,
     target_lifecycle: null,
@@ -272,8 +267,6 @@ export const demoComplianceRequirementEntities: SeedEntityInput[] = [
     schema_id: SEED_SCHEMA_IDS.complianceRequirement,
     data: {
       requirement_code: 'GDPR-32',
-      description:
-        'Technical and organisational measures ensure a level of security appropriate to the risk.',
       status: 'in-progress',
       framework: [DEMO_RISK_COMPLIANCE_IDS.frameworks.gdpr]
     },
@@ -288,7 +281,7 @@ export const demoComplianceRequirementEntities: SeedEntityInput[] = [
     slug: 'gdpr-art-17-right-to-erasure',
     namespace: 'default',
     name: 'Art. 17 - Right to Erasure',
-    description: 'Customers can request deletion of their personal data without undue delay.',
+    description: 'Data subject erasure requests are fulfilled within the required timeframe.',
     owner: TEAM_IDS.security,
     lifecycle: LIFECYCLE_IDS.production,
     target_lifecycle: null,
@@ -298,7 +291,6 @@ export const demoComplianceRequirementEntities: SeedEntityInput[] = [
     schema_id: SEED_SCHEMA_IDS.complianceRequirement,
     data: {
       requirement_code: 'GDPR-17',
-      description: 'Data subject erasure requests are fulfilled within the required timeframe.',
       status: 'not-started',
       framework: [DEMO_RISK_COMPLIANCE_IDS.frameworks.gdpr]
     },

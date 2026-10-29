@@ -122,6 +122,18 @@ describe('template-backed catalog seed data', () => {
       }
     }
   });
+
+  it('stores compliance requirement summaries in the built-in description', () => {
+    const requirementSchema = seedSchemas.find(schema => schema.name === 'Compliance Requirement');
+    const requirements = seedEntities.filter(entity => entity.schema_id === requirementSchema?.id);
+
+    expect(requirementSchema).toBeDefined();
+    expect(requirements).toHaveLength(3);
+    expect(requirements[0]?.description).toBe(
+      'The entity implements logical access security measures.'
+    );
+    expect(requirements.every(entity => !('description' in entity.data))).toBe(true);
+  });
 });
 
 describe('dashboard assessment seed data', () => {

@@ -1117,6 +1117,7 @@ describe('instantiateTemplate', () => {
         requirementLevel: 'required'
       })
     );
+    expect(complianceRequirement?.fields.map(field => field.id)).not.toContain('description');
 
     expect(definitions.dashboardWidgets).toHaveLength(10);
     expect(
