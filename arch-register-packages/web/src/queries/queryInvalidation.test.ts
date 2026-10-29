@@ -188,6 +188,7 @@ describe('workspace-scoped invalidation', () => {
 
     expect(invalidateQueries.mock.calls.map(([options]) => options.queryKey)).toEqual([
       governanceKeys.casesWorkspace('ws-1'),
+      governanceKeys.subjectsWorkspace('ws-1'),
       governanceKeys.tasksWorkspace('ws-1'),
       governanceKeys.count('ws-1'),
       governanceKeys.submissionsWorkspace('ws-1'),

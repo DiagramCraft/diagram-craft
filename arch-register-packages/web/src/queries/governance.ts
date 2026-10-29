@@ -13,6 +13,10 @@ export const governanceKeys = {
   casesWorkspace: (workspaceId: string) => [...governanceKeys.all, 'cases', workspaceId] as const,
   case: (workspaceId: string, caseId: string) =>
     [...governanceKeys.all, 'case', workspaceId, caseId] as const,
+  subjectsWorkspace: (workspaceId: string) =>
+    [...governanceKeys.all, 'subjects', workspaceId] as const,
+  subjects: (workspaceId: string, caseIds: string[]) =>
+    [...governanceKeys.subjectsWorkspace(workspaceId), caseIds] as const,
   tasks: (workspaceId: string, query: ListGovernanceTasksQuery = {}) =>
     [...governanceKeys.all, 'tasks', workspaceId, query] as const,
   tasksWorkspace: (workspaceId: string) => [...governanceKeys.all, 'tasks', workspaceId] as const,
@@ -96,12 +100,37 @@ export const governanceSubmissionsQuery = (
     refetchInterval: 10 * 1000
   });
 
+export type GovernanceCaseSubjectRef = {
+  caseId: string;
+  caseKind: string;
+  subjectType: string;
+  subjectId: string;
+};
+
+/** Resolves display data for many case subjects in a single request */
+export const governanceCaseSubjectsQuery = (
+  workspaceId: string,
+  cases: GovernanceCaseSubjectRef[],
+  enabled = true
+) =>
+  queryOptions({
+    queryKey: governanceKeys.subjects(
+      workspaceId,
+      cases.map(c => c.caseId)
+    ),
+    queryFn: () =>
+      orpcClient.governance.cases.subjects({ params: { workspace: workspaceId }, body: { cases } }),
+    enabled: enabled && !!workspaceId && cases.length > 0,
+    staleTime: 15 * 1000
+  });
+
 export const invalidateGovernanceQueries = async (
   queryClient: QueryClient,
   workspaceId: string
 ) => {
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: governanceKeys.casesWorkspace(workspaceId) }),
+    queryClient.invalidateQueries({ queryKey: governanceKeys.subjectsWorkspace(workspaceId) }),
     queryClient.invalidateQueries({ queryKey: governanceKeys.tasksWorkspace(workspaceId) }),
     queryClient.invalidateQueries({ queryKey: governanceKeys.count(workspaceId) }),
     queryClient.invalidateQueries({ queryKey: governanceKeys.submissionsWorkspace(workspaceId) }),

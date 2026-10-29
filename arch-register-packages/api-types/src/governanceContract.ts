@@ -191,6 +191,33 @@ const listGovernanceSubmissionsQuerySchema = z.object({
   status: governanceCaseStatusSchema.optional().describe('Filter by case status')
 });
 
+const governanceCaseSubjectRefSchema = z.object({
+  caseId: z.string(),
+  caseKind: z.string(),
+  subjectType: z.string(),
+  subjectId: z.string()
+});
+
+const governanceCaseSubjectSchema = z.object({
+  label: z.string().nullable().describe('Display name of the subject, null when not resolvable'),
+  bulkMembers: z
+    .array(z.object({ uid: z.string(), publicId: z.string().nullable(), name: z.string() }))
+    .describe('Member entities of a bulk entity change'),
+  bulkEntityCount: z.number().int().nullable().describe('Number of entities in a bulk change'),
+  proposal: z
+    .object({ id: z.string(), status: z.string() })
+    .nullable()
+    .describe('The current entity change proposal, if any'),
+  latestRevision: z
+    .object({
+      createdByName: z.string().nullable(),
+      createdAt: z.string(),
+      message: z.string().nullable()
+    })
+    .nullable()
+    .describe('Latest revision of the entity change proposal, if any')
+});
+
 // ── Contract ──────────────────────────────────────────────────
 
 export const governanceContract = oc.tag('Governance').router({
@@ -250,6 +277,23 @@ export const governanceContract = oc.tag('Governance').router({
           })
         )
         .output(governanceCaseSchema),
+      subjects: oc
+        .route({
+          method: 'POST',
+          path: '/{workspace}/governance/case-subjects',
+          inputStructure: 'detailed',
+          summary: 'Resolve display data for governance case subjects',
+          description:
+            'Resolves the subject name, bulk members and latest proposal revision for a batch of cases in one request. Cases whose subject the caller cannot view are omitted.',
+          tags: ['Governance']
+        })
+        .input(
+          z.object({
+            params: ws,
+            body: z.object({ cases: z.array(governanceCaseSubjectRefSchema).max(500) })
+          })
+        )
+        .output(z.record(z.string(), governanceCaseSubjectSchema)),
       remind: oc
         .route({
           method: 'POST',
@@ -326,6 +370,7 @@ export type GovernanceEvent = z.infer<typeof governanceEventSchema>;
 export type GovernanceDecisionAction = z.infer<typeof governanceDecisionActionSchema>;
 export type ListGovernanceCasesQuery = z.infer<typeof listGovernanceCasesQuerySchema>;
 export type DecideGovernanceAssignmentBody = z.infer<typeof decideGovernanceAssignmentBodySchema>;
+export type GovernanceCaseSubject = z.infer<typeof governanceCaseSubjectSchema>;
 export type GovernanceTask = z.infer<typeof governanceTaskSchema>;
 export type ListGovernanceTasksQuery = z.infer<typeof listGovernanceTasksQuerySchema>;
 export type GovernanceSubmission = z.infer<typeof governanceSubmissionSchema>;

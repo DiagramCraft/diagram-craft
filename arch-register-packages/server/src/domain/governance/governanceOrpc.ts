@@ -1,4 +1,5 @@
 import { implement } from '@orpc/server';
+import { resolveGovernanceCaseSubjects } from './governanceCaseSubjectOperations';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { createOrpcHandler } from '../../utils/orpcHandler';
@@ -65,6 +66,14 @@ export const createGovernanceORPCRouter = (registry: GovernanceRegistry) =>
             context.event,
             input.body,
             registry
+          );
+        }),
+        subjects: governanceRouter.governance.cases.subjects.handler(async ({ input, context }) => {
+          return await resolveGovernanceCaseSubjects(
+            context.db,
+            input.params.workspace,
+            context.event,
+            input.body.cases
           );
         }),
         remind: governanceRouter.governance.cases.remind.handler(async ({ input, context }) => {
