@@ -113,9 +113,9 @@ describe('demo bootstrap dataset: governance entities', () => {
     expect(demoComplianceRequirementEntities[0]?.description).toBe(
       'The entity implements logical access security measures.'
     );
-    expect(
-      demoComplianceRequirementEntities.every(entity => !('description' in entity.data))
-    ).toBe(true);
+    expect(demoComplianceRequirementEntities.every(entity => !('description' in entity.data))).toBe(
+      true
+    );
   });
 
   it('has no duplicate ids and every framework/relation reference resolves', () => {
