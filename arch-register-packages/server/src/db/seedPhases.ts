@@ -515,6 +515,9 @@ export const seedDemoEntityChangeCases = async (db: DatabaseAdapter): Promise<vo
         spec.outcome === 'approved' ? 'approve' : 'reject',
         closedAt
       );
+      // Mirror decideGovernanceAssignment: completing a case supersedes its still-open assignments,
+      // otherwise they keep showing up as open tasks (and deciding them fails with a 409)
+      await tx.governance.supersedeAllOpenAssignmentsForCase(governanceCase.id, closedAt);
       await tx.entityChange.updateApprovalRevisionStatus(
         WORKSPACE_ID,
         revision.id,

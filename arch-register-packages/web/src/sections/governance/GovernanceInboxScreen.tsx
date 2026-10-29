@@ -1,13 +1,21 @@
 import { useState } from 'react';
 import { useQueries, useQueryClient } from '@tanstack/react-query';
-import { useNavigate, useParams } from '@tanstack/react-router';
-import { TbAlertTriangle, TbClipboardCheck, TbClock, TbExternalLink } from 'react-icons/tb';
+import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
+import {
+  TbAlertTriangle,
+  TbArrowBackUp,
+  TbBell,
+  TbCheck,
+  TbClock,
+  TbExternalLink,
+  TbMessageReply
+} from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
-import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { Title } from '../../components/Title';
+import { FilterDropdown } from '../../components/FilterDropdown';
 import {
   useDecideGovernanceAssignment,
   useGovernanceSubmissions,
@@ -34,6 +42,7 @@ import {
   invalidateBulkEntityChangeQueries,
   invalidateEntityChangeQueries
 } from '../../queries/entityChanges';
+import { useGovernanceWorkflowConfig } from '../../hooks/useGovernanceWorkflowConfig';
 import { useWithdrawEntityChangeApproval } from '../../hooks/useEntityChanges';
 import { caseKindLabel, humanizeCaseKind as humanize } from '../../utils/governanceCaseLabels';
 import { formatDate, formatDateTime } from '../../utils/dateFormat';
@@ -73,13 +82,21 @@ const describeWaitingOn = (assignment: GovernanceAssignment) => {
 export const GovernanceInboxScreen = () => {
   const { workspaceSlug } = useParams({ strict: false });
   const navigate = useNavigate();
-  const { openEntityDrawer } = useEntityDrawer();
+  const { openCaseDrawer } = useEntityDrawer();
+  // Opens the case drawer on a row click, unless the click was on one of the row's own controls
+  const caseRowClick = (caseId: string) => (event: React.MouseEvent) => {
+    if ((event.target as HTMLElement).closest('button, a, input, select, textarea')) return;
+    openCaseDrawer(caseId);
+  };
   const dateTimeFormatPreference = useDateTimeFormatPreference();
   const workspace = workspaceSlug ?? '';
-  const [scope, setScope] = useState<'assigned' | 'submitted'>('assigned');
+  const { scope = 'assigned' } = useSearch({ strict: false }) as {
+    scope?: 'assigned' | 'submitted';
+  };
   const [state, setState] = useState<'open' | 'completed'>('open');
   const [taskKind, setTaskKind] = useState('');
   const [caseKind, setCaseKind] = useState('');
+  const { data: workflowConfig } = useGovernanceWorkflowConfig(workspace);
   const [due, setDue] = useState<'all' | 'overdue' | 'week'>('all');
   const [submittedStatus, setSubmittedStatus] = useState<'open' | 'completed' | 'cancelled'>(
     'open'
@@ -134,10 +151,10 @@ export const GovernanceInboxScreen = () => {
   const bulkCaseIds = [
     ...new Set([
       ...tasks
-        .filter(task => task.case.caseKind === 'entity.change.bulk')
+        .filter(task => task.case.caseKind === 'entity.change-case.bulk')
         .map(task => task.case.subjectId),
       ...rawSubmissions
-        .filter(submission => submission.case.caseKind === 'entity.change.bulk')
+        .filter(submission => submission.case.caseKind === 'entity.change-case.bulk')
         .map(submission => submission.case.subjectId)
     ])
   ];
@@ -182,13 +199,14 @@ export const GovernanceInboxScreen = () => {
     ...new Set([
       ...tasks
         .filter(
-          task => task.case.caseKind === 'entity.change' && task.case.subjectType === 'entity'
+          task => task.case.caseKind === 'entity.change-case' && task.case.subjectType === 'entity'
         )
         .map(task => task.case.subjectId),
       ...rawSubmissions
         .filter(
           submission =>
-            submission.case.caseKind === 'entity.change' && submission.case.subjectType === 'entity'
+            submission.case.caseKind === 'entity.change-case' &&
+            submission.case.subjectType === 'entity'
         )
         .map(submission => submission.case.subjectId)
     ])
@@ -206,7 +224,7 @@ export const GovernanceInboxScreen = () => {
   // tell a withdrawn proposal apart from one still awaiting revision. Fall back to the
   // proposal's own status for entity-change cases.
   const isEntityChangeProposalWithdrawn = (submission: GovernanceSubmission) =>
-    submission.case.caseKind === 'entity.change' &&
+    submission.case.caseKind === 'entity.change-case' &&
     proposalsByEntityId.get(submission.case.subjectId)?.status === 'withdrawn';
   const submissions = rawSubmissions.filter(submission => {
     if (isEntityChangeProposalWithdrawn(submission)) return submittedStatus === 'cancelled';
@@ -243,7 +261,10 @@ export const GovernanceInboxScreen = () => {
   );
 
   const withdrawSubmission = (submission: GovernanceSubmission) => {
-    if (submission.case.caseKind === 'entity.change' && submission.case.subjectType === 'entity') {
+    if (
+      submission.case.caseKind === 'entity.change-case' &&
+      submission.case.subjectType === 'entity'
+    ) {
       const proposal = proposalsByEntityId.get(submission.case.subjectId);
       if (proposal) {
         withdrawEntityChangeApproval.mutate({
@@ -284,7 +305,7 @@ export const GovernanceInboxScreen = () => {
       { assignmentId: requestChangesTask.assignment.id, decision: 'request_changes', reason },
       {
         onSuccess: async () => {
-          if (requestChangesTask.case.caseKind === 'entity.change.bulk') {
+          if (requestChangesTask.case.caseKind === 'entity.change-case.bulk') {
             await invalidateBulkEntityChangeQueries(
               queryClient,
               workspace,
@@ -308,75 +329,74 @@ export const GovernanceInboxScreen = () => {
     <div className={styles.screen}>
       <Title
         eyebrow="Governance"
-        title="My work"
-        description="Governance tasks assigned to you or available through your workspace roles."
-        buttons={<TbClipboardCheck size={20} />}
+        title={scope === 'assigned' ? 'Assigned to me' : 'Requested by me'}
+        description={
+          scope === 'assigned'
+            ? 'Governance tasks assigned to you or available through your workspace roles.'
+            : 'Governance cases you have requested.'
+        }
       />
-
-      <Tabs.Root value={scope} onValueChange={value => setScope(value as 'assigned' | 'submitted')}>
-        <Tabs.List>
-          <Tabs.Trigger value="assigned">Assigned to me</Tabs.Trigger>
-          <Tabs.Trigger value="submitted">Submitted by me</Tabs.Trigger>
-        </Tabs.List>
-      </Tabs.Root>
 
       <div className={styles.toolbar}>
         {scope === 'assigned' ? (
           <>
-            <select
-              className={styles.select}
-              aria-label="Task state"
+            <FilterDropdown
+              label="State"
               value={state}
-              onChange={event => setState(event.target.value as 'open' | 'completed')}
-            >
-              <option value="open">Open tasks</option>
-              <option value="completed">Completed history</option>
-            </select>
-            <select
-              className={styles.select}
-              aria-label="Task kind"
+              onChange={value => setState(value as 'open' | 'completed')}
+              options={[
+                { value: 'open', label: 'Open tasks' },
+                { value: 'completed', label: 'Completed history' }
+              ]}
+            />
+            <FilterDropdown
+              label="Kind"
               value={taskKind}
-              onChange={event => setTaskKind(event.target.value)}
-            >
-              <option value="">All task kinds</option>
-              <option value="approve">Approve</option>
-              <option value="acknowledge">Acknowledge</option>
-              <option value="review">Review</option>
-              <option value="remediate">Remediate</option>
-            </select>
+              onChange={setTaskKind}
+              options={[
+                { value: '', label: 'All task kinds' },
+                { value: 'approve', label: 'Approve' },
+                { value: 'acknowledge', label: 'Acknowledge' },
+                { value: 'review', label: 'Review' },
+                { value: 'remediate', label: 'Remediate' }
+              ]}
+            />
           </>
         ) : (
-          <select
-            className={styles.select}
-            aria-label="Submission status"
+          <FilterDropdown
+            label="Status"
             value={submittedStatus}
-            onChange={event =>
-              setSubmittedStatus(event.target.value as 'open' | 'completed' | 'cancelled')
-            }
-          >
-            <option value="open">Needs attention</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Withdrawn / cancelled</option>
-          </select>
+            onChange={value => setSubmittedStatus(value as 'open' | 'completed' | 'cancelled')}
+            options={[
+              { value: 'open', label: 'Needs attention' },
+              { value: 'completed', label: 'Completed' },
+              { value: 'cancelled', label: 'Withdrawn / cancelled' }
+            ]}
+          />
         )}
-        <input
-          className={styles.input}
-          aria-label="Case kind"
-          placeholder="Filter case kind"
+        <FilterDropdown
+          label="Case"
           value={caseKind}
-          onChange={event => setCaseKind(event.target.value)}
+          onChange={setCaseKind}
+          options={[
+            { value: '', label: 'All case kinds' },
+            ...(workflowConfig?.case_kinds ?? []).map(kind => ({
+              value: kind.case_kind,
+              label: kind.label
+            }))
+          ]}
         />
         {scope === 'assigned' && (
-          <select
-            className={styles.select}
-            aria-label="Due date"
+          <FilterDropdown
+            label="Due"
             value={due}
-            onChange={event => setDue(event.target.value as 'all' | 'overdue' | 'week')}
-          >
-            <option value="all">Any due date</option>
-            <option value="overdue">Overdue</option>
-            <option value="week">Due in 7 days</option>
-          </select>
+            onChange={value => setDue(value as 'all' | 'overdue' | 'week')}
+            options={[
+              { value: 'all', label: 'Any due date' },
+              { value: 'overdue', label: 'Overdue' },
+              { value: 'week', label: 'Due in 7 days' }
+            ]}
+          />
         )}
       </div>
 
@@ -399,9 +419,9 @@ export const GovernanceInboxScreen = () => {
             <div>Governance work you submit will appear here.</div>
           </div>
         ) : (
-          <ul className={styles.list} aria-label="Submitted governance cases">
+          <ul className={styles.list} aria-label="Requested governance cases">
             {submissions.map((submission: GovernanceSubmission) => {
-              const isBulk = submission.case.caseKind === 'entity.change.bulk';
+              const isBulk = submission.case.caseKind === 'entity.change-case.bulk';
               const bulkProposal = isBulk
                 ? bulkProposalsByCaseId.get(submission.case.subjectId)
                 : undefined;
@@ -435,9 +455,7 @@ export const GovernanceInboxScreen = () => {
                 : proposal?.revisions.at(-1);
               const proposalNote = latestRevision?.message;
               const viewSubject = () => {
-                if (subjectEntity?._publicId) {
-                  openEntityDrawer(subjectEntity._publicId);
-                } else if (submission.case.subjectType === 'document') {
+                if (submission.case.subjectType === 'document') {
                   navigate(
                     workspaceMarkdownRoute(workspace, submission.case.subjectId, {
                       mode: 'preview'
@@ -456,7 +474,7 @@ export const GovernanceInboxScreen = () => {
                 }
               };
               const withdrawPending =
-                submission.case.caseKind === 'entity.change'
+                submission.case.caseKind === 'entity.change-case'
                   ? withdrawEntityChangeApproval.isPending
                   : withdrawCase.isPending;
               const requestChangesReason = requestChangesReasonByCaseId.get(submission.case.id);
@@ -468,14 +486,18 @@ export const GovernanceInboxScreen = () => {
               const canWithdraw =
                 !isEntityChangeProposalWithdrawn(submission) &&
                 (submission.case.status === 'open' ||
-                  ((submission.case.caseKind === 'entity.change' ||
-                    submission.case.caseKind === 'entity.change.bulk') &&
+                  ((submission.case.caseKind === 'entity.change-case' ||
+                    submission.case.caseKind === 'entity.change-case.bulk') &&
                     submission.case.outcome === 'request_changes'));
               const canRemind =
                 submission.case.status === 'open' && submission.openAssignments.length > 0;
               const reminderError = reminderErrorByCaseId[submission.case.id];
               return (
-                <li className={styles.task} key={submission.case.id}>
+                <li
+                  className={styles.task}
+                  key={submission.case.id}
+                  onClick={caseRowClick(submission.case.id)}
+                >
                   <div className={styles.taskMain}>
                     <div className={styles.taskTitle}>
                       {isBulk
@@ -545,6 +567,7 @@ export const GovernanceInboxScreen = () => {
                     {canRemind && (
                       <Button
                         variant="secondary"
+                        icon={<TbBell size={12} />}
                         disabled={sendReminder.isPending}
                         onClick={event => {
                           event.stopPropagation();
@@ -557,6 +580,7 @@ export const GovernanceInboxScreen = () => {
                     {canWithdraw && (
                       <Button
                         variant="secondary"
+                        icon={<TbArrowBackUp size={12} />}
                         disabled={withdrawPending}
                         onClick={event => {
                           event.stopPropagation();
@@ -566,24 +590,18 @@ export const GovernanceInboxScreen = () => {
                         Withdraw
                       </Button>
                     )}
-                    <Button
-                      variant="ghost"
-                      icon={<TbExternalLink size={12} />}
-                      onClick={viewSubject}
-                      disabled={
-                        !subjectEntity?._publicId &&
-                        submission.case.subjectType !== 'document' &&
-                        submission.case.subjectType !== 'assessment'
-                      }
-                    >
-                      {submission.case.subjectType === 'entity'
-                        ? 'View entity'
-                        : submission.case.subjectType === 'document'
+                    {(submission.case.subjectType === 'document' ||
+                      submission.case.subjectType === 'assessment') && (
+                      <Button
+                        variant="ghost"
+                        icon={<TbExternalLink size={12} />}
+                        onClick={viewSubject}
+                      >
+                        {submission.case.subjectType === 'document'
                           ? 'View document'
-                          : submission.case.subjectType === 'assessment'
-                            ? 'View assessment'
-                            : 'View case'}
-                    </Button>
+                          : 'View assessment'}
+                      </Button>
+                    )}
                   </div>
                 </li>
               );
@@ -605,7 +623,7 @@ export const GovernanceInboxScreen = () => {
                 : task.assignment.action === 'acknowledge'
                   ? 'acknowledge'
                   : null;
-            const isBulk = task.case.caseKind === 'entity.change.bulk';
+            const isBulk = task.case.caseKind === 'entity.change-case.bulk';
             const bulkProposal = isBulk
               ? bulkProposalsByCaseId.get(task.case.subjectId)
               : undefined;
@@ -639,9 +657,7 @@ export const GovernanceInboxScreen = () => {
               : proposal?.revisions.at(-1);
             const proposalNote = latestRevision?.message;
             const viewSubject = () => {
-              if (subjectEntity?._publicId) {
-                openEntityDrawer(subjectEntity._publicId);
-              } else if (task.case.subjectType === 'document') {
+              if (task.case.subjectType === 'document') {
                 navigate(
                   workspaceMarkdownRoute(workspace, task.case.subjectId, { mode: 'preview' })
                 );
@@ -658,7 +674,11 @@ export const GovernanceInboxScreen = () => {
               }
             };
             return (
-              <li className={styles.task} key={task.assignment.id}>
+              <li
+                className={styles.task}
+                key={task.assignment.id}
+                onClick={caseRowClick(task.case.id)}
+              >
                 <div className={styles.taskMain}>
                   <div className={styles.taskTitle}>
                     {isBulk
@@ -690,11 +710,9 @@ export const GovernanceInboxScreen = () => {
                       <>
                         <span>·</span>
                         <span
-                          className={
-                            new Date(task.case.dueAt) < new Date()
-                              ? styles.taskDueOverdue
-                              : undefined
-                          }
+                          className={`${styles.taskDue} ${
+                            new Date(task.case.dueAt) < new Date() ? styles.taskDueOverdue : ''
+                          }`}
                         >
                           <TbClock size={11} /> Due{' '}
                           {formatDate(task.case.dueAt, '—', dateTimeFormatPreference)}
@@ -728,6 +746,7 @@ export const GovernanceInboxScreen = () => {
                   {task.requiresAction && decision && (
                     <Button
                       variant="primary"
+                      icon={<TbCheck size={12} />}
                       disabled={decide.isPending}
                       onClick={event => {
                         event.stopPropagation();
@@ -739,10 +758,11 @@ export const GovernanceInboxScreen = () => {
                   )}
                   {task.requiresAction &&
                     decision === 'approve' &&
-                    (task.case.caseKind === 'entity.change' ||
-                      task.case.caseKind === 'entity.change.bulk' ||
+                    (task.case.caseKind === 'entity.change-case' ||
+                      task.case.caseKind === 'entity.change-case.bulk' ||
                       task.case.caseKind === 'document.status') && (
                       <Button
+                        icon={<TbMessageReply size={12} />}
                         disabled={decide.isPending}
                         onClick={event => {
                           event.stopPropagation();
@@ -753,24 +773,16 @@ export const GovernanceInboxScreen = () => {
                         Request changes
                       </Button>
                     )}
-                  <Button
-                    variant="ghost"
-                    icon={<TbExternalLink size={12} />}
-                    onClick={viewSubject}
-                    disabled={
-                      !subjectEntity?._publicId &&
-                      task.case.subjectType !== 'document' &&
-                      task.case.subjectType !== 'assessment'
-                    }
-                  >
-                    {task.case.subjectType === 'entity'
-                      ? 'View entity'
-                      : task.case.subjectType === 'document'
-                        ? 'View document'
-                        : task.case.subjectType === 'assessment'
-                          ? 'View assessment'
-                          : 'View case'}
-                  </Button>
+                  {(task.case.subjectType === 'document' ||
+                    task.case.subjectType === 'assessment') && (
+                    <Button
+                      variant="ghost"
+                      icon={<TbExternalLink size={12} />}
+                      onClick={viewSubject}
+                    >
+                      {task.case.subjectType === 'document' ? 'View document' : 'View assessment'}
+                    </Button>
+                  )}
                 </div>
               </li>
             );

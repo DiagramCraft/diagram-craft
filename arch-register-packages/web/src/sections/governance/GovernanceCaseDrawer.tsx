@@ -176,7 +176,7 @@ export const GovernanceCaseDrawer = ({
         </Chip>
       }
       footer={
-        <>
+        <div className={styles.footerActions}>
           {canDecide && (
             <Button
               variant="primary"
@@ -202,7 +202,7 @@ export const GovernanceCaseDrawer = ({
               {onOpenDataset ? `Open ${entityNoun}` : 'Open record in Entities'}
             </Button>
           )}
-        </>
+        </div>
       }
     >
       <div className={styles.sectionLabel}>Case</div>

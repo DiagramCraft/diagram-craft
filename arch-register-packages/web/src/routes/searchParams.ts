@@ -198,6 +198,16 @@ export type SearchRouteSearchParams = SearchParamsFromSchema<typeof searchRouteS
 export const validateSearchSearch = (raw: Record<string, unknown>): SearchRouteSearchParams =>
   parseSearchParams(searchRouteSearchSchema, raw);
 
+// Governance (My work) params
+const governanceSearchSchema = defineSearchParamSchema({
+  scope: enumCodec(['assigned', 'submitted'] as const)
+});
+
+export type GovernanceSearchParams = SearchParamsFromSchema<typeof governanceSearchSchema>;
+
+export const validateGovernanceSearch = (raw: Record<string, unknown>): GovernanceSearchParams =>
+  parseSearchParams(governanceSearchSchema, raw);
+
 // Diagram params
 const diagramSearchSchema = defineSearchParamSchema({
   returnTo: stringCodec,
