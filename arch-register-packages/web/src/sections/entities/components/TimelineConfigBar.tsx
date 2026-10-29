@@ -1,6 +1,6 @@
 import { TbBriefcase2, TbCalendarOff, TbCalendarWeek, TbFlag, TbGitCommit } from 'react-icons/tb';
 import styles from './TimelineView.module.css';
-import { FilterDropdown } from '../../../components/FilterDropdown';
+import { LabeledSelect } from '../../../components/LabeledSelect';
 import { Button } from '@diagram-craft/app-components/Button';
 import type { FieldOption } from './entityFieldSources';
 import type { TimelineConfig } from './timelineViewTypes';
@@ -21,7 +21,7 @@ export const TimelineConfigBar = ({
   <div className={styles.configBar}>
     <span className={styles.configMeta}>Date</span>
 
-    <FilterDropdown
+    <LabeledSelect
       label="Start"
       value={cfg.startFieldId ?? ''}
       onChange={v => onChange({ startFieldId: v ?? null })}
@@ -33,7 +33,7 @@ export const TimelineConfigBar = ({
 
     <span className={styles.configArrow}>→</span>
 
-    <FilterDropdown
+    <LabeledSelect
       label="End"
       value={cfg.endFieldId ?? ''}
       onChange={v => onChange({ endFieldId: v ?? null })}
@@ -57,7 +57,7 @@ export const TimelineConfigBar = ({
 
     <div className={styles.configSep} />
 
-    <FilterDropdown
+    <LabeledSelect
       label="Group"
       value={cfg.groupBy}
       onChange={v => onChange({ groupBy: v as TimelineConfig['groupBy'] })}

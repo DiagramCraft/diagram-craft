@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useSearch } from '@tanstack/react-router';
-import { FilterDropdown } from '../../components/FilterDropdown';
+import { LabeledSelect } from '../../components/LabeledSelect';
 import { Title } from '../../components/Title';
 import { useGovernanceSubmissions, useGovernanceTasks } from '../../hooks/useGovernance';
 import { useGovernanceWorkflowConfig } from '../../hooks/useGovernanceWorkflowConfig';
@@ -93,7 +93,7 @@ export const GovernanceInboxScreen = () => {
       <div className={styles.toolbar}>
         {scope === 'assigned' ? (
           <>
-            <FilterDropdown
+            <LabeledSelect
               label="State"
               value={state}
               onChange={value => setState(value as 'open' | 'completed')}
@@ -102,7 +102,7 @@ export const GovernanceInboxScreen = () => {
                 { value: 'completed', label: 'Completed history' }
               ]}
             />
-            <FilterDropdown
+            <LabeledSelect
               label="Kind"
               value={taskKind}
               onChange={setTaskKind}
@@ -116,7 +116,7 @@ export const GovernanceInboxScreen = () => {
             />
           </>
         ) : (
-          <FilterDropdown
+          <LabeledSelect
             label="Status"
             value={submittedStatus}
             onChange={value => setSubmittedStatus(value as SubmissionStatusFilter)}
@@ -127,7 +127,7 @@ export const GovernanceInboxScreen = () => {
             ]}
           />
         )}
-        <FilterDropdown
+        <LabeledSelect
           label="Case"
           value={caseKind}
           onChange={setCaseKind}
@@ -140,7 +140,7 @@ export const GovernanceInboxScreen = () => {
           ]}
         />
         {scope === 'assigned' && (
-          <FilterDropdown
+          <LabeledSelect
             label="Due"
             value={due}
             onChange={value => setDue(value as 'all' | 'overdue' | 'week')}

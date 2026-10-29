@@ -1,4 +1,4 @@
-/* Shared by the entity browser views: the bar of FilterDropdowns above a view, and the bordered frame around it. */
+/* Shared by the entity browser views: the bar of LabeledSelects above a view, and the bordered frame around it. */
 .bar {
   display: flex;
   align-items: center;

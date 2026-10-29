@@ -3,7 +3,7 @@ import styles from './RelationMatrixView.module.css';
 import { TbColumnRemove, TbHelp, TbRowRemove } from 'react-icons/tb';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { ToolbarButton } from '../../../components/ToolbarButton';
-import { FilterDropdown } from '../../../components/FilterDropdown';
+import { LabeledSelect } from '../../../components/LabeledSelect';
 import { TypeBadge } from '../../../components/TypeBadge';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useEntities, useMultipleEntityRelations } from '../../../hooks/useEntities';
@@ -429,7 +429,7 @@ export const RelationMatrixView = ({
       {/* Config bar */}
       {!hideToolbar && (
         <div className={styles.config}>
-          <FilterDropdown
+          <LabeledSelect
             label="Columns"
             value={colMode}
             onChange={value => {
@@ -445,7 +445,7 @@ export const RelationMatrixView = ({
 
           {colMode === 'entity' ? (
             <>
-              <FilterDropdown
+              <LabeledSelect
                 label="Type"
                 value={effColSchemaId ?? ''}
                 onChange={handleColSchemaChange}
@@ -453,7 +453,7 @@ export const RelationMatrixView = ({
               />
 
               {availableFieldNames.length > 1 && (
-                <FilterDropdown
+                <LabeledSelect
                   label="Via"
                   value={filterFieldName ?? 'any'}
                   onChange={value => {
@@ -472,7 +472,7 @@ export const RelationMatrixView = ({
               )}
 
               {colorFields.length > 0 && (
-                <FilterDropdown
+                <LabeledSelect
                   label="Color"
                   value={effColorField?.key ?? 'none'}
                   onChange={value => {
@@ -532,7 +532,7 @@ export const RelationMatrixView = ({
               )}
             </>
           ) : attrFields.length > 0 ? (
-            <FilterDropdown
+            <LabeledSelect
               label="Attribute"
               value={effColFieldId ?? ''}
               onChange={value => {

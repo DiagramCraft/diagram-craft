@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { TbFileExport, TbFilter } from 'react-icons/tb';
-import { FilterDropdown } from '../../../components/FilterDropdown';
+import { LabeledSelect } from '../../../components/LabeledSelect';
 import { ToolbarButton } from '../../../components/ToolbarButton';
 import { useRelationSchemas } from '../../../hooks/useRelationSchemas';
 import type { EntityGraphConfig } from './entityGraphConfig';
@@ -62,7 +62,7 @@ export const EntityGraphToolbar = ({
         setLayoutOptions={setLayoutOptions}
       />
 
-      <FilterDropdown
+      <LabeledSelect
         label="Depth"
         value={String(maxDepth)}
         onChange={value => {
@@ -73,7 +73,7 @@ export const EntityGraphToolbar = ({
         options={[1, 2, 3, 4, 5].map(depth => ({ value: String(depth), label: String(depth) }))}
       />
 
-      <FilterDropdown
+      <LabeledSelect
         label="Direction"
         value={direction}
         onChange={value => {

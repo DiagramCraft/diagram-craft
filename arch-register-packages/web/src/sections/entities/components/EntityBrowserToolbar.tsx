@@ -13,7 +13,7 @@ import type {
 } from '@arch-register/api-types/viewContract';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import type { Assessment } from '@arch-register/api-types/assessmentContract';
-import { FilterDropdown } from '../../../components/FilterDropdown';
+import { LabeledSelect } from '../../../components/LabeledSelect';
 import styles from './EntityBrowser.module.css';
 import { ManageFieldsPopover } from './ManageFieldsPopover';
 import { AssessmentJoinPicker } from './AssessmentJoinPicker';
@@ -133,7 +133,7 @@ export const EntityBrowserToolbar = ({
         />
       )}
       {projectId && !readOnly && (
-        <FilterDropdown
+        <LabeledSelect
           label="Scope"
           value={projectScope}
           onChange={v => setProjectScope((v as 'project' | 'all') ?? 'project')}
@@ -144,12 +144,12 @@ export const EntityBrowserToolbar = ({
         />
       )}
       <div style={{ flex: 1 }} />
-      <FilterDropdown label="Sort" value={sort} onChange={setSort} options={sortOptions} />
+      <LabeledSelect label="Sort" value={sort} onChange={setSort} options={sortOptions} />
       {(() => {
         const viewOptions = allowedViews ?? BROWSER_VIEW_OPTIONS;
         return (
           <>
-            <FilterDropdown
+            <LabeledSelect
               label="View"
               value={view}
               onChange={v => setView(v as BrowserView)}

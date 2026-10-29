@@ -17,7 +17,8 @@ import {
   type AssessmentListFilter
 } from '../../../lib/assessmentStatus';
 import { LoadingState } from '../../../components/LoadingState';
-import { ToolbarFilterBar, ToolbarFilterSelect } from '../../../components/ToolbarFilter';
+import { ToolbarFilterBar } from '../../../components/ToolbarFilter';
+import { LabeledSelect } from '../../../components/LabeledSelect';
 import { AssessmentEditorDialog } from './AssessmentEditorDialog';
 import type { AssessmentFormData } from './assessmentEditorState';
 
@@ -65,7 +66,7 @@ export const ProjectAssessments = ({
         }
         toolbar={
           <ToolbarFilterBar>
-            <ToolbarFilterSelect
+            <LabeledSelect
               label="Status"
               value={statusFilter}
               onChange={value => setStatusFilter(value as AssessmentListFilter)}

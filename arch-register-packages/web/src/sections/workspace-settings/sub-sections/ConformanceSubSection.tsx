@@ -36,7 +36,8 @@ import {
 } from '../../../components/ConformanceBadges';
 import { DropdownMenu, type MenuItem } from '../../../components/DropdownMenu';
 import { Drawer } from '../../../components/Drawer';
-import { ToolbarFilterBar, ToolbarFilterSelect } from '../../../components/ToolbarFilter';
+import { ToolbarFilterBar } from '../../../components/ToolbarFilter';
+import { LabeledSelect } from '../../../components/LabeledSelect';
 import { LoadingState } from '../../../components/LoadingState';
 import { QueryState } from '../QueryState';
 import { Pagination } from '../../../components/Pagination';
@@ -617,7 +618,7 @@ export const ConformanceSubSection = ({
         {tab === 'violations' && (
           <section className={styles.section}>
             <ToolbarFilterBar noPadding>
-              <ToolbarFilterSelect
+              <LabeledSelect
                 label="Status"
                 value={status}
                 onChange={value => {
@@ -626,7 +627,7 @@ export const ConformanceSubSection = ({
                 }}
                 options={STATUS_OPTIONS}
               />
-              <ToolbarFilterSelect
+              <LabeledSelect
                 label="Severity"
                 value={severity}
                 onChange={value => {
@@ -635,7 +636,7 @@ export const ConformanceSubSection = ({
                 }}
                 options={SEVERITY_OPTIONS}
               />
-              <ToolbarFilterSelect
+              <LabeledSelect
                 label="Check"
                 value={checkId}
                 onChange={value => {
@@ -647,7 +648,7 @@ export const ConformanceSubSection = ({
                   ...checks.map(check => ({ value: check.id, label: check.name }))
                 ]}
               />
-              <ToolbarFilterSelect
+              <LabeledSelect
                 label="Schema"
                 value={schemaId}
                 onChange={value => {
@@ -659,7 +660,7 @@ export const ConformanceSubSection = ({
                   ...schemas.map(schema => ({ value: schema.id, label: schema.name }))
                 ]}
               />
-              <ToolbarFilterSelect
+              <LabeledSelect
                 label="Owner"
                 value={ownerId}
                 onChange={value => {

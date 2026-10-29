@@ -4,7 +4,7 @@ import { TbArrowsSort, TbChevronUp, TbChevronDown } from 'react-icons/tb';
 import { ToolbarButton } from '../../../components/ToolbarButton';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { EmptyState } from '../../../components/EmptyState';
-import { FilterDropdown } from '../../../components/FilterDropdown';
+import { LabeledSelect } from '../../../components/LabeledSelect';
 import { SearchInput } from '../../../components/SearchInput';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { radarViewConfigSchema } from '@arch-register/api-types/viewContract';
@@ -308,7 +308,7 @@ export const RadarView = ({
       {!hideToolbar && (
         <div className={styles.config}>
           {!soleSchemaId && (
-            <FilterDropdown
+            <LabeledSelect
               label="Schema"
               value={config?.schemaId ?? ''}
               onChange={handleSchemaChange}
@@ -319,7 +319,7 @@ export const RadarView = ({
             />
           )}
 
-          <FilterDropdown
+          <LabeledSelect
             label="Quadrant"
             value={config?.quadrantFieldId ?? ''}
             onChange={handleQuadrantFieldChange}
@@ -331,7 +331,7 @@ export const RadarView = ({
             }
           />
 
-          <FilterDropdown
+          <LabeledSelect
             label="Ring"
             value={config?.ringFieldId ?? ''}
             onChange={handleRingFieldChange}

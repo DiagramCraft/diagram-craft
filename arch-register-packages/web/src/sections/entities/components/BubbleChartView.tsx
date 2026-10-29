@@ -6,7 +6,7 @@ import { Popover, type PopoverActions } from '@diagram-craft/app-components/Popo
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { EmptyState } from '../../../components/EmptyState';
 import { MixedSchemasWarning } from '../../../components/MixedSchemasWarning';
-import { FilterDropdown } from '../../../components/FilterDropdown';
+import { LabeledSelect } from '../../../components/LabeledSelect';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { bubbleViewConfigSchema } from '@arch-register/api-types/viewContract';
 import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
@@ -290,7 +290,7 @@ export const BubbleChartView = ({
     <div className={styles.screen}>
       {!hideToolbar && (
         <div className={styles.config}>
-          <FilterDropdown
+          <LabeledSelect
             label="X axis"
             value={config?.xFieldId ?? ''}
             onChange={value => config && applyConfig({ ...config, xFieldId: value })}
@@ -302,7 +302,7 @@ export const BubbleChartView = ({
             }
           />
 
-          <FilterDropdown
+          <LabeledSelect
             label="Y axis"
             value={config?.yFieldId ?? ''}
             onChange={value => config && applyConfig({ ...config, yFieldId: value })}
@@ -314,7 +314,7 @@ export const BubbleChartView = ({
             }
           />
 
-          <FilterDropdown
+          <LabeledSelect
             label="Size"
             value={config?.sizeFieldId ?? ''}
             onChange={value => config && applyConfig({ ...config, sizeFieldId: value || null })}
@@ -325,7 +325,7 @@ export const BubbleChartView = ({
             ]}
           />
 
-          <FilterDropdown
+          <LabeledSelect
             label="Color"
             value={config?.colorFieldId ?? ''}
             onChange={value => config && applyConfig({ ...config, colorFieldId: value || null })}

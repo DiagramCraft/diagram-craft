@@ -10,7 +10,7 @@ import {
   type DiagramBrowserFolderItem
 } from '../DiagramCard';
 import { EmptyState } from '../EmptyState';
-import { FilterDropdown } from '../FilterDropdown';
+import { LabeledSelect } from '../LabeledSelect';
 import { SearchInput } from '../SearchInput';
 import toolbarStyles from './DiagramBrowserToolbar.module.css';
 import styles from './DiagramBrowserView.module.css';
@@ -98,9 +98,9 @@ export const DiagramBrowserToolbar = ({
     />
     <div className={toolbarStyles.spacer} />
     {sortOptions && sort !== undefined && onSortChange && (
-      <FilterDropdown label="Sort" value={sort} onChange={onSortChange} options={sortOptions} />
+      <LabeledSelect label="Sort" value={sort} onChange={onSortChange} options={sortOptions} />
     )}
-    <FilterDropdown
+    <LabeledSelect
       label="View"
       value={viewMode}
       onChange={value => onViewModeChange(value as DiagramViewMode)}

@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { EmptyState } from '../../../components/EmptyState';
 import { MixedSchemasWarning } from '../../../components/MixedSchemasWarning';
-import { FilterDropdown } from '../../../components/FilterDropdown';
+import { LabeledSelect } from '../../../components/LabeledSelect';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { heatmapViewConfigSchema } from '@arch-register/api-types/viewContract';
 import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
@@ -208,7 +208,7 @@ export const HeatmapView = ({
     <div className={styles.screen}>
       {!hideToolbar && (
         <div className={styles.config}>
-          <FilterDropdown
+          <LabeledSelect
             label="Row"
             value={config?.likelihoodFieldId ?? ''}
             onChange={value => config && applyConfig({ ...config, likelihoodFieldId: value })}
@@ -220,7 +220,7 @@ export const HeatmapView = ({
             }
           />
 
-          <FilterDropdown
+          <LabeledSelect
             label="Column"
             value={config?.impactFieldId ?? ''}
             onChange={value => config && applyConfig({ ...config, impactFieldId: value })}
@@ -232,7 +232,7 @@ export const HeatmapView = ({
             }
           />
 
-          <FilterDropdown
+          <LabeledSelect
             label="Bands"
             value={String(config?.buckets ?? 5)}
             onChange={value => config && applyConfig({ ...config, buckets: Number(value) })}
@@ -243,7 +243,7 @@ export const HeatmapView = ({
             }))}
           />
 
-          <FilterDropdown
+          <LabeledSelect
             label="Color"
             value={config?.colorFieldId ?? ''}
             onChange={value => config && applyConfig({ ...config, colorFieldId: value || null })}

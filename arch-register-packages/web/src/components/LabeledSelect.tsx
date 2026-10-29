@@ -1,11 +1,11 @@
 import { TbChevronDown } from 'react-icons/tb';
-import styles from './FilterDropdown.module.css';
+import styles from './LabeledSelect.module.css';
 
 type Option = { value: string; label: string };
 
 export type OptionGroup = { label: string; options: Option[] };
 
-type FilterDropdownProps = {
+type LabeledSelectProps = {
   label: string;
   value: string;
   onChange: (v: string) => void;
@@ -19,7 +19,7 @@ const renderOption = (o: Option) => (
   </option>
 );
 
-export const FilterDropdown = ({
+export const LabeledSelect = ({
   label,
   value,
   onChange,
@@ -27,11 +27,11 @@ export const FilterDropdown = ({
   groups,
   variant,
   disabled = false
-}: FilterDropdownProps) => {
+}: LabeledSelectProps) => {
   const allOptions = options ?? groups.flatMap(g => g.options);
   return (
     <div
-      className={styles.cFilterDropdown}
+      className={styles.cLabeledSelect}
       data-variant={variant ?? 'default'}
       data-disabled={disabled || undefined}
     >
@@ -43,6 +43,7 @@ export const FilterDropdown = ({
       <select
         className={styles.eSelect}
         value={value}
+        aria-label={label}
         disabled={disabled}
         onChange={e => onChange(e.target.value)}
       >

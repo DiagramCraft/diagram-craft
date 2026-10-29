@@ -1,15 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { FilterDropdown } from './FilterDropdown';
+import { LabeledSelect } from './LabeledSelect';
 import { useState } from 'react';
 
 const meta = {
-  title: 'Components/FilterDropdown',
-  component: FilterDropdown,
+  title: 'Components/LabeledSelect',
+  component: LabeledSelect,
   parameters: {
     layout: 'centered'
   },
   tags: ['autodocs']
-} satisfies Meta<typeof FilterDropdown>;
+} satisfies Meta<typeof LabeledSelect>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -96,7 +96,7 @@ export const Interactive = {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', minWidth: '300px' }}>
         <div>
-          <FilterDropdown
+          <LabeledSelect
             label="Status"
             value={status}
             onChange={setStatus}
@@ -105,11 +105,11 @@ export const Interactive = {
         </div>
 
         <div>
-          <FilterDropdown label="Type" value={type} onChange={setType} options={typeOptions} />
+          <LabeledSelect label="Type" value={type} onChange={setType} options={typeOptions} />
         </div>
 
         <div>
-          <FilterDropdown label="Sort by" value={sort} onChange={setSort} options={sortOptions} />
+          <LabeledSelect label="Sort by" value={sort} onChange={setSort} options={sortOptions} />
         </div>
 
         <div
@@ -135,14 +135,14 @@ export const MultipleInRow = {
 
     return (
       <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-        <FilterDropdown
+        <LabeledSelect
           label="Status"
           value={filter1}
           onChange={setFilter1}
           options={statusOptions}
         />
-        <FilterDropdown label="Type" value={filter2} onChange={setFilter2} options={typeOptions} />
-        <FilterDropdown label="Sort" value={filter3} onChange={setFilter3} options={sortOptions} />
+        <LabeledSelect label="Type" value={filter2} onChange={setFilter2} options={typeOptions} />
+        <LabeledSelect label="Sort" value={filter3} onChange={setFilter3} options={sortOptions} />
       </div>
     );
   }
@@ -201,7 +201,7 @@ export const WithCallback = {
 
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        <FilterDropdown
+        <LabeledSelect
           label="Status"
           value={value}
           onChange={handleChange}
@@ -213,5 +213,25 @@ export const WithCallback = {
         )}
       </div>
     );
+  }
+};
+
+export const Disabled: Story = {
+  args: {
+    label: 'Status',
+    value: 'active',
+    options: statusOptions,
+    disabled: true,
+    onChange: () => {}
+  }
+};
+
+export const Secondary: Story = {
+  args: {
+    label: 'Page Size',
+    value: 'active',
+    options: statusOptions,
+    variant: 'secondary',
+    onChange: () => {}
   }
 };

@@ -11,7 +11,7 @@ import type {
 } from '../../components/DependencyGraph';
 import { LoadingState } from '../../components/LoadingState';
 import { TypeBadge } from '../../components/TypeBadge';
-import { FilterDropdown } from '../../components/FilterDropdown';
+import { LabeledSelect } from '../../components/LabeledSelect';
 import { useEntitiesByIds, useEntitiesByIdSet } from '../../hooks/useEntities';
 import { relationIds } from '../../lib/entityEditState';
 import { resolveSchemaColor } from '../../lib/schemaPresentation';
@@ -235,13 +235,13 @@ export const RelationGraphView = ({
           setLayoutOptions={setLayoutOptions}
           betweenLayoutAndSettings={
             <>
-              <FilterDropdown
+              <LabeledSelect
                 label="Edge labels"
                 value={selectedEdgeLabelFieldId}
                 onChange={onEdgeLabelFieldIdChange}
                 options={labelOptions.map(option => ({ value: option.value, label: option.label }))}
               />
-              <FilterDropdown
+              <LabeledSelect
                 label="Edge color"
                 value={selectedEdgeColorFieldId}
                 onChange={onEdgeColorFieldIdChange}

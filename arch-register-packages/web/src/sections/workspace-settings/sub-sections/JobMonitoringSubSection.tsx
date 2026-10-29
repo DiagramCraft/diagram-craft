@@ -23,11 +23,8 @@ import {
 } from '../../../hooks/useJobs';
 import { useWorkspaceAuthorization } from '../../../auth/WorkspaceAuthorizationContext';
 import { DropdownMenu, type MenuItem } from '../../../components/DropdownMenu';
-import {
-  ToolbarFilterBar,
-  ToolbarFilterDate,
-  ToolbarFilterSelect
-} from '../../../components/ToolbarFilter';
+import { ToolbarFilterBar, ToolbarFilterDate } from '../../../components/ToolbarFilter';
+import { LabeledSelect } from '../../../components/LabeledSelect';
 import { Table } from '../../../components/table/Table';
 import { Chip } from '../../../components/Chip';
 import { Banner } from '../../../components/Banner';
@@ -547,7 +544,7 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
         {tab === 'history' && (
           <>
             <ToolbarFilterBar noPadding>
-              <ToolbarFilterSelect
+              <LabeledSelect
                 label="Schedule"
                 value={scheduleId}
                 onChange={value => updateFilter(() => setScheduleId(value))}
@@ -556,7 +553,7 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
                   ...schedules.map(schedule => ({ value: schedule.id, label: schedule.job_type }))
                 ]}
               />
-              <ToolbarFilterSelect
+              <LabeledSelect
                 label="Status"
                 value={status}
                 onChange={value => updateFilter(() => setStatus(value as '' | JobRunStatus))}

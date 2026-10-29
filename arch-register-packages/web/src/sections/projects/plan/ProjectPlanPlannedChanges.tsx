@@ -21,7 +21,8 @@ import { Chip } from '../../../components/Chip';
 import { DropdownMenu } from '../../../components/DropdownMenu';
 import { TypeBadge } from '../../../components/TypeBadge';
 import { EmptyState } from '../../../components/EmptyState';
-import { ToolbarFilterBar, ToolbarFilterSelect } from '../../../components/ToolbarFilter';
+import { ToolbarFilterBar } from '../../../components/ToolbarFilter';
+import { LabeledSelect } from '../../../components/LabeledSelect';
 import { formatDate } from '../../../utils/dateFormat';
 import {
   getSnapshotEffectiveDate,
@@ -98,7 +99,7 @@ export const ProjectPlanPlannedChanges = ({
   const toolbar = (
     <div className={styles.plannedToolbar}>
       <ToolbarFilterBar noPadding>
-        <ToolbarFilterSelect
+        <LabeledSelect
           label="Show"
           value={show}
           onChange={value => setShow(value as ShowFilter)}
@@ -110,7 +111,7 @@ export const ProjectPlanPlannedChanges = ({
           ]}
         />
         <div className={styles.toolbarEnd}>
-          <ToolbarFilterSelect
+          <LabeledSelect
             label="Group by"
             value={groupBy}
             onChange={value => setGroupBy(value as GroupBy)}

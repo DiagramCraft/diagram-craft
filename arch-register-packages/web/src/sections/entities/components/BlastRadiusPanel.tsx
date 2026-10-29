@@ -6,7 +6,7 @@ import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspace
 import { TypeBadge } from '../../../components/TypeBadge';
 import { StatusChip } from '../../../components/StatusChip';
 import { Chip } from '../../../components/Chip';
-import { FilterDropdown } from '../../../components/FilterDropdown';
+import { LabeledSelect } from '../../../components/LabeledSelect';
 import { EntityNavigationLink } from '../../../components/EntityNavigationLink';
 import { EmptyState } from '../../../components/EmptyState';
 import { LoadingState } from '../../../components/LoadingState';
@@ -215,13 +215,13 @@ export const BlastRadiusToolbar = ({
   children?: ReactNode;
 }) => (
   <div className={styles.toolbar}>
-    <FilterDropdown
+    <LabeledSelect
       label="Depth"
       value={String(depth)}
       onChange={v => setDepth(Number(v))}
       options={BLAST_RADIUS_DEPTH_OPTIONS}
     />
-    <FilterDropdown
+    <LabeledSelect
       label="Owner"
       value={ownerFilter}
       onChange={setOwnerFilter}
