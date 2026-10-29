@@ -569,7 +569,9 @@ export const MapConfigControls = ({
                 <Popover.Root actionsRef={numeratorConditionPopoverRef}>
                   <Popover.Trigger
                     element={
-                      <ToolbarButton variant={metricConfig.numeratorCondition ? 'primary' : undefined}>
+                      <ToolbarButton
+                        variant={metricConfig.numeratorCondition ? 'primary' : undefined}
+                      >
                         {metricConfig.numeratorCondition ? 'Numerator: 1 condition' : 'Numerator…'}
                       </ToolbarButton>
                     }
