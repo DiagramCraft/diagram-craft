@@ -251,5 +251,3 @@ export const useMergeWizardController = ({
     reset
   };
 };
-
-export type MergeWizardController = ReturnType<typeof useMergeWizardController>;

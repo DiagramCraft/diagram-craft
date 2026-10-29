@@ -1,14 +1,5 @@
-.changeHistory {
-  padding: 16px 24px 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.chDim {
-  color: var(--cmp-fg-disabled);
+.chNoWrap {
   white-space: nowrap;
-  font-size: 11px;
 }
 
 .snapshotTypeBadge {

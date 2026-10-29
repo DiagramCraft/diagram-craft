@@ -8,6 +8,8 @@ import styles from '../../dialogs/AddEntityDialog.module.css';
 import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 import { useDocumentTemplates, useDocumentTypes } from '../../hooks/useDocuments';
 import { useAutoFocus } from '../../hooks/useAutoFocus';
+import { useContentTree, type ContentScope } from '../../hooks/useContentScope';
+import { isContentPathTaken, markdownDocumentPath } from '../../lib/contentPath';
 
 type AddMarkdownDialogProps = {
   open: boolean;
@@ -21,6 +23,9 @@ type AddMarkdownDialogProps = {
   }) => void;
   workspaceSlug: string;
   projectId?: string;
+  /** Where the document will be created, used to reject a name that is already taken. */
+  scope: ContentScope;
+  folder: string | null;
   isPending: boolean;
 };
 
@@ -32,6 +37,8 @@ export const AddMarkdownDialog = ({
   onOpenDraft,
   workspaceSlug,
   projectId,
+  scope,
+  folder,
   isPending
 }: AddMarkdownDialogProps) => {
   const [name, setName] = useState('');
@@ -39,6 +46,7 @@ export const AddMarkdownDialog = ({
   const [templateId, setTemplateId] = useState('');
   const [error, setError] = useState('');
   const nameRef = useRef<HTMLInputElement>(null);
+  const { data: contentTree } = useContentTree(scope, { enabled: open });
   useAutoFocus(nameRef, { enabled: open });
   const { data: documentTypes = [], isLoading: documentTypesLoading } =
     useDocumentTypes(workspaceSlug);
@@ -65,12 +73,22 @@ export const AddMarkdownDialog = ({
     }
   }, [open]);
 
+  const trimmedName = name.trim();
+  const nameTaken =
+    trimmedName !== '' &&
+    contentTree != null &&
+    isContentPathTaken(contentTree, markdownDocumentPath(trimmedName, folder));
+  const nameTakenError = nameTaken
+    ? `A document named '${trimmedName}' already exists here`
+    : undefined;
+
   const handleSubmit = async () => {
     const trimmed = name.trim();
     if (!trimmed) {
       setError('Name is required');
       return;
     }
+    if (nameTaken) return;
     setError('');
     if (onOpenDraft) {
       onOpenDraft({
@@ -118,11 +136,16 @@ export const AddMarkdownDialog = ({
       title="New markdown document"
       buttons={[
         { label: 'Cancel', onClick: onClose, type: 'cancel' },
-        { label: 'Create', onClick: handleSubmit, type: 'default', disabled: isPending }
+        {
+          label: 'Create',
+          onClick: handleSubmit,
+          type: 'default',
+          disabled: isPending || nameTaken
+        }
       ]}
     >
       <div className={styles.form}>
-        <FormElement label="Name" required error={error}>
+        <FormElement label="Name" required error={nameTakenError ?? error}>
           <TextInput
             ref={nameRef}
             value={name}

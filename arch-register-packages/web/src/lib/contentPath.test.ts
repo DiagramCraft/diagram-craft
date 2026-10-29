@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
-import { baseName, buildContentFolderTree, movePath, parentPath, renamePath } from './contentPath';
+import {
+  baseName,
+  buildContentFolderTree,
+  isContentPathTaken,
+  markdownDocumentPath,
+  movePath,
+  parentPath,
+  renamePath
+} from './contentPath';
 
 const file = (path: string, type: ProjectFile['type']): ProjectFile =>
   ({ path, type }) as ProjectFile;
@@ -28,5 +36,23 @@ describe('content path helpers', () => {
     ]);
     expect(tree.map(node => node.path)).toEqual(['a', 'b']);
     expect(tree[1]?.children.map(node => node.path)).toEqual(['b/c']);
+  });
+});
+
+describe('new markdown document paths', () => {
+  it('places the document in the folder, or the root', () => {
+    expect(markdownDocumentPath('Notes', null)).toBe('Notes.md');
+    expect(markdownDocumentPath('Notes', 'a/b')).toBe('a/b/Notes.md');
+  });
+
+  it('finds files in the root and in folders', () => {
+    const tree = {
+      rootFiles: [file('Root.md', 'markdown')],
+      folders: [{ files: [file('a/Inside.md', 'markdown')] }]
+    };
+    expect(isContentPathTaken(tree, 'Root.md')).toBe(true);
+    expect(isContentPathTaken(tree, 'a/Inside.md')).toBe(true);
+    expect(isContentPathTaken(tree, 'Inside.md')).toBe(false);
+    expect(isContentPathTaken(tree, 'a/Other.md')).toBe(false);
   });
 });

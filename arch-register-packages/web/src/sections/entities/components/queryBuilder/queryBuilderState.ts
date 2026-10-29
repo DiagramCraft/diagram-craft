@@ -18,7 +18,6 @@ export type NodePath = readonly number[];
 
 export type GroupNode = Extract<QueryNode, { kind: 'and' | 'or' }>;
 export type PredicateNode = Extract<QueryNode, { kind: 'predicate' }>;
-export type RelationExistsNode = Extract<QueryNode, { kind: 'relationExists' }>;
 export type NotNode = Extract<QueryNode, { kind: 'not' }>;
 
 export const isGroupNode = (node: QueryNode): node is GroupNode =>

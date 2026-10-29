@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  buildBlastRadiusTree,
   filterBlastRadiusEntities,
   uniqueProvenanceHopIds,
   viaSchemaIdsForEntity,
@@ -153,5 +154,52 @@ describe('uniqueProvenanceHopIds', () => {
       ]
     });
     expect(new Set(uniqueProvenanceHopIds([shared, other]))).toEqual(new Set(['root', 'e1', 'e2']));
+  });
+});
+
+describe('buildBlastRadiusTree', () => {
+  const at = (entityId: string, entityName: string, via: string[]) =>
+    entity({
+      entityId,
+      entityName,
+      depth: via.length + 1,
+      paths: [
+        {
+          rootId: 'root',
+          pathId: 'blast-radius',
+          depth: via.length + 1,
+          provenance: [
+            hop('root', 'schema-root'),
+            ...via.map(id => hop(id, 'schema-a')),
+            hop(entityId, 'schema-a')
+          ]
+        }
+      ]
+    });
+
+  it('nests entities under the entity they were reached through', () => {
+    const tree = buildBlastRadiusTree([
+      at('c', 'C', ['a', 'b']),
+      at('b', 'B', ['a']),
+      at('a', 'A', []),
+      at('z', 'Z', [])
+    ]);
+    expect(tree.map(node => node.entity.entityId)).toEqual(['a', 'z']);
+    expect(tree[0]!.children.map(node => node.entity.entityId)).toEqual(['b']);
+    expect(tree[0]!.children[0]!.children.map(node => node.entity.entityId)).toEqual(['c']);
+  });
+
+  it('attaches an entity to the nearest ancestor that is still in the results', () => {
+    const tree = buildBlastRadiusTree([at('a', 'A', []), at('c', 'C', ['a', 'b'])]);
+    expect(tree).toHaveLength(1);
+    expect(tree[0]!.children.map(node => node.entity.entityId)).toEqual(['c']);
+  });
+
+  it('puts an entity with no surviving ancestor at the top level and skips the root', () => {
+    const tree = buildBlastRadiusTree([
+      at('c', 'C', ['b']),
+      entity({ entityId: 'root', depth: 0 })
+    ]);
+    expect(tree.map(node => node.entity.entityId)).toEqual(['c']);
   });
 });

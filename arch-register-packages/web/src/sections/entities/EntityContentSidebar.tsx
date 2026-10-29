@@ -35,7 +35,7 @@ import {
 } from '../../hooks/useContentScope';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useWorkspaceCapabilityConfigurations } from '../../hooks/useWorkspaceConfig';
-import { resolveSchemaColor } from '../../lib/schemaPresentation';
+import { resolveSchemaPresentation } from '../../lib/schemaPresentation';
 import {
   asEntityPublicId,
   asProjectPublicId,
@@ -69,8 +69,11 @@ export const EntityContentSidebar = ({
   const context = useWorkspaceContext();
   const { data: workspaceCapabilityConfigurations = [] } =
     useWorkspaceCapabilityConfigurations(workspaceSlug);
-  const schemaIndex = context.schemas.findIndex(schema => schema.id === entity?._schema?.id);
-  const schema = schemaIndex >= 0 ? context.schemas[schemaIndex] : undefined;
+  const { schema: resolvedSchema, color: accentColor } = resolveSchemaPresentation(
+    context.schemas,
+    entity?._schema?.id
+  );
+  const schema = resolvedSchema ?? undefined;
   const workspaceApiConfiguration = workspaceCapabilityConfigurations.find(
     configuration => configuration.type === 'api-specification'
   );
@@ -79,7 +82,6 @@ export const EntityContentSidebar = ({
     workspaceApiConfiguration?.valid === true &&
     workspaceApiBinding?.target.kind === 'entity_schema' &&
     workspaceApiBinding.target.id === schema?.id;
-  const accentColor = schema ? resolveSchemaColor(schema, schemaIndex) : 'var(--accent-fg)';
   const treeRef = useRef<ContentTreeHandle>(null);
   const [folderDialog, setFolderDialog] = useState<{ open: boolean; parent: string | null }>({
     open: false,
@@ -219,19 +221,19 @@ export const EntityContentSidebar = ({
           label="Context"
           icon={<TbCompass size={13} />}
           active={!contentFolder && CONTEXT_TAB_IDS.includes(tab)}
-          onClick={() => navigateTab('topology')}
+          onClick={() => navigateTab(CONTEXT_TAB_IDS[0]!)}
         />
         <TreeRow
           label="Collaboration"
           icon={<TbMessageCircle size={13} />}
           active={!contentFolder && COLLABORATION_TAB_IDS.includes(tab)}
-          onClick={() => navigateTab('discussions')}
+          onClick={() => navigateTab(COLLABORATION_TAB_IDS[0]!)}
         />
         <TreeRow
           label="Planning & review"
           icon={<TbClipboardList size={13} />}
           active={!contentFolder && PLANNING_TAB_IDS.includes(tab)}
-          onClick={() => navigateTab('assessments')}
+          onClick={() => navigateTab(PLANNING_TAB_IDS[0]!)}
         />
         {apiCapable && (
           <>
@@ -240,7 +242,7 @@ export const EntityContentSidebar = ({
               label="API catalog"
               icon={<TbApi size={13} />}
               active={!contentFolder && API_TAB_IDS.includes(tab)}
-              onClick={() => navigateTab('api')}
+              onClick={() => navigateTab(API_TAB_IDS[0]!)}
               testId="entity-api-tab"
             />
           </>
@@ -286,6 +288,8 @@ export const EntityContentSidebar = ({
         open={markdownFolder !== undefined}
         onClose={() => setMarkdownFolder(undefined)}
         workspaceSlug={workspaceSlug}
+        scope={scope}
+        folder={markdownFolder ?? null}
         onCreated={file => {
           setMarkdownFolder(undefined);
           navigate(

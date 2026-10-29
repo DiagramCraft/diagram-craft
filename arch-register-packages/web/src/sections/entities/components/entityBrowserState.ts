@@ -13,15 +13,10 @@ import {
   isAssessmentCondition,
   ASSESSMENT_FIELD_PREFIX
 } from '@arch-register/api-types/assessmentFilter';
-import type {
-  EntityBrowserSidebarTab,
-  EntitySearchParams,
-  ProjectSearchParams
-} from '../../../routes/searchParams';
+import type { EntitySearchParams, ProjectSearchParams } from '../../../routes/searchParams';
 
 export type BrowserSearch = EntitySearchParams &
   ProjectSearchParams & {
-    sidebarTab?: EntityBrowserSidebarTab;
     collectionId?: string;
   };
 
@@ -413,8 +408,6 @@ export const parseJsonConfig = <T>(value: string | undefined): T | null => {
     return null;
   }
 };
-
-export const serializeConfig = <T>(value: T | null) => (value ? JSON.stringify(value) : undefined);
 
 export const parseViewConfigs = (value: string | undefined): BrowserViewConfigMap => {
   if (!value) return {};

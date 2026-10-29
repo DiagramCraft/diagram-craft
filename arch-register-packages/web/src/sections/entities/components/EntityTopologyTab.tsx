@@ -3,7 +3,7 @@ import { TypeBadge } from '../../../components/TypeBadge';
 import { StatusChip } from '../../../components/StatusChip';
 import { Chip } from '../../../components/Chip';
 import { getRelationDisplayLabel } from '../../../lib/entityRelations';
-import { resolveSchemaColor } from '../../../lib/schemaPresentation';
+import { resolveSchemaPresentation } from '../../../lib/schemaPresentation';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
@@ -30,6 +30,121 @@ type Props = {
   lifecycleStates: WorkspaceLifecycleState[];
   onEntityClick: (entityId: string) => void;
 };
+
+type RelationColor = { schema: EntitySchema | null | undefined; color: string };
+
+type GridShared = {
+  resolveRelColor: (relation: Relation) => RelationColor;
+  setCardRef: (key: string) => (element: HTMLElement | null) => void;
+  onEntityClick: (entityId: string) => void;
+  onTypedRelationClick: (relationId: string, event: React.MouseEvent) => void;
+};
+
+// One column of cards (incoming or outgoing) grouped by field (references) or by relation schema
+// (typed relations). The ref key prefix ("in-"/"out-") drives which side the edge is drawn on.
+const TopologyColumn = ({
+  side,
+  kind,
+  relations,
+  showEmpty,
+  resolveRelColor,
+  setCardRef,
+  onEntityClick,
+  onTypedRelationClick
+}: {
+  side: 'in' | 'out';
+  kind: 'reference' | 'typed';
+  relations: Relation[];
+  showEmpty: boolean;
+} & GridShared) => {
+  const typed = kind === 'typed';
+  const groups = typed
+    ? groupRelationsByRelationSchema(relations)
+    : groupRelationsByField(relations);
+
+  return (
+    <div
+      className={`${styles.topoRefsCol} ${side === 'in' ? styles.topoRefsColIn : styles.topoRefsColOut}`}
+    >
+      {showEmpty && (
+        <div className={`${styles.topoRefsEmpty} ${sharedStyles.dim}`}>
+          No {side === 'in' ? 'incoming' : 'outgoing'} references
+        </div>
+      )}
+      {groups.map(group => (
+        <div key={group.key} className={styles.topoRefGroup}>
+          <div className={styles.topoAxisLabel}>{group.label}</div>
+          {group.relations.map((r, i) => {
+            const { schema: rs, color: schemaColor } = resolveRelColor(r);
+            const rc = typed ? (r.relationSchemaColor ?? 'var(--accent-fg)') : schemaColor;
+            return (
+              <button
+                key={i}
+                type="button"
+                ref={
+                  setCardRef(
+                    `${side}-${typed ? 'typed-' : ''}${group.key}-${i}`
+                  ) as React.Ref<HTMLButtonElement>
+                }
+                className={styles.topoRefCard}
+                onClick={event =>
+                  typed
+                    ? r.relationId && onTypedRelationClick(r.relationId, event)
+                    : onEntityClick(r.publicId)
+                }
+              >
+                <span className={styles.topoCardBar} style={{ background: rc }} />
+                {typed ? (
+                  <TypeBadge color={rc} icon={r.relationSchemaIcon ?? undefined} size={14} />
+                ) : (
+                  <TypeBadge color={rc} name={rs?.name} icon={rs?.icon} size={14} />
+                )}
+                <div className={styles.topoRefBody}>
+                  <div className={styles.topoCardName}>{r.entityName}</div>
+                  {rs && (
+                    <div className={`${styles.topoRefKind} ${sharedStyles.dim}`}>{rs.name}</div>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const TopologyGrid = ({
+  kind,
+  incoming,
+  outgoing,
+  showIncomingEmpty,
+  showOutgoingEmpty,
+  ...shared
+}: {
+  kind: 'reference' | 'typed';
+  incoming: Relation[];
+  outgoing: Relation[];
+  showIncomingEmpty: boolean;
+  showOutgoingEmpty: boolean;
+} & GridShared) => (
+  <div className={styles.topoRefsGrid}>
+    <TopologyColumn
+      side="in"
+      kind={kind}
+      relations={incoming}
+      showEmpty={showIncomingEmpty}
+      {...shared}
+    />
+    <TopologyColumn
+      side="out"
+      kind={kind}
+      relations={outgoing}
+      showEmpty={showOutgoingEmpty}
+      {...shared}
+    />
+  </div>
+);
 
 export const EntityTopologyTab = ({
   workspaceId,
@@ -66,11 +181,7 @@ export const EntityTopologyTab = ({
   const topologyVersion = `${parents.length}:${children.length}:${consumesRefs.length}:${usedByRefs.length}:${typedOutgoing.length}:${typedIncoming.length}`;
 
   const resolveRelColor = useCallback(
-    (rel: Relation) => {
-      const idx = schemas.findIndex(s => s.id === rel.entitySchemaId);
-      const s = idx >= 0 ? schemas[idx] : null;
-      return { schema: s, color: s ? resolveSchemaColor(s, idx) : 'var(--accent-fg)' };
-    },
+    (rel: Relation) => resolveSchemaPresentation(schemas, rel.entitySchemaId),
     [schemas]
   );
 
@@ -161,6 +272,18 @@ export const EntityTopologyTab = ({
       typedOutgoing.length +
       typedIncoming.length ===
     0;
+
+  // References and relationships are shown as one set of incoming/outgoing connections, so the
+  // empty message is shown once - in the first grid that renders.
+  const noIncoming = usedByRefs.length + typedIncoming.length === 0;
+  const noOutgoing = consumesRefs.length + typedOutgoing.length === 0;
+  const showRefsGrid = usedByRefs.length > 0 || consumesRefs.length > 0;
+  const gridProps = {
+    resolveRelColor,
+    setCardRef,
+    onEntityClick,
+    onTypedRelationClick: handleTypedRelationClick
+  };
 
   return (
     <div className={styles.topologyPage} ref={containerRef}>
@@ -262,158 +385,26 @@ export const EntityTopologyTab = ({
         )}
       </div>
 
-      {(usedByRefs.length > 0 || consumesRefs.length > 0) && (
-        <div className={styles.topoRefsGrid}>
-          <div className={`${styles.topoRefsCol} ${styles.topoRefsColIn}`}>
-            {usedByRefs.length === 0 && (
-              <div className={`${styles.topoRefsEmpty} ${sharedStyles.dim}`}>
-                No incoming references
-              </div>
-            )}
-            {groupRelationsByField(usedByRefs).map(group => (
-              <div key={group.key} className={styles.topoRefGroup}>
-                <div className={styles.topoAxisLabel}>{group.label}</div>
-                {group.relations.map((r, i) => {
-                  const { schema: rs, color: rc } = resolveRelColor(r);
-                  return (
-                    <button
-                      key={i}
-                      type="button"
-                      ref={setCardRef(`in-${group.key}-${i}`) as React.Ref<HTMLButtonElement>}
-                      className={styles.topoRefCard}
-                      onClick={() => onEntityClick(r.publicId)}
-                    >
-                      <span className={styles.topoCardBar} style={{ background: rc }} />
-                      <TypeBadge color={rc} name={rs?.name} icon={rs?.icon} size={14} />
-                      <div className={styles.topoRefBody}>
-                        <div className={styles.topoCardName}>{r.entityName}</div>
-                        {rs && (
-                          <div className={`${styles.topoRefKind} ${sharedStyles.dim}`}>
-                            {rs.name}
-                          </div>
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-          <div className={`${styles.topoRefsCol} ${styles.topoRefsColOut}`}>
-            {consumesRefs.length === 0 && (
-              <div className={`${styles.topoRefsEmpty} ${sharedStyles.dim}`}>
-                No outgoing references
-              </div>
-            )}
-            {groupRelationsByField(consumesRefs).map(group => (
-              <div key={group.key} className={styles.topoRefGroup}>
-                <div className={styles.topoAxisLabel}>{group.label}</div>
-                {group.relations.map((r, i) => {
-                  const { schema: rs, color: rc } = resolveRelColor(r);
-                  return (
-                    <button
-                      key={i}
-                      type="button"
-                      ref={setCardRef(`out-${group.key}-${i}`) as React.Ref<HTMLButtonElement>}
-                      className={styles.topoRefCard}
-                      onClick={() => onEntityClick(r.publicId)}
-                    >
-                      <span className={styles.topoCardBar} style={{ background: rc }} />
-                      <TypeBadge color={rc} name={rs?.name} icon={rs?.icon} size={14} />
-                      <div className={styles.topoRefBody}>
-                        <div className={styles.topoCardName}>{r.entityName}</div>
-                        {rs && (
-                          <div className={`${styles.topoRefKind} ${sharedStyles.dim}`}>
-                            {rs.name}
-                          </div>
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-        </div>
+      {showRefsGrid && (
+        <TopologyGrid
+          kind="reference"
+          incoming={usedByRefs}
+          outgoing={consumesRefs}
+          showIncomingEmpty={noIncoming}
+          showOutgoingEmpty={noOutgoing}
+          {...gridProps}
+        />
       )}
 
       {(typedOutgoing.length > 0 || typedIncoming.length > 0) && (
-        <div className={styles.topoRefsGrid}>
-          <div className={`${styles.topoRefsCol} ${styles.topoRefsColIn}`}>
-            {typedIncoming.length === 0 && (
-              <div className={`${styles.topoRefsEmpty} ${sharedStyles.dim}`}>
-                No incoming relationships
-              </div>
-            )}
-            {groupRelationsByRelationSchema(typedIncoming).map(group => (
-              <div key={group.key} className={styles.topoRefGroup}>
-                <div className={styles.topoAxisLabel}>{group.label}</div>
-                {group.relations.map((r, i) => {
-                  const { schema: rs } = resolveRelColor(r);
-                  const rc = r.relationSchemaColor ?? 'var(--accent-fg)';
-                  return (
-                    <button
-                      key={i}
-                      type="button"
-                      ref={setCardRef(`in-typed-${group.key}-${i}`) as React.Ref<HTMLButtonElement>}
-                      className={styles.topoRefCard}
-                      onClick={e => r.relationId && handleTypedRelationClick(r.relationId, e)}
-                    >
-                      <span className={styles.topoCardBar} style={{ background: rc }} />
-                      <TypeBadge color={rc} icon={r.relationSchemaIcon ?? undefined} size={14} />
-                      <div className={styles.topoRefBody}>
-                        <div className={styles.topoCardName}>{r.entityName}</div>
-                        {rs && (
-                          <div className={`${styles.topoRefKind} ${sharedStyles.dim}`}>
-                            {rs.name}
-                          </div>
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-          <div className={`${styles.topoRefsCol} ${styles.topoRefsColOut}`}>
-            {typedOutgoing.length === 0 && (
-              <div className={`${styles.topoRefsEmpty} ${sharedStyles.dim}`}>
-                No outgoing relationships
-              </div>
-            )}
-            {groupRelationsByRelationSchema(typedOutgoing).map(group => (
-              <div key={group.key} className={styles.topoRefGroup}>
-                <div className={styles.topoAxisLabel}>{group.label}</div>
-                {group.relations.map((r, i) => {
-                  const { schema: rs } = resolveRelColor(r);
-                  const rc = r.relationSchemaColor ?? 'var(--accent-fg)';
-                  return (
-                    <button
-                      key={i}
-                      type="button"
-                      ref={
-                        setCardRef(`out-typed-${group.key}-${i}`) as React.Ref<HTMLButtonElement>
-                      }
-                      className={styles.topoRefCard}
-                      onClick={e => r.relationId && handleTypedRelationClick(r.relationId, e)}
-                    >
-                      <span className={styles.topoCardBar} style={{ background: rc }} />
-                      <TypeBadge color={rc} icon={r.relationSchemaIcon ?? undefined} size={14} />
-                      <div className={styles.topoRefBody}>
-                        <div className={styles.topoCardName}>{r.entityName}</div>
-                        {rs && (
-                          <div className={`${styles.topoRefKind} ${sharedStyles.dim}`}>
-                            {rs.name}
-                          </div>
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-        </div>
+        <TopologyGrid
+          kind="typed"
+          incoming={typedIncoming}
+          outgoing={typedOutgoing}
+          showIncomingEmpty={noIncoming && !showRefsGrid}
+          showOutgoingEmpty={noOutgoing && !showRefsGrid}
+          {...gridProps}
+        />
       )}
 
       {isEmpty && (

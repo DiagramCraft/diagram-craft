@@ -716,11 +716,11 @@ export const AutomationRulesSubSection = ({
   return (
     <>
       <SectionActions>
-        tab === 'rules' ? (
-        <Button variant="primary" icon={<TbPlus size={12} />} onClick={() => setEditor('new')}>
-          New rule
-        </Button>
-        ) : undefined
+        {tab === 'rules' && (
+          <Button variant="primary" icon={<TbPlus size={12} />} onClick={() => setEditor('new')}>
+            New rule
+          </Button>
+        )}
       </SectionActions>
       <SettingsPage>
         <Tabs.Root value={tab} onValueChange={v => setTab(v as AutomationTab)}>

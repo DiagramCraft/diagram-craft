@@ -92,8 +92,8 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   const contentFolder = folder ?? null;
 
   const navigateToEntity = useCallback(
-    (id: string) => {
-      navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(id)));
+    (id: string, tab?: TabId) => {
+      navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(id), tab ? { tab } : undefined));
     },
     [navigate, workspaceSlug]
   );
@@ -270,7 +270,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   const outgoing: Relation[] = relations.outgoing;
   const incoming: Relation[] = relations.incoming;
   const relationCount = outgoing.length + incoming.length;
-  const futurePlansCount = flattenChangeCaseMembers(entityChangeCases).filter(
+  const plannedChangesCount = flattenChangeCaseMembers(entityChangeCases).filter(
     entry => entry.changeCase.status === 'planned'
   ).length;
 
@@ -467,7 +467,6 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
           setTab={setTab}
           layout={layout}
           relationCount={relationCount}
-          futurePlansCount={futurePlansCount}
           activeViolationCount={activeViolationCount}
           canViewAudit={canViewAudit}
           overviewProps={{
@@ -507,6 +506,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
             entitySchemaId: schema?.id ?? '',
             entityName: entity._name
           }}
+          relatedContentProps={{ workspaceId, entityId }}
           changeHistoryProps={{
             workspaceId,
             entityId,
@@ -517,11 +517,6 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
             teams,
             canViewAudit
           }}
-          futurePlansProps={{
-            workspaceId,
-            entityProjects,
-            changeCases: entityChangeCases
-          }}
           conformanceProps={{
             workspaceId,
             entityId: entity._uid,
@@ -530,12 +525,11 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
         />
       )}
 
-      {/* Context: Topology / Graph / Dependents / Related content */}
+      {/* Context: Topology / Graph / Blast radius */}
       {!contentFolder && CONTEXT_TAB_IDS.includes(tab) && (
         <EntityContextSection
           tab={tab}
           setTab={setTab}
-          dependentsCount={incoming.length}
           topologyProps={{
             workspaceId,
             entity,
@@ -545,7 +539,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
             incoming,
             schemas,
             lifecycleStates,
-            onEntityClick: navigateToEntity
+            onEntityClick: id => navigateToEntity(id, 'topology')
           }}
           graphProps={{
             workspaceId,
@@ -553,16 +547,16 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
             rootEntityName: entity._name ?? entity._slug,
             rootEntitySchemaId: entity._schema.id,
             schemas,
-            onEntityClick: navigateToEntity
+            layout: 'force',
+            maxDepth: 1,
+            onEntityClick: id => navigateToEntity(id, 'graph')
           }}
-          dependentsProps={{ workspaceId, entityId, schemas, lifecycleStates }}
           blastRadiusProps={{
             workspaceId,
-            subject: { kind: 'entity', entityId: entity?._uid ?? entityId },
+            entityId: entity?._uid ?? entityId,
             schemas,
             lifecycleStates
           }}
-          relatedContentProps={{ workspaceId, entityId }}
         />
       )}
 
@@ -575,12 +569,18 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
         />
       )}
 
-      {/* Planning & review: Assessments / Timeline */}
+      {/* Planning & review: Timeline / Assessments / Planned changes */}
       {!contentFolder && PLANNING_TAB_IDS.includes(tab) && (
         <EntityPlanningReviewSection
           tab={tab}
           setTab={setTab}
           assessmentsProps={{ workspaceId, entity, schema }}
+          plannedChangesCount={plannedChangesCount}
+          plannedChangesProps={{
+            workspaceId,
+            entityProjects,
+            changeCases: entityChangeCases
+          }}
           timelineProps={{
             workspaceId,
             versions: entityVersions,

@@ -61,3 +61,18 @@ export const findContentFile = (
   fileId
     ? [...rootFiles, ...folders.flatMap(folder => folder.files)].find(file => file.id === fileId)
     : undefined;
+
+/** The path a new markdown document called `name` gets in `folder` (null for the root). */
+export const markdownDocumentPath = (name: string, folder: string | null): string =>
+  folder ? `${folder}/${name}.md` : `${name}.md`;
+
+/** True when a file already exists at `path` in the content tree. */
+export const isContentPathTaken = (
+  tree: {
+    rootFiles: Pick<ProjectFile, 'path'>[];
+    folders: { files: Pick<ProjectFile, 'path'>[] }[];
+  },
+  path: string
+): boolean =>
+  tree.rootFiles.some(file => file.path === path) ||
+  tree.folders.some(folder => folder.files.some(file => file.path === path));

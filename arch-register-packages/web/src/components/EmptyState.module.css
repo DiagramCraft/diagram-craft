@@ -21,6 +21,13 @@
   color: var(--base-fg-dim);
 }
 
+.emptySub {
+  font-size: 12px;
+  max-width: 360px;
+  text-align: center;
+  color: var(--cmp-fg-disabled);
+}
+
 .compact {
   padding: 18px 16px;
   color: var(--base-fg-more-dim);
@@ -62,4 +69,16 @@
   max-width: 360px;
   margin: 6px 0 14px;
   color: var(--cmp-fg-disabled);
+}
+
+.toneGood {
+  color: var(--green);
+}
+
+.toneWarning {
+  color: var(--warning-fg);
+}
+
+.toneError {
+  color: var(--error-fg);
 }

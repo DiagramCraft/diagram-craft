@@ -45,10 +45,10 @@ export const EntityBrowserScreen = () => {
   const [isSavingView, setIsSavingView] = useState(false);
   const [isCreatingBaseline, setIsCreatingBaseline] = useState(false);
   const { data: savedViews = [] } = useSavedViews(workspaceId, {
-    enabled: search.sidebarTab === 'views' || search.viewId != null
+    enabled: search.viewId != null
   });
   const { data: collections = [] } = useCollections(workspaceId, undefined, {
-    enabled: search.sidebarTab === 'bookmarks' || collectionId != null
+    enabled: collectionId != null
   });
   const createSavedViewMutation = useCreateSavedView(workspaceId);
   const updateSavedViewMutation = useUpdateSavedView(workspaceId);
@@ -337,7 +337,6 @@ export const EntityBrowserScreen = () => {
             search: (previous: Record<string, unknown>) => ({
               ...previous,
               baselineId: undefined,
-              sidebarTab: 'home',
               asOf: undefined,
               asOfIncludeProjects: undefined
             })

@@ -29,6 +29,9 @@ export const RelationAuditLogDialog = ({
     { enabled: open && !!relation }
   );
 
+  // Without fields of its own a relation has no versions worth listing or restoring.
+  const hasFields = !relationSchema || relationSchema.fields.some(f => !f.archived);
+
   return (
     <Dialog
       open={open}
@@ -39,13 +42,19 @@ export const RelationAuditLogDialog = ({
     >
       {open && relation && (
         <>
-          <div style={{ fontSize: 12, fontWeight: 600, margin: '0 0 6px' }}>Versions</div>
-          <RelationHistorySection
-            workspaceSlug={workspaceId}
-            relation={relation}
-            relationSchema={relationSchema}
-          />
-          <div style={{ fontSize: 12, fontWeight: 600, margin: '16px 0 6px' }}>Activity</div>
+          {hasFields && (
+            <>
+              <div style={{ fontSize: 12, fontWeight: 600, margin: '0 0 6px' }}>Versions</div>
+              <RelationHistorySection
+                workspaceSlug={workspaceId}
+                relation={relation}
+                relationSchema={relationSchema}
+              />
+            </>
+          )}
+          <div style={{ fontSize: 12, fontWeight: 600, margin: `${hasFields ? 16 : 0}px 0 6px` }}>
+            Activity
+          </div>
         </>
       )}
       {isLoading ? (

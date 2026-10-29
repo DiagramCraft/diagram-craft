@@ -60,6 +60,8 @@ export const useProjectContentCreateDialogs = ({
         onClose={close}
         workspaceSlug={scope.workspaceId}
         projectId={scope.projectId}
+        scope={scope}
+        folder={folder}
         onCreated={file => {
           close();
           openFile(file);

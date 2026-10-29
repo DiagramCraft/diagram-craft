@@ -4,12 +4,18 @@ import type { EntityDrawerSearchParams } from '../../../routes/searchParams';
 
 export type EntityDrawerStackEntry =
   | { kind: 'entity'; entityId: string }
-  | { kind: 'case'; caseId: string };
+  | { kind: 'case'; caseId: string }
+  | { kind: 'project'; projectId: string }
+  | { kind: 'plannedChange'; projectId: string; caseId: string; memberId: string };
 
-const sameEntry = (a: EntityDrawerStackEntry, b: EntityDrawerStackEntry): boolean =>
-  a.kind === 'entity'
-    ? b.kind === 'entity' && a.entityId === b.entityId
-    : b.kind === 'case' && a.caseId === b.caseId;
+export type PlannedChangeRef = { projectId: string; caseId: string; memberId: string };
+
+const sameEntry = (a: EntityDrawerStackEntry, b: EntityDrawerStackEntry): boolean => {
+  if (a.kind === 'entity') return b.kind === 'entity' && a.entityId === b.entityId;
+  if (a.kind === 'case') return b.kind === 'case' && a.caseId === b.caseId;
+  if (a.kind === 'project') return b.kind === 'project' && a.projectId === b.projectId;
+  return b.kind === 'plannedChange' && a.memberId === b.memberId && a.caseId === b.caseId;
+};
 
 export type EntityDrawerController = {
   drawerEntityId: string | undefined;
@@ -17,6 +23,8 @@ export type EntityDrawerController = {
   activeDrawerIndex: number;
   openEntityDrawer: (entityId: string) => void;
   openCaseDrawer: (caseId: string) => void;
+  openProjectDrawer: (projectId: string) => void;
+  openPlannedChangeDrawer: (ref: PlannedChangeRef) => void;
   backEntityDrawer: () => void;
   closeEntityDrawer: () => void;
 };
@@ -83,6 +91,20 @@ export const EntityDrawerStackProvider = ({ children }: { children: ReactNode })
     [openEntry]
   );
 
+  const openProjectDrawer = useCallback(
+    (projectId: string) => {
+      if (projectId) openEntry({ kind: 'project', projectId });
+    },
+    [openEntry]
+  );
+
+  const openPlannedChangeDrawer = useCallback(
+    (ref: PlannedChangeRef) => {
+      if (ref.projectId && ref.caseId && ref.memberId) openEntry({ kind: 'plannedChange', ...ref });
+    },
+    [openEntry]
+  );
+
   const backEntityDrawer = useCallback(() => {
     const currentIndex = activeIndexRef.current;
     if (currentIndex < 0) return;
@@ -112,6 +134,8 @@ export const EntityDrawerStackProvider = ({ children }: { children: ReactNode })
         activeDrawerIndex,
         openEntityDrawer,
         openCaseDrawer,
+        openProjectDrawer,
+        openPlannedChangeDrawer,
         backEntityDrawer,
         closeEntityDrawer: backEntityDrawer
       }}
@@ -154,6 +178,8 @@ export const useEntityDrawer = (): EntityDrawerController => {
     openEntityDrawer,
     // Outside the workspace stack there is nowhere to host a case drawer; no-op.
     openCaseDrawer: () => {},
+    openProjectDrawer: () => {},
+    openPlannedChangeDrawer: () => {},
     backEntityDrawer: closeEntityDrawer,
     closeEntityDrawer
   };

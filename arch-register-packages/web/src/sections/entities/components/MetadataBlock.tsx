@@ -189,7 +189,7 @@ export const MetadataBlock = ({
             ) : (
               <span className={styles.tags}>
                 {entity._tags.map(t => (
-                  <Chip key={t} tone="ghost">
+                  <Chip key={t} tone="accent">
                     {t}
                   </Chip>
                 ))}

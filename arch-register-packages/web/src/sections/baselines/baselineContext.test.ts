@@ -10,15 +10,13 @@ const baseline = (overrides: Partial<Baseline>): Pick<Baseline, 'id'> => ({
 describe('baselineContextSearch', () => {
   it('opens a workspace baseline as a named contextual view', () => {
     expect(baselineContextSearch(baseline({}))).toEqual({
-      baselineId: 'baseline-1',
-      sidebarTab: 'baselines'
+      baselineId: 'baseline-1'
     });
   });
 
   it('uses the same contextual state for project baselines', () => {
     expect(baselineContextSearch(baseline({ id: 'project-baseline-1' }))).toEqual({
-      baselineId: 'project-baseline-1',
-      sidebarTab: 'baselines'
+      baselineId: 'project-baseline-1'
     });
   });
 });

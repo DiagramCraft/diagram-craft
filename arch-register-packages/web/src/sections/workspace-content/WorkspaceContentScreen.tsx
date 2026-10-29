@@ -285,6 +285,8 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
         open={addMarkdownOpen}
         onClose={() => setAddMarkdownOpen(false)}
         workspaceSlug={workspaceSlug}
+        scope={scope}
+        folder={folder ?? null}
         onCreated={file => {
           setAddMarkdownOpen(false);
           handleMarkdownClick(file.id, 'edit');

@@ -447,15 +447,18 @@ export const ConformanceSubSection = ({
   return (
     <>
       <SectionActions>
-        canManageWorkspaces ? (
-        <Button
-          icon={<TbRefresh size={12} />}
-          disabled={runConformance.isPending}
-          onClick={() => runConformance.mutate(undefined)}
-        >
-          Run workspace scan
-        </Button>
-        <AddCheckMenu aiConfigured={aiConfigured} onSelect={handleAddCheck} />) : undefined
+        {canManageWorkspaces && (
+          <>
+            <Button
+              icon={<TbRefresh size={12} />}
+              disabled={runConformance.isPending}
+              onClick={() => runConformance.mutate(undefined)}
+            >
+              Run workspace scan
+            </Button>
+            <AddCheckMenu aiConfigured={aiConfigured} onSelect={handleAddCheck} />
+          </>
+        )}
       </SectionActions>
       <div className={styles.stack}>
         {summary && (

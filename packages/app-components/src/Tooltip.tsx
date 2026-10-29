@@ -23,7 +23,7 @@ export const Tooltip = (props: Props) => {
   return (
     <BaseUITooltip.Provider>
       <BaseUITooltip.Root>
-        <BaseUITooltip.Trigger render={props.element} />
+        <BaseUITooltip.Trigger render={props.element} delay={props.delay} />
         <BaseUITooltip.Portal>
           <BaseUITooltip.Positioner
             className={styles.cTooltipPositioner}
@@ -44,4 +44,6 @@ export const Tooltip = (props: Props) => {
 type Props = {
   message: React.ReactNode;
   element: ReactElement;
+  /** Delay in milliseconds before the tooltip opens on hover; uses the library default if omitted. */
+  delay?: number;
 };

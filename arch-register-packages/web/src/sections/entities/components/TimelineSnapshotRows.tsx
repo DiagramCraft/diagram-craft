@@ -49,9 +49,6 @@ export const dotCommitMessage = (dot: TimelineDot): string | null =>
 export const dotCreatedAt = (dot: TimelineDot): string =>
   dot.source === 'own' ? dot.version.created_at : dot.entry.changeCase.created_at;
 
-export const dotProjectId = (dot: TimelineDot): string | null =>
-  dot.source === 'own' ? null : dot.entry.changeCase.project_id;
-
 // ── SnapBlock ─────────────────────────────────────────────────────────────────
 
 type SnapBlockProps = {

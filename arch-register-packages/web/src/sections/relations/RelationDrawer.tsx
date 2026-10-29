@@ -11,7 +11,7 @@ import { relationIds } from '../../lib/entityEditState';
 import { formatRelationFieldValue } from '../../widgets/data-views/relation-table/relationTableLogic';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { RelationHistorySection } from './RelationHistorySection';
-import { RelationFuturePlansSection } from './RelationFuturePlansSection';
+import { RelationPlannedChangesSection } from './RelationPlannedChangesSection';
 import { useEntityDrawer } from '../entities/entityDrawer/useEntityDrawer';
 import { RelationEditDialog } from '../../dialogs/RelationEditDialog';
 import { EntityChangeApprovalPanel } from '../entities/components/EntityChangeApprovalPanel';
@@ -164,8 +164,8 @@ export const RelationDrawer = ({
         <span>{relation._owner?.name ?? '—'}</span>
       </div>
 
-      <div className={styles.sectionLabel}>Future plans</div>
-      <RelationFuturePlansSection
+      <div className={styles.sectionLabel}>Planned changes</div>
+      <RelationPlannedChangesSection
         workspaceSlug={workspaceSlug}
         relation={relation}
         relationSchema={relationSchema}

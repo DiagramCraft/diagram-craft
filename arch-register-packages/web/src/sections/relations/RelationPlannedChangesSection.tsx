@@ -13,7 +13,7 @@ import {
 import styles from '../entities/components/EntityOverviewTab.module.css';
 
 // Planned changes (from project change cases) that include this relation.
-export const RelationFuturePlansSection = ({
+export const RelationPlannedChangesSection = ({
   workspaceSlug,
   relation,
   relationSchema
@@ -30,7 +30,7 @@ export const RelationFuturePlansSection = ({
   const entries = flattenRelationChangeCaseMembers(changeCases).filter(
     entry => entry.changeCase.status === 'planned'
   );
-  if (entries.length === 0) return <div className="dim">No future plans</div>;
+  if (entries.length === 0) return <div className="dim">No planned changes</div>;
 
   return (
     <div>

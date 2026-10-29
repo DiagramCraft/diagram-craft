@@ -10,10 +10,12 @@ import { formatDateTime } from '../../../utils/dateFormat';
 import { RestoreSnapshotDialog } from './RestoreSnapshotDialog';
 import { diffSnapshotState } from './entityTimelineHelpers';
 import styles from './EntityChangeHistoryTab.module.css';
+import { EntityTabPage } from './EntityTabPage';
 import { Table } from '../../../components/table/Table';
 import { DropdownMenu } from '../../../components/DropdownMenu';
 import { EmptyState } from '../../../components/EmptyState';
 import { LoadingState } from '../../../components/LoadingState';
+import { TbHistory } from 'react-icons/tb';
 
 type Props = {
   workspaceId: string;
@@ -68,31 +70,35 @@ export const EntityChangeHistoryTab = ({
 
   if (savedVersions.length === 0) {
     return (
-      <EmptyState
-        title="No change history yet"
-        subtitle="Changes will appear here as properties are edited."
-      />
+      <EntityTabPage>
+        <EmptyState
+          framed
+          icon={<TbHistory size={20} />}
+          title="No change history yet"
+          subtitle="Changes will appear here as properties are edited."
+        />
+      </EntityTabPage>
     );
   }
 
   return (
     <>
-      <div className={styles.changeHistory}>
+      <EntityTabPage>
         {savedVersions.length > 0 && (
-          <Table.Root>
+          <Table.Root layout="fixed">
             <Table.Head>
               <Table.Row>
-                <Table.HeaderCell>Date</Table.HeaderCell>
-                <Table.HeaderCell>Type</Table.HeaderCell>
-                <Table.HeaderCell>By</Table.HeaderCell>
+                <Table.HeaderCell width={160}>Date</Table.HeaderCell>
+                <Table.HeaderCell width={110}>Type</Table.HeaderCell>
+                <Table.HeaderCell width={160}>By</Table.HeaderCell>
                 <Table.HeaderCell>Message</Table.HeaderCell>
-                <Table.HeaderCell />
+                <Table.HeaderCell width={40} />
               </Table.Row>
             </Table.Head>
             <Table.Body>
               {savedVersions.map(version => (
                 <Table.Row key={version.id}>
-                  <Table.Cell className={styles.chDim}>
+                  <Table.Cell className={styles.chNoWrap}>
                     {formatDateTime(version.created_at)}
                   </Table.Cell>
                   <Table.Cell>
@@ -103,7 +109,7 @@ export const EntityChangeHistoryTab = ({
                     </span>
                   </Table.Cell>
                   <Table.Cell>{version.created_by_name ?? '—'}</Table.Cell>
-                  <Table.Cell className={styles.chDim}>{version.commit_message ?? '—'}</Table.Cell>
+                  <Table.Cell>{version.commit_message ?? '—'}</Table.Cell>
                   <Table.ActionsCell>
                     <DropdownMenu
                       trigger={<Table.DotsButton />}
@@ -117,7 +123,7 @@ export const EntityChangeHistoryTab = ({
             </Table.Body>
           </Table.Root>
         )}
-      </div>
+      </EntityTabPage>
 
       {restoreDialogVersion && entity && (
         <RestoreSnapshotDialog

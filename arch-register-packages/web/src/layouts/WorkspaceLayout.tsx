@@ -29,6 +29,8 @@ import { RouteContentBoundary } from '../routes/RouteContentBoundary';
 import { AppErrorState } from '../components/AppErrorState';
 import { WorkspaceDetailLayout } from './WorkspaceDetailLayout';
 import { EntityDrawer } from '../sections/entities/entityDrawer/EntityDrawer';
+import { PlannedChangeDrawer } from '../sections/entities/entityDrawer/PlannedChangeDrawer';
+import { ProjectDrawer } from '../sections/projects/ProjectDrawer';
 import { GovernanceCaseDrawer } from '../sections/governance/GovernanceCaseDrawer';
 import {
   EntityDrawerStackProvider,
@@ -563,6 +565,34 @@ const WorkspaceEntityDrawerStack = ({
               caseId={entry.caseId}
               onClose={closeEntityDrawer}
               onOpenDataset={openEntityDrawer}
+              active={active}
+              stacked
+              stackOffset={stackOffset}
+            />
+          );
+        }
+        if (entry.kind === 'plannedChange') {
+          return (
+            <PlannedChangeDrawer
+              key={`plannedChange:${entry.caseId}:${entry.memberId}`}
+              workspaceSlug={workspaceSlug}
+              projectId={entry.projectId}
+              caseId={entry.caseId}
+              memberId={entry.memberId}
+              onClose={closeEntityDrawer}
+              active={active}
+              stacked
+              stackOffset={stackOffset}
+            />
+          );
+        }
+        if (entry.kind === 'project') {
+          return (
+            <ProjectDrawer
+              key={`project:${entry.projectId}`}
+              workspaceSlug={workspaceSlug}
+              projectId={entry.projectId}
+              onClose={closeEntityDrawer}
               active={active}
               stacked
               stackOffset={stackOffset}
