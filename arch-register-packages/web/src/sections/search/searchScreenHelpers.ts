@@ -1,23 +1,10 @@
 import { TbArrowsRightLeft, TbCode, TbDatabase, TbFolder, TbFolders } from 'react-icons/tb';
 import type {
-  EntitySearchResult,
   ProjectFileSearchResult,
-  ProjectSearchResult,
-  RelationSearchResult,
-  SchemaSearchResult,
   SearchResponse
 } from '@arch-register/api-types/searchContract';
 
 export type SearchFilter = 'all' | 'entities' | 'projects' | 'files' | 'schemas' | 'relations';
-
-export type SearchPreview =
-  | { type: 'project'; data: ProjectSearchResult }
-  | { type: 'file'; data: ProjectFileSearchResult }
-  | { type: 'entity'; data: EntitySearchResult }
-  | { type: 'schema'; data: SchemaSearchResult }
-  | { type: 'relation'; data: RelationSearchResult };
-
-export type RowId = { kind: string; id: string };
 
 export type SearchRow = { kind: string; id: string; data: unknown };
 
@@ -103,34 +90,6 @@ export const getSearchCategoryCounts = (results: SearchResponse) => ({
   schemas: results.schemas.length,
   relations: results.relations.length
 });
-
-export const findSearchPreview = (
-  selected: RowId | null,
-  results: SearchResponse
-): SearchPreview | null => {
-  if (!selected) return null;
-  if (selected.kind === 'entity') {
-    const data = results.entities.find(entity => entity.entityId === selected.id);
-    return data ? { type: 'entity', data } : null;
-  }
-  if (selected.kind === 'project') {
-    const data = results.projects.find(project => project.id === selected.id);
-    return data ? { type: 'project', data } : null;
-  }
-  if (selected.kind === 'file') {
-    const data = results.files.find(file => file.fileId === selected.id);
-    return data ? { type: 'file', data } : null;
-  }
-  if (selected.kind === 'schema') {
-    const data = results.schemas.find(schema => schema.schemaId === selected.id);
-    return data ? { type: 'schema', data } : null;
-  }
-  if (selected.kind === 'relation') {
-    const data = results.relations.find(relation => relation.relationId === selected.id);
-    return data ? { type: 'relation', data } : null;
-  }
-  return null;
-};
 
 export const snippetAround = (text: string | null | undefined, q: string, max = 140) => {
   if (!text) return '';

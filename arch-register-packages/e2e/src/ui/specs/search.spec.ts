@@ -53,10 +53,7 @@ test.describe('search section', () => {
     await expect(page).toHaveURL(/category=entities/);
 
     await page.reload();
-    await expect(page.getByTestId('search-category-Entities')).toHaveAttribute(
-      'aria-pressed',
-      'true'
-    );
+    await expect(page.getByTestId('search-category-Entities')).toHaveClass(/active/);
 
     await page.goBack();
     await expect(page).not.toHaveURL(/category=/);

@@ -2,44 +2,25 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { TbSearch } from 'react-icons/tb';
 import { useNavigate, useSearch as useRouterSearch } from '@tanstack/react-router';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import type {
-  ProjectFileSearchResult,
-  RelationSearchResult
-} from '@arch-register/api-types/searchContract';
 import { useSearch } from '../../hooks/useSearch';
 import { SearchInput } from '../../components/SearchInput';
 import styles from './SearchScreen.module.css';
 import { EmptyState } from '../../components/EmptyState';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import {
-  asEntityPublicId,
-  asProjectPublicId,
-  entityContentFolderRoute,
-  entityDetailRoute,
-  projectContentFolderRoute,
-  projectDetailRoute,
-  workspaceContentFolderRoute
-} from '../../routes/publicObjectRoutes';
-import {
-  CATEGORY_DEFS,
   EMPTY_RESULTS,
   buildSearchGroups,
-  findSearchPreview,
   getSearchCategoryCounts,
-  type RowId,
-  type SearchFilter,
-  type SearchPreview
+  type SearchFilter
 } from './searchScreenHelpers';
 import { ResultRow } from './components/ResultRow';
-import { PreviewPane } from './components/PreviewPane';
 import { useAutoFocus } from '../../hooks/useAutoFocus';
-import { useEntityDrawer } from '../entities/entityDrawer/useEntityDrawer';
+import { useOpenSearchRow } from './useOpenSearchRow';
 
 // ── Screen ───────────────────────────────────────────────────
 
 export const SearchScreen = () => {
   const routerNavigate = useNavigate();
-  const { openEntityDrawer } = useEntityDrawer();
   const routerSearch = useRouterSearch({ strict: false }) as {
     q?: string;
     category?: SearchFilter;
@@ -50,7 +31,6 @@ export const SearchScreen = () => {
 
   const [localQ, setLocalQ] = useState(query);
   const filter = routerSearch.category ?? 'all';
-  const [selected, setSelected] = useState<RowId | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   useAutoFocus(inputRef, { delay: 60 });
 
@@ -81,26 +61,9 @@ export const SearchScreen = () => {
 
   const groups = useMemo(() => buildSearchGroups(results, filter), [results, filter]);
 
-  const flatRows = useMemo(() => groups.flatMap(g => g.rows), [groups]);
-
   const categoryCounts = useMemo(() => getSearchCategoryCounts(results), [results]);
 
   const totalResults = categoryCounts.all;
-
-  // Auto-select first result
-  useEffect(() => {
-    if (flatRows.length > 0) {
-      setSelected({ kind: flatRows[0]!.kind, id: flatRows[0]!.id });
-    } else {
-      setSelected(null);
-    }
-  }, [flatRows]);
-
-  // Preview from selected
-  const preview = useMemo<SearchPreview | null>(
-    () => findSearchPreview(selected, results),
-    [selected, results]
-  );
 
   const navigateToSearch = useCallback(
     (q: string) => {
@@ -115,7 +78,6 @@ export const SearchScreen = () => {
 
   const setFilter = useCallback(
     (category: SearchFilter) => {
-      setSelected(null);
       routerNavigate({
         to: '/$workspaceSlug/search',
         params: { workspaceSlug },
@@ -128,143 +90,20 @@ export const SearchScreen = () => {
     [routerNavigate, workspaceSlug]
   );
 
-  const navigateToEntity = useCallback(
-    (entityId: string) => {
-      openEntityDrawer(entityId);
-    },
-    [openEntityDrawer]
-  );
+  const openRow = useOpenSearchRow();
 
-  const navigateToProject = useCallback(
-    (projectId: string) => {
-      routerNavigate(
-        projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), {
-          tab: 'projects' as const,
-          section: 'home' as const
-        })
-      );
-    },
-    [routerNavigate, workspaceSlug]
-  );
-
-  const navigateToProjectFolder = useCallback(
-    (projectId: string, folder: string | null) => {
-      if (folder) {
-        routerNavigate(
-          projectContentFolderRoute(workspaceSlug, asProjectPublicId(projectId), folder)
-        );
-      } else {
-        routerNavigate(
-          projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), {
-            tab: 'projects' as const,
-            section: 'home' as const
-          })
-        );
-      }
-    },
-    [routerNavigate, workspaceSlug]
-  );
-
-  const navigateToSchema = useCallback(
-    (schemaId: string) => {
-      routerNavigate({
-        to: '/$workspaceSlug/settings/schemas',
-        params: { workspaceSlug },
-        search: { schema: schemaId }
-      });
-    },
-    [routerNavigate, workspaceSlug]
-  );
-
-  const navigateToEntityFolder = useCallback(
-    (entityId: string, folder: string | null) => {
-      if (folder) {
-        routerNavigate(entityContentFolderRoute(workspaceSlug, asEntityPublicId(entityId), folder));
-      } else {
-        routerNavigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entityId)));
-      }
-    },
-    [routerNavigate, workspaceSlug]
-  );
-
-  const navigateToWorkspaceFolder = useCallback(
-    (folder: string | null) => {
-      if (folder) {
-        routerNavigate(workspaceContentFolderRoute(workspaceSlug, folder));
-      } else {
-        routerNavigate({ to: '/$workspaceSlug/content', params: { workspaceSlug } });
-      }
-    },
-    [routerNavigate, workspaceSlug]
-  );
-
-  const openRow = useCallback(
-    (row: { kind: string; id: string; data: unknown }) => {
-      if (row.kind === 'entity') {
-        navigateToEntity(row.id);
-      } else if (row.kind === 'project') {
-        navigateToProject(row.id);
-      } else if (row.kind === 'file') {
-        const f = row.data as ProjectFileSearchResult;
-        const folder = f.path.includes('/') ? f.path.slice(0, f.path.lastIndexOf('/')) : null;
-        if (f.scope === 'project' && f.projectId) {
-          navigateToProjectFolder(f.projectId, folder);
-        } else if (f.scope === 'entity' && f.entityPublicId) {
-          navigateToEntityFolder(f.entityPublicId, folder);
-        } else if (f.scope === 'workspace') {
-          navigateToWorkspaceFolder(folder);
-        }
-      } else if (row.kind === 'schema') {
-        navigateToSchema(row.id);
-      } else if (row.kind === 'relation') {
-        const r = row.data as RelationSearchResult;
-        navigateToEntity(r.inEntityPublicId);
-      }
-    },
-    [
-      navigateToEntity,
-      navigateToProject,
-      navigateToProjectFolder,
-      navigateToSchema,
-      navigateToEntityFolder,
-      navigateToWorkspaceFolder
-    ]
-  );
-
-  // Keyboard navigation
+  // Keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && localQ) {
         setLocalQ('');
         navigateToSearch('');
         inputRef.current?.focus();
-        return;
-      }
-      if (!['ArrowDown', 'ArrowUp', 'Enter'].includes(e.key)) return;
-      if (!flatRows.length) return;
-      const curIdx = Math.max(
-        0,
-        flatRows.findIndex(r => selected && r.id === selected.id && r.kind === selected.kind)
-      );
-      if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        const next = flatRows[Math.min(flatRows.length - 1, curIdx + 1)]!;
-        setSelected({ kind: next.kind, id: next.id });
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        const next = flatRows[Math.max(0, curIdx - 1)]!;
-        setSelected({ kind: next.kind, id: next.id });
-      } else if (e.key === 'Enter') {
-        // Only handle Enter when NOT focused on the search input
-        if (document.activeElement === inputRef.current) return;
-        e.preventDefault();
-        const cur = flatRows[curIdx];
-        if (cur) openRow(cur);
       }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [flatRows, selected, localQ, navigateToSearch, openRow]);
+  }, [localQ, navigateToSearch]);
 
   const handleInputChange = (val: string) => {
     setLocalQ(val);
@@ -296,15 +135,7 @@ export const SearchScreen = () => {
               inputRef.current?.blur();
             }
           }}
-        >
-          <span className={styles.kbdHints}>
-            <kbd className={styles.kbd}>↑</kbd>
-            <kbd className={styles.kbd}>↓</kbd>
-            <span className={styles.dim}> navigate ·</span>
-            <kbd className={styles.kbd}>⏎</kbd>
-            <span className={styles.dim}> open</span>
-          </span>
-        </SearchInput>
+        />
 
         <div className={styles.summary}>
           {trimmed ? (
@@ -319,33 +150,6 @@ export const SearchScreen = () => {
             <span className={styles.dim}>Start typing to search across the workspace.</span>
           )}
         </div>
-      </div>
-
-      {/* ── Category chips ── */}
-      <div className={styles.cats}>
-        {CATEGORY_DEFS.map(c => {
-          const Ic = c.icon;
-          const n = categoryCounts[c.value];
-          return (
-            <button
-              type="button"
-              key={c.value}
-              data-testid={`search-category-${c.label}`}
-              aria-pressed={filter === c.value}
-              className={`${styles.cat} ${filter === c.value ? styles.catActive : ''}`}
-              onClick={() => setFilter(c.value)}
-            >
-              <Ic size={11} />
-              <span>{c.label}</span>
-              <span
-                data-testid={`${c.label.toLowerCase()}-result-count`}
-                className={styles.catCount}
-              >
-                {n}
-              </span>
-            </button>
-          );
-        })}
       </div>
 
       {/* ── Body ── */}
@@ -391,8 +195,6 @@ export const SearchScreen = () => {
                       key={`${row.kind}-${row.id}`}
                       row={row}
                       q={trimmed}
-                      isSelected={selected?.kind === row.kind && selected?.id === row.id}
-                      onSelect={() => setSelected({ kind: row.kind, id: row.id })}
                       onOpen={() => openRow(row)}
                       schemaMap={schemaMap}
                       lifecycleStates={lifecycleStates}
@@ -403,21 +205,6 @@ export const SearchScreen = () => {
             ))
           )}
         </div>
-
-        <aside className={styles.preview}>
-          <PreviewPane
-            preview={preview}
-            schemaMap={schemaMap}
-            onEntityClick={navigateToEntity}
-            onProjectClick={navigateToProject}
-            onProjectFolderClick={navigateToProjectFolder}
-            onEntityFolderClick={navigateToEntityFolder}
-            onWorkspaceFolderClick={navigateToWorkspaceFolder}
-            onSchemaClick={navigateToSchema}
-            q={trimmed}
-            lifecycleStates={lifecycleStates}
-          />
-        </aside>
       </div>
     </div>
   );

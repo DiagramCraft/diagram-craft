@@ -2,6 +2,7 @@ import { createRoute, type AnyRoute } from '@tanstack/react-router';
 import { validateSearchSearch } from '../searchParams';
 import { buildSearchBreadcrumbs } from '../../layouts/workspaceShellDescriptors';
 import { withWorkspaceShell } from './workspaceShellRoute';
+import { SearchSidebar } from '../../sections/search/SearchSidebar';
 import { LazySearchScreen } from './lazyWorkspaceScreens';
 
 export const createSearchWorkspaceRoute = <TParentRoute extends AnyRoute>(
@@ -17,7 +18,8 @@ export const createSearchWorkspaceRoute = <TParentRoute extends AnyRoute>(
     ctx => ({
       variant: 'full-bleed',
       activeRailItem: 'search',
-      breadcrumbs: buildSearchBreadcrumbs(ctx)
+      breadcrumbs: buildSearchBreadcrumbs(ctx),
+      primarySidebar: <SearchSidebar workspaceSlug={ctx.workspaceSlug} />
     })
   );
 
