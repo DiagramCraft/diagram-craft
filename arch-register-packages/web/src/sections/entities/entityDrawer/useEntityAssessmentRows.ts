@@ -36,13 +36,32 @@ export const useEntityAssessmentRows = (
     [allAssessments.data, entitySchemaId]
   );
 
+  // Assessments with identical scope conditions share one entity query; duplicate queries in a
+  // single useQueries call trigger a QueriesObserver warning
+  const { uniqueConditions, conditionsIndexByAssessmentId } = useMemo(() => {
+    const unique: (typeof scopedAssessments)[number]['scope_conditions'][] = [];
+    const indexByKey = new Map<string, number>();
+    const indexByAssessment = new Map<string, number>();
+    for (const assessment of scopedAssessments) {
+      const key = JSON.stringify(assessment.scope_conditions ?? null);
+      let index = indexByKey.get(key);
+      if (index === undefined) {
+        index = unique.length;
+        unique.push(assessment.scope_conditions);
+        indexByKey.set(key, index);
+      }
+      indexByAssessment.set(assessment.id, index);
+    }
+    return { uniqueConditions: unique, conditionsIndexByAssessmentId: indexByAssessment };
+  }, [scopedAssessments]);
+
   const entityQueries = useQueries({
-    queries: scopedAssessments.map(assessment =>
+    queries: uniqueConditions.map(conditions =>
       entitiesQuery(
         workspaceSlug,
         {
           schemaId: entitySchemaId,
-          conditions: assessment.scope_conditions,
+          conditions,
           view: 'full',
           limit: 500
         },
@@ -58,11 +77,13 @@ export const useEntityAssessmentRows = (
 
   const entitiesByAssessmentId = useMemo(() => {
     const map = new Map<string, EntityRecord[]>();
-    scopedAssessments.forEach((assessment, index) => {
-      map.set(assessment.id, (entityQueries[index]?.data?.items as EntityRecord[]) ?? []);
+    scopedAssessments.forEach(assessment => {
+      const index = conditionsIndexByAssessmentId.get(assessment.id);
+      const query = index === undefined ? undefined : entityQueries[index];
+      map.set(assessment.id, (query?.data?.items as EntityRecord[]) ?? []);
     });
     return map;
-  }, [scopedAssessments, entityQueries]);
+  }, [scopedAssessments, entityQueries, conditionsIndexByAssessmentId]);
 
   const responsesByAssessmentId = useMemo(() => {
     const map = new Map<string, AssessmentResponse[]>();

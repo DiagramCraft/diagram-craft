@@ -455,6 +455,10 @@ const CopyDrawerLinkButton = ({ entityId }: { entityId: string }) => {
   );
 };
 
+// Stable fallbacks: fresh objects here would change providerContext/renderModel on every render
+const EMPTY_RELATIONS = { outgoing: [], incoming: [] };
+const EMPTY_TYPED_RELATIONS = { outgoing: [], incoming: [] };
+
 export const EntityDrawer = ({
   workspaceSlug,
   entityId,
@@ -530,8 +534,8 @@ export const EntityDrawer = ({
     return options;
   }, [referenceQueries, referenceSchemaIds]);
 
-  const relations = relationsQuery.data ?? { outgoing: [], incoming: [] };
-  const typedRelations = typedRelationsQuery.data ?? { outgoing: [], incoming: [] };
+  const relations = relationsQuery.data ?? EMPTY_RELATIONS;
+  const typedRelations = typedRelationsQuery.data ?? EMPTY_TYPED_RELATIONS;
   const refLookup = useMemo(() => buildEntityRefLookup(relations), [relations]);
 
   const openEntity = useCallback(
