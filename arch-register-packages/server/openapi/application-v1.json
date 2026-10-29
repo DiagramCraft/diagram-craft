@@ -87827,6 +87827,49 @@
                       "type": "string",
                       "description": "The search query that was executed"
                     },
+                    "totalCounts": {
+                      "type": "object",
+                      "properties": {
+                        "projects": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991,
+                          "description": "Total matching projects before result limits"
+                        },
+                        "files": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991,
+                          "description": "Total matching files before result limits"
+                        },
+                        "entities": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991,
+                          "description": "Total matching entities before result limits"
+                        },
+                        "schemas": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991,
+                          "description": "Total matching schemas before result limits"
+                        },
+                        "relations": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991,
+                          "description": "Total matching relations before result limits"
+                        }
+                      },
+                      "required": [
+                        "projects",
+                        "files",
+                        "entities",
+                        "schemas",
+                        "relations"
+                      ],
+                      "description": "Total matching results by type before result limits"
+                    },
                     "projects": {
                       "type": "array",
                       "items": {
@@ -88317,6 +88360,7 @@
                   },
                   "required": [
                     "query",
+                    "totalCounts",
                     "projects",
                     "files",
                     "entities",

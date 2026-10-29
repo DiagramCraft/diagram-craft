@@ -1133,7 +1133,7 @@
       each hierarchy manually.
 
         - @id:ar.search.workspace Users can search across the current workspace and navigate to matching records and
-          content.
+          content. Type and overall result counts show full match totals even when displayed result rows are limited.
 
         - @id:ar.search.filters Users can combine search terms and structured filters to narrow results. Entity
           browser views provide a progressive filter builder popover (available alongside the multi-select sidebar
