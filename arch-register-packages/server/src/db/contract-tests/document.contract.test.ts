@@ -398,6 +398,17 @@ runContractSuiteAgainstBothDrivers('DocumentDatabase', getDb => {
       })
     ]);
     expect(await db.document.listDocumentsLinkingDocument(workspace, newerNodeId)).toEqual([]);
+
+    // Body links live beside metadata links and are replaced independently of them
+    await db.document.replaceBodyDocumentLinks(workspace, newerNodeId, [olderNodeId]);
+    expect(await db.document.listDocumentsLinkingDocument(workspace, olderNodeId)).toHaveLength(2);
+    await db.document.replaceDocumentLinks(workspace, newerNodeId, []);
+    expect(await db.document.listDocumentsLinkingDocument(workspace, olderNodeId)).toEqual([
+      expect.objectContaining({ node_id: newerNodeId, field_id: '__body__' })
+    ]);
+    expect(await db.document.listDocumentLinks(workspace, newerNodeId)).toEqual([]);
+    await db.document.replaceBodyDocumentLinks(workspace, newerNodeId, []);
+    expect(await db.document.listDocumentsLinkingDocument(workspace, olderNodeId)).toEqual([]);
   });
 
   it('bumps document type version on update and leaves it unchanged when omitted', async () => {

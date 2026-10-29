@@ -234,3 +234,26 @@ export const projectDiagramHref = (
   diagramId: string
 ) =>
   `/${encodeURIComponent(workspaceSlug)}/projects/${encodeURIComponent(projectId)}/diagrams/${encodeURIComponent(diagramId)}`;
+
+/** Route to a markdown page, picked by the scope (project, entity or workspace) that owns it. */
+export const markdownFileRoute = (
+  workspaceSlug: string,
+  file: {
+    id: string;
+    project_id?: string | null;
+    project_public_id?: string | null;
+    entity_id?: string | null;
+  }
+) => {
+  const search = { mode: 'preview' } as const;
+  if (file.project_id)
+    return projectMarkdownRoute(
+      workspaceSlug,
+      asProjectPublicId(file.project_public_id ?? file.project_id),
+      file.id,
+      search
+    );
+  if (file.entity_id)
+    return entityMarkdownRoute(workspaceSlug, asEntityPublicId(file.entity_id), file.id, search);
+  return workspaceMarkdownRoute(workspaceSlug, file.id, search);
+};

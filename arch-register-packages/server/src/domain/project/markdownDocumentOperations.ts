@@ -32,6 +32,7 @@ import type { DocumentMetadata } from '@arch-register/api-types/documentContract
 import {
   assertDocumentMetadataValid,
   assertNoExternalDocumentFieldWrites,
+  documentLinkTargetsFromBody,
   validateDocumentMetadata
 } from '../document/documentValidation';
 import type { ExternalUpdateEnvelope } from '@arch-register/api-types/common';
@@ -271,6 +272,11 @@ export const saveNewMarkdownContent = async (
             });
             await tx.document.replaceDocumentLinks(ws, nodeId, resolvedMetadata.links);
           }
+          await tx.document.replaceBodyDocumentLinks(
+            ws,
+            nodeId,
+            documentLinkTargetsFromBody(input.body)
+          );
         },
         afterCommit: [
           {
@@ -591,6 +597,11 @@ export const saveMarkdownContent = async (
           } else {
             await tx.document.deleteDocumentMetadata(ws, node.id);
           }
+          await tx.document.replaceBodyDocumentLinks(
+            ws,
+            node.id,
+            documentLinkTargetsFromBody(body)
+          );
           if (!external && effectiveChange && nextDocumentType) {
             await scheduleMetadataGenerationForDocument(tx, {
               workspace: ws,
@@ -882,6 +893,11 @@ export const restoreMarkdownRevision = async (
           } else {
             await tx.document.deleteDocumentMetadata(ws, node.id);
           }
+          await tx.document.replaceBodyDocumentLinks(
+            ws,
+            node.id,
+            documentLinkTargetsFromBody(revision.body)
+          );
           if (effectiveChange && restoredType) {
             await scheduleMetadataGenerationForDocument(tx, {
               workspace: ws,

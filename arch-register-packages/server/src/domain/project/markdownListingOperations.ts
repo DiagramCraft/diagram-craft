@@ -27,6 +27,7 @@ import {
   requireMarkdownNodeAccess,
   isMarkdownNode
 } from './markdownOperationHelpers';
+import { BODY_LINK_FIELD_ID } from '../document/documentValidation';
 import { getDocumentWorkflowStatuses } from '../document/documentWorkflowOperations';
 export const listRelatedContent = async (
   db: DatabaseAdapter,
@@ -130,9 +131,11 @@ export const listDocumentBacklinks = async (
         field_id: string;
         field_name: string;
         field_inverse_name: string | null;
+        source: 'metadata' | 'body';
       }> = [];
       const seen = new Set<string>();
       for (const link of links) {
+        if (link.node_id === targetNode.id) continue;
         const node = await db.project.contentNodes.getAnyContentNodeById(ws, link.node_id);
         if (!node || !isMarkdownNode(node)) continue;
         try {
@@ -141,7 +144,10 @@ export const listDocumentBacklinks = async (
           continue;
         }
         const state = await getDocumentState(db, ws, node);
-        const field = state.documentType?.fields.find(item => item.id === link.field_id);
+        const isBody = link.field_id === BODY_LINK_FIELD_ID;
+        const field = isBody
+          ? undefined
+          : state.documentType?.fields.find(item => item.id === link.field_id);
         const key = `${node.id}:${link.field_id}`;
         if (seen.has(key)) continue;
         seen.add(key);
@@ -153,8 +159,9 @@ export const listDocumentBacklinks = async (
           document_type_color: state.documentType?.color ?? null,
           document_type_icon: state.documentType?.icon ?? null,
           field_id: link.field_id,
-          field_name: field?.name ?? link.field_id,
-          field_inverse_name: field?.inverseName ?? null
+          field_name: isBody ? 'Linked in text' : (field?.name ?? link.field_id),
+          field_inverse_name: field?.inverseName ?? null,
+          source: isBody ? 'body' : 'metadata'
         });
       }
       return result;

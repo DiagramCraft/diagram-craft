@@ -128,6 +128,18 @@ export const contentNodeMapper = (row: DatabaseRow): ContentNodeDbResult => ({
   document_type_icon: row['document_type_icon'] == null ? null : String(row['document_type_icon'])
 });
 
+export type ContentNodeDbRelocate = {
+  parent_id: string | null;
+  path: string;
+  name: string;
+  original_filename: string | null;
+  size_bytes: number;
+  comment_count: number;
+  unresolved_comment_count: number;
+  updated_at: Date;
+  updated_by: string;
+};
+
 export type ContentNodeDatabase = {
   listContentNodes(ws: string, projectId: string): Promise<ContentNodeDbResult[]>;
   listAllContentNodes(ws: string): Promise<ContentNodeDbResult[]>;
@@ -189,6 +201,7 @@ export type ContentNodeDatabase = {
   deleteContentMetadata(ws: string, nodeId: string): Promise<void>;
   upsertContentNode(input: ContentNodeDbUpsert): Promise<ContentNodeDbResult>;
   createContentNodeIfAbsent(input: ContentNodeDbUpsert): Promise<ContentNodeDbResult | null>;
+  relocateContentNode(ws: string, nodeId: string, input: ContentNodeDbRelocate): Promise<void>;
   deleteContentNodesByIds(ws: string, nodeIds: readonly string[]): Promise<void>;
   deleteContentNodeByPath(
     ws: string,

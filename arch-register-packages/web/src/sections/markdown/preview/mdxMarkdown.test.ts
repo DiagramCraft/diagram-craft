@@ -18,6 +18,7 @@ vi.mock('../../../widgets/shared/widgetRegistry', () => {
     EntityCard: { mode: 'block', allowedProps: ['id'] },
     EntityGraph: { mode: 'block', allowedProps: ['id', 'depth', 'direction'] },
     EntityMention: { mode: 'inline', allowedProps: ['id'] },
+    WikiLink: { mode: 'inline', allowedProps: ['id'] },
     Caption: { mode: 'block', allowedProps: ['caption'], acceptsChildren: true },
     Callout: { mode: 'block', allowedProps: ['variant'], acceptsRichContent: true },
     EntityLifecycleChart: { mode: 'block', allowedProps: [], dashboardOnly: true }
@@ -46,6 +47,15 @@ describe('parseMarkdownWithComponents', () => {
       true,
       false
     ]);
+  });
+
+  it('parses an inline WikiLink by page id', () => {
+    const ast = parseMarkdownWithComponents(
+      'See <WikiLink id="3f2c9a52-1b7e-4d0c-9a3e-0c1f2a3b4c5d" /> for details'
+    );
+    const paragraph = ast[0] as { children?: Array<{ type: string; props?: { id?: string } }> };
+    const link = paragraph.children?.find(n => n.type === 'component');
+    expect(link?.props?.id).toBe('3f2c9a52-1b7e-4d0c-9a3e-0c1f2a3b4c5d');
   });
 
   it('parses a self-closing block component (regression)', () => {
