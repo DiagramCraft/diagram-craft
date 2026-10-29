@@ -93,7 +93,7 @@ describe('document AI action test contract', () => {
 describe('project contract composition', () => {
   it('keeps every focused project operation in the public router', () => {
     expect(Object.keys(projectContract.projects)).toEqual(expectedProjectOperations);
-    expect(Object.keys(projectContract.projects)).toHaveLength(59);
+    expect(Object.keys(projectContract.projects)).toHaveLength(60);
   });
 
   it('retains the complete document discovery fragment', () => {
