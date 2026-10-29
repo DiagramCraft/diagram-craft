@@ -1,0 +1,18 @@
+/**
+ *  LabeledValue - .cLabeledValue (pill look from LabeledControl.module.css)
+ *  | Label - shared .eLabel (LabeledControl.module.css)
+ *  | Value - .eValue
+ */
+
+.cLabeledValue {
+  cursor: default;
+
+  .eValue {
+    font-size: 11px;
+    color: var(--base-fg);
+    font-family: inherit;
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}

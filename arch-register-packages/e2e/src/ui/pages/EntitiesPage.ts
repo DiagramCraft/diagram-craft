@@ -41,14 +41,31 @@ export class EntitiesPage extends WorkspacePage {
     await expect(this.browserTitle()).toHaveText(name);
   };
 
-  switchView = async (view: 'table' | 'cards' | 'tree' | 'graph' | 'explore') => {
+  switchView = async (view: 'table' | 'cards' | 'tree' | 'graph' | 'relation-columns') => {
     await this.goto({ viewMode: view });
     await expect(this.browserTitle()).toBeVisible();
   };
 
   exploreColumn = (index: number) => this.page.getByTestId(`explore-column-${index}`);
-  exploreColumnSchemaFilter = (index: number) =>
-    this.page.getByTestId(`explore-column-schema-filter-${index}`);
+  exploreColumnMenu = (index: number) => this.page.getByTestId(`explore-column-menu-${index}`);
+
+  /** Picks a schema in an Explore column's "Filter by schema" submenu ("All schemas" clears it). */
+  selectExploreColumnSchema = async (index: number, schemaName: string) => {
+    await this.exploreColumnMenu(index).click();
+    await this.page.getByRole('menuitem', { name: 'Filter by schema' }).click();
+    await this.page.getByRole('menuitemradio', { name: schemaName, exact: true }).click();
+  };
+
+  /** Whether the given schema is the checked entry of an Explore column's schema submenu. */
+  expectExploreColumnSchema = async (index: number, schemaName: string) => {
+    await this.exploreColumnMenu(index).click();
+    await this.page.getByRole('menuitem', { name: 'Filter by schema' }).click();
+    await expect(
+      this.page.getByRole('menuitemradio', { name: schemaName, exact: true })
+    ).toBeChecked();
+    await this.page.keyboard.press('Escape');
+    await this.page.keyboard.press('Escape');
+  };
 
   graphNodes = () => this.page.locator('[data-node]');
   graphRootNodes = () => this.page.locator('[data-node] rect[data-selected]');
@@ -105,12 +122,8 @@ export class EntitiesPage extends WorkspacePage {
   openEntityDrawerButton = () => this.page.getByRole('button', { name: 'Open record in Entities' });
 
   openEntity = async (name: string) => {
-    // A row click now opens the entity's summary drawer rather than navigating directly (#3313).
-    // Drill into the full record via the drawer's "Open record in Entities" action so downstream
-    // helpers (edit mode, tabs, API catalog, action menus) keep working against the full page.
+    // In the table, a row click navigates straight to the entity page.
     await this.entityRow(name).click();
-    await expect(this.openEntityDrawerButton()).toBeVisible();
-    await this.openEntityDrawerButton().click();
     await expect(this.page.getByRole('heading', { name })).toBeVisible();
   };
 

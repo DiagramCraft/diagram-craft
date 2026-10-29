@@ -11,8 +11,14 @@ div[data-frame="true"] {
 
     & > div {
       margin: calc(-1 * var(--_frame-top-padding)) calc(-1 * var(--_frame-left-padding));
-      border-width: 0;
     }
+  }
+}
+
+/* Only the visible widget frame supplies a border; without it the table keeps its own. */
+div[data-frame="true"][data-framed="true"] {
+  .stack > div {
+    border-width: 0;
   }
 }
 
@@ -388,14 +394,6 @@ div[data-frame="true"] {
   }
 }
 
-.staleControls {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--panel-border);
-}
-
 .staleReportControls {
   display: flex;
   align-items: center;
@@ -441,15 +439,6 @@ div[data-frame="true"] {
   font: inherit;
   font-size: 12px;
   padding: 5px 9px;
-}
-
-.staleTotal {
-  margin-left: auto;
-}
-
-.staleTotal:disabled {
-  cursor: default;
-  color: var(--base-fg-more-dim);
 }
 
 .reportSub {

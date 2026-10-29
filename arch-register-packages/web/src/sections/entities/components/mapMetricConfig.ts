@@ -56,9 +56,18 @@ export const parseMetricConfig = (raw: unknown): MetricConfig | null => {
     return null;
   }
   if (
-    !['count', 'leafCount', 'sum', 'average', 'minimum', 'maximum', 'worst', 'percentage'].includes(
-      aggregation
-    ) ||
+    ![
+      'none',
+      'count',
+      'leafCount',
+      'sum',
+      'average',
+      'minimum',
+      'maximum',
+      'best',
+      'worst',
+      'percentage'
+    ].includes(aggregation) ||
     typeof source.kind !== 'string' ||
     !['field', 'assessmentRating', 'lifecycle', 'enum', 'assessmentEnum'].includes(source.kind)
   ) {
@@ -68,6 +77,16 @@ export const parseMetricConfig = (raw: unknown): MetricConfig | null => {
   const worstDirection = candidate.worstDirection;
   const targetCurrency = candidate.targetCurrency;
   const numeratorCondition = parseFilterCondition(candidate.numeratorCondition);
+  const colourBands = Array.isArray(candidate.colourBands)
+    ? (candidate.colourBands.filter(
+        band =>
+          band != null &&
+          typeof band === 'object' &&
+          (typeof (band as { max?: unknown }).max === 'number' ||
+            (band as { max?: unknown }).max === null) &&
+          ['good', 'warn', 'bad'].includes(String((band as { tone?: unknown }).tone))
+      ) as NonNullable<MetricConfig['colourBands']>)
+    : undefined;
   const parsedPath = Array.isArray(path)
     ? (path.filter(step => {
         if (step == null || typeof step !== 'object') return false;
@@ -121,7 +140,8 @@ export const parseMetricConfig = (raw: unknown): MetricConfig | null => {
     ...(typeof targetCurrency === 'string' && /^[A-Z]{3}$/.test(targetCurrency)
       ? { targetCurrency }
       : {}),
-    ...(numeratorCondition ? { numeratorCondition } : {})
+    ...(numeratorCondition ? { numeratorCondition } : {}),
+    ...(colourBands ? { colourBands } : {})
   };
 };
 
@@ -322,11 +342,27 @@ export const sourceKey = (source: MetricSource): string =>
 export const isEnumSource = (source: MetricSource): boolean =>
   source.kind === 'enum' || source.kind === 'assessmentEnum';
 
+/** Sources whose value is one of an ordered set of choices (select fields and lifecycle states). */
+export const isChoiceSource = (source: MetricSource): boolean =>
+  isEnumSource(source) || source.kind === 'lifecycle';
+
+/**
+ * Whether the roll-up of this metric is a dominant option (most common / best / worst) rather than
+ * a number: select and lifecycle sources always.
+ */
+export const isChoiceMetric = (metric: Pick<MetricConfig, 'source'>): boolean =>
+  isChoiceSource(metric.source);
+
 export const isCurrencyMetric = (
   metric: MetricConfig,
   schema: EntitySchema | RelationSchema | undefined
 ): boolean => {
-  if (metric.source.kind !== 'field' || metric.aggregation === 'count') return false;
+  if (
+    metric.source.kind !== 'field' ||
+    metric.aggregation === 'count' ||
+    metric.aggregation === 'none'
+  )
+    return false;
   const fieldId = metric.source.fieldId;
   return (
     schema?.fields.some(
@@ -338,11 +374,19 @@ export const isCurrencyMetric = (
 };
 
 export const AGGREGATION_OPTIONS: { value: MetricAggregation; label: string }[] = [
+  { value: 'none', label: 'None' },
   { value: 'count', label: 'Count' },
   { value: 'sum', label: 'Sum' },
   { value: 'average', label: 'Average' },
   { value: 'minimum', label: 'Minimum' },
   { value: 'maximum', label: 'Maximum' },
+  { value: 'best', label: 'Best' },
   { value: 'worst', label: 'Worst' },
   { value: 'percentage', label: 'Percentage' }
 ];
+
+/** Aggregation label for a source kind: "count" over a select field is the most common option. */
+export const aggregationOptionLabel = (
+  option: { value: MetricAggregation; label: string },
+  isEnum: boolean
+): string => (isEnum && option.value === 'count' ? 'Most common' : option.label);

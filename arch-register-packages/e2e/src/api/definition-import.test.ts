@@ -692,7 +692,6 @@ test.describe('definition import', () => {
       shared_field_group_links: [],
       color: null,
       icon: null,
-      relation_approval_policy: 'disabled',
       created_at: now,
       updated_at: now
     });

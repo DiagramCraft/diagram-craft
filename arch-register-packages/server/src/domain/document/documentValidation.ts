@@ -241,3 +241,13 @@ export const documentLinksFromMetadata = (fields: DocumentField[], metadata: Doc
   }
   return links;
 };
+
+/** Field id used in `document_link_index` for links written in the page body rather than in metadata */
+export const BODY_LINK_FIELD_ID = '__body__';
+
+const BODY_WIKI_LINK_RE = /<WikiLink\s+id="([^"]+)"\s*\/>/g;
+
+/** Ids of the wiki pages linked from the body text via `<WikiLink id="…"/>`, in first-seen order */
+export const documentLinkTargetsFromBody = (body: string): string[] => [
+  ...new Set(Array.from(body.matchAll(BODY_WIKI_LINK_RE), match => match[1]!))
+];

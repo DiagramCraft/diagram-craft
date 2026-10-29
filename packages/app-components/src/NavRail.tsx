@@ -11,12 +11,22 @@ export type NavRailItem = {
   separator?: boolean;
 };
 
+export type NavRailAction = {
+  id: string;
+  icon: IconType;
+  tooltip: string;
+  onClick: () => void;
+};
+
 type NavRailProps = {
   items: NavRailItem[];
   value: string | null;
   onChange: (id: string | null) => void;
   toggle?: boolean;
   side?: 'left' | 'right';
+  onItemContextMenu?: (id: string, event: React.MouseEvent) => void;
+  /** Plain action buttons rendered after the last item (not selectable), e.g. an add button. */
+  actions?: NavRailAction[];
 };
 
 export const NavRail = ({
@@ -24,7 +34,9 @@ export const NavRail = ({
   value,
   onChange,
   toggle = false,
-  side = 'left'
+  side = 'left',
+  onItemContextMenu,
+  actions
 }: NavRailProps) => {
   return (
     <div className={styles.cNavRail} data-side={side}>
@@ -44,6 +56,14 @@ export const NavRail = ({
                     aria-label={typeof item.tooltip === 'string' ? item.tooltip : item.id}
                     aria-pressed={isActive}
                     onClick={() => onChange(toggle && isActive ? null : item.id)}
+                    onContextMenu={
+                      onItemContextMenu
+                        ? event => {
+                            event.preventDefault();
+                            onItemContextMenu(item.id, event);
+                          }
+                        : undefined
+                    }
                   >
                     <Icon size={16} />
                   </button>
@@ -52,6 +72,27 @@ export const NavRail = ({
               {item.extra}
             </div>
           </Fragment>
+        );
+      })}
+      {actions && actions.length > 0 && <div className={styles.eSeparator} />}
+      {actions?.map(action => {
+        const Icon = action.icon;
+        return (
+          <div key={action.id} className={styles.eItem}>
+            <Tooltip
+              message={action.tooltip}
+              element={
+                <button
+                  type="button"
+                  className={styles.eButton}
+                  aria-label={action.tooltip}
+                  onClick={action.onClick}
+                >
+                  <Icon size={16} />
+                </button>
+              }
+            />
+          </div>
         );
       })}
     </div>

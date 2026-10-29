@@ -107,6 +107,22 @@ const validateTemplateDefaults = (
   });
 };
 
+const validateTemplateTypeAndDefaults = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  documentTypeId: string | null,
+  allowArchived: boolean,
+  metadata: DocumentTemplateWrite['metadata_defaults']
+) => {
+  if (documentTypeId === null) {
+    // An untyped document has no metadata fields, so there is nothing to default
+    validateTemplateDefaults([], metadata);
+    return;
+  }
+  const documentType = await requireDocumentType(db, workspace, documentTypeId, allowArchived);
+  validateTemplateDefaults(documentType.fields, metadata);
+};
+
 export const listDocumentTypes = async (
   db: DatabaseAdapter,
   workspace: string,
@@ -309,7 +325,7 @@ export const updateDocumentType = async (
               await tx.governanceCaseConfig.upsertCaseConfig({
                 workspace: ws,
                 case_kind: config.case_kind,
-                case_subkind: encodeCaseSubkind(id, migration.newFieldId),
+                case_subkinds: [encodeCaseSubkind(id, migration.newFieldId)],
                 name: config.name,
                 description: config.description,
                 enabled: config.enabled,
@@ -517,8 +533,13 @@ export const createDocumentTemplate = async (
       const projectId = input.project_id
         ? await requireProjectTemplateAccess(db, ws, input.project_id, authCtx, true)
         : null;
-      const documentType = await requireDocumentType(db, ws, input.document_type_id, false);
-      validateTemplateDefaults(documentType.fields, input.metadata_defaults ?? {});
+      await validateTemplateTypeAndDefaults(
+        db,
+        ws,
+        input.document_type_id,
+        false,
+        input.metadata_defaults ?? {}
+      );
       const now = new Date();
       return toApiTemplate(
         await db.document.createDocumentTemplate({
@@ -557,13 +578,13 @@ export const updateDocumentTemplate = async (
         ? await requireProjectTemplateAccess(db, ws, projectIdInput, authCtx, true)
         : null;
       if (!projectIdInput) requireWorkspaceCapability(authCtx, 'ws.settings');
-      const documentType = await requireDocumentType(
+      await validateTemplateTypeAndDefaults(
         db,
         ws,
         documentTypeId,
-        documentTypeId === current.document_type_id
+        documentTypeId === current.document_type_id,
+        input.metadata_defaults ?? {}
       );
-      validateTemplateDefaults(documentType.fields, input.metadata_defaults ?? {});
       const now = new Date();
       const row = await db.document.updateDocumentTemplate(ws, id, {
         ...input,

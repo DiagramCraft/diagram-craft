@@ -11,7 +11,6 @@ export type TabId =
   | 'relations'
   | 'future-plans'
   | 'related-content'
-  | 'dependents'
   | 'blast-radius'
   | 'assessments'
   | 'discussions'
@@ -26,20 +25,14 @@ export type TabId =
 export const HOME_TAB_IDS: readonly TabId[] = [
   'overview',
   'relations',
-  'future-plans',
+  'related-content',
   'conformance',
   'changes'
 ];
 export const API_TAB_IDS: readonly TabId[] = ['api'];
-export const CONTEXT_TAB_IDS: readonly TabId[] = [
-  'topology',
-  'graph',
-  'dependents',
-  'blast-radius',
-  'related-content'
-];
+export const CONTEXT_TAB_IDS: readonly TabId[] = ['topology', 'graph', 'blast-radius'];
 export const COLLABORATION_TAB_IDS: readonly TabId[] = ['discussions'];
-export const PLANNING_TAB_IDS: readonly TabId[] = ['assessments', 'timeline'];
+export const PLANNING_TAB_IDS: readonly TabId[] = ['timeline', 'assessments', 'future-plans'];
 
 export type Relation = {
   entityId: string;

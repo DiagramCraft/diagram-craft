@@ -20,6 +20,11 @@ describe('addRetentionDuration', () => {
     expect(toIsoDate(addRetentionDuration(start, 10, 'days'))).toBe('2026-01-11');
   });
 
+  it('adds weeks as seven days each', () => {
+    const start = parseIsoDate('2026-01-01')!;
+    expect(toIsoDate(addRetentionDuration(start, 2, 'weeks'))).toBe('2026-01-15');
+  });
+
   it('adds months using calendar arithmetic, clamping overflow days', () => {
     const start = parseIsoDate('2024-01-31')!;
     expect(toIsoDate(addRetentionDuration(start, 1, 'months'))).toBe('2024-02-29');

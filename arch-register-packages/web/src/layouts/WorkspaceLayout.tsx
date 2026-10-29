@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
+import { isArchivedProject } from '../lib/projectStatus';
 import { Outlet, getRouteApi, useNavigate, useMatches, useRouter } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { DndProvider } from 'react-dnd';
@@ -28,6 +29,9 @@ import { RouteContentBoundary } from '../routes/RouteContentBoundary';
 import { AppErrorState } from '../components/AppErrorState';
 import { WorkspaceDetailLayout } from './WorkspaceDetailLayout';
 import { EntityDrawer } from '../sections/entities/entityDrawer/EntityDrawer';
+import { PlannedChangeDrawer } from '../sections/entities/entityDrawer/PlannedChangeDrawer';
+import { ProjectDrawer } from '../sections/projects/ProjectDrawer';
+import { GovernanceCaseDrawer } from '../sections/governance/GovernanceCaseDrawer';
 import {
   EntityDrawerStackProvider,
   useEntityDrawer
@@ -38,18 +42,16 @@ import {
   resolveWorkspaceShellDescriptor
 } from './workspaceShellDescriptors';
 import {
-  APP_DEFINITIONS,
   appAccentStyle,
+  buildAppDefinitions,
   getAppDefinition,
-  railItemMeta,
   railItemToAppId
 } from '../shell/appShellRegistry';
+import { useApplications } from '../hooks/useApplications';
+import { useApplicationDashboardManager } from '../shell/ApplicationDashboardManager';
 import type { AppDefinition, AppId, WorkspaceRailItemId } from '../shell/shellTypes';
 import { getWorkspaceShellBuilder } from '../routes/workspace/workspaceShellRoute';
-import {
-  useAccessibleApplications,
-  useWorkspaceCapabilityConfigurations
-} from '../hooks/useWorkspaceConfig';
+import { useAccessibleApplications } from '../hooks/useWorkspaceConfig';
 import { settingsSectionTarget } from '../routes/settingsNavigation';
 import {
   asEntityPublicId,
@@ -57,11 +59,6 @@ import {
   entityDetailRoute,
   projectDetailRoute
 } from '../routes/publicObjectRoutes';
-import {
-  isChangeCasesWorkflowEnabled,
-  resolveDataStewardshipConfig
-} from '../app/data-stewardship/dataStewardshipQueries';
-import { DS_CHANGE_CASES_ID } from '../app/data-stewardship/dataStewardshipSections';
 
 const routeApi = getRouteApi('/authenticated/$workspaceSlug');
 
@@ -108,14 +105,15 @@ export const WorkspaceLayout = () => {
   const { lifecycleStates, teams, projectEntityTypes, assessmentTypes, currencies } =
     useWorkspaceConfig(workspaceSlug, !!workspaceSlug);
   const { data: aiConfig } = useAiConfig(workspaceSlug, !!workspaceSlug);
-  const { data: capabilityConfigurations = [] } = useWorkspaceCapabilityConfigurations(
-    workspaceSlug,
-    !!workspaceSlug
-  );
   const { data: applicationAccess, error: applicationAccessError } = useAccessibleApplications(
     workspaceSlug,
     !!workspaceSlug
   );
+  const { data: applications, error: applicationsError } = useApplications(
+    workspaceSlug,
+    !!workspaceSlug
+  );
+  const apps = useMemo(() => buildAppDefinitions(applications), [applications]);
 
   const {
     canManageWorkspaces,
@@ -147,7 +145,9 @@ export const WorkspaceLayout = () => {
             'query-console'
           ]
         : []),
-      ...(canManageWorkspaces || canAdministerWorkspace ? ['applications-capabilities'] : []),
+      ...(canManageWorkspaces || canAdministerWorkspace || canManageDashboard
+        ? ['applications-capabilities']
+        : []),
       ...(canManageTeams ? ['lifecycle-owners', 'teams'] : []),
       ...(canViewSchemas ? ['model-overview', 'schemas', 'schema-validation', 'conformance'] : []),
       ...(canManageMembers ? ['roles', 'members'] : []),
@@ -163,7 +163,8 @@ export const WorkspaceLayout = () => {
       canManageMembers,
       canAdministerWorkspace,
       canViewAudit,
-      canManageJobs
+      canManageJobs,
+      canManageDashboard
     ]
   );
 
@@ -171,16 +172,16 @@ export const WorkspaceLayout = () => {
 
   const handleRailPick = useCallback(
     (id: WorkspaceRailItemId) => {
-      navigateFromRailItem(id, { navigate, workspaceSlug, projects });
+      navigateFromRailItem(id, { navigate, workspaceSlug, projects, apps });
     },
-    [navigate, projects, workspaceSlug]
+    [apps, navigate, projects, workspaceSlug]
   );
 
   const handlePickApp = useCallback(
     (id: AppId) => {
-      navigateToApp(id, { navigate, workspaceSlug });
+      navigateToApp(id, { navigate, workspaceSlug, apps });
     },
-    [navigate, workspaceSlug]
+    [apps, navigate, workspaceSlug]
   );
 
   const handlePickWs = useCallback(
@@ -224,18 +225,13 @@ export const WorkspaceLayout = () => {
 
   const enabledApps = useMemo(
     () =>
-      APP_DEFINITIONS.filter(app => {
+      apps.filter(app => {
         const accessibleApplicationIds = new Set(
           applicationAccess?.accessible_application_ids ?? ['home']
         );
-        if (!accessibleApplicationIds.has(app.applicationId)) return false;
-        const enablement = app.enablement;
-        if (enablement === 'always') return true;
-        return capabilityConfigurations.some(
-          configuration => configuration.type === enablement.capabilityType && configuration.valid
-        );
+        return accessibleApplicationIds.has(app.applicationId);
       }),
-    [applicationAccess?.accessible_application_ids, capabilityConfigurations]
+    [apps, applicationAccess?.accessible_application_ids]
   );
 
   const contextValue = useMemo(
@@ -315,6 +311,7 @@ export const WorkspaceLayout = () => {
     navigate,
     workspace: ws,
     workspaceSlug,
+    apps,
     schemas,
     enums,
     projects,
@@ -325,7 +322,7 @@ export const WorkspaceLayout = () => {
 
   const activeRailItem =
     shellDescriptor.variant === 'overlay' ? null : shellDescriptor.activeRailItem;
-  const activeApp = getAppDefinition(railItemToAppId(activeRailItem));
+  const activeApp = getAppDefinition(apps, railItemToAppId(apps, activeRailItem));
 
   useEffect(() => {
     if (!applicationAccess || activeApp.applicationId === 'home') return;
@@ -337,31 +334,17 @@ export const WorkspaceLayout = () => {
     });
   }, [activeApp.applicationId, applicationAccess, navigate, workspaceSlug]);
 
-  // Data Stewardship's "Change cases & exceptions" rail icon is only shown once the configured
-  // Data Entity schema actually has its `entity.change-case` approval workflow enabled — without
-  // it, no entity.change-case governance cases are ever created for that schema, so the section
-  // would always be an empty register; hiding the icon (rather than showing an in-screen notice)
-  // keeps the rail itself an honest reflection of what's actually usable, mirroring the aiEnabled
-  // gate on the 'assistant'/'extract' items just below.
-  const changeCasesWorkflowEnabled = isChangeCasesWorkflowEnabled(
-    schemas,
-    resolveDataStewardshipConfig(capabilityConfigurations)
-  );
-
   const visibleRailItems: NavRailItem[] = (() => {
     const aiEnabled = aiConfig?.enabled === true;
     const count = governanceTaskCount?.count ?? 0;
     return activeApp.sections
-      .map(section => section.id)
-      .filter(id => aiEnabled || (id !== 'assistant' && id !== 'extract'))
-      .filter(id => changeCasesWorkflowEnabled || id !== DS_CHANGE_CASES_ID)
-      .map(id => {
-        const meta = railItemMeta(id);
+      .filter(({ id }) => aiEnabled || (id !== 'assistant' && id !== 'extract'))
+      .map(({ id, icon, tooltip, separator }) => {
         const item: NavRailItem = {
           id,
-          icon: meta.icon,
-          tooltip: meta.tooltip,
-          ...(meta.separator ? { separator: true } : {})
+          icon,
+          tooltip,
+          ...(separator ? { separator: true } : {})
         };
         if (id === 'governance' && count > 0) {
           return {
@@ -373,14 +356,24 @@ export const WorkspaceLayout = () => {
       });
   })();
 
+  const dashboardManager = useApplicationDashboardManager(
+    workspaceSlug,
+    applications?.find(application => application.key === activeApp.id),
+    canManageDashboard && activeApp.id !== 'home'
+  );
+
   const navRail = (
-    <NavRail
-      items={visibleRailItems}
-      value={activeRailItem}
-      onChange={id => {
-        if (id !== null) handleRailPick(id as WorkspaceRailItemId);
-      }}
-    />
+    <>
+      <NavRail
+        {...dashboardManager.railProps}
+        items={visibleRailItems}
+        value={activeRailItem}
+        onChange={id => {
+          if (id !== null) handleRailPick(id as WorkspaceRailItemId);
+        }}
+      />
+      {dashboardManager.overlays}
+    </>
   );
 
   const routeContent = (
@@ -397,7 +390,8 @@ export const WorkspaceLayout = () => {
     enumsError ||
     fieldGroupsError ||
     categoriesError ||
-    applicationAccessError
+    applicationAccessError ||
+    applicationsError
   ) {
     const error =
       workspacesError ??
@@ -407,7 +401,8 @@ export const WorkspaceLayout = () => {
       enumsError ??
       fieldGroupsError ??
       categoriesError ??
-      applicationAccessError;
+      applicationAccessError ??
+      applicationsError;
     return (
       <AppErrorState
         fullScreen
@@ -509,10 +504,7 @@ export const WorkspaceLayout = () => {
                 void invalidateProjectList(queryClient, workspaceSlug);
                 navigate(
                   projectDetailRoute(workspaceSlug, asProjectPublicId(project.public_id), {
-                    tab:
-                      project.status === 'complete' || project.status === 'cancelled'
-                        ? 'archive'
-                        : 'projects',
+                    tab: isArchivedProject(project) ? 'archive' : 'projects',
                     section: 'home'
                   })
                 );
@@ -548,7 +540,8 @@ const WorkspaceEntityDrawerStack = ({
   workspaceSlug: string;
   app: AppDefinition;
 }) => {
-  const { drawerStack, activeDrawerIndex, openEntityDrawer, closeEntityDrawer } = useEntityDrawer();
+  const { drawerStack, activeDrawerIndex, openEntityDrawer, openCaseDrawer, closeEntityDrawer } =
+    useEntityDrawer();
 
   if (activeDrawerIndex < 0) return null;
 
@@ -563,16 +556,60 @@ const WorkspaceEntityDrawerStack = ({
       />
       {activeEntries.map((entry, index) => {
         const active = index === activeDrawerIndex;
+        const stackOffset = (activeDrawerIndex - index) * 12;
+        if (entry.kind === 'case') {
+          return (
+            <GovernanceCaseDrawer
+              key={`case:${entry.caseId}`}
+              workspaceSlug={workspaceSlug}
+              caseId={entry.caseId}
+              onClose={closeEntityDrawer}
+              onOpenDataset={openEntityDrawer}
+              active={active}
+              stacked
+              stackOffset={stackOffset}
+            />
+          );
+        }
+        if (entry.kind === 'plannedChange') {
+          return (
+            <PlannedChangeDrawer
+              key={`plannedChange:${entry.caseId}:${entry.memberId}`}
+              workspaceSlug={workspaceSlug}
+              projectId={entry.projectId}
+              caseId={entry.caseId}
+              memberId={entry.memberId}
+              onClose={closeEntityDrawer}
+              active={active}
+              stacked
+              stackOffset={stackOffset}
+            />
+          );
+        }
+        if (entry.kind === 'project') {
+          return (
+            <ProjectDrawer
+              key={`project:${entry.projectId}`}
+              workspaceSlug={workspaceSlug}
+              projectId={entry.projectId}
+              onClose={closeEntityDrawer}
+              active={active}
+              stacked
+              stackOffset={stackOffset}
+            />
+          );
+        }
         return (
           <EntityDrawer
-            key={entry.entityId}
+            key={`entity:${entry.entityId}`}
             workspaceSlug={workspaceSlug}
             entityId={entry.entityId}
             onClose={closeEntityDrawer}
             onOpenEntity={openEntityDrawer}
+            onOpenGovernanceCase={openCaseDrawer}
             active={active}
             stacked
-            stackOffset={(activeDrawerIndex - index) * 12}
+            stackOffset={stackOffset}
           />
         );
       })}

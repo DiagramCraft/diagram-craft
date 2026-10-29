@@ -4,7 +4,13 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import type { RelationDbResult, RelationSchemaDbResult } from './db/relationDatabase';
 import type { ChangeCaseDbResult, ChangeCaseMemberDbResult } from './db/changeCaseDatabase';
-import { addRelationToChangeCase } from './changeCaseOperations';
+import {
+  addRelationToChangeCase,
+  removeEntityFromChangeCase,
+  updateChangeCaseMemberProposedState
+} from './changeCaseOperations';
+import { checkChangeCaseApplyConflicts } from './changeCaseConflictOperations';
+import { listChangeCasesByRelation, toApiMember } from './changeCaseReadOperations';
 import { applyChangeCase } from './changeCaseApplyOperations';
 
 const authorizationMocks = vi.hoisted(() => ({
@@ -68,7 +74,6 @@ const relationSchema: RelationSchemaDbResult = {
   groups: [],
   color: null,
   icon: null,
-  relation_approval_policy: 'disabled',
   created_at: now,
   updated_at: now
 };
@@ -157,6 +162,9 @@ const makeDb = (options: { relation?: RelationDbResult; members?: ChangeCaseMemb
   const markMemberApplied = vi.fn(async () => {});
   const markRevisionApplied = vi.fn(async () => {});
   const markCaseApplied = vi.fn(async () => {});
+  const removeMember = vi.fn(async () => ({}));
+  const updateMemberProposedState = vi.fn(async () => ({}));
+  const listCasesByEntity = vi.fn(async () => [changeCase]);
 
   const db = {
     project: {
@@ -170,6 +178,9 @@ const makeDb = (options: { relation?: RelationDbResult; members?: ChangeCaseMemb
       getLatestRevision: vi.fn(async () => revision),
       listMembers: vi.fn(async () => members),
       addMember,
+      removeMember,
+      updateMemberProposedState,
+      listCasesByEntity,
       markMemberApplied,
       markRevisionApplied,
       markCaseApplied
@@ -193,7 +204,17 @@ const makeDb = (options: { relation?: RelationDbResult; members?: ChangeCaseMemb
     }
   } as unknown as DatabaseAdapter;
 
-  return { db, relation, addMember, updateRelation, createEntityVersion, markMemberApplied };
+  return {
+    db,
+    relation,
+    addMember,
+    updateRelation,
+    createEntityVersion,
+    markMemberApplied,
+    removeMember,
+    updateMemberProposedState,
+    listCasesByEntity
+  };
 };
 
 describe('addRelationToChangeCase', () => {
@@ -290,5 +311,175 @@ describe('applyChangeCase — relation members', () => {
         resolutions: [{ memberId: member.id, resolvedEntityData: { data: { note: 'after' } } }]
       })
     ).rejects.toMatchObject({ status: 409 });
+  });
+});
+
+const makeRelationMember = (overrides: Partial<ChangeCaseMemberDbResult> = {}) =>
+  makeMember({
+    base_state: {
+      id: 'relation-1',
+      schema_id: relationSchema.id,
+      in_entity_id: 'entity-in',
+      out_entity_id: 'entity-out',
+      data: { note: 'before' }
+    },
+    ...overrides
+  });
+
+describe('toApiMember — record kind', () => {
+  it('marks relation members with kind "relation" and a relation_id', () => {
+    const member = toApiMember(makeRelationMember(), authCtx, new Map());
+    expect(member).toMatchObject({ kind: 'relation', relation_id: 'relation-1' });
+  });
+
+  it('keeps kind and relation_id on endpoint-redacted relation members', () => {
+    const member = toApiMember(makeRelationMember(), authCtx, new Map(), false);
+    expect(member).toMatchObject({ kind: 'relation', relation_id: 'relation-1' });
+  });
+
+  it('marks entity members with kind "entity" and a null relation_id', () => {
+    const member = toApiMember(
+      makeMember({
+        entity_id: 'entity-1',
+        base_state: { id: 'entity-1', schema_id: 's', data: {} },
+        proposed_state: { id: 'entity-1', schema_id: 's', data: {} }
+      }),
+      authCtx,
+      new Map()
+    );
+    expect(member).toMatchObject({ kind: 'entity', relation_id: null });
+  });
+});
+
+describe('listChangeCasesByRelation', () => {
+  it('lists the cases touching the relation', async () => {
+    const { db, listCasesByEntity } = makeDb({ members: [makeRelationMember()] });
+    const endpointSchema = { id: 'endpoint-schema', fields: [], groups: [] };
+    (db.catalog.getEntity as ReturnType<typeof vi.fn>).mockImplementation(async (_ws, id) =>
+      id === 'entity-in' || id === 'entity-out' ? { id, schema_id: endpointSchema.id } : null
+    );
+    (db.catalog.listSchemas as ReturnType<typeof vi.fn>).mockResolvedValue([endpointSchema]);
+
+    const result = await listChangeCasesByRelation(db, 'ws-1', 'relation-1', eventForAuthCtx());
+
+    expect(listCasesByEntity).toHaveBeenCalledWith('ws-1', 'relation-1');
+    expect(result).toHaveLength(1);
+    expect(result[0]!.members[0]).toMatchObject({ kind: 'relation', relation_id: 'relation-1' });
+  });
+
+  it('returns 404 when the endpoint schemas cannot be resolved (fails closed)', async () => {
+    const { db, listCasesByEntity } = makeDb({ members: [makeRelationMember()] });
+
+    await expect(
+      listChangeCasesByRelation(db, 'ws-1', 'relation-1', eventForAuthCtx())
+    ).rejects.toMatchObject({ status: 404 });
+    expect(listCasesByEntity).not.toHaveBeenCalled();
+  });
+
+  it('returns 404 when the relation does not exist', async () => {
+    const { db } = makeDb({});
+    (db.relation.getRelation as ReturnType<typeof vi.fn>).mockResolvedValueOnce(null);
+
+    await expect(
+      listChangeCasesByRelation(db, 'ws-1', 'missing', eventForAuthCtx())
+    ).rejects.toMatchObject({ status: 404 });
+  });
+});
+
+describe('relation members — conflicts, update and remove', () => {
+  it('reports a stale relation member in checkChangeCaseApplyConflicts', async () => {
+    const { db } = makeDb({
+      relation: makeRelation({ version: 3 }),
+      members: [makeRelationMember({ base_version: 1 })]
+    });
+
+    const conflicts = await checkChangeCaseApplyConflicts(
+      db,
+      'ws-1',
+      project.id,
+      changeCase.id,
+      eventForAuthCtx()
+    );
+
+    expect(conflicts).toEqual([
+      expect.objectContaining({
+        memberId: 'member-1',
+        entityId: 'relation-1',
+        baseVersion: 1,
+        currentVersion: 3,
+        stale: true
+      })
+    ]);
+  });
+
+  it('updates the proposed state of a relation member', async () => {
+    const { db, updateMemberProposedState } = makeDb({ members: [makeRelationMember()] });
+
+    await updateChangeCaseMemberProposedState(
+      db,
+      'ws-1',
+      project.id,
+      changeCase.id,
+      'member-1',
+      eventForAuthCtx(),
+      { proposedState: { data: { note: 'newer' } } }
+    );
+
+    expect(updateMemberProposedState).toHaveBeenCalledWith(
+      'ws-1',
+      'member-1',
+      { data: { note: 'newer' } },
+      {}
+    );
+  });
+
+  it('rejects a member update that changes a relation endpoint', async () => {
+    const { db, updateMemberProposedState } = makeDb({ members: [makeRelationMember()] });
+
+    await expect(
+      updateChangeCaseMemberProposedState(
+        db,
+        'ws-1',
+        project.id,
+        changeCase.id,
+        'member-1',
+        eventForAuthCtx(),
+        { proposedState: { data: {}, out_entity_id: 'entity-other' } }
+      )
+    ).rejects.toMatchObject({ status: 400 });
+    expect(updateMemberProposedState).not.toHaveBeenCalled();
+  });
+
+  it('removes a relation member when other members remain', async () => {
+    const { db, removeMember } = makeDb({
+      members: [makeRelationMember(), makeMember({ id: 'member-2', entity_id: 'entity-1' })]
+    });
+
+    await removeEntityFromChangeCase(
+      db,
+      'ws-1',
+      project.id,
+      changeCase.id,
+      'member-1',
+      eventForAuthCtx()
+    );
+
+    expect(removeMember).toHaveBeenCalledWith('ws-1', 'member-1');
+  });
+
+  it('refuses to remove the last remaining member', async () => {
+    const { db, removeMember } = makeDb({ members: [makeRelationMember()] });
+
+    await expect(
+      removeEntityFromChangeCase(
+        db,
+        'ws-1',
+        project.id,
+        changeCase.id,
+        'member-1',
+        eventForAuthCtx()
+      )
+    ).rejects.toMatchObject({ status: 400 });
+    expect(removeMember).not.toHaveBeenCalled();
   });
 });

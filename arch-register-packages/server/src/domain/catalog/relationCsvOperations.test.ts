@@ -106,7 +106,6 @@ const makeRelationSchema = (
   shared_field_group_links: [],
   color: null,
   icon: null,
-  relation_approval_policy: 'disabled',
   created_at: now,
   updated_at: now
 });
@@ -150,15 +149,29 @@ type MockDb = DatabaseAdapter & {
 const makeDb = ({
   relationSchemas,
   entities,
-  existingRelations = []
+  existingRelations = [],
+  approvalRequiredSchemaIds = []
 }: {
   relationSchemas: RelationSchemaDbResult[];
   entities: EntityDbResult[];
   existingRelations?: RelationDbResult[];
+  approvalRequiredSchemaIds?: string[];
 }) => {
   const db = {
     core: {
       transaction: vi.fn(async (callback: (tx: DatabaseAdapter) => unknown) => callback(db))
+    },
+    governanceCaseConfig: {
+      getCaseConfig: vi.fn(async (_ws: string, _kind: string, subkind: string) => ({
+        enabled: approvalRequiredSchemaIds.includes(subkind)
+      })),
+      listCaseConfig: vi.fn(async () =>
+        approvalRequiredSchemaIds.map(id => ({
+          case_kind: 'relation.change-case',
+          case_subkinds: [id],
+          enabled: true
+        }))
+      )
     },
     catalog: {
       listSchemas: vi.fn(async () => [entitySchema]),
@@ -402,11 +415,15 @@ describe('parseRelationsImport', () => {
 
   it('flags an existing relation that requires an approved change proposal', async () => {
     const relationSchema = makeRelationSchema('relation-schema', 'Depends On');
-    relationSchema.relation_approval_policy = 'required';
     const entities = [makeEntity('in-1'), makeEntity('out-1')];
     const existing = makeRelation('relation-schema', 'in-1', 'out-1');
     const result = await parseRelationsImport(
-      makeDb({ relationSchemas: [relationSchema], entities, existingRelations: [existing] }),
+      makeDb({
+        relationSchemas: [relationSchema],
+        entities,
+        existingRelations: [existing],
+        approvalRequiredSchemaIds: ['relation-schema']
+      }),
       'ws-1',
       authCtx,
       '_schemaId;_inEntityId;_outEntityId\nrelation-schema;in-1;out-1'
@@ -583,9 +600,12 @@ describe('parseRelationsImport — entityRelation fields', () => {
 describe('commitRelationsImport', () => {
   it('never gates creating a new relation, even under a required-approval schema', async () => {
     const relationSchema = makeRelationSchema('relation-schema', 'Depends On');
-    relationSchema.relation_approval_policy = 'required';
     const entities = [makeEntity('in-1'), makeEntity('out-1')];
-    const db = makeDb({ relationSchemas: [relationSchema], entities });
+    const db = makeDb({
+      relationSchemas: [relationSchema],
+      entities,
+      approvalRequiredSchemaIds: ['relation-schema']
+    });
 
     const result = await commitRelationsImport(db, 'ws-1', authCtx, eventForAuthCtx(), [
       { _schemaId: 'relation-schema', _inEntityId: 'in-1', _outEntityId: 'out-1' }
@@ -598,13 +618,13 @@ describe('commitRelationsImport', () => {
     const relationSchema = makeRelationSchema('relation-schema', 'Depends On', [
       { id: 'note', name: 'Note', type: 'text', requirementLevel: 'optional' }
     ]);
-    relationSchema.relation_approval_policy = 'required';
     const entities = [makeEntity('in-1'), makeEntity('out-1')];
     const existing = makeRelation('relation-schema', 'in-1', 'out-1');
     const db = makeDb({
       relationSchemas: [relationSchema],
       entities,
-      existingRelations: [existing]
+      existingRelations: [existing],
+      approvalRequiredSchemaIds: ['relation-schema']
     });
 
     await expect(
@@ -644,14 +664,14 @@ describe('commitRelationsImport', () => {
     const relationSchema = makeRelationSchema('relation-schema', 'Depends On', [
       { id: 'note', name: 'Note', type: 'text', requirementLevel: 'optional' }
     ]);
-    relationSchema.relation_approval_policy = 'required';
     const entities = [makeEntity('in-1'), makeEntity('out-1')];
     const existing = makeRelation('relation-schema', 'in-1', 'out-1');
     existing.approval_policy_override = 'disabled';
     const db = makeDb({
       relationSchemas: [relationSchema],
       entities,
-      existingRelations: [existing]
+      existingRelations: [existing],
+      approvalRequiredSchemaIds: ['relation-schema']
     });
 
     const result = await commitRelationsImport(db, 'ws-1', authCtx, eventForAuthCtx(), [

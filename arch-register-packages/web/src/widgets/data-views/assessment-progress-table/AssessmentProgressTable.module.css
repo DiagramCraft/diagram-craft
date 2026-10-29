@@ -1,0 +1,15 @@
+.progress {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 120px;
+}
+
+.progressBar {
+  flex: 1;
+}
+
+.message {
+  padding: 8px 0;
+  font-size: 12px;
+}

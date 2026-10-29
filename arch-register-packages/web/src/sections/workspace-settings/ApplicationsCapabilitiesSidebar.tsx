@@ -1,12 +1,14 @@
-import { useMemo } from 'react';
 import { getRouteApi } from '@tanstack/react-router';
-import { TbApps, TbBolt } from 'react-icons/tb';
+import { useMemo, useState } from 'react';
+import { TbApps, TbBolt, TbPlus } from 'react-icons/tb';
 import { TreeRow } from '../../components/TreeRow';
 import styles from '../../shell/SidePanel.module.css';
-import dotStyles from './ApplicationsCapabilitiesSidebar.module.css';
 import { SidebarGroupLabel, SidebarTitleHeader } from '../../components/sidebar/SidebarPrimitives';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
+import { useApplications, useCreateApplication } from '../../hooks/useApplications';
+import { AddApplicationDialog } from './AddApplicationDialog';
 import { useWorkspaceCapabilityConfigurations } from '../../hooks/useWorkspaceConfig';
+import dotStyles from './ApplicationsCapabilitiesSidebar.module.css';
 import {
   buildApplicationsCapabilitiesItems,
   findApplicationsCapabilitiesItem,
@@ -22,10 +24,10 @@ const StatusDot = ({ state }: { state: EnabledState }) => (
     className={`${dotStyles.dot} ${dotStyles[state]}`}
     title={
       state === 'on'
-        ? 'Enabled'
+        ? 'Configured'
         : state === 'warn'
-          ? 'Enabled — configuration incomplete'
-          : 'Not enabled'
+          ? 'Configuration incomplete'
+          : 'Not configured'
     }
   />
 );
@@ -34,22 +36,26 @@ export const ApplicationsCapabilitiesSidebar = ({ workspaceSlug }: { workspaceSl
   const navigate = routeApi.useNavigate();
   const search = routeApi.useSearch();
   const ctx = useWorkspaceContext();
+  const { data: workspaceApplications = [] } = useApplications(workspaceSlug);
+  const createApplication = useCreateApplication(workspaceSlug);
+  const [addOpen, setAddOpen] = useState(false);
   const { data: configurations = [] } = useWorkspaceCapabilityConfigurations(workspaceSlug);
-
   const stateByType = useMemo(() => {
     const map = new Map<string, EnabledState>();
-    for (const config of configurations) {
-      map.set(config.type, config.valid ? 'on' : 'warn');
-    }
+    for (const config of configurations) map.set(config.type, config.valid ? 'on' : 'warn');
     return map;
   }, [configurations]);
 
   const perms = {
     canManageBindings: ctx.permissions.canManageWorkspaces,
-    canManageAccess: ctx.permissions.canAdministerWorkspace ?? false
+    canManageAccess: ctx.permissions.canAdministerWorkspace ?? false,
+    canManageApplications: ctx.permissions.canManageDashboard
   };
-  const { applications, capabilities } = buildApplicationsCapabilitiesItems(perms);
-  const activeItem = findApplicationsCapabilitiesItem(perms, search.item);
+  const { applications, capabilities } = buildApplicationsCapabilitiesItems(
+    perms,
+    workspaceApplications
+  );
+  const activeItem = findApplicationsCapabilitiesItem(perms, workspaceApplications, search.item);
 
   const select = (id: string) =>
     navigate({
@@ -69,7 +75,11 @@ export const ApplicationsCapabilitiesSidebar = ({ workspaceSlug }: { workspaceSl
             label={item.label}
             active={activeItem?.id === item.id}
             onClick={() => select(item.id)}
-            trailing={<StatusDot state={stateByType.get(item.capabilityType) ?? 'off'} />}
+            trailing={
+              item.capabilityType ? (
+                <StatusDot state={stateByType.get(item.capabilityType) ?? 'off'} />
+              ) : undefined
+            }
           />
         ))}
       </>
@@ -77,7 +87,41 @@ export const ApplicationsCapabilitiesSidebar = ({ workspaceSlug }: { workspaceSl
 
   return (
     <>
-      <SidebarTitleHeader title="Applications & Capabilities" />
+      <SidebarTitleHeader
+        title="Applications & Capabilities"
+        actions={
+          perms.canManageApplications ? (
+            <button
+              type="button"
+              className={styles.action}
+              title="Add application"
+              onClick={() => setAddOpen(true)}
+            >
+              <TbPlus size={13} />
+            </button>
+          ) : undefined
+        }
+      />
+      <AddApplicationDialog
+        key={`add-${addOpen}`}
+        open={addOpen}
+        error={
+          createApplication.error instanceof Error ? createApplication.error.message : undefined
+        }
+        onCancel={() => setAddOpen(false)}
+        onConfirm={application =>
+          createApplication.mutate(application, {
+            onSuccess: created => {
+              setAddOpen(false);
+              void navigate({
+                to: '/$workspaceSlug/settings/applications-capabilities',
+                params: { workspaceSlug },
+                search: { item: created.key }
+              });
+            }
+          })
+        }
+      />
       <div className={styles.scroll}>
         {renderGroup('Applications', applications, <TbApps size={12} />)}
         {renderGroup('Capabilities', capabilities, <TbBolt size={12} />)}

@@ -9,6 +9,7 @@ import {
   filterDisplayFieldIdsForContext,
   formatEntityDisplayValue,
   getDisplayFieldIds,
+  isNumericDisplayField,
   withDisplayFieldIds,
   withoutDisplayFieldIds
 } from './entityDisplayFields';
@@ -89,6 +90,17 @@ describe('entity display fields', () => {
     expect(formatEntityDisplayValue(entity, fields.find(field => field.id === 'phase')!)).toBe(
       'Production'
     );
+  });
+
+  it('formats usage count when present and blank when omitted', () => {
+    const fields = buildEntityDisplayFields([schema], false);
+    const usageField = fields.find(field => field.id === '_usageCount')!;
+
+    expect(usageField).toMatchObject({ label: 'Usage count', group: 'General' });
+    expect(
+      formatEntityDisplayValue({ _usageCount: 3 } as unknown as EntityRecord, usageField)
+    ).toBe('3');
+    expect(formatEntityDisplayValue({} as unknown as EntityRecord, usageField)).toBeNull();
   });
 
   it('exposes conformance status and marks stale coverage separately', () => {
@@ -203,5 +215,27 @@ describe('joined assessment display fields', () => {
     } as unknown as BrowserEntityRecord as EntityRecord;
     expect(formatEntityDisplayValue(withResponse, ratingField)).toBe('4');
     expect(formatEntityDisplayValue(withResponse, enumField)).toBe('High');
+  });
+});
+
+describe('isNumericDisplayField', () => {
+  const display = (schemaField?: Record<string, unknown>) =>
+    ({
+      id: 'f',
+      label: 'F',
+      group: 'G',
+      schemaField: schemaField as unknown as EntitySchema['fields'][number] | undefined
+    }) as Parameters<typeof isNumericDisplayField>[0];
+
+  it.each([
+    [{ type: 'number' }, true],
+    [{ type: 'currency' }, true],
+    [{ type: 'derived', resultType: 'currency' }, true],
+    [{ type: 'derived', resultType: 'rating' }, true],
+    [{ type: 'derived', resultType: 'text' }, false],
+    [{ type: 'text' }, false],
+    [undefined, false]
+  ])('classifies %j as %s', (schemaField, expected) => {
+    expect(isNumericDisplayField(display(schemaField))).toBe(expected);
   });
 });

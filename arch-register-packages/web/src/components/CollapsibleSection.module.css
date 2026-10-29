@@ -1,0 +1,70 @@
+/**
+ *  CollapsibleSection - .cCollapsibleSection
+ *  | Header  - .eHeader
+ *  | | Toggle  - .eToggle (chevron + Title)
+ *  | | Actions - .eActions (optional, right aligned)
+ *  | Body    - .eBody
+ */
+
+.cCollapsibleSection {
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--panel-border);
+
+  .eHeader {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .eToggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+    height: 32px;
+    padding: 0 10px;
+    background: transparent;
+    border: none;
+    font-family: inherit;
+    cursor: pointer;
+    text-align: left;
+
+    &:hover {
+      background: color-mix(in oklch, var(--base-fg) 5%, transparent);
+    }
+  }
+
+  .eIcon {
+    flex-shrink: 0;
+    transition: transform 100ms;
+    color: var(--base-fg-more-dim);
+
+    &[data-open="false"] {
+      transform: rotate(-90deg);
+    }
+  }
+
+  .eTitle {
+    flex-shrink: 0;
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: var(--base-fg-more-dim);
+  }
+
+  .eActions {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .eBody {
+    padding: 4px 10px 12px;
+  }
+}

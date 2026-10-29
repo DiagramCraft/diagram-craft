@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
-import { FormGroup } from '@diagram-craft/app-components/FormGroup';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
@@ -14,6 +13,7 @@ import {
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { Banner } from '../components/Banner';
+import { FormGroup } from '../components/FormGroup';
 import { useEntitiesBySchema } from '../hooks/useEntities';
 import {
   applyEntityTemplate,
@@ -158,7 +158,7 @@ export const EntityTemplateDialog = ({
           />
         </FormElement>
         <div className={styles.contentGrid}>
-          <FormGroup label="Properties" icon={<TbAdjustments size={12} />}>
+          <FormGroup variant="border" label="Properties" icon={<TbAdjustments size={12} />}>
             <div className={styles.propertiesList}>
               {schema.fields
                 .filter(
@@ -192,7 +192,7 @@ export const EntityTemplateDialog = ({
                 ))}
             </div>
           </FormGroup>
-          <FormGroup label="Metadata" icon={<TbInfoCircle size={11} />}>
+          <FormGroup variant="border" label="Metadata" icon={<TbInfoCircle size={11} />}>
             <FormElement label="Description" required={false}>
               <TextArea
                 value={meta.description}

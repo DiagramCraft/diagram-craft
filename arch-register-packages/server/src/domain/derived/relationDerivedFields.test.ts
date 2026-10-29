@@ -75,7 +75,7 @@ describe('relation-rooted derived fields', () => {
       entityRelationField('assets', 'data-entity'),
       derivedField(
         'permitted_count',
-        'relation.assets.map(.permitted_regions) |> flatten |> count',
+        'relation.assets.map(.permitted_regions).flat().count()',
         undefined,
         'number'
       )
@@ -291,7 +291,7 @@ describe('relation derived recalculation', () => {
       entityRelationField('assets', 'data-entity'),
       derivedField(
         'permitted_count',
-        'relation.assets.map(.permitted_regions) |> flatten |> count',
+        'relation.assets.map(.permitted_regions).flat().count()',
         undefined,
         'number'
       )

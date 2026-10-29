@@ -1,9 +1,22 @@
 import { seededUsers } from '@arch-register/server/db/seedFixtures';
 import { createApiTest, expect } from '../helpers/fixtures';
+import { disableEntityApproval } from '../helpers/governancePolicy';
 import { makeAuthHeader, seedIds } from '../helpers/seedHelper';
+import { seedWorkspaces } from '@arch-register/server/db/seedData/workspace';
 import type { TestORPCClient } from '../helpers/orpcTestClient';
 
-const test = createApiTest({ seed: 'bootstrap' }).extend<{ auth: string }>({
+const DATA_ENTITY_SCHEMA_ID = '00000000-0000-0000-0000-000000000008';
+
+// These tests edit Data Entities directly; the seed requires approval for them, which is covered
+// by the entity change approval tests instead.
+const test = createApiTest({
+  seed: 'bootstrap',
+  afterSeed: async server => {
+    for (const workspace of seedWorkspaces) {
+      await disableEntityApproval(server.db, workspace.id, DATA_ENTITY_SCHEMA_ID);
+    }
+  }
+}).extend<{ auth: string }>({
   auth: [
     async ({ server }, use) => {
       await use(await makeAuthHeader(server.db, seededUsers.globalAdmin.id));
@@ -11,8 +24,6 @@ const test = createApiTest({ seed: 'bootstrap' }).extend<{ auth: string }>({
     { scope: 'file' }
   ]
 });
-
-const DATA_ENTITY_SCHEMA_ID = '00000000-0000-0000-0000-000000000008';
 
 const initialStewardship = {
   steward: { principal_type: 'user', principal_id: seedIds.users.securityteamadmin },

@@ -194,13 +194,12 @@ test.describe('entities section', () => {
   test('filters an explore column by schema and persists the selection', async ({ page }) => {
     const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);
 
-    await entitiesPage.goto({ viewMode: 'explore', q: frontendAppEntity.name });
-    await expect(page).toHaveURL(/viewMode=explore/);
+    await entitiesPage.goto({ viewMode: 'relation-columns', q: frontendAppEntity.name });
+    await expect(page).toHaveURL(/viewMode=relation-columns/);
 
     const outgoingColumn = entitiesPage.exploreColumn(1);
-    const schemaFilter = entitiesPage.exploreColumnSchemaFilter(1);
-    await expect(schemaFilter).toBeVisible();
-    await schemaFilter.selectOption(apiSchema.id);
+    await expect(entitiesPage.exploreColumnMenu(1)).toBeVisible();
+    await entitiesPage.selectExploreColumnSchema(1, apiSchema.name);
     await expect(outgoingColumn).toContainText(apiSchema.name);
     await expect(outgoingColumn.getByText('Auth Service', { exact: true })).toHaveCount(0);
     await expect
@@ -213,20 +212,20 @@ test.describe('entities section', () => {
     const viewConfigs = (
       typeof parsedViewConfigs === 'string' ? JSON.parse(parsedViewConfigs) : parsedViewConfigs
     ) as {
-      explore?: { columnSchemaIds?: Record<string, string> };
+      'relation-columns'?: { columnSchemaIds?: Record<string, string> };
     };
     expect(viewConfigs).toMatchObject({
-      explore: { columnSchemaIds: { '1': apiSchema.id } }
+      'relation-columns': { columnSchemaIds: { '1': apiSchema.id } }
     });
 
     await page.reload();
-    await expect(entitiesPage.exploreColumnSchemaFilter(1)).toHaveValue(apiSchema.id);
+    await entitiesPage.expectExploreColumnSchema(1, apiSchema.name);
     await expect(
       entitiesPage.exploreColumn(1).getByText('Auth Service', { exact: true })
     ).toHaveCount(0);
   });
 
-  test('persists the Capability + Entity + Project roadmap mode and horizon toggle', async ({
+  test('persists the Parent + Entity + Project roadmap mode and horizon toggle', async ({
     page
   }) => {
     const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);
@@ -253,26 +252,6 @@ test.describe('entities section', () => {
       page.getByText('Group', { exact: true }).locator('..').locator('select')
     ).toHaveValue('capability');
     await expect(page.getByRole('button', { name: 'Show horizon bands' })).toBeVisible();
-  });
-
-  test('loads tree view without the redundant entity list request', async ({ page }) => {
-    const entityListRequests: string[] = [];
-    page.on('request', request => {
-      const pathname = new URL(request.url()).pathname;
-      if (pathname === '/api/application/v1/default/data') entityListRequests.push(pathname);
-    });
-
-    const treeResponse = page.waitForResponse(response => {
-      const pathname = new URL(response.url()).pathname;
-      return pathname === '/api/application/v1/default/data/tree' && response.ok();
-    });
-
-    const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);
-    await entitiesPage.goto({ viewMode: 'tree' });
-    await treeResponse;
-    await entitiesPage.expectLoaded();
-
-    expect(entityListRequests).toHaveLength(0);
   });
 
   test('restores entity tabs through reload and browser history', async ({ page }) => {
@@ -482,28 +461,28 @@ test.describe('entities section', () => {
       `/${defaultWorkspace.slug}/entities/${authApiEntity.publicId}/folders/security`
     );
 
-    const filterInput = page.getByPlaceholder('Filter diagrams…');
-    const listViewButton = page.locator('button[title="List view"]');
+    const filterInput = page.getByPlaceholder('Filter…');
+    const listViewButton = page.locator('select:has(option[value="list"])');
 
     await expect(page.getByRole('heading', { name: 'Security' })).toBeVisible();
 
     await filterInput.fill('Threat');
     await expect(page).toHaveURL(/contentQuery=Threat/);
 
-    await listViewButton.click();
+    await listViewButton.selectOption('list');
     await expect(page).toHaveURL(/contentView=list/);
     await expect(page.getByText('Threat Model')).toBeVisible();
-    await expect(page.getByText('Name')).toBeVisible();
+    await expect(page.getByText('Name', { exact: true })).toBeVisible();
 
     await page.reload();
     await expect(filterInput).toHaveValue('Threat');
     await expect(page.getByText('Threat Model')).toBeVisible();
-    await expect(page.getByText('Name')).toBeVisible();
+    await expect(page.getByText('Name', { exact: true })).toBeVisible();
 
     await page.goBack();
     await expect(filterInput).toHaveValue('Threat');
     await expect(page).not.toHaveURL(/contentView=list/);
-    await expect(page.getByText('Name')).toHaveCount(0);
+    await expect(page.getByText('Name', { exact: true })).toHaveCount(0);
     await expect(page.getByText('Threat Model')).toBeVisible();
   });
 

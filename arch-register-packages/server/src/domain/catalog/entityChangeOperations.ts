@@ -88,7 +88,7 @@ type ResolvedEntityApprovalPolicy = {
   policyVersion: string;
 };
 
-const entityState = (entity: Entity): Record<string, unknown> => ({
+export const entityState = (entity: Entity): Record<string, unknown> => ({
   id: entity.id,
   workspace: entity.workspace,
   public_id: entity.public_id,

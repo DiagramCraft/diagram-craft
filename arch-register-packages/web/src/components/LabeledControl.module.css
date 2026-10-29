@@ -1,0 +1,26 @@
+/**
+ *  Shared look of the toolbar controls that show a small label next to their value
+ *  (LabeledSelect, LabeledDateInput).
+ *
+ *  Pill  - .cLabeledControl
+ *  Label - .eLabel
+ */
+
+.cLabeledControl {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 26px;
+  padding: 0 8px 0 10px;
+  background: var(--cmp-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.eLabel {
+  font-size: 11px;
+  color: var(--base-fg-more-dim);
+  margin-right: 2px;
+}

@@ -896,7 +896,8 @@ export const cloneEntity = async (
   workspace: string,
   id: string,
   authCtx: AuthorizationContext | null,
-  actor: EntityMutationActor
+  actor: EntityMutationActor,
+  projectId?: string | null
 ): Promise<EntityRecord> => {
   try {
     return await withCatalogMutationTransaction(db, async tx => {
@@ -922,8 +923,17 @@ export const cloneEntity = async (
         enumDefinitions: await getWorkspaceEnumDefinitions(tx, workspace)
       });
 
-      const baseName = source.name ? `${source.name} (copy)` : source.slug;
-      const baseSlug = slugify(baseName);
+      const takenSlugs = new Set(
+        await tx.catalog.listEntitySlugs(workspace, source.schema_id, source.namespace)
+      );
+      let copyNumber = 1;
+      let baseName = source.name ? `${source.name} (copy)` : source.slug;
+      let baseSlug = slugify(baseName);
+      while (takenSlugs.has(baseSlug)) {
+        copyNumber++;
+        baseName = `${source.name ?? source.slug} (copy ${copyNumber})`;
+        baseSlug = slugify(baseName);
+      }
       const timestamp = new Date();
       const publicId = await allocateEntityPublicId(tx, workspace, source.schema_id, timestamp);
       const row = await createEntityWithAudit(tx, {
@@ -945,7 +955,7 @@ export const cloneEntity = async (
           links: source.links,
           schema_id: source.schema_id,
           data: normalizedData,
-          project_id: source.project_id,
+          project_id: projectId ?? source.project_id,
           created_at: timestamp,
           updated_at: timestamp,
           completeness: computeEntityCompleteness(

@@ -61,7 +61,6 @@ describe('availableRelationSchemaCatalog', () => {
       groups: [],
       color: null,
       icon: null,
-      relation_approval_policy: 'disabled',
       created_at: new Date('2026-01-01'),
       updated_at: new Date('2026-01-01')
     };

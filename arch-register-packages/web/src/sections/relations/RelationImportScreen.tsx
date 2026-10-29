@@ -23,7 +23,8 @@ import {
 import { downloadBlob } from '../../lib/browserDownload';
 import { invalidateRelationSchemaConsumers } from '../../queries/relations';
 import { useQueryClient } from '@tanstack/react-query';
-import styles from '../entities/ImportScreen.module.css';
+import { Title } from '../../components/Title';
+import styles from './RelationImportScreen.module.css';
 
 type ImportPhase = 'upload' | 'parsing' | 'review' | 'done';
 
@@ -209,14 +210,21 @@ export const RelationImportScreen = () => {
     <div className={styles.extract}>
       <div className={styles.header}>
         <div className={styles.headerContent}>
-          <div className={styles.eyebrow}>
-            <TbFileImport size={11} /> Import
-          </div>
-          <div className={styles.title}>Import relations from CSV</div>
-          <div className={styles.desc}>
-            Download a relation type template, fill it with your relation data, and upload it back.
-            Review the parsed data before importing.
-          </div>
+          <Title
+            breadcrumb={[
+              {
+                label: 'Relations',
+                onClick: () =>
+                  navigate({
+                    to: '/$workspaceSlug/entities/relations',
+                    params: { workspaceSlug }
+                  })
+              }
+            ]}
+            icon={<TbFileImport size={20} />}
+            title="Import relations from CSV"
+            description="Download a relation type template, fill it with your relation data, and upload it back. Review the parsed data before importing."
+          />
         </div>
         <Stepper phase={phase} />
       </div>

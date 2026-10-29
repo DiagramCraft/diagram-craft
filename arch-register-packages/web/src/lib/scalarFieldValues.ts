@@ -8,6 +8,7 @@ export const isMultiValuedScalarField = (field: SchemaField): boolean =>
       field.type !== 'boolean' &&
       field.type !== 'date' &&
       field.type !== 'currency' &&
+      field.type !== 'duration' &&
       field.type !== 'number' &&
       field.type !== 'select' &&
       field.type !== 'principal'

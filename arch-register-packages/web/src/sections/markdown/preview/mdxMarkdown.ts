@@ -7,12 +7,8 @@ import {
   type ParserState
 } from '@diagram-craft/markdown';
 import { markdownEngine } from './markdownAstUtils';
-import {
-  MDX_COMPONENTS,
-  getMdxSpec,
-  getMdxSpecsForSurface,
-  type MdxComponentName
-} from '../mdx-components/mdxRegistry';
+import { getWidgetDefinition, getWikiMdxComponents } from '../../../widgets/shared/widgetRegistry';
+import type { MdxWidgetDefinition } from '../../../widgets/shared/types';
 
 const JSX_BLOCK_RE = /^\s*<([A-Z][A-Za-z0-9]*)(\s[^>]*)?\s*\/>\s*$/;
 const INLINE_JSX_RE = /<([A-Z][A-Za-z0-9]*)(\s[^>]*)?\s*\/>/g;
@@ -22,12 +18,7 @@ const SAFE_PROP_NAME = /^[a-zA-Z0-9_-]+$/;
 // Allows parens so CSS color functions (e.g. `oklch(0.62 0.13 145)`) survive as prop values.
 const SAFE_PROP_VALUE = /^[a-zA-Z0-9_\-.,()%\s]*$/;
 
-// This module's parsing pipeline is used only for wiki content, so components
-// that opt out of the 'wiki' surface (e.g. dashboard-only widgets) must never
-// be recognized here, regardless of their presence in the full registry.
-const WIKI_MDX_COMPONENTS = getMdxSpecsForSurface('wiki');
-
-const isKnownComponent = (name: string): name is MdxComponentName => name in WIKI_MDX_COMPONENTS;
+const isKnownComponent = (name: string): boolean => name in getWikiMdxComponents();
 
 /**
  * Strips the common leading whitespace the markdown serializer adds to a JSX
@@ -47,11 +38,12 @@ const dedent = (lines: string[]): string[] => {
 };
 
 const validateProps = (
-  name: MdxComponentName,
+  definition: MdxWidgetDefinition,
   props: Record<string, string>
 ): Record<string, string> => {
+  const name = definition.type;
   const validated: Record<string, string> = {};
-  const allowedProps = MDX_COMPONENTS[name].allowedProps;
+  const allowedProps = definition.mdx.allowedProps;
   for (const [key, value] of Object.entries(props)) {
     if (
       SAFE_PROP_NAME.test(key) &&
@@ -84,17 +76,18 @@ const parseJsxProps = (rawProps: string, parser: Parser): Record<string, string>
 const makeComponentNode = (
   parser: Parser,
   subtype: 'inline' | 'block',
-  name: MdxComponentName,
+  definition: MdxWidgetDefinition,
   rawProps: string | undefined,
   source: string,
   children?: ASTNode[]
 ): ASTNode => {
-  const props = validateProps(name, parseJsxProps(rawProps ?? '', parser));
+  const name = definition.type;
+  const props = validateProps(definition, parseJsxProps(rawProps ?? '', parser));
   return {
     type: 'component',
     subtype,
     name,
-    props: MDX_COMPONENTS[name].normalizeProps?.(props) ?? props,
+    props,
     source,
     ...(children ? { children } : {})
   };
@@ -119,7 +112,9 @@ class MdxComponentWrapperBlockHandler implements BlockParser {
 
     const name = match[1];
     if (!name || !isKnownComponent(name)) return false;
-    const spec = getMdxSpec(name);
+    const definition = getWidgetDefinition(name, 'mdx');
+    if (!definition) return false;
+    const spec = definition.mdx;
     if (spec.mode !== 'block' || (!spec.acceptsChildren && !spec.acceptsRichContent)) return false;
 
     stream.consume();
@@ -147,7 +142,14 @@ class MdxComponentWrapperBlockHandler implements BlockParser {
     if (spec.acceptsRichContent) {
       const children = innerAst.filter(n => !(n.type === 'literal' && n.value.trim() === ''));
       ast.push(
-        makeComponentNode(parser, 'block', name, match[2], parser.unescape(openLine), children)
+        makeComponentNode(
+          parser,
+          'block',
+          definition,
+          match[2],
+          parser.unescape(openLine),
+          children
+        )
       );
       return true;
     }
@@ -159,13 +161,15 @@ class MdxComponentWrapperBlockHandler implements BlockParser {
     );
 
     const child = componentChildren[0];
+    const childDefinition = child ? getWidgetDefinition(child.name, 'mdx') : undefined;
     const isValidChild =
       componentChildren.length === 1 &&
       otherContent.length === 0 &&
       !!child &&
       isKnownComponent(child.name) &&
-      getMdxSpec(child.name).mode === 'block' &&
-      !getMdxSpec(child.name).acceptsChildren;
+      !!childDefinition &&
+      childDefinition.mdx.mode === 'block' &&
+      !childDefinition.mdx.acceptsChildren;
 
     if (!isValidChild || !child) {
       ast.push({ type: 'literal', value: parser.unescape(openLine) });
@@ -173,7 +177,7 @@ class MdxComponentWrapperBlockHandler implements BlockParser {
     }
 
     ast.push(
-      makeComponentNode(parser, 'block', name, match[2], parser.unescape(openLine), [child])
+      makeComponentNode(parser, 'block', definition, match[2], parser.unescape(openLine), [child])
     );
     return true;
   }
@@ -191,9 +195,10 @@ class MdxComponentBlockHandler implements BlockParser {
 
     const name = match[1];
     if (!name || !isKnownComponent(name)) return false;
-    if (MDX_COMPONENTS[name].mode !== 'block') return false;
+    const definition = getWidgetDefinition(name, 'mdx');
+    if (definition?.mdx.mode !== 'block') return false;
 
-    ast.push(makeComponentNode(parser, 'block', name, match[2], parser.unescape(line)));
+    ast.push(makeComponentNode(parser, 'block', definition, match[2], parser.unescape(line)));
     stream.consume();
     return true;
   }
@@ -212,7 +217,9 @@ class MdxComponentInlineHandler extends InlineParser {
     return this.applyInlineRegExp(parser, parserState, s, INLINE_JSX_RE, match => {
       const name = match[1];
       if (!name || !isKnownComponent(name)) return null;
-      return makeComponentNode(parser, 'inline', name, match[2], parser.unescape(match[0]));
+      const definition = getWidgetDefinition(name, 'mdx');
+      if (!definition) return null;
+      return makeComponentNode(parser, 'inline', definition, match[2], parser.unescape(match[0]));
     });
   }
 }

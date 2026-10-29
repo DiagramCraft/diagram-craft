@@ -25,7 +25,7 @@ export const ratingValues = (max = 5): FieldOption[] =>
 
 /**
  * Fields are deduped by id across the given schemas (first occurrence wins), the same way
- * MatrixView's attribute-column mode unions select fields across the row schemas present in
+ * RelationMatrixView's attribute-column mode unions select fields across the row schemas present in
  * the current browser results.
  */
 const findFieldAcrossSchemas = (schemas: EntitySchema[], fieldId: string) => {
@@ -41,7 +41,7 @@ const findFieldAcrossSchemas = (schemas: EntitySchema[], fieldId: string) => {
  *
  * `includeRatingFields` opts in rating-typed assessment fields as a discrete/bucketed axis
  * (e.g. RadarView's quadrant/ring axes, which treat a 1-5 rating as 5 discrete values) —
- * it defaults to false since most callers (e.g. BubbleView) treat rating fields as numeric
+ * it defaults to false since most callers (e.g. BubbleChartView) treat rating fields as numeric
  * via `getNumericFields` instead, and offering them in both places would be confusing.
  */
 export const getCategoricalFields = (

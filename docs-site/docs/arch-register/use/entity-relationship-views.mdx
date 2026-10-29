@@ -38,11 +38,12 @@ context. Select a related entity to open it; select a typed relation to inspect 
   }}
 />
 
-## Explore
+## Relation columns
 
-Choose **Explore** to compare connected entity sets in adjacent columns. Start with the filtered records in the first
-column, then use the relation filter and schema controls to choose how each next column is reached. A column's schema
-selection constrains later traversal, so use it to follow a meaningful path through mixed-schema data.
+Choose **Relation columns** to compare connected entity sets in adjacent columns. Start with the filtered records in the first
+column, then use each column's **…** menu to choose how columns are reached: filter the column's outgoing relations,
+filter it to a schema, add or hide columns, or reset the column's filters and exclusions. A column's selections constrain later
+traversal, so use them to follow a meaningful path through mixed-schema data.
 
 <ThemedImage
   alt="Entity explore view in Arch Register"
@@ -52,12 +53,14 @@ selection constrains later traversal, so use it to follow a meaningful path thro
   }}
 />
 
-## Matrix
+## Relation matrix
 
-Choose **Matrix** to compare relationship density or coverage across entities. Configure entity columns or attribute
+Choose **Relation matrix** to compare relationship density or coverage across entities. Configure entity columns or attribute
 columns, then use populated cells to see where relationships exist and blank cells to spot gaps. A relation-field
 filter narrows which connections are counted; hide empty rows or columns when you want to focus on connected records.
-Joined assessment select fields can also be used as dimensions for review comparisons.
+Joined assessment select fields can also be used as dimensions for review comparisons. With entity columns, **color by** tints each populated cell by a select field of the row entity, the column
+entity, or the typed relation between them, such as a mitigation's effectiveness. A legend lists the field's options and
+their colors. For a relation field, the weakest value wins when several relations connect the same pair.
 
 <ThemedImage
   alt="Entity matrix view in Arch Register"
@@ -82,9 +85,9 @@ review whether a chain such as controls to risks to assets is complete. See [Pro
   }}
 />
 
-## Path Walker
+## Trail
 
-Choose **Path Walker** to explore one relationship chain interactively without defining the complete path first. The
+Choose **Trail** to explore one relationship chain interactively without defining the complete path first. The
 first column contains the current filtered entities. Select an entity, choose a relationship from the arrow menu, and
 continue through the next column; each step narrows the records shown at the next hop. The walker supports up to six
 hops and shows where a chain stops when no records match. The selected chain is reflected in the URL; saving the view

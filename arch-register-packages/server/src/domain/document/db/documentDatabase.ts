@@ -58,7 +58,7 @@ export type DocumentTemplateDbResult = {
   project_id: string | null;
   name: string;
   body: string;
-  document_type_id: string;
+  document_type_id: string | null;
   metadata_defaults: DocumentMetadata;
   archived: boolean;
   created_at: Date;
@@ -233,6 +233,12 @@ export type DocumentDatabase = {
     workspace: string,
     nodeId: string,
     links: Omit<DocumentLinkIndexDbResult, 'workspace' | 'node_id'>[]
+  ): Promise<void>;
+  /** Replaces the links written in the page body; metadata links are left untouched */
+  replaceBodyDocumentLinks(
+    workspace: string,
+    nodeId: string,
+    targetDocumentIds: string[]
   ): Promise<void>;
   listDocumentsLinkingEntity(
     workspace: string,

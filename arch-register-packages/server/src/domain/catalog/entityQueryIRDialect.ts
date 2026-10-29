@@ -16,6 +16,8 @@ export type EntityQueryDialectAdapter = {
   jsonFieldValue: (expression: string, fieldId: string) => string;
   jsonPathText: (expression: string, path: readonly string[]) => string;
   jsonPathValue: (expression: string, path: readonly string[]) => string;
+  /** SQL numeric expression: a `{ amount, unit }` duration field normalised to days. */
+  durationDays: (expression: string, fieldId: string) => string;
   jsonArrayElements: (expression: string) => { from: string; value: string };
   jsonArrayContains: (ownerAlias: string, fieldId: string, targetAlias: string) => string;
   jsonArrayElementPosition: (ownerAlias: string, fieldId: string, targetId: string) => string;
@@ -92,6 +94,14 @@ export const createEntityQueryDialectAdapter = (
       return `${expression}${path.map(fieldId => `->'${fieldId}'`).join('')}`;
     }
     return `json_extract(${expression}, '$.${jsonPath(path)}')`;
+  };
+
+  // Keep the factors in sync with DAYS_PER_UNIT in utils/durationValue.ts.
+  const durationDays = (expression: string, fieldId: string): string => {
+    const amount = jsonPathText(expression, [fieldId, 'amount']);
+    const unit = jsonPathText(expression, [fieldId, 'unit']);
+    const numericAmount = dialect === 'postgres' ? `CAST(${amount} AS NUMERIC)` : amount;
+    return `(${numericAmount} * CASE ${unit} WHEN 'weeks' THEN 7 WHEN 'months' THEN 30.4375 WHEN 'years' THEN 365.25 ELSE 1 END)`;
   };
 
   const jsonFieldText = (expression: string, fieldId: string): string => {
@@ -255,6 +265,7 @@ export const createEntityQueryDialectAdapter = (
     jsonFieldValue,
     jsonPathText,
     jsonPathValue,
+    durationDays,
     jsonArrayElements: expression =>
       dialect === 'postgres'
         ? { from: `jsonb_array_elements_text(${expression}) t`, value: 't' }

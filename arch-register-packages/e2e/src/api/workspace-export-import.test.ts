@@ -86,7 +86,7 @@ test.describe('workspace export/import', () => {
     await server.db.governanceCaseConfig.upsertCaseConfig({
       workspace: source.id,
       case_kind: 'entity.deprecation',
-      case_subkind: encodeCaseSubkind(schema.id),
+      case_subkinds: [encodeCaseSubkind(schema.id)],
       name: 'Schema deprecation workflow',
       description: 'Description carried through schema export and import.',
       enabled: true,
@@ -105,7 +105,7 @@ test.describe('workspace export/import', () => {
     await server.db.governanceCaseConfig.upsertCaseConfig({
       workspace: source.id,
       case_kind: 'document.status',
-      case_subkind: encodeCaseSubkind(documentType.id, 'status'),
+      case_subkinds: [encodeCaseSubkind(documentType.id, 'status')],
       name: 'Document status workflow',
       description: 'Description carried through document export and import.',
       enabled: true,
@@ -177,6 +177,74 @@ test.describe('workspace export/import', () => {
     );
   });
 
+  test('round-trips a workflow shared by several schemas with remapped schema ids', async ({
+    orpc,
+    server
+  }) => {
+    const suffix = randomUUID();
+    const source = await orpc.workspaces.create({
+      body: { name: `Shared workflow source ${suffix}`, badge: 'SWS' }
+    });
+    const first = await orpc.schemas.create({
+      params: { workspace: source.url_slug },
+      body: { name: `Alpha ${suffix}` }
+    });
+    const second = await orpc.schemas.create({
+      params: { workspace: source.url_slug },
+      body: { name: `Bravo ${suffix}` }
+    });
+    await orpc.governanceWorkflowConfig.upsert({
+      params: { workspace: source.url_slug },
+      body: {
+        case_kind: 'entity.change-case',
+        case_subkinds: [first.id, second.id],
+        name: 'Shared change review',
+        enabled: true,
+        config: { extensions: {} }
+      }
+    });
+
+    const archive = await orpc.workspaces.export({
+      params: { workspace: source.url_slug },
+      body: { include: ['schemas'], options: { include_content: false } }
+    });
+    const target = await orpc.workspaces.create({
+      body: { name: `Shared workflow target ${suffix}`, badge: 'SWT' }
+    });
+    const parsed = await orpc.workspaces.importParse({
+      params: { workspace: target.url_slug },
+      body: {
+        file: new File([archive.body as Blob], 'shared-workflow-export.zip', {
+          type: 'application/zip'
+        })
+      }
+    });
+    expect(parsed.valid).toBe(true);
+    const execute = await orpc.workspaces.importExecute({
+      params: { workspace: target.url_slug },
+      body: {
+        import_id: (parsed as any).import_id,
+        include: ['schemas'],
+        conflict_resolutions: suggestedResolutions(parsed as any),
+        options: { preserve_ids: false, update_references: true }
+      }
+    });
+    expect(execute.success).toBe(true);
+
+    const targetSchemas = await server.db.catalog.listSchemas(target.id);
+    const targetFirst = targetSchemas.find(item => item.name === first.name)!;
+    const targetSecond = targetSchemas.find(item => item.name === second.name)!;
+    expect(targetFirst.id).not.toBe(first.id);
+
+    const workflows = (
+      await server.db.governanceCaseConfig.listCaseConfigForKind(target.id, 'entity.change-case')
+    ).filter(row => row.name === 'Shared change review');
+    expect(workflows).toHaveLength(1);
+    expect([...workflows[0]!.case_subkinds].sort()).toEqual(
+      [targetFirst.id, targetSecond.id].sort()
+    );
+  });
+
   test('exports and imports workspace capability field mappings', async ({ orpc, server }) => {
     const suffix = randomUUID();
     const source = await orpc.workspaces.create({
@@ -244,6 +312,227 @@ test.describe('workspace export/import', () => {
         }
       }
     });
+  });
+
+  test('exports and imports applications, dashboards and access policies', async ({
+    orpc,
+    server
+  }) => {
+    const suffix = randomUUID();
+    const source = await orpc.workspaces.create({
+      body: { name: `Application source ${suffix}`, badge: 'APS' }
+    });
+    const schema = await orpc.schemas.create({
+      params: { workspace: source.url_slug },
+      body: { name: `App schema ${suffix}`, fields: [{ id: 'f', name: 'F', type: 'text' }] }
+    });
+    const team = (await server.db.workspace.listTeams(source.id))[0];
+    const key = `import-app-${suffix.slice(0, 8)}`;
+    const application = await server.db.application.create({
+      id: randomUUID(),
+      workspace: source.id,
+      key,
+      name: 'Imported App',
+      description: 'desc',
+      accent_color: '#112233',
+      sort_order: 50,
+      updated_by: null
+    });
+    for (const [index, name] of ['Second', 'First'].entries()) {
+      const row = await server.db.dashboard.create({
+        id: randomUUID(),
+        workspace: source.id,
+        name,
+        key: name.toLowerCase(),
+        sort_order: 1 - index,
+        application_id: application.id,
+        application_order: 1 - index,
+        icon: 'TbChartBar',
+        updated_by: null
+      });
+      await server.db.dashboard.update(source.id, row.id, {
+        layout: [
+          { id: 'w1', x: 0, y: 0, w: 4, h: 2, type: 'entity-list', config: { schema: schema.id } }
+        ],
+        updated_by: null
+      });
+    }
+    await server.db.dashboard.create({
+      id: randomUUID(),
+      workspace: source.id,
+      name: 'Custom home',
+      key: 'custom-home',
+      sort_order: 99,
+      updated_by: null
+    });
+    if (team) {
+      await server.db.workspace.upsertWorkspaceApplicationAccessPolicy({
+        workspace: source.id,
+        application_id: key,
+        mode: 'selected',
+        user_ids: [],
+        team_ids: [team.id],
+        created_at: new Date(),
+        updated_at: new Date()
+      });
+    }
+
+    const archive = await orpc.workspaces.export({
+      params: { workspace: source.url_slug },
+      body: {
+        include: ['config', 'schemas', 'applications'],
+        options: { include_content: false }
+      }
+    });
+    const target = await orpc.workspaces.create({
+      body: { name: `Application target ${suffix}`, badge: 'APT' }
+    });
+    const parsed = await orpc.workspaces.importParse({
+      params: { workspace: target.url_slug },
+      body: {
+        file: new File([archive.body as Blob], 'applications-export.zip', {
+          type: 'application/zip'
+        })
+      }
+    });
+    expect(parsed.valid).toBe(true);
+    const execute = await orpc.workspaces.importExecute({
+      params: { workspace: target.url_slug },
+      body: {
+        import_id: (parsed as any).import_id,
+        include: ['config', 'schemas', 'applications'],
+        conflict_resolutions: suggestedResolutions(parsed as any),
+        options: { preserve_ids: false, update_references: true }
+      }
+    });
+    expect(execute.success).toBe(true);
+
+    const importedApp = await server.db.application.getByKey(target.id, key);
+    expect(importedApp).toMatchObject({ name: 'Imported App', accent_color: '#112233' });
+    const dashboards = (
+      await server.db.dashboard.listByApplication(target.id, importedApp!.id)
+    ).sort((a, b) => (a.application_order ?? 0) - (b.application_order ?? 0));
+    expect(dashboards.map(d => d.name)).toEqual(['First', 'Second']);
+    expect(dashboards[0]).toMatchObject({ icon: 'TbChartBar' });
+    const importedSchema = (await server.db.catalog.listSchemas(target.id)).find(
+      item => item.name === schema.name
+    );
+    expect(dashboards[0]!.layout[0]!.config['schema']).toBe(importedSchema!.id);
+    expect(
+      (await server.db.dashboard.list(target.id)).some(
+        d => d.application_id == null && d.name === 'Custom home'
+      )
+    ).toBe(true);
+    if (team) {
+      const policy = await server.db.workspace.getWorkspaceApplicationAccessPolicy(target.id, key);
+      const importedTeam = (await server.db.workspace.listTeams(target.id)).find(
+        item => item.name === team.name
+      );
+      expect(policy).toMatchObject({ mode: 'selected', team_ids: [importedTeam!.id] });
+    }
+  });
+
+  test('application overwrite clears the destination access policy when the archive has none', async ({
+    orpc,
+    server
+  }) => {
+    const suffix = randomUUID();
+    const key = `policy-app-${suffix.slice(0, 8)}`;
+    const source = await orpc.workspaces.create({
+      body: { name: `Policy source ${suffix}`, badge: 'PLS' }
+    });
+    const target = await orpc.workspaces.create({
+      body: { name: `Policy target ${suffix}`, badge: 'PLT' }
+    });
+    for (const workspace of [source, target]) {
+      const application = await server.db.application.create({
+        id: randomUUID(),
+        workspace: workspace.id,
+        key,
+        name: 'Policy App',
+        description: undefined,
+        accent_color: null,
+        sort_order: 50,
+        updated_by: null
+      });
+      await server.db.dashboard.create({
+        id: randomUUID(),
+        workspace: workspace.id,
+        name: 'Main',
+        key: 'main',
+        sort_order: 0,
+        application_id: application.id,
+        application_order: 0,
+        updated_by: null
+      });
+    }
+    await server.db.workspace.upsertWorkspaceApplicationAccessPolicy({
+      workspace: target.id,
+      application_id: key,
+      mode: 'selected',
+      user_ids: [],
+      team_ids: [],
+      created_at: new Date(),
+      updated_at: new Date()
+    });
+
+    const archive = await orpc.workspaces.export({
+      params: { workspace: source.url_slug },
+      body: { include: ['config', 'applications'], options: { include_content: false } }
+    });
+    const parsed = await orpc.workspaces.importParse({
+      params: { workspace: target.url_slug },
+      body: { file: new File([archive.body as Blob], 'policy.zip', { type: 'application/zip' }) }
+    });
+    expect(parsed.valid).toBe(true);
+    const execute = await orpc.workspaces.importExecute({
+      params: { workspace: target.url_slug },
+      body: {
+        import_id: (parsed as any).import_id,
+        include: ['config', 'applications'],
+        conflict_resolutions: suggestedResolutions(parsed as any),
+        options: { preserve_ids: false, update_references: true }
+      }
+    });
+    expect(execute.success).toBe(true);
+
+    await expect(
+      server.db.workspace.getWorkspaceApplicationAccessPolicy(target.id, key)
+    ).resolves.toBeFalsy();
+    const app = await server.db.application.getByKey(target.id, key);
+    expect(
+      (await server.db.dashboard.listByApplication(target.id, app!.id)).length
+    ).toBeGreaterThan(0);
+  });
+
+  test('rejects importing an application without dashboards', async ({ orpc, server }) => {
+    const suffix = randomUUID();
+    const source = await orpc.workspaces.create({
+      body: { name: `Empty app source ${suffix}`, badge: 'EAS' }
+    });
+    await server.db.application.create({
+      id: randomUUID(),
+      workspace: source.id,
+      key: `empty-app-${suffix.slice(0, 8)}`,
+      name: 'Empty App',
+      description: undefined,
+      accent_color: null,
+      sort_order: 50,
+      updated_by: null
+    });
+    const archive = await orpc.workspaces.export({
+      params: { workspace: source.url_slug },
+      body: { include: ['config', 'applications'], options: { include_content: false } }
+    });
+    const target = await orpc.workspaces.create({
+      body: { name: `Empty app target ${suffix}`, badge: 'EAT' }
+    });
+    const parsed = await orpc.workspaces.importParse({
+      params: { workspace: target.url_slug },
+      body: { file: new File([archive.body as Blob], 'empty.zip', { type: 'application/zip' }) }
+    });
+    expect(parsed.valid).toBe(false);
+    expect(JSON.stringify(parsed)).toContain('must contain at least one dashboard');
   });
 
   test('exports and imports workspace capability bindings with remapped targets', async ({
@@ -436,7 +725,6 @@ test.describe('workspace export/import', () => {
       shared_field_group_links: [],
       color: '#123456',
       icon: 'link',
-      relation_approval_policy: 'disabled',
       version: 1,
       created_at: now,
       updated_at: now
@@ -560,7 +848,6 @@ test.describe('workspace export/import', () => {
       shared_field_group_links: [],
       color: null,
       icon: null,
-      relation_approval_policy: 'disabled',
       version: 1,
       created_at: now,
       updated_at: now
@@ -637,7 +924,6 @@ test.describe('workspace export/import', () => {
       shared_field_group_links: [],
       color: null,
       icon: null,
-      relation_approval_policy: 'disabled',
       version: 1,
       created_at: now,
       updated_at: now

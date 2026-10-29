@@ -39,6 +39,7 @@ const Root = (props: RootProps) => {
         id={props.id}
         aria-describedby={props['aria-describedby']}
         aria-labelledby={props['aria-labelledby']}
+        aria-label={props['aria-label']}
       >
         <BaseUISelect.Value className={styles.eValue}>
           {props.isIndeterminate ? (
@@ -79,6 +80,7 @@ type RootProps = {
   id?: string;
   'aria-describedby'?: string;
   'aria-labelledby'?: string;
+  'aria-label'?: string;
 };
 
 const Item = (props: ItemProps) => {

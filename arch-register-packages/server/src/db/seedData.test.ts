@@ -39,6 +39,37 @@ describe('schema presentation categories', () => {
   });
 });
 
+describe('field descriptions', () => {
+  const isBlank = (description: string | undefined) => !description || description.trim() === '';
+
+  it('describes every field of every seeded entity schema', () => {
+    const missing = seedSchemas.flatMap(schema =>
+      schema.fields
+        .filter(field => isBlank(field.description))
+        .map(field => `${schema.name}.${field.id}`)
+    );
+    expect(missing).toEqual([]);
+  });
+
+  it('describes every field of every seeded relation schema', () => {
+    const missing = seedRelationSchemas.flatMap(schema =>
+      schema.fields
+        .filter(field => isBlank(field.description))
+        .map(field => `${schema.name}.${field.id}`)
+    );
+    expect(missing).toEqual([]);
+  });
+
+  it('describes every field of every seeded shared field group', () => {
+    const missing = seedSharedFieldGroups.flatMap(group =>
+      group.fields
+        .filter(field => isBlank(field.description))
+        .map(field => `${group.name}.${field.id}`)
+    );
+    expect(missing).toEqual([]);
+  });
+});
+
 describe('template-backed catalog seed data', () => {
   it('uses the composed templates for every default-workspace definition', () => {
     const defaultSchemas = seedSchemas.filter(schema => schema.workspace === WORKSPACE_ID);
@@ -90,6 +121,18 @@ describe('template-backed catalog seed data', () => {
         expect(fieldGroupIds.has(link.groupId)).toBe(true);
       }
     }
+  });
+
+  it('stores compliance requirement summaries in the built-in description', () => {
+    const requirementSchema = seedSchemas.find(schema => schema.name === 'Compliance Requirement');
+    const requirements = seedEntities.filter(entity => entity.schema_id === requirementSchema?.id);
+
+    expect(requirementSchema).toBeDefined();
+    expect(requirements).toHaveLength(3);
+    expect(requirements[0]?.description).toBe(
+      'The entity implements logical access security measures.'
+    );
+    expect(requirements.every(entity => !('description' in entity.data))).toBe(true);
   });
 });
 
@@ -191,7 +234,7 @@ describe('business capability strategy seed data', () => {
           id: 'capability_level',
           type: 'derived',
           expression:
-            "entity.parent == null ? 'L1' : 'L' + ((entity.parent.capability_level |> replace('L', '') |> toNumber) + 1)",
+            "entity.parent == null ? 'L1' : `L${toNumber(entity.parent.capability_level.replace('L', '')) + 1}`",
           resultType: 'text'
         }),
         expect.objectContaining({
@@ -285,7 +328,7 @@ describe('contract allocation seed data', () => {
       expect.objectContaining({
         id: 'budget',
         type: 'derived',
-        expression: 'entity.contracts.map(.allocation * .entity.annual_cost.amount / 100) |> sum'
+        expression: 'entity.contracts.map(.allocation * .entity.annual_cost.amount / 100).sum()'
       })
     );
     expect(system?.fields).toContainEqual(
@@ -299,7 +342,7 @@ describe('contract allocation seed data', () => {
       expect.objectContaining({
         id: 'allocated',
         type: 'derived',
-        expression: 'entity.system.map(.allocation) |> sum'
+        expression: 'entity.system.map(.allocation).sum()'
       })
     );
     expect(contract?.fields).toContainEqual(

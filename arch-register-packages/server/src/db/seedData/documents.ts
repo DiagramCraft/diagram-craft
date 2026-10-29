@@ -137,7 +137,7 @@ This page demonstrates the custom MDX components that pull live data from the ca
 
 ## Entity chart
 
-<EntityChart schema="00000000-0000-0000-0000-000000000003" groupBy="lifecycle" type="pie" />
+<EntityChart schema="00000000-0000-0000-0000-000000000003" groupBy="lifecycle" chartType="donut" />
 
 ## Entity metric
 

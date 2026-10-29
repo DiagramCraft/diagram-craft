@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Dialog, KbdHints } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
-import { FormSection } from '@diagram-craft/app-components/FormSection';
 import { ModeSwitcher } from '@diagram-craft/app-components/ModeSwitcher';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
@@ -11,6 +10,7 @@ import { ApiError } from '../lib/http';
 import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
 import { Banner } from '../components/Banner';
 import { ColorPicker } from '../components/ColorPicker';
+import { FormGroup } from '../components/FormGroup';
 import styles from './AddWorkspaceDialog.module.css';
 import { Workspace } from '@arch-register/api-types/workspaceContract';
 import { useAutoFocus } from '../hooks/useAutoFocus';
@@ -455,7 +455,7 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
       ]}
     >
       <div className={styles.body}>
-        <FormSection step={1} title="Identity">
+        <FormGroup variant="section" icon={1} label="Identity">
           <div className={styles.identity}>
             <div className={styles.badgeCol}>
               <div
@@ -513,9 +513,9 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
               </FormElement>
             </div>
           </div>
-        </FormSection>
+        </FormGroup>
 
-        <FormSection step={2} title="Schema setup">
+        <FormGroup variant="section" icon={2} label="Schema setup">
           <ModeSwitcher
             modes={[
               { value: 'blank', label: 'Start blank' },
@@ -632,7 +632,7 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
               )}
             </div>
           )}
-        </FormSection>
+        </FormGroup>
 
         {error && <Banner variant="error">{error}</Banner>}
       </div>

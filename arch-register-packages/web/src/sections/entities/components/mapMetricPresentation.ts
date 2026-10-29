@@ -1,3 +1,4 @@
+import { metricSourceSchemaMatches } from '@arch-register/api-types/metricContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
@@ -9,9 +10,15 @@ import type {
   MetricResult
 } from '@arch-register/api-types/metricContract';
 import type { EntityHoverCardRow } from '../../../components/EntityHoverCardBody';
-import { AGGREGATION_OPTIONS, isEnumSource } from './mapMetricConfig';
-import { categoricalColor, NEUTRAL_MISSING_COLOR, numericColor } from './mapColorScales';
+import { AGGREGATION_OPTIONS, isChoiceMetric, isEnumSource } from './mapMetricConfig';
+import {
+  categoricalColor,
+  NEUTRAL_MISSING_COLOR,
+  numericColor,
+  type MapColorScheme
+} from './mapColorScales';
 import { formatMetricResultValue, formatMetricSourceValue } from './mapMetricFormatting';
+import { bandedFill } from './mapBandColors';
 import { isRelationMapNode } from './mapViewTraversal';
 
 export const aggregationLabel = (aggregation: MetricAggregation) =>
@@ -26,6 +33,7 @@ export const metricValueLabel = (
   lifecycleStates: WorkspaceLifecycleState[]
 ): string | null => {
   if (!metric) return null;
+  if (metric.aggregation === 'none' && !isLeaf) return null;
   if (metric.aggregation === 'percentage') {
     return result ? formatMetricResultValue(metric, sourceSchema, result) : null;
   }
@@ -42,7 +50,7 @@ export const metricValueLabel = (
     );
   }
   if (!result) return null;
-  if (isEnumSource(metric.source)) return result.dominantLabel ?? '—';
+  if (isChoiceMetric(metric)) return result.dominantLabel ?? '—';
   if (metric.source.kind === 'lifecycle') {
     return result.lifecycleId == null
       ? '—'
@@ -61,7 +69,9 @@ export const resolveBoxColor = (
   lifecycleStates: WorkspaceLifecycleState[],
   sourceSchema: EntitySchema | RelationSchema | undefined,
   isLeaf: boolean,
-  directMetricRange: { min: number | null; max: number | null }
+  directMetricRange: { min: number | null; max: number | null },
+  colorScheme: MapColorScheme = 'blue',
+  reverseColors = false
 ): string | null => {
   if (!metric) return null;
   const result = resultsByBoxId.get(node._uid);
@@ -69,20 +79,54 @@ export const resolveBoxColor = (
   const colorMin = legend.min ?? directMetricRange.min;
   const colorMax = legend.max ?? directMetricRange.max;
 
+  // No aggregation: only leaf boxes are colored, from their own value; parents stay uncolored.
+  if (metric.aggregation === 'none') {
+    if (!isLeaf) return null;
+    if (directValue?.kind === 'number') {
+      if (metric.colourBands?.length) {
+        return bandedFill(metric.colourBands, directValue.value) ?? NEUTRAL_MISSING_COLOR;
+      }
+      return colorMin != null && colorMax != null
+        ? numericColor(directValue.value, colorMin, colorMax, colorScheme, reverseColors)
+        : NEUTRAL_MISSING_COLOR;
+    }
+    if (directValue?.kind === 'enum') {
+      const index = (legend.categories ?? []).findIndex(
+        category => category.value === directValue.value
+      );
+      return categoricalColor(index === -1 ? Number.MAX_SAFE_INTEGER : index);
+    }
+    if (directValue?.kind === 'lifecycle') {
+      return (
+        lifecycleStates.find(state => state.id === directValue.value)?.color ??
+        NEUTRAL_MISSING_COLOR
+      );
+    }
+    return NEUTRAL_MISSING_COLOR;
+  }
+
+  // Banded (severity-tone) colouring replaces the sequential ramp for a numeric metric that
+  // carries `colourBands`: the rolled-up value, falling back to a leaf's own value.
+  if (
+    metric.colourBands?.length &&
+    metric.aggregation !== 'percentage' &&
+    !isEnumSource(metric.source) &&
+    metric.source.kind !== 'lifecycle'
+  ) {
+    const value = result?.value ?? (directValue?.kind === 'number' ? directValue.value : null);
+    return bandedFill(metric.colourBands, value) ?? NEUTRAL_MISSING_COLOR;
+  }
+
   if (metric.aggregation === 'percentage') {
     if (!result || result.value == null || legend.min == null || legend.max == null) {
       return NEUTRAL_MISSING_COLOR;
     }
-    return numericColor(result.value, legend.min, legend.max);
+    return numericColor(result.value, legend.min, legend.max, colorScheme, reverseColors);
   }
 
-  if (
-    !result ||
-    result.value == null ||
-    (isEnumSource(metric.source) && result.dominantValue == null)
-  ) {
+  if (!result || result.value == null || (isChoiceMetric(metric) && result.dominantValue == null)) {
     if (directValue?.kind === 'number' && colorMin != null && colorMax != null) {
-      return numericColor(directValue.value, colorMin, colorMax);
+      return numericColor(directValue.value, colorMin, colorMax, colorScheme, reverseColors);
     }
     if (directValue?.kind === 'enum') {
       const index = (legend.categories ?? []).findIndex(
@@ -109,7 +153,7 @@ export const resolveBoxColor = (
   }
   if (result.value == null || legend.min == null || legend.max == null)
     return NEUTRAL_MISSING_COLOR;
-  return numericColor(result.value, legend.min, legend.max);
+  return numericColor(result.value, legend.min, legend.max, colorScheme, reverseColors);
 };
 
 export type DirectMetricValue =
@@ -124,7 +168,7 @@ export const getDirectMetricValue = (
   isLeaf: boolean
 ): DirectMetricValue | null => {
   if (metric.aggregation === 'percentage') return null;
-  if (!isLeaf || node._schema.id !== metric.sourceSchemaId) return null;
+  if (!isLeaf || !metricSourceSchemaMatches(metric.sourceSchemaId, node._schema.id)) return null;
   const record = node as Record<string, unknown>;
   if (metric.source.kind === 'enum') {
     const raw = record[metric.source.fieldId];
@@ -158,7 +202,7 @@ export const hasMissingMetricData = (
   if (!result) return true;
   if (result.sourceCount === 0) return true;
   if (metric.aggregation === 'percentage') return result.value == null;
-  return isEnumSource(metric.source) ? result.dominantValue == null : result.value == null;
+  return isChoiceMetric(metric) ? result.dominantValue == null : result.value == null;
 };
 
 /** Extra hover-card rows describing the metric result: value, enum distribution, coverage. */
@@ -173,6 +217,7 @@ export const buildMetricRows = (
   sourceSchema: EntitySchema | RelationSchema | undefined
 ): EntityHoverCardRow[] => {
   if (!metric) return [];
+  if (metric.aggregation === 'none' && !isLeaf) return [];
   const result = resultsByBoxId.get(node._uid);
   const directSourceNode = isLeaf || isRelationMapNode(node);
   if (
@@ -215,7 +260,7 @@ export const buildMetricRows = (
   }
 
   const rows: EntityHoverCardRow[] = [];
-  if (metric.aggregation !== 'percentage' && isEnumSource(metric.source)) {
+  if (metric.aggregation !== 'percentage' && isChoiceMetric(metric)) {
     rows.push({ label: metricLabel, value: result.dominantLabel ?? '—' });
     if (result.distribution.length > 0) {
       rows.push({

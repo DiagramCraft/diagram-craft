@@ -2,7 +2,7 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { EntityDbResult, SchemaDbResult } from '../catalog/db/catalogDatabase';
 import type { RelationDbResult } from '../catalog/db/relationDatabase';
 import { decodeRefs } from '../../types';
-import { materializeDerivedFields } from './derivedFields';
+import { materializeDerivedFields, type DerivedCurrencyConversion } from './derivedFields';
 import { buildEntityProjection } from './entityProjection';
 import { buildRelationProjection } from './relationProjection';
 import { createLogger } from '../../utils/logger';
@@ -96,6 +96,29 @@ const affectedEntityIds = (
 };
 
 /**
+ * The workspace currency and latest exchange-rate snapshot, injected as `entity.fx` so currency
+ * rollups (e.g. Vendor spend) are converted like the metrics rollup does. `undefined` when rates
+ * are not available yet (the daily scan fills them in once they are).
+ */
+const loadCurrencyConversion = async (
+  db: DatabaseAdapter,
+  workspace: string
+): Promise<DerivedCurrencyConversion | undefined> => {
+  if (
+    typeof db.workspace?.getSupportedCurrencies !== 'function' ||
+    typeof db.currencyRates?.getLatestSnapshot !== 'function'
+  ) {
+    return undefined;
+  }
+  const [config, snapshot] = await Promise.all([
+    db.workspace.getSupportedCurrencies(workspace),
+    db.currencyRates.getLatestSnapshot()
+  ]);
+  if (!snapshot || !config.default_currency) return undefined;
+  return { targetCurrency: config.default_currency, rates: snapshot.rates };
+};
+
+/**
  * Recalculates materialized entity derived values against the current one-hop entity graph.
  *
  * The default is a full workspace scan. Callers may provide changed entity ids to limit the
@@ -139,6 +162,8 @@ export const recalculateEntityDerivedFields = async (
       ? await db.relation.listRelationSchemas(workspace)
       : [];
 
+  const fx = await loadCurrencyConversion(db, workspace);
+
   const { entityById, neighborsByEntityId } = buildNeighborIndex(entities, schemas);
   for (const relation of allTypedRelations) {
     if (!entityById.has(relation.in_entity_id) || !entityById.has(relation.out_entity_id)) {
@@ -181,7 +206,8 @@ export const recalculateEntityDerivedFields = async (
         { objectType: 'entity', objectId: entity.id },
         schema.groups ?? [],
         projection ?? entity.data,
-        now
+        now,
+        fx
       );
       if (valuesEqual(entity.data, nextData)) continue;
       entity.data = nextData;

@@ -14,33 +14,142 @@ const gridPositionShape = {
   h: z.number().int().describe('Grid height in rows')
 };
 
+export const dashboardWidgetFrameSchema = z.object({
+  title: z.string().optional().describe('Title overriding the widget default'),
+  style: z
+    .enum(['header', 'frame', 'none'])
+    .optional()
+    .describe(
+      'Frame style: header (border and header), frame (border only) or none; omit for default'
+    ),
+  tint: z
+    .enum(['gray', 'blue', 'green', 'amber', 'red', 'purple'])
+    .optional()
+    .describe('Background tint of the widget; omit for none'),
+  showFrame: z
+    .boolean()
+    .optional()
+    .describe('Deprecated: replaced by style (false = none, true = header)'),
+  icon: z.string().optional().describe('Icon name overriding the widget default icon')
+});
+
 export const dashboardWidgetSchema = z.object({
   ...gridPositionShape,
   type: dashboardWidgetTypeSchema,
+  frame: dashboardWidgetFrameSchema
+    .optional()
+    .describe('Per-instance frame settings; omitted values fall back to the widget defaults'),
   config: z
     .record(z.string(), z.unknown())
     .describe('Widget-specific configuration; interpreted by the widget implementation')
 });
 
-export const dashboardSidebarConfigSchema = z.object({
-  kind: z.literal('entity-picker').describe('Selection UI kind; more kinds may be added later'),
-  schemaName: z
+const dashboardSidebarSchemaNameSchema = z
+  .string()
+  .describe(
+    "Entity schema display name to list in the picker, matched at render time — the schema's actual id is often workspace-configurable, so it cannot be seeded as a fixed id (mirrors AggregateStat widget configs referencing schemas by name in query strings)"
+  );
+
+const dashboardSidebarVariableNameSchema = z
+  .string()
+  .describe(
+    'Exposed as $<variableName> for substitution into widget config string values (see resolveSidebarVariableReferences)'
+  );
+
+export const dashboardFacetConfigSchema = z.object({
+  fieldId: z
     .string()
     .describe(
-      "Entity schema display name to list in the picker, matched at render time — the schema's actual id is often workspace-configurable, so it cannot be seeded as a fixed id (mirrors AggregateStat widget configs referencing schemas by name in query strings)"
+      "Field to facet on: either a reference, select or text field's display NAME on the faceted schema (matched " +
+        "at render time, like `schemaName` — a schema's actual field ids are workspace-specific, " +
+        "resolved via capability field-role binding, so they can't be seeded as fixed ids; its " +
+        "counts are tallied against the referenced schema's entities; select facets use the " +
+        "field's options as labels, text facets the distinct values), or one of the stable " +
+        "standard fields '_owner' / '_lifecycle'"
     ),
-  variableName: z
-    .string()
-    .describe(
-      'Exposed as $<variableName> for substitution into widget config string values (see resolveSidebarVariableReferences)'
-    ),
-  itemLabel: z.string().optional().describe('Group label shown above the picker list')
+  variableName: dashboardSidebarVariableNameSchema.describe(
+    'Exposed as $<variableName>, holding a comma-joined list of the selected ids (multi-select, ' +
+      "unlike entity-picker's single id) for substitution into widget config string values " +
+      '(see resolveSidebarVariableReferences)'
+  ),
+  itemLabel: z.string().optional().describe("Group label shown above this facet's list")
 });
+
+export const dashboardSidebarOptionSchema = z.object({
+  value: z
+    .string()
+    .min(1)
+    .describe('Value exposed as $<variableName> when this option is selected'),
+  label: z.string().describe('Label shown for this option in the sidebar')
+});
+
+export const dashboardSidebarConfigSchema = z.discriminatedUnion('kind', [
+  z.object({
+    kind: z.literal('entity-picker').describe('Single-select list of one schema’s entities'),
+    schemaName: dashboardSidebarSchemaNameSchema,
+    variableName: dashboardSidebarVariableNameSchema,
+    itemLabel: z.string().optional().describe('Group label shown above the picker list'),
+    valueKind: z
+      .enum(['publicId', 'id'])
+      .optional()
+      .describe(
+        "Which identifier the selection exposes as $<variableName>: the entity's public id " +
+          "(default) or its internal id, which is what a query's '_id' predicate matches"
+      )
+  }),
+  z.object({
+    kind: z
+      .literal('facets')
+      .describe('One or more independent multi-select facet lists over one schema’s entities'),
+    schemaName: dashboardSidebarSchemaNameSchema.describe(
+      'Schema display name whose records are being faceted: an entity schema, or a relation ' +
+        "schema when `schemaKind` is 'relation'"
+    ),
+    schemaKind: z
+      .enum(['entity', 'relation'])
+      .optional()
+      .describe(
+        'Whether `schemaName` names an entity schema (default) or a relation schema, in which case ' +
+          "facets are tallied over the relation's own select/text fields and '_owner' / '_lifecycle'"
+      ),
+    facets: z
+      .array(dashboardFacetConfigSchema)
+      .min(1)
+      .describe('Facet sections to render, each its own labeled multi-select list')
+  }),
+  z.object({
+    kind: z
+      .literal('options')
+      .describe('Single-select list of fixed value/label pairs (no counts, no entity lookup)'),
+    variableName: dashboardSidebarVariableNameSchema.describe(
+      'Exposed as $<variableName>, holding the selected option value, or an empty string when ' +
+        'nothing is selected, for substitution into widget config string values (see ' +
+        'resolveSidebarVariableReferences)'
+    ),
+    itemLabel: z.string().optional().describe('Group label shown above the options list'),
+    allLabel: z
+      .string()
+      .optional()
+      .describe(
+        'When set, a first row with this label is shown that is active while nothing is selected ' +
+          'and clears the selection when clicked'
+      ),
+    options: z
+      .array(dashboardSidebarOptionSchema)
+      .min(1)
+      .describe('Fixed options to choose between; re-selecting the active one clears it')
+  })
+]);
 
 export const workspaceDashboardSchema = z.object({
   id: z.string().describe('Unique dashboard identifier'),
   workspaceId: z.string().describe('Parent workspace identifier'),
   name: z.string().describe('Dashboard name'),
+  key: z
+    .string()
+    .describe(
+      'URL-safe slug (lowercase letters, digits and single hyphens), unique within the application or, for home dashboards, within the workspace'
+    ),
   description: z.string().describe('Dashboard description; empty when not set'),
   order: z
     .number()
@@ -56,6 +165,31 @@ export const workspaceDashboardSchema = z.object({
     .nullable()
     .optional()
     .describe('Set when the dashboard belongs to an app rather than the workspace home'),
+  applicationId: z
+    .string()
+    .nullable()
+    .optional()
+    .describe(
+      'Identifier of the application that owns the dashboard; null for workspace dashboards'
+    ),
+  applicationOrder: z
+    .number()
+    .int()
+    .nullable()
+    .optional()
+    .describe(
+      'Position among the application dashboards, ascending; null for workspace dashboards'
+    ),
+  icon: z
+    .string()
+    .nullable()
+    .optional()
+    .describe('Icon name shown for the dashboard in the app rail'),
+  railLabel: z
+    .string()
+    .nullable()
+    .optional()
+    .describe('Label shown for the dashboard in the app rail'),
   sidebar: dashboardSidebarConfigSchema
     .optional()
     .describe('Optional selection sidebar whose current selection can drive widget config')
@@ -65,12 +199,23 @@ export const workspaceDashboardSchema = z.object({
 
 export const createDashboardBodySchema = z.object({
   name: z.string().describe('Dashboard name'),
-  description: z.string().optional().describe('Dashboard description')
+  key: z.string().optional().describe('URL-safe slug; generated from the name when omitted'),
+  description: z.string().optional().describe('Dashboard description'),
+  applicationId: z
+    .string()
+    .optional()
+    .describe(
+      'When set, the dashboard is added to the end of this application instead of the home'
+    ),
+  icon: z.string().nullable().optional().describe('Icon name shown in the app rail')
 });
 
 export const updateDashboardBodySchema = z.object({
   name: z.string().optional().describe('Dashboard name'),
+  key: z.string().optional().describe('URL-safe slug; must stay unique in its scope'),
   description: z.string().optional().describe('Dashboard description'),
+  icon: z.string().nullable().optional().describe('Icon name shown in the app rail'),
+  railLabel: z.string().nullable().optional().describe('Label shown in the app rail'),
   widgets: z.array(dashboardWidgetSchema).optional().describe('Dashboard widget layout to persist'),
   sidebar: dashboardSidebarConfigSchema
     .nullable()
@@ -127,7 +272,7 @@ export const workspaceDashboardContract = oc.tag('Dashboard').router({
         inputStructure: 'detailed',
         summary: 'Get app dashboard',
         description:
-          'Retrieves the dashboard backing an app section, seeding the default layout on first access. App dashboards are not part of the workspace home dashboard list and are updated through the regular dashboard update endpoint.',
+          'Retrieves the dashboard backing an app section. App dashboards are not part of the workspace home dashboard list and are updated through the regular dashboard update endpoint.',
         tags: ['Dashboard']
       })
       .input(z.object({ params: ws.extend({ appKey: z.string() }) }))
@@ -161,11 +306,16 @@ export const workspaceDashboardContract = oc.tag('Dashboard').router({
 
 export type DashboardWidgetType = z.infer<typeof dashboardWidgetTypeSchema>;
 
+export type DashboardWidgetFrame = z.infer<typeof dashboardWidgetFrameSchema>;
+
 export type DashboardWidget = z.infer<typeof dashboardWidgetSchema>;
 
 export type WorkspaceDashboard = z.infer<typeof workspaceDashboardSchema>;
 
 export type DashboardSidebarConfig = z.infer<typeof dashboardSidebarConfigSchema>;
+
+export type DashboardSidebarOption = z.infer<typeof dashboardSidebarOptionSchema>;
+export type DashboardFacetConfig = z.infer<typeof dashboardFacetConfigSchema>;
 
 export type CreateDashboardRequest = z.infer<typeof createDashboardBodySchema>;
 
@@ -209,7 +359,12 @@ export const personalDashboardContract = oc.tag('PersonalDashboard').router({
         description: 'Creates a new, empty personal dashboard for the caller in this workspace.',
         tags: ['PersonalDashboard']
       })
-      .input(z.object({ params: ws, body: createDashboardBodySchema }))
+      .input(
+        z.object({
+          params: ws,
+          body: createDashboardBodySchema.omit({ key: true })
+        })
+      )
       .output(personalDashboardSchema),
     get: oc
       .route({
@@ -232,7 +387,12 @@ export const personalDashboardContract = oc.tag('PersonalDashboard').router({
           'Updates an existing personal dashboard owned by the caller. Only provided fields will be updated; widgets, when provided, wholesale replace the existing layout.',
         tags: ['PersonalDashboard']
       })
-      .input(z.object({ params: wsAndUUID, body: updateDashboardBodySchema }))
+      .input(
+        z.object({
+          params: wsAndUUID,
+          body: updateDashboardBodySchema.omit({ key: true })
+        })
+      )
       .output(personalDashboardSchema),
     remove: oc
       .route({
@@ -290,7 +450,12 @@ export const projectDashboardContract = oc.tag('ProjectDashboard').router({
           'Updates the project dashboard. Widgets wholesale-replace the existing layout.',
         tags: ['ProjectDashboard']
       })
-      .input(z.object({ params: wsAndProjectId, body: updateProjectDashboardBodySchema }))
+      .input(
+        z.object({
+          params: wsAndProjectId,
+          body: updateProjectDashboardBodySchema
+        })
+      )
       .output(projectDashboardSchema)
   }
 });

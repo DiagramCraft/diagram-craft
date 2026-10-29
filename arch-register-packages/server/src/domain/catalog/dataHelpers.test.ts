@@ -150,3 +150,31 @@ describe('matchesFilterCondition with membership', () => {
     ).toBe(false);
   });
 });
+
+describe('matchesFilterCondition with durations', () => {
+  const entity = baseEntity({
+    term: { amount: 2, unit: 'weeks' },
+    terms: [
+      { amount: 2, unit: 'weeks' },
+      { amount: 1, unit: 'years' }
+    ]
+  });
+
+  it('compares scalar durations in days', () => {
+    expect(matchesFilterCondition(entity, { fieldId: 'term', op: 'gt', value: 10 }, null)).toBe(
+      true
+    );
+    expect(matchesFilterCondition(entity, { fieldId: 'term', op: 'gt', value: 20 }, null)).toBe(
+      false
+    );
+  });
+
+  it('matches multi-valued durations when any element satisfies the range', () => {
+    expect(matchesFilterCondition(entity, { fieldId: 'terms', op: 'gt', value: 300 }, null)).toBe(
+      true
+    );
+    expect(matchesFilterCondition(entity, { fieldId: 'terms', op: 'gt', value: 400 }, null)).toBe(
+      false
+    );
+  });
+});

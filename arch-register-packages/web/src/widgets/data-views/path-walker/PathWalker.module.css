@@ -1,0 +1,10 @@
+.message {
+  padding: 8px 0;
+  font-size: 12px;
+}
+
+.walker {
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+}

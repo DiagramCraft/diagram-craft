@@ -1,0 +1,50 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 0;
+}
+
+.status {
+  font-size: 10.5px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px solid;
+  line-height: 1.6;
+  flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.statusPlanned {
+  color: var(--cmp-fg-dim);
+  border-color: var(--cmp-border-strong, var(--cmp-border));
+  background: transparent;
+}
+
+.statusActive {
+  color: var(--green);
+  border-color: color-mix(in oklch, var(--green) 35%, transparent);
+  background: color-mix(in oklch, var(--green) 10%, transparent);
+}
+
+.statusComplete {
+  color: var(--accent-fg);
+  border-color: color-mix(in oklch, var(--accent-fg) 35%, transparent);
+  background: color-mix(in oklch, var(--accent-fg) 10%, transparent);
+}
+
+.statusCancelled {
+  color: var(--cmp-fg-disabled);
+  border-color: var(--cmp-border);
+  background: transparent;
+}
+
+/* Editor dialog */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* The filter bar has no padding of its own so the gap under the Plan tabs stays small */

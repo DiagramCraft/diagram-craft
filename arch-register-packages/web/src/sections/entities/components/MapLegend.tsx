@@ -1,11 +1,18 @@
 import styles from './MapLegend.module.css';
 import type {
   MetricAggregation,
+  MetricConfig,
   MetricLegend,
   MetricSource
 } from '@arch-register/api-types/metricContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
-import { categoricalColor, NEUTRAL_MISSING_COLOR } from './mapColorScales';
+import {
+  categoricalColor,
+  colorSchemeGradient,
+  NEUTRAL_MISSING_COLOR,
+  type MapColorScheme
+} from './mapColorScales';
+import { bandedLegend } from './mapBandColors';
 import { isEnumSource } from './mapMetricConfig';
 import { formatMetricLegendValue, formatMetricRateDate } from './mapMetricFormatting';
 
@@ -14,6 +21,10 @@ type MapLegendProps = {
   source: MetricSource;
   aggregation: MetricAggregation;
   legend: MetricLegend;
+  /** Severity bands; when set the legend shows one swatch per band tone instead of the ramp. */
+  colourBands?: MetricConfig['colourBands'];
+  colorScheme?: MapColorScheme;
+  reverseColors?: boolean;
   lifecycleStates: WorkspaceLifecycleState[];
 };
 
@@ -22,8 +33,31 @@ export const MapLegend = ({
   source,
   aggregation,
   legend,
+  colourBands,
+  colorScheme,
+  reverseColors,
   lifecycleStates
 }: MapLegendProps) => {
+  if (colourBands?.length && aggregation !== 'percentage' && !isEnumSource(source)) {
+    return (
+      <div className={styles.legend}>
+        <span className={styles.title}>{metricLabel}</span>
+        <div className={styles.row}>
+          {bandedLegend(colourBands).map(entry => (
+            <span key={entry.label} className={styles.item}>
+              <span className={styles.swatch} style={{ background: entry.color }} />
+              {entry.label}
+            </span>
+          ))}
+          <span className={styles.item}>
+            <span className={styles.swatch} style={{ background: NEUTRAL_MISSING_COLOR }} />
+            No data
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   if (aggregation !== 'percentage' && isEnumSource(source)) {
     const categories = legend.categories ?? [];
     return (
@@ -83,7 +117,7 @@ export const MapLegend = ({
         </span>
         <span
           className={styles.gradient}
-          style={{ background: 'linear-gradient(to right, #86b6ef, #0d366b)' }}
+          style={{ background: colorSchemeGradient(colorScheme, reverseColors) }}
         />
         <span className={styles.rangeLabel}>
           {formatMetricLegendValue(legend.max, legend, aggregation)}

@@ -1,0 +1,7 @@
+.warning {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--base-fg-more-dim);
+}

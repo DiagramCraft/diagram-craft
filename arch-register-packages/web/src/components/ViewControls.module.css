@@ -1,0 +1,58 @@
+/**
+ *  ViewControls - .cViewControls
+ *  | Spacer    - .eSpacer
+ *  | Separator - .eSeparator
+ *  ViewControlsFrame - .cViewControlsFrame
+ */
+
+.cViewControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 8px 0;
+  margin-bottom: 8px;
+
+  &[data-variant="tab"] {
+    padding: 8px;
+    margin-top: -8px;
+    background-color: var(--panel-bg);
+    border-bottom: 1px solid var(--panel-border);
+  }
+
+  &[data-variant="view"] {
+    padding: 6px 10px;
+    min-height: 42px;
+    margin-bottom: 0;
+    border-bottom: 1px solid var(--panel-border);
+    flex-shrink: 0;
+  }
+
+  &[data-nowrap] {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+
+  .eSpacer {
+    flex: 1;
+  }
+
+  .eSeparator {
+    width: 1px;
+    height: 16px;
+    margin: 0;
+    border: 0;
+    background: var(--panel-border);
+    flex-shrink: 0;
+  }
+}
+
+.cViewControlsFrame {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+}

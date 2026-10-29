@@ -1,5 +1,12 @@
 import styles from './EmptyState.module.css';
 
+const TONE_CLASS = {
+  neutral: '',
+  good: styles.toneGood,
+  warning: styles.toneWarning,
+  error: styles.toneError
+};
+
 export const EmptyState = (props: {
   icon?: React.ReactNode;
   title: string;
@@ -7,6 +14,8 @@ export const EmptyState = (props: {
   action?: React.ReactNode;
   compact?: boolean;
   framed?: boolean;
+  /** Colours the icon to signal the state: `good` (e.g. nothing wrong), `warning` or `error`. */
+  tone?: 'neutral' | 'good' | 'warning' | 'error';
 }) => {
   if (props.compact) {
     return <div className={styles.compact}>{props.title}</div>;
@@ -15,7 +24,11 @@ export const EmptyState = (props: {
   return (
     <div className={props.framed ? styles.framed : styles.empty}>
       {props.icon && (
-        <div className={props.framed ? styles.framedIcon : styles.emptyIcon}>{props.icon}</div>
+        <div
+          className={`${props.framed ? styles.framedIcon : styles.emptyIcon} ${TONE_CLASS[props.tone ?? 'neutral']}`}
+        >
+          {props.icon}
+        </div>
       )}
       <div className={props.framed ? styles.framedTitle : styles.emptyTitle}>{props.title}</div>
       {props.subtitle && (

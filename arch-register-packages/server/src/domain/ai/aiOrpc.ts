@@ -266,10 +266,11 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
           messages: [{ role: 'user', content: input.body.text }],
           systemPrompts: [systemPrompt],
           modelOptions: { temperature: 0.3 },
+          threadId: randomUUID(),
           stream: false
         });
 
-        return parseExtractResponse(result);
+        return parseExtractResponse(result.text);
       }),
 
       chat: aiRouter.ai.chat.handler(async ({ input, context }) => {
@@ -306,7 +307,8 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
           modelOptions: { temperature: aiConfig.temperature },
           threadId: input.body.threadId,
           runId: input.body.runId,
-          parentRunId: input.body.parentRunId
+          parentRunId: input.body.parentRunId,
+          resume: input.body.resume
         });
 
         const forwardedConversationId =

@@ -1,7 +1,7 @@
 # Workspace Templates And Capabilities
 
 Workspace templates provide a starting model when creating a workspace. Applications and capabilities configure
-optional workflows for an existing workspace. These are related setup choices, but they serve different purposes.
+workflows for an existing workspace. These are related setup choices, but they serve different purposes.
 
 ## Create A Workspace From A Template
 
@@ -19,15 +19,29 @@ definition import flow. Review the proposed mappings and resolve dependencies be
 
 ## Configure Applications And Capabilities
 
-Open **Workspace Settings → Applications & Capabilities**. Enable and configure an application's capability binding
-there. A binding connects the application's required semantic roles to workspace schemas and, where supported, fields.
-An application appears in the switcher only after its capability is configured.
+Open **Workspace Settings → Applications & Capabilities**. Applications are workspace data: the built-in applications
+(Business Glossary, Strategy & Capability Modelling, Vendor Management, Risk & Compliance, Data Stewardship, API &
+Integration Catalog) are created with every workspace and can be edited or deleted like any other application.
 
-Use the **Access** tab in the same area to set who can use each optional application. The policy can allow all workspace
-members or selected people and teams. Individual and team grants are additive. This access policy is separate from
-workspace roles and from the capability binding: members still need workspace access, and the application needs a
-valid capability configuration. A missing policy denies ordinary members; global administrators and workspace role
-managers retain access. Home remains available to workspace members.
+Use the **+** button in the sidebar to add an application. The **Add application** dialog asks for a name, a key, an
+optional description, and an accent colour. Each application then has two tabs:
+
+- **General** — name, description, and accent colour. Available to users with
+  dashboard-management rights.
+- **Access** — who can use the application. Available to workspace administrators. The policy can allow all workspace
+  members or selected people and teams. Individual and team grants are additive.
+
+The access policy is separate from workspace roles: members still need workspace access. A missing policy denies
+ordinary members; global administrators and workspace role managers retain access. Home remains available to workspace
+members.
+
+An application can be deleted from the **…** menu in the page header, on either tab.
+
+Dashboards inside an application are managed from its left rail, not from this screen.
+
+Capabilities are listed separately. Workspace templates connect the **API specification** capability to the API schema
+when the template is applied; its **Binding** tab, under *Capabilities*, edits the connection. Other applications are
+dashboard-based and need no binding.
 
 ## Related Pages
 

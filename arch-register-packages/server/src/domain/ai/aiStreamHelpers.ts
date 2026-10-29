@@ -31,7 +31,7 @@ export const createAiToolCallAccumulator = () => {
 
   const consume = (chunk: StreamChunk) => {
     if (chunk.type === 'TOOL_CALL_START') {
-      const name = chunk.toolCallName || chunk.toolName;
+      const name = chunk.toolCallName;
       if (!name || !chunk.toolCallId) return;
 
       const existing = calls.get(chunk.toolCallId);

@@ -5,6 +5,8 @@ import {
   changeCaseQuery,
   changeCasesByEntityQuery,
   changeCasesByProjectQuery,
+  changeCasesByRelationQuery,
+  changeCaseKeys,
   invalidateChangeCaseQueries
 } from '../queries/changeCases';
 import { orpcClient } from '../lib/orpcClient';
@@ -15,6 +17,9 @@ export const useChangeCasesByProject = (workspaceId: string, projectId: string, 
 
 export const useChangeCasesByEntity = (workspaceId: string, entityId: string, enabled = true) =>
   useQuery(changeCasesByEntityQuery(workspaceId, entityId, enabled));
+
+export const useChangeCasesByRelation = (workspaceId: string, relationId: string, enabled = true) =>
+  useQuery(changeCasesByRelationQuery(workspaceId, relationId, enabled));
 
 export const changeCasesByEntityQueryOptions = changeCasesByEntityQuery;
 
@@ -79,6 +84,31 @@ export const useAddChangeCaseMember = (workspaceId: string, projectId: string) =
         projectId,
         variables.caseId,
         variables.entityId
+      );
+    }
+  });
+};
+
+export const useAddRelationChangeCaseMember = (workspaceId: string, projectId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (params: {
+      caseId: string;
+      relationId: string;
+      proposedState: Record<string, unknown>;
+    }) =>
+      orpcClient.changeCases.addRelationMember({
+        params: { workspace: workspaceId, id: projectId, caseId: params.caseId },
+        body: { relationId: params.relationId, proposedState: params.proposedState }
+      }),
+    onSuccess: (_, variables) => {
+      invalidateChangeCaseQueries(
+        queryClient,
+        workspaceId,
+        projectId,
+        variables.caseId,
+        variables.relationId
       );
     }
   });
@@ -182,6 +212,11 @@ export const useApplyChangeCase = (workspaceId: string, projectId: string) => {
         body: { resolutions: params.resolutions }
       }),
     onSuccess: (_, variables) => {
+      // The conflict check only makes sense for an unapplied case: drop it rather than refetch it
+      // (the apply dialog is still mounted and would otherwise get a 409 for the applied case).
+      queryClient.removeQueries({
+        queryKey: changeCaseKeys.applyConflicts(workspaceId, variables.caseId)
+      });
       invalidateChangeCaseQueries(queryClient, workspaceId, projectId, variables.caseId);
       invalidateEntityQueries(queryClient, workspaceId);
     }

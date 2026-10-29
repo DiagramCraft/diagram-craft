@@ -82,7 +82,10 @@ export const useAssistantController = () => {
   );
   const respondToApproval = useCallback(
     (id: string, approved: boolean) => {
-      void chat.addToolApprovalResponse({ id, approved });
+      const interrupt = chat.interrupts.find(
+        item => item.id === id && item.kind === 'tool-approval'
+      );
+      if (interrupt?.kind === 'tool-approval') interrupt.resolveInterrupt(approved);
     },
     [chat]
   );

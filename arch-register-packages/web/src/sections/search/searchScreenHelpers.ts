@@ -1,28 +1,16 @@
 import { TbArrowsRightLeft, TbCode, TbDatabase, TbFolder, TbFolders } from 'react-icons/tb';
 import type {
-  EntitySearchResult,
   ProjectFileSearchResult,
-  ProjectSearchResult,
-  RelationSearchResult,
-  SchemaSearchResult,
   SearchResponse
 } from '@arch-register/api-types/searchContract';
 
 export type SearchFilter = 'all' | 'entities' | 'projects' | 'files' | 'schemas' | 'relations';
-
-export type SearchPreview =
-  | { type: 'project'; data: ProjectSearchResult }
-  | { type: 'file'; data: ProjectFileSearchResult }
-  | { type: 'entity'; data: EntitySearchResult }
-  | { type: 'schema'; data: SchemaSearchResult }
-  | { type: 'relation'; data: RelationSearchResult };
-
-export type RowId = { kind: string; id: string };
+export type SearchCategory = Exclude<SearchFilter, 'all'>;
 
 export type SearchRow = { kind: string; id: string; data: unknown };
 
 export type SearchGroup = {
-  id: string;
+  id: SearchCategory;
   label: string;
   rows: SearchRow[];
 };
@@ -39,6 +27,7 @@ export const CATEGORY_DEFS: Array<{ value: SearchFilter; label: string; icon: ty
 
 export const EMPTY_RESULTS: SearchResponse = {
   query: '',
+  totalCounts: { projects: 0, files: 0, entities: 0, schemas: 0, relations: 0 },
   projects: [],
   files: [],
   entities: [],
@@ -91,46 +80,9 @@ export const buildSearchGroups = (results: SearchResponse, filter: SearchFilter)
 };
 
 export const getSearchCategoryCounts = (results: SearchResponse) => ({
-  all:
-    results.entities.length +
-    results.projects.length +
-    results.files.length +
-    results.schemas.length +
-    results.relations.length,
-  entities: results.entities.length,
-  projects: results.projects.length,
-  files: results.files.length,
-  schemas: results.schemas.length,
-  relations: results.relations.length
+  all: Object.values(results.totalCounts).reduce((total, count) => total + count, 0),
+  ...results.totalCounts
 });
-
-export const findSearchPreview = (
-  selected: RowId | null,
-  results: SearchResponse
-): SearchPreview | null => {
-  if (!selected) return null;
-  if (selected.kind === 'entity') {
-    const data = results.entities.find(entity => entity.entityId === selected.id);
-    return data ? { type: 'entity', data } : null;
-  }
-  if (selected.kind === 'project') {
-    const data = results.projects.find(project => project.id === selected.id);
-    return data ? { type: 'project', data } : null;
-  }
-  if (selected.kind === 'file') {
-    const data = results.files.find(file => file.fileId === selected.id);
-    return data ? { type: 'file', data } : null;
-  }
-  if (selected.kind === 'schema') {
-    const data = results.schemas.find(schema => schema.schemaId === selected.id);
-    return data ? { type: 'schema', data } : null;
-  }
-  if (selected.kind === 'relation') {
-    const data = results.relations.find(relation => relation.relationId === selected.id);
-    return data ? { type: 'relation', data } : null;
-  }
-  return null;
-};
 
 export const snippetAround = (text: string | null | undefined, q: string, max = 140) => {
   if (!text) return '';

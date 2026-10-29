@@ -30,6 +30,7 @@ import {
   assertEntityBelongsToProject,
   buildMemberInput,
   getActiveRevisionOrThrow,
+  getCaseMemberSubject,
   getCaseOrThrow,
   getProjectOrThrow,
   requireCaseEditAccess,
@@ -444,6 +445,9 @@ export const saveChangeCaseDraft = async (
 
         for (const member of currentMembers) {
           if (!desired.some(candidate => candidate.entity.id === member.entity_id)) {
+            // Relation members are managed through the relation member endpoints
+            const subject = await getCaseMemberSubject(tx, ws, member.entity_id);
+            if (subject?.kind === 'relation') continue;
             await tx.changeCase.removeMember(ws, member.id);
           }
         }

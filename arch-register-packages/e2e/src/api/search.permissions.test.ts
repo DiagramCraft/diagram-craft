@@ -88,6 +88,7 @@ test.describe('search permission routes', () => {
       '00000000-0000-0000-0003-00000000000e',
       resources.entityIds.frontendApp
     ]);
+    expect(result.totalCounts.entities).toBe(3);
     expect(result.projects).toEqual([]);
     expect(result.files).toEqual([]);
     expect(result.schemas).toEqual([]);
@@ -109,7 +110,10 @@ test.describe('search permission routes', () => {
 
     expect(result.projects).toEqual([]);
     expect(result.files).toEqual([]);
+    expect(result.totalCounts.projects).toBe(0);
+    expect(result.totalCounts.files).toBe(0);
     expect(metadataResult.files).toEqual([]);
+    expect(metadataResult.totalCounts.files).toBe(0);
   });
 
   test('non-disclosure: outsider cannot discover restricted entities by exact query', async ({
@@ -122,5 +126,6 @@ test.describe('search permission routes', () => {
     });
 
     expect(result.entities).toEqual([]);
+    expect(result.totalCounts.entities).toBe(0);
   });
 });

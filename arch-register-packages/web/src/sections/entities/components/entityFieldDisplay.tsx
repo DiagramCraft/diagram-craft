@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Chip } from '../../../components/Chip';
 import { EntityNavigationLink } from '../../../components/EntityNavigationLink';
 import { formatCurrencyValue } from '../../../utils/currencyFormat';
+import { formatDurationValue } from '../../../utils/durationFormat';
 import { relationIds } from '../../../lib/entityEditState';
 import type { EntitySummary } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
@@ -189,6 +190,8 @@ const formatMultiValueDisplay = (
     return <span>{value.map(item => deps.formatDateValue(item)).join(', ')}</span>;
   if (field.type === 'currency')
     return <span>{value.map(item => formatCurrencyValue(item)).join(', ')}</span>;
+  if (field.type === 'duration')
+    return <span>{value.map(item => formatDurationValue(item)).join(', ')}</span>;
   if (field.type === 'principal') {
     return (
       <span style={{ display: 'inline-flex', gap: 4, flexWrap: 'wrap' }}>
@@ -244,6 +247,7 @@ export const renderEntityFieldDisplayValue = (
   if (field.type === 'derived') {
     if (field.resultType === 'boolean') return <span>{value ? 'Yes' : 'No'}</span>;
     if (field.resultType === 'currency') return <span>{formatCurrencyValue(value)}</span>;
+    if (field.resultType === 'duration') return <span>{formatDurationValue(value)}</span>;
     if (field.resultType === 'select')
       return formatSelectOption(field.options, String(value), asChip);
     return <span>{String(value)}</span>;
@@ -252,5 +256,6 @@ export const renderEntityFieldDisplayValue = (
   if (field.type === 'select') return formatSelectOption(field.options, value, asChip);
   if (field.type === 'date') return <span>{formatDateValue(value)}</span>;
   if (field.type === 'currency') return <span>{formatCurrencyValue(value)}</span>;
+  if (field.type === 'duration') return <span>{formatDurationValue(value)}</span>;
   return <span>{String(value)}</span>;
 };

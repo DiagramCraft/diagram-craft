@@ -1,0 +1,40 @@
+.container {
+  padding: 8px 0;
+}
+
+.entityBrowserViewWrapper {
+  padding: 0;
+}
+div[data-frame="true"] {
+  .entityBrowserViewWrapper {
+    margin: calc(-1 * var(--_frame-top-padding)) calc(-1 * var(--_frame-left-padding));
+    & > div {
+      overflow: visible;
+    }
+  }
+}
+
+/* Only the visible widget frame supplies a border; without it the view keeps its own. */
+div[data-frame="true"][data-framed="true"] {
+  .entityBrowserViewWrapper > div {
+    border-width: 0;
+  }
+}
+
+.skeleton {
+  height: 40px;
+  border-radius: var(--r);
+  background: var(--panel-bg);
+  margin-bottom: 6px;
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}

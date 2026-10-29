@@ -27,6 +27,7 @@ import { createEntityChangeORPCHandler } from './domain/catalog/entityChangeOrpc
 import { createRelationChangeORPCHandler } from './domain/catalog/relationChangeOrpc';
 import { createWorkspaceTemplateORPCHandler } from './domain/catalog/templateOrpc';
 import { createWorkspaceViewORPCHandler } from './domain/catalog/viewOrpc';
+import { createWorkspaceApplicationORPCHandler } from './domain/application/applicationOrpc';
 import { createWorkspaceDashboardORPCHandler } from './domain/dashboard/dashboardOrpc';
 import { createPersonalDashboardORPCHandler } from './domain/personalDashboard/personalDashboardOrpc';
 import { createProjectDashboardORPCHandler } from './domain/dashboard/projectDashboardOrpc';
@@ -64,7 +65,6 @@ import { createIntegrationSyncORPCHandler } from './domain/integrationSync/integ
 import { createArtifactORPCHandler } from './domain/artifact/artifactOrpc';
 import { createBaselineORPCHandler } from './domain/baseline/baselineOrpc';
 import { createConformanceORPCHandler } from './domain/conformance/conformanceOrpc';
-import { createGlossaryORPCHandler } from './app/business-glossary/glossaryOrpc';
 import {
   createPublicCatalogConfigORPCHandler,
   createPublicCatalogORPCHandler
@@ -276,15 +276,6 @@ const protectedRouteDefinitions = [
     create: ({ db }) => createWorkspaceEntityTraversalORPCHandler(db)
   },
   {
-    id: 'workspace-glossary',
-    auth: 'protected',
-    kind: 'orpc',
-    dependencies: ['db'],
-    prefix: API_PREFIXES.application,
-    surfaces: [API_PREFIXES.application],
-    create: ({ db }) => createGlossaryORPCHandler(db)
-  },
-  {
     id: 'entity-sync',
     auth: 'protected',
     kind: 'orpc',
@@ -409,6 +400,15 @@ const protectedRouteDefinitions = [
     prefix: API_PREFIXES.application,
     surfaces: [API_PREFIXES.application],
     create: ({ db }) => createWorkspaceViewORPCHandler(db)
+  },
+  {
+    id: 'workspace-applications',
+    auth: 'protected',
+    kind: 'orpc',
+    dependencies: ['db'],
+    prefix: API_PREFIXES.application,
+    surfaces: [API_PREFIXES.application],
+    create: ({ db }) => createWorkspaceApplicationORPCHandler(db)
   },
   {
     id: 'workspace-dashboards',

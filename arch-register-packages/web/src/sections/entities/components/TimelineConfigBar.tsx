@@ -1,7 +1,9 @@
-import { TbBriefcase2, TbCalendarWeek, TbFlag, TbGitCommit } from 'react-icons/tb';
+import { TbBriefcase2, TbCalendarOff, TbCalendarWeek, TbFlag, TbGitCommit } from 'react-icons/tb';
 import styles from './TimelineView.module.css';
-import { FilterDropdown } from '../../../components/FilterDropdown';
-import { Button } from '@diagram-craft/app-components/Button';
+import { ViewControls, ViewControlsSeparator } from '../../../components/ViewControls';
+import { SegmentedControl } from '../../../components/SegmentedControl';
+import { LabeledSelect } from '../../../components/LabeledSelect';
+import { ToolbarButton } from '../../../components/ToolbarButton';
 import type { FieldOption } from './entityFieldSources';
 import type { TimelineConfig } from './timelineViewTypes';
 
@@ -11,21 +13,15 @@ export const TimelineConfigBar = ({
   cfg,
   onChange,
   dateFields,
-  totalDated,
-  totalRows,
   isEventMode
 }: {
   cfg: TimelineConfig;
   onChange: (update: Partial<TimelineConfig>) => void;
   dateFields: FieldOption[];
-  totalDated: number;
-  totalRows: number;
   isEventMode: boolean;
 }) => (
-  <div className={styles.configBar}>
-    <span className={styles.configMeta}>Date mapping</span>
-
-    <FilterDropdown
+  <ViewControls variant="view">
+    <LabeledSelect
       label="Start"
       value={cfg.startFieldId ?? ''}
       onChange={v => onChange({ startFieldId: v ?? null })}
@@ -37,7 +33,7 @@ export const TimelineConfigBar = ({
 
     <span className={styles.configArrow}>→</span>
 
-    <FilterDropdown
+    <LabeledSelect
       label="End"
       value={cfg.endFieldId ?? ''}
       onChange={v => onChange({ endFieldId: v ?? null })}
@@ -47,9 +43,20 @@ export const TimelineConfigBar = ({
       ]}
     />
 
-    <div className={styles.configSep} />
+    <ToolbarButton
+      variant={cfg.includeUndated ? 'primary' : 'secondary'}
+      icon={<TbCalendarOff size={13} />}
+      title={cfg.includeUndated ? 'Hide entities without dates' : 'Show entities without dates'}
+      aria-label={
+        cfg.includeUndated ? 'Hide entities without dates' : 'Show entities without dates'
+      }
+      aria-pressed={cfg.includeUndated}
+      onClick={() => onChange({ includeUndated: !cfg.includeUndated })}
+    />
 
-    <FilterDropdown
+    <ViewControlsSeparator />
+
+    <LabeledSelect
       label="Group"
       value={cfg.groupBy}
       onChange={v => onChange({ groupBy: v as TimelineConfig['groupBy'] })}
@@ -57,34 +64,29 @@ export const TimelineConfigBar = ({
         { value: 'owner', label: 'By owner' },
         { value: 'type', label: 'By type' },
         { value: 'containment', label: 'By parent' },
-        { value: 'project', label: 'Project + Entity' },
-        { value: 'snapshot', label: 'Entity + Project' },
-        { value: 'capability', label: 'Capability + Entity + Project' }
+        { value: 'project', label: 'Project, Entity' },
+        { value: 'snapshot', label: 'Entity, Project' },
+        { value: 'capability', label: 'Parent, Entity, Project' }
       ]}
     />
 
-    <div className={styles.configSep} />
+    <ViewControlsSeparator />
 
-    <div className={styles.segmented}>
-      {(['month', 'quarter', 'year'] as const).map(z => (
-        <button
-          key={z}
-          type="button"
-          className={cfg.zoom === z ? styles.segmentedActive : ''}
-          onClick={() => onChange({ zoom: z })}
-          title={z.charAt(0).toUpperCase() + z.slice(1)}
-        >
-          {z === 'month' ? 'Mo' : z === 'quarter' ? 'Qr' : 'Yr'}
-        </button>
-      ))}
-    </div>
+    <SegmentedControl
+      value={cfg.zoom}
+      onChange={zoom => onChange({ zoom })}
+      options={[
+        { value: 'month', label: 'Mo', title: 'Month' },
+        { value: 'quarter', label: 'Qr', title: 'Quarter' },
+        { value: 'year', label: 'Yr', title: 'Year' }
+      ]}
+    />
 
     {isEventMode && (
       <>
-        <div className={styles.configSep} />
+        <ViewControlsSeparator />
         {(cfg.groupBy === 'snapshot' || cfg.groupBy === 'capability') && (
-          <Button
-            size="sm"
+          <ToolbarButton
             variant={cfg.showProjectLanes ? 'primary' : 'secondary'}
             icon={<TbBriefcase2 size={13} />}
             title={cfg.showProjectLanes ? 'Hide project lanes' : 'Show project lanes'}
@@ -93,8 +95,7 @@ export const TimelineConfigBar = ({
             onClick={() => onChange({ showProjectLanes: !cfg.showProjectLanes })}
           />
         )}
-        <Button
-          size="sm"
+        <ToolbarButton
           variant={cfg.showMilestones ? 'primary' : 'secondary'}
           icon={<TbFlag size={13} />}
           title={cfg.showMilestones ? 'Hide milestones' : 'Show milestones'}
@@ -102,8 +103,7 @@ export const TimelineConfigBar = ({
           aria-pressed={cfg.showMilestones}
           onClick={() => onChange({ showMilestones: !cfg.showMilestones })}
         />
-        <Button
-          size="sm"
+        <ToolbarButton
           variant={cfg.showAutosaves ? 'primary' : 'secondary'}
           icon={<TbGitCommit size={13} />}
           title={cfg.showAutosaves ? 'Hide autosave snapshots' : 'Show autosave snapshots'}
@@ -114,9 +114,8 @@ export const TimelineConfigBar = ({
       </>
     )}
 
-    <div className={styles.configSep} />
-    <Button
-      size="sm"
+    <ViewControlsSeparator />
+    <ToolbarButton
       variant={cfg.showHorizonBands ? 'primary' : 'secondary'}
       icon={<TbCalendarWeek size={13} />}
       title={cfg.showHorizonBands ? 'Hide horizon bands' : 'Show horizon bands'}
@@ -124,11 +123,5 @@ export const TimelineConfigBar = ({
       aria-pressed={cfg.showHorizonBands}
       onClick={() => onChange({ showHorizonBands: !cfg.showHorizonBands })}
     />
-
-    <div style={{ flex: 1 }} />
-
-    <span className={styles.configMeta}>
-      {totalDated} <span style={{ opacity: 0.6 }}>of {totalRows}</span>
-    </span>
-  </div>
+  </ViewControls>
 );

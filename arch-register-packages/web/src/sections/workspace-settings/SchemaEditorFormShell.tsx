@@ -1,59 +1,48 @@
 import type { ReactNode } from 'react';
-import { Button } from '@diagram-craft/app-components/Button';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
-import { TbTrash } from 'react-icons/tb';
 import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
 import { ICON_MAP } from '../../components/TypeBadge';
 import { SCHEMA_ICONS } from '../../lib/schemaPresentation';
 import { CategorySelect } from './CategorySelect';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
+import { useCanEditSchemas, useSchemaEditor } from './schemaEditorContext';
+import type { EditorField, EditorGroup } from './schemaEditorState';
 import styles from './SchemaSettingsScreen.module.css';
 
+type CommonDraft = { categoryId: string | null };
+
+/**
+ * Name / category / description / appearance form shared by the schema editors. Reads the draft
+ * from the surrounding `SchemaEditorProvider`; screens only add what is specific to them.
+ */
 export const SchemaEditorFormShell = ({
-  name,
-  categoryId,
-  description,
-  color,
-  icon,
-  dirty,
-  canEdit,
-  updatePending,
-  saveBlocked = false,
   descriptionPlaceholder,
   beforeDescription,
   afterDescription,
-  children,
   onNameChange,
-  onCategoryChange,
-  onDescriptionChange,
-  onColorChange,
-  onIconChange,
-  onDelete,
-  onSave
+  children
 }: {
-  name: string;
-  categoryId: string | null;
-  description: string;
-  color: string | null;
-  icon: string | null;
-  dirty: boolean;
-  canEdit: boolean;
-  updatePending: boolean;
-  saveBlocked?: boolean;
   descriptionPlaceholder: string;
   beforeDescription?: ReactNode;
   afterDescription?: ReactNode;
+  /** Overrides the default name edit, e.g. to derive other fields from the name. */
+  onNameChange?: (value: string) => void;
   children: ReactNode;
-  onNameChange: (value: string) => void;
-  onCategoryChange: (value: string | null) => void;
-  onDescriptionChange: (value: string) => void;
-  onColorChange: (value: string) => void;
-  onIconChange: (value: string) => void;
-  onDelete?: () => void;
-  onSave: () => void;
 }) => {
+  const editor = useSchemaEditor<EditorField, EditorGroup, CommonDraft>();
+  const canEdit = useCanEditSchemas();
   const { categories } = useWorkspaceContext();
+  const { draft, updateDraft } = editor;
+  if (!draft) return null;
+  const { name, categoryId, description, color, icon } = draft;
+  const setName = onNameChange ?? ((value: string) => updateDraft(d => ({ ...d, name: value })));
+  const onCategoryChange = (value: string | null) =>
+    updateDraft(d => ({ ...d, categoryId: value }));
+  const onDescriptionChange = (value: string) => updateDraft(d => ({ ...d, description: value }));
+  const onColorChange = (value: string) => updateDraft(d => ({ ...d, color: value }));
+  const onIconChange = (value: string) => updateDraft(d => ({ ...d, icon: value }));
+
   return (
     <div className={styles.editor}>
       <div className={styles.formRow}>
@@ -62,7 +51,7 @@ export const SchemaEditorFormShell = ({
           <TextInput
             value={name}
             disabled={!canEdit}
-            onChange={value => onNameChange(value ?? '')}
+            onChange={value => setName(value ?? '')}
             style={{ width: '100%' }}
           />
         </div>
@@ -131,19 +120,6 @@ export const SchemaEditorFormShell = ({
         </div>
       </div>
       {children}
-      <div className={styles.formActions}>
-        {canEdit && onDelete && (
-          <Button variant="danger" icon={<TbTrash size={12} />} onClick={onDelete}>
-            Delete type
-          </Button>
-        )}
-        <div style={{ flex: 1 }} />
-        {canEdit && dirty && (
-          <Button variant="primary" onClick={onSave} disabled={updatePending || saveBlocked}>
-            {updatePending ? 'Saving...' : 'Save'}
-          </Button>
-        )}
-      </div>
     </div>
   );
 };

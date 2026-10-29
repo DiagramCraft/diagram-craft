@@ -20,12 +20,12 @@
   "keywords": [],
   "author": "Magnus Johansson",
   "engines": {
-    "node": ">=22"
+    "node": ">=22.12"
   },
   "dependencies": {
     "@arch-register/api-types": "workspace:*",
     "@arch-register/permissions": "workspace:*",
-    "@asyncapi/parser": "^3.6.3",
+    "@asyncapi/parser": "^3.6.6",
     "@diagram-craft/canvas": "workspace:^",
     "@diagram-craft/canvas-app": "workspace:^",
     "@diagram-craft/canvas-edges": "workspace:^",
@@ -38,16 +38,16 @@
     "@orpc/openapi": "^1.15.0",
     "@orpc/server": "^1.15.0",
     "@orpc/zod": "^1.15.0",
-    "@scalar/openapi-parser": "^0.29.2",
-    "@tanstack/ai": "^0.54.0",
-    "@tanstack/ai-openai": "0.22.6",
-    "@tanstack/ai-openrouter": "0.19.9",
+    "@scalar/openapi-parser": "^0.29.15",
+    "@tanstack/ai": "^1.0.0",
+    "@tanstack/ai-openai": "1.0.0",
+    "@tanstack/ai-openrouter": "1.0.0",
     "archiver": "^8.0.0",
     "argon2": "^0.45.1",
     "better-sqlite3": "^13.0.2",
-    "bonsai-js": "^0.5.0",
-    "dotenv": "^17.2.3",
-    "h3": "2.0.1-rc.32",
+    "bonsai-js": "^1.0.0",
+    "dotenv": "^18.0.8",
+    "h3": "2.0.8",
     "jsonwebtoken": "^9.0.2",
     "lib0": "^0.2.117",
     "nodemailer": "^10.0.10",
@@ -68,6 +68,6 @@
     "@types/node": "^26.4.0",
     "@types/unzipper": "^0.10.10",
     "@types/ws": "^8.18.1",
-    "vitest": "^4.1.10"
+    "vitest": "5.0.5"
   }
 }

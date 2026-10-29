@@ -1,0 +1,9 @@
+.channels {
+  display: flex;
+  gap: 24px;
+}
+
+.channel {
+  display: flex;
+  align-items: center;
+}

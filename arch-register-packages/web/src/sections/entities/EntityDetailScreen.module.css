@@ -305,13 +305,6 @@
   cursor: pointer;
 }
 
-.futurePlansPage {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 16px 24px 32px;
-}
-
 .futurePlanApply:hover {
   background: color-mix(in oklch, var(--accent-fg) 10%, transparent);
 }
@@ -886,36 +879,6 @@
   text-transform: uppercase;
   color: var(--cmp-fg-disabled);
   padding: 2px 0;
-}
-
-.etlChgRow {
-  display: flex;
-  align-items: baseline;
-  gap: 5px;
-  flex-wrap: wrap;
-  font-size: 11px;
-  padding: 4px 6px;
-  border-radius: 3px;
-  background: var(--cmp-bg);
-}
-
-.etlChgField {
-  font-weight: 500;
-  color: var(--base-fg-more-dim);
-}
-
-.etlChgFrom {
-  font-size: 10.5px;
-  color: var(--cmp-fg-disabled);
-}
-
-.etlChgArrow {
-  color: var(--cmp-fg-disabled);
-}
-
-.etlChgTo {
-  font-weight: 500;
-  color: var(--base-fg);
 }
 
 .etlDetailMeta {

@@ -41,49 +41,62 @@
           an application scopes the left icon rail to only that application's sections and re-skins the shell with
           its accent colour. An application may own several
           rail sections, each with its own icon, tooltip, route, and optionally its own primary sidebar. An
-          application appears in the switcher only when enabled, which is governed by its backing workspace
-          capability configuration (managed from the "Applications & Capabilities" workspace settings screen, which
-          pairs each application's schema binding with its access policy in one tabbed view). Workspace administrators
-          can separately control application access for ordinary members with an all-members or
-          selected-people-and-teams policy;
+          application appears in the switcher for every member who has access to it. Workspace administrators
+          control application access for ordinary members from the "Applications" group of the "Applications &
+          Capabilities" workspace settings screen with an all-members or selected-people-and-teams policy, while the
+          "Capabilities" group edits the schema binding of capabilities with non-dashboard consumers (API specification);
           missing policies deny ordinary members by default while global administrators and workspace role managers
-          retain access. Breadcrumbs are relative to the active application, which the switcher represents.
+          retain access. Applications are workspace data: users with dashboard-management rights (`ws.manage_dashboard`) can create, rename,
+          recolour, reorder, and delete them through the API (the built-in applications are seeded into every
+          workspace). From the left rail of an application the same users can add dashboards, rename them, change
+          their icon and URL key, reorder them, and delete them (rail context menu and "Add dashboard" button). Every shared
+          dashboard has a human-readable URL key (a lowercase slug, unique within its application or, for home
+          dashboards, within the workspace), generated from the name and editable; application dashboards are
+          addressed as `/apps/<application key>/<dashboard key>`, and links using the dashboard id keep working.
+          Applications
+          themselves are added from the "+" button of the "Applications & Capabilities" workspace settings sidebar, and
+          their name, description, accent colour (from the shared colour palette), and deletion live on each
+          application's "General" tab next to its "Access" tab. Breadcrumbs are relative to the active application, which the switcher represents.
 
         - @id:ar.workspace.home Users can use the workspace home to navigate to entities, projects, content, search,
           diagrams, and other primary work areas. The home screen shows a composable dashboard of widgets (stat metrics,
           saved-view embeds, entity tables, entity cards, entity graphs, entity changelogs, document browsers, entity
           browsers, diagram previews, wiki-page embeds, lifecycle and activity-trend charts, stale-entity reports, an
-          activity feed, configurable Markdown content, and API & Integration Catalog statistics and list panels)
+          activity feed, configurable Markdown content, stat tiles that count or sum a field over a query, API & Integration Catalog statistics and list panels, ratio
+          bar-lists, count-by-field breakdown bars, month-bucketed date bar charts, upcoming-by-date countdown lists, ranked lists with share bars, a risk matrix, tabs that group other widgets, relation tables with an optional row detail drawer, specification-operation tables, provider × consumer pair-coverage tables, and assessment lists and counts scoped to chosen entity types)
           laid out on a grid; a fresh workspace shows a sensible default layout. The entity table and entity browser
           widgets both show a list of entities but serve different needs: entity table offers quick, flat schema/owner/
           lifecycle/limit filtering with fixed columns, while entity browser exposes the full entity browser experience
           (arbitrary filter conditions, sort, and table/cards/tree/map views) for users who need finer-grained control.
+          Table column headers are clickable to sort by any column, ascending or descending, and an entity browser
+          widget can have its own title and a maximum number of rows, or be switched to an interactive mode with a
+          search box and pagination (table and cards views).
+          The Add widget dialog groups the catalog into Metrics, Data views, Visualizations, and Content & layout,
+          gives each widget a one-line description of what it shows, and has a search box; the wiki editor's `/`
+          insert menu groups the wiki-supported blocks and inline items the same way, with the same names and
+          descriptions, and can be searched by name, description, or keyword.
           A workspace can have multiple
           named dashboards, listed in order in a "Dashboards" section of the home sidebar and switchable by selecting
           one; the first dashboard in that order is shown at the workspace home, and a workspace always retains at
           least one dashboard. Administrators can create a dashboard from the sidebar (added at the end of the order),
-          and rename or delete a dashboard via its context menu. Administrators can also enter edit mode to add,
-          remove, resize, and reposition widgets and save the layout; other users see the active dashboard read-only.
+          and rename it, change its URL key, or delete it via its context menu; the selected dashboard is addressed by
+          its key in the `?dashboard=` URL parameter. Administrators can also enter edit mode to add,
+          remove, resize, and reposition widgets and save the layout (the contents of each tab in a Tabs widget are laid out the same way, in a large editor dialog opened from the widget's configuration); other users see the active dashboard read-only.
           Schema templates can seed a complete default dashboard layout when a workspace adopts the template. The
           optional Information Governance cross-cutting template contributes reusable built-in vocabularies for data
           flow direction, regulatory tags, processing purposes, and residency regions without adding a new semantic
           enum type. It
-          also contributes a Retention Policy entity schema (duration and time unit) and a "Subject to Retention
-          Policy" relation schema (an "activated from" date) bound together via the `retention` workspace
-          capability, without adding a bespoke retention data model: any governed entity records its retention
-          obligation as an ordinary typed-relation assignment to a policy entity, and the assignment's computed
-          expiry status (active, approaching expiry, expired, or incomplete when the policy or activation date is
-          missing) is available to `resolveEntityRetentionStatus` for later surfacing in queries, views, and
-          exports.
+          also contributes a Retention Policy entity schema (a single Period duration field) and a "Subject to Retention
+          Policy" relation schema (an "activated from" date), without adding a bespoke retention data model: any
+          governed entity records its retention obligation as an ordinary typed-relation assignment to a policy
+          entity.
           What this actually captures: `activated_from` is a single date on the assignment relation, and the
           governed entity it is usually attached to (a Data Entity) is a *category* of data (e.g. "Customer
           Credentials"), not an individual record — there is no per-record creation-date tracking anywhere in this
           model. So the computed expiry status answers "how long has this policy nominally applied to this
           category, relative to its stated duration", not "which individual records are due for disposal" — the
           records within a governed category don't all share one creation date, so a category showing "expired"
-          does not mean every (or any particular) record in it is actually due. Consumers of
-          `resolveEntityRetentionStatus` should treat it as a policy-governance/review signal (is this category's
-          retention policy stale enough to warrant a compliance check) rather than a disposal action queue; see
+          does not mean every (or any particular) record in it is actually due. See
           `ar.risk-compliance.retention` below, which was scoped down to a plain assignments register for exactly
           this reason.
           The same template also contributes a Data Entity schema and an "Information Asset Stewardship" shared
@@ -114,18 +127,36 @@
           redaction stays consistent, and queryable/filterable through the standard query engine like any other
           field.
           The home sidebar's Data model section groups schema links by schema category.
-          Every widget shows a title bar (an icon and a title, separated from the widget's content by a divider); the
-          stat-metric and API & Integration Catalog widgets have configurable titles; the catalog's list panels also
-          let users choose how many items to show. Other widget types show a fixed title naming the widget type. In
+          Every widget shows a title bar (an icon and a title, separated from the widget's content by a divider). Any
+          widget's configuration dialog has an Appearance section to override the title, choose a frame style
+          (with header, frame only, or no frame), pick a background color (gray, blue, green, amber, red or purple,
+          adapted to light and dark mode), and pick an icon; the catalog's list panels also
+          let users choose how many items to show. In
           edit mode, the per-widget edit and remove controls appear within the title bar rather than overlapping the
           content.
           An "Aggregate stat" widget shows the number of entities or relations matching a query written in the
           entity query language, or a percentage of a second "total" query. It can add a subtext (optionally using a
           second query's count) and highlight the value in warning or critical colours beyond configurable
-          thresholds, and its link opens the matching records in the catalog. Stats that need logic beyond a query
-          count (case queues, provider/consumer coverage, sums, group-by distributions) remain dedicated widgets.
+          thresholds, and its link opens the matching records in the catalog. It can also show the sum of a number or
+          currency field, a spend-weighted percentage (sum over a query divided by sum over a total query), or the
+          number of distinct values of a field. Stats that need logic beyond that (case queues, provider/consumer
+          coverage) remain dedicated widgets.
+          A "Roll-up table" widget sums a number or currency field over the records of a query into ranked rows, per
+          record or grouped by any field (select labels resolved), with optional bars, share-of-total percentage,
+          record count and a total row.
+          A "Field matrix" widget places the records of a query in a grid of numeric row values against banded
+          numeric values (bands carry a label, lower bound, colour tone and an optional emphasis flag), each cell
+          listing clickable record chips.
+          "Assessment status" and "Assessment progress" widgets summarise assessments that target a chosen entity
+          type: a stat tile counting the overdue, in-progress, not-started or complete ones, and a table
+          with per-assessment progress, due date and status.
           A "Blast radius" widget can be added to workspace dashboards: users pick an entity in the widget's
           configuration and it shows the same depth- and owner-filterable blast-radius list as the entity detail tab.
+          The widget can also be configured with named typed-relation fields (for example Providers and Direct
+          consumers) to show one column per field plus a second-order column. A "Case count" widget shows the number
+          of open governance cases against a chosen entity type, filtered by case kind and scope, and the "Pair
+          coverage", "Top entities" and "Date calendar" widgets can respectively show a compact gap-count tile, rank
+          entities by their number of related records, and place governance cases on the calendar by due date.
 
         - @id:ar.workspace.home.personal-dashboards Any workspace member can optionally create one or more personal
           dashboards for themselves, separate from the shared workspace dashboard (s). Personal dashboards are listed
@@ -209,7 +240,8 @@
               keeping them out of new record edits. Removing an unused option deletes it; an option still in use is
               automatically retained as retired. Enum names and field references provide context without a hard-coded
               enum category set.
-              reusable shared fieldgroups, relationships, and schema-specific behavior, including currency fields and
+              reusable shared fieldgroups, relationships, and schema-specific behavior, including currency and duration fields (an amount plus a day, week, month, or year unit,
+              shown as e.g. "3 years" and filtered by its length in days) and
               ordered multi-valued scalar fields (text, long text, boolean, date, number, currency, and select) with
               minimum/maximum cardinality,
               date fields that can generate schema-field-scoped approaching and overdue governance reminders,
@@ -222,7 +254,8 @@
               one-hop JSON context — on entity schemas the `entity` root (direct references, containment, and
               typed-relation targets); on relation schemas the `relation` root (the relation's own fields, its
               `_in`/`_out` endpoint entities, and `entityRelation` targets) — with a
-              declared text, number, currency, select, boolean, or rating result type;
+              declared text, number, currency, select, boolean, or rating result type, using function/method calls
+              and explicit boolean conditions;
               derived expressions can read `<root>.now` (the current date) and use `daysBetween`, and a
               time-dependent derived field can declare an hourly or daily recalculation cadence so a recurring
               scan job keeps its value current as the calendar advances without any record edit,
@@ -239,7 +272,11 @@
               on-change or scheduled. Derived values are materialized and synchronously recalculated for affected
               entities and relations when inputs, relations, or definitions change (a relation's derived
               values also re-materialize when a connected or carried entity's fields change), and are excluded
-              from required-field completeness. Fields can be organized into named, presentation-only groups (with an
+              from required-field completeness. Every field (on entity schemas, relation types, shared field groups
+              and document types) can carry an optional user-facing description, authored in the schema editors and
+              shown as an (i) icon or hint next to the field label on entity detail, drawer, create and edit forms,
+              relation views, and table column headers; every field in the built-in templates ships with one, and
+              fields without a description render as before. Fields can be organized into named, presentation-only groups (with an
               optional description) that render as labeled sections wherever fields appear as a form or list; this has
               no
               effect on validation, required-ness, or completeness. A group — a schema-local group, or a schema's
@@ -285,64 +322,41 @@
         - @id:ar.workspace.analytics Administrators can inspect workspace-wide analytics and completeness-oriented
           views.
 
-    - @id:ar.strategy Workspaces can optionally enable Strategy & Capability Modelling (@id:ar.entities.strategy-model)
-      as its own workspace application, with a dedicated left rail. The application
-      is enabled only once the workspace's `strategy-model` capability configuration is
-      valid (all five Business Capability, Objective, Outcome, Initiative, and Measure schema bindings resolved);
-      until then, or while a section's own capability lookup is still loading, each section shows a
-      capability-not-configured empty state instead of its content.
-
-        - @id:ar.strategy.view-config Alongside the schema bindings, workspace administrators configure how the
-          Business Capability attributes are presented across the application. In the "Applications & Capabilities"
-          workspace settings screen — a secondary sidebar grouping the applications (Business Glossary, Strategy
-          & Capability Modelling, Vendor Management, Risk & Compliance, Data Stewardship, API & Integration Catalog)
-          and the remaining capability (Retention policy), each row
-          showing a dot for whether that capability is enabled — the Strategy & Capability Modelling entry splits
-          into Bindings / Fields / Dashboard / Access tabs. The Fields tab lists
-          every capability field in one shared display order (no add or remove — the list follows the schema); each
-          field independently opts into the
-          Capabilities table (with an optional header override and a rendering — plain value, a red/amber/green bar,
-          or a signed delta), the subtree roll-up (average or sum, plus a number format), the detail drawer, and a
-          capability-map overlay (direction plus colour-band thresholds; a roll-up field colours by its subtree
-          aggregate, otherwise by the capability's own value). The Capabilities table's Name, Level, Owner, and
-          Applications columns are fixed and always lead. The Dashboard tab configures the landing-screen tiles,
-          the Bindings tab maps the capability roles to schemas as before, and the Access tab carries the
-          application's access policy (@id:ar.authorization.application-access). Retiring a field in the schema editor
-          drops it from every view (with an advisory diagnostic); the
-          configuration round-trips through workspace export/import, and a workspace with no stored configuration
-          falls back to a built-in default that mirrors the seed schema fields.
+    - @id:ar.strategy Workspaces include Strategy & Capability Modelling (@id:ar.entities.strategy-model)
+      as a seeded workspace application, with a dedicated left rail. The application
+      needs no capability binding: it is available to every member with application access, and its dashboards
+      reference the Business Capability, Objective, Outcome, Initiative, and Measure schemas by name.
 
         - @id:ar.strategy.overview The Overview section is the application's landing screen — where the app switcher
-          opens. It shows read-only summary tiles chosen by the workspace's view configuration (@id:
-          ar.strategy.view-config), derived from the same entity and relation data as the other sections:
-          capability count by level, objective count by a select field, application coverage (share of capabilities
-          with at least one supporting application), an orphan-capability count (capabilities no objective supports),
-          and top-N lists of the largest values of a capability field or roll-up. Each tile links into the section
-          behind it (Capabilities filtered by level, Strategy, Capability map, or Traceability's "No strategy link"
-          tab).
+          opens. It is a configurable dashboard (seeded as the `strategy-overview` app dashboard, editable like other
+          app dashboards) built from generic widgets: "Count by field" breakdowns (capabilities by level, objectives
+          by status), application-coverage and orphan-capability stat tiles (capabilities with at least one supporting
+          application; capabilities no objective supports), and a table of the capabilities with the largest maturity
+          gap.
 
-        - @id:ar.strategy.capability-map The Capability map section renders the Business Capability model as a
-          nested L1 → L2 → L3 grid over containment. A toolbar overlay selector colours the leaf tiles by one of the
-          workspace's configured overlays (@id:ar.strategy.view-config) — each a capability field or subtree roll-up
-          banded into heat colours — with a legend; a search box dims tiles whose capability name does not match
-          without removing them, and the
-          sidebar's owner facet dims tiles the same way. Clicking a domain header (or a node in the sidebar's
-          capability tree) focuses the grid on that subtree, with an "All domains" control to clear it (`focus`
-          and `owner` are carried in the URL). Clicking a tile opens the capability's drawer without changing the
-          URL; the drawer's own link-icon action copies a shareable `?drawer=<id>` link.
+        - @id:ar.strategy.capability-map The Capability map section is a configurable dashboard (seeded as the
+          `strategy-capability-map` app dashboard, editable like other app dashboards) whose widget is an entity
+          browser embed in Nested map view (@id:ar.entity-views.map) over the Business Capability containment hierarchy
+          (L1 domains → L2 → L3). Its toolbar offers an overlay selector that colours the tiles in severity
+          colours — each overlay a capability field rolled up over the subtree and banded into heat colours, listed in
+          the widget's Advanced configuration (seeded with maturity, maturity gap, investment and risk) — with a
+          legend, and a search box that dims tiles whose capability
+          name does not match without removing them. The dashboard's Owner facet dims tiles not owned by the
+          selected team the same way. Clicking a domain header drills into that subtree; clicking a tile opens the
+          capability's drawer without changing the URL; the drawer's own link-icon action copies a shareable
+          `?drawer=<id>` link.
 
-        - @id:ar.strategy.capabilities The Capabilities section lists every Business Capability with columns chosen
-          by the workspace's view configuration (@id:ar.strategy.view-config) — capability fields, subtree roll-up
-          metrics, and structural columns such as level, owner, and supported-application count — plus level and
-          owner filters, and sortable columns. Rows open the
-          capability's drawer (see below) and carry a separate "Open in Entities" action to the Home entity
-          browser. The section's own primary sidebar swaps the app's usual
-          section nav list for a capability hierarchy tree (clicking a node filters the table to that subtree) plus
-          an owner facet with counts.
+        - @id:ar.strategy.capabilities The Capabilities section is a configurable dashboard (seeded as the
+          `strategy-capabilities` app dashboard, editable like other app dashboards) whose widget is an entity
+          browser embed in Tree view (@id:ar.entity-views.tree) over the Business Capability containment hierarchy,
+          showing level and owner. The dashboard's Owner facet narrows the tree (matching capabilities keep
+          their ancestors, shown muted). Rows open the capability's drawer (see below). Subtree roll-up columns
+          (maturity bars, gap, investment, risk, supporting-application count) are not yet shown here; the
+          table's per-column renderers (@id:ar.entity-views.table.column-rendering) are the building block.
 
           The configurable entity drawer shows subtree roll-up stats and a leaf count via the generic drawer
-          `rollup`/leaf-count item kinds (seeded from @id:ar.strategy.view-config's roll-up fields by default, but
-          configurable per drawer profile like any other item — the same reusable mechanism any schema with a
+          `rollup`/leaf-count item kinds (seeded for the standard maturity, gap, investment, and risk fields by
+          default, but configurable per drawer profile like any other item — the same reusable mechanism any schema with a
           containment hierarchy can use), plus capability badges, configured fields, the built-in containment-child
           list, configurable drawer items for linked objectives and initiatives, and a "Realized by" item
           using the generic drawer `query` item kind — a path expression in the text query DSL (see
@@ -356,50 +370,51 @@
 
         - @id:ar.strategy.heatmaps The Heatmaps section is deprioritized and not currently surfaced in the app rail
           or section nav; its route and placeholder screen are retained. The capability-map overlay control already
-          provides configurable heat colouring over any capability field or roll-up (@id:ar.strategy.view-config).
+          provides configurable heat colouring over any capability field or roll-up.
 
-        - @id:ar.strategy.strategy The Strategy section is scoped to one objective at a time — chosen from the
-          primary sidebar's objective list and shown in a header with its status, target date, owner, capability
-          count, and description. Below it are the
-          objective's Outcomes, Initiatives, and Measures panels plus a "Capabilities this objective depends on"
-          table with maturity, gap, investment, and application roll-ups over each capability's containment subtree.
-          Measures render a baseline → current → target progress bar from the Measure schema's measurement fields. A
-          "New objective" action opens the entity-create dialog pre-set to the Objective schema. Selecting a
-          capability opens the shared capability drawer.
+        - @id:ar.strategy.strategy The Strategy section is a configurable dashboard (seeded as `strategy-strategy`)
+          scoped by an Objective picker in the sidebar. The seed shows an entity card for the objective (status,
+          target date, owner, description), Outcomes, Initiatives, and Measures lists (generic "Related entities"
+          widgets that list entities referencing the picked objective, optionally through an intermediate type;
+          Measures show a baseline → current → target progress bar), and a "Capabilities this objective depends on"
+          table (a standard entity browser filtered to the capabilities the objective supports, showing name and
+          owner). Selecting a row opens the entity drawer. No objective is selected by default.
 
-        - @id:ar.strategy.traceability The Traceability section has two tabs. **Trace chain** is a three-column
-          hop walker — Objective → Capability → Application — walked one hop at a time over the Objective Supports
-          Business Capability and Business Capability Supports Entity typed relations, with a path summary of the
-          current selection and an initiatives sub-list for the selected objective. **No strategy link** lists the
-          capabilities that no objective supports. Selecting a capability opens the shared capability drawer;
-          selecting an application opens its record in Entities.
+        - @id:ar.strategy.traceability The Traceability section is a configurable dashboard (seeded as
+          `strategy-traceability`) with two tabs. **Trace chain** is a generic "Relationship walker" widget: it lists
+          every entity of a configured type (Objective) and walks a chain of relations column by column — seeded as
+          Objective → Capability → Application over the Objective Supports Business Capability and Business
+          Capability Supports Entity relations — with a path summary of the current selection; viewers can re-pick
+          the relation to follow at each column. **No strategy link** is a standard entity browser filtered to the
+          capabilities no objective supports, showing level and owner. Selecting an entity opens the entity drawer.
+          The walk is local to the widget and not deep-linkable.
 
-    - @id:ar.vendor-management Workspaces can optionally enable Vendor Management as its own workspace application,
+    - @id:ar.vendor-management Workspaces include Vendor Management as a seeded workspace application,
       with a dedicated left rail scoped to five sections (Overview, Vendors, Contracts, Spend, Risk). The application
-      is enabled only once the workspace's `vendor-management` capability configuration is valid (the required Vendor
-      entity schema binding resolved; the Contract and Technology Release entity schema bindings are optional —
-      Technology Release only gates the Risk section's technology EOL exposure table); until then, or while a
-      section's own capability lookup is still loading, each section shows a capability-not-configured empty state
-      instead of its content.
+      needs no capability binding: it is available to every member with application access, and its dashboards
+      reference the Vendor, Contract, and Technology Release schemas by name.
 
         - @id:ar.vendor-management.overview The Overview section is the application's landing screen — where the app
-          switcher opens — and summarizes the other four sections rather than adding new data. Four header stats
-          (contracted spend, renewals due in 90 days with the $ at stake, vendors above risk tolerance, auto-renewing
-          contract count) sit above a 12-month renewal strip — one bar per month, height by that month's contracted
-          $ value, colored red when the month holds a contract due within 30 days or overdue, folding an
-          already-overdue contract into the current month the same way the Contracts section's own calendar does.
-          Below that, a "Next renewals" list (contract, vendor, auto-renew flag, $ value, and a colored day
-          countdown) opens the configurable contract drawer on the Contracts section; a "Spend by vendor" list (top 8, magnitude bar + $ value)
-          opens the vendor drawer on the Spend section. A "Vendors above tolerance" table (Tier, Criticality, the
-          composite risk chip, and applications-supplied count) and a "Technology end-of-life exposure" list (top 5
-          by soonest EOL, hidden — not shown empty — when the optional Technology Release binding is unset or
-          unusable) both open the vendor drawer on the Risk section. A "Renewal calendar" button jumps to the
-          Contracts section's calendar view, and a footnote links back to Entities.
+          switcher opens. It is a configurable dashboard (seeded as the `vendor-management-overview` app dashboard,
+          editable like other app dashboards) built from generic widgets: four stat tiles (contracted spend summed
+          across vendors, contracts renewing within 90 days with the $ at stake, vendors at elevated or high risk, and
+          the auto-renewing share of contracts), a 12-month renewal bar chart (bars sized by contracted $ value, red
+          when a contract is due within 30 days or overdue, with overdue contracts folded into the current month), a
+          "Next renewals" countdown list, a "Spend by vendor" ranked list with share bars, a "Vendors above tolerance"
+          table, and a "Technology end-of-life exposure" table of technology releases reaching end of life within a
+          year. Rows open the standard entity drawer. Compared with the previous bespoke screen, the end-of-life table
+          lists releases rather than vendors with affected-application counts, and there is no applications-supplied
+          column or dedicated renewal-calendar shortcut.
 
-        - @id:ar.vendor-management.vendors The Vendors section is a register of Vendor entities: free-text search by
-          name, sort by name / spend / risk / next renewal, and a sidebar of Tier, Category, and Relationship Owner
-          facets (each showing a count, driven off the Vendor schema's own field options and the fetched vendors'
-          values). Next renewal is the earliest upcoming `Contract.contract_end` across a vendor's own Contracts.
+        - @id:ar.vendor-management.vendors The Vendors section is a configurable dashboard: one entity-browser table of
+          Vendor entities (Tier, Category, Relationship Owner, Annual Spend, Risk, Next Renewal) with a sidebar of
+          multi-select Tier, Category, and Relationship Owner facets (each showing a count tallied from the first 200
+          vendors). Annual Spend (summed across the vendor's own Contracts) and Next Renewal (the earliest upcoming
+          `Contract.contract_end`, refreshed daily) are derived fields on the Vendor schema, alongside the derived
+          `risk` rating; they are populated for newly created workspaces. Risk is shown as its numeric rating, without
+          the band pill. Free-text search and the old spend / risk / renewal sort options are not part of this
+          screen. Facet filters previously carried as `tier` / `category`
+          / `owner` URL parameters are now `tiers` / `categories` / `relationshipOwners` (comma-joined).
           Selecting a vendor opens the configurable shared vendor drawer (deep-linkable via its own link-icon
           action, see below): its schema profile preserves the Vendor schema's derived `risk` rating (weighted
           across the vendor's security, concentration, financial, and compliance risk fields and lifted by
@@ -410,83 +425,69 @@
           entity-drawer configuration; the composite risk summary remains a compact mini-panel. Capabilities funded
           is not yet available — no Contract-to-capability link exists yet.
 
-        - @id:ar.vendor-management.contracts The Contracts section offers a list view and a 12-month renewal
-          calendar (its timeline view is still pending). The list is a register of Contract entities: free-text
-          search by contract or vendor name, sort by name / vendor / annual cost / renewal date, and a sidebar of
-          Renewal window, Type, and Vendor facets (each showing a count). Renewal window is a computed bucket over
-          `Contract.contract_end` (overdue, next 30/90/365 days, beyond 12 months, or no end date), not a schema
-          field. The calendar shows the current month plus the next 11, one cell per month, with each contract's
-          renewal placed by the calendar month of its `contract_end`; an overdue contract is folded into the
-          current month's cell instead of dropping off the grid, and a contract renewing beyond 12 months out, or
-          with no end date, is excluded from the grid and counted in a caption below it (both remain visible in the
-          list). Selecting a contract, in either view, opens the configurable contract entity drawer (contract and
+        - @id:ar.vendor-management.contracts The Contracts section is a configurable dashboard with three tabs (List,
+          Renewal calendar, Timelines) and a sidebar of multi-select Type and Vendor facets (each showing a count
+          tallied from the first 200 contracts). The List tab is an entity-browser table of Contract entities (Vendor,
+          Type, Annual cost, Auto-renew, Contract End). The Renewal calendar tab is a generic month/week calendar widget
+          (12 months from the current one by default): each contract is placed by the month of its `contract_end`, with
+          the month's total annual cost in its header; an overdue contract is folded into the current month, and a
+          contract beyond the window or with no end date is excluded and counted in a caption. The Timelines tab is a
+          generic date-range timeline widget: a bar from `contract_start` to `contract_end`, a notice marker on
+          auto-renewing contracts with a notice period (a Duration field, converted to days), and a today line; contracts missing either date are counted in a
+          caption. Both widgets are available to any dashboard (query, date fields, subtitle and value fields are
+          configurable). Compared with the previous bespoke screen, free-text search, sort options, the renewal-window
+          facet and the `q` / `type` / `vendor` / `renewalWindow` / `view` URL parameters are no longer part of this
+          screen (facets are now `contractTypes` / `vendorIds`, comma-joined; the tab is carried in `tab`). Selecting a contract, in either view, opens the configurable contract entity drawer (contract and
           renewal badges, configured terms and cost fields, a link back to the contract's vendor drawer, and the
           `contract.systems-used` content slot). The Vendor link opens a nested Vendor drawer while preserving the
           Contract drawer; Back, Escape, or close returns to the parent, and a direct `drawer=<id>` link opens the
           linked entity as the stack root. Opening the drawer never changes the URL itself; its own link-icon action
           copies a shareable `drawer=<id>` link, mirroring the Vendors section's shared drawer.
 
-        - @id:ar.vendor-management.spend The Spend section is a portfolio-wide spend roll-up: four header stats (total
-          annualised spend, fixed-term commitment not auto-renewing, the Strategic tier's share of spend,
-          and the number of cost centres charged), a toolbar toggle grouping the roll-up by vendor, by the Vendor
-          schema's Cost Centre field, or by capability, a portfolio-wide share-of-spend strip, and a roll-up table
-          (share bar, spend, % of total, contract count, largest contract) sorted by spend descending. A sidebar
-          of Cost Centre (each row showing that centre's own spend) and Owner facets narrows the roll-up rows (the
-          header stats stay portfolio-wide). Selecting a vendor row or share-strip segment (not available
-          when grouped by cost centre) opens the shared vendor drawer in place. Grouping by capability shows an
-          explanatory empty state instead of
-          data — no Contract-to-capability link exists yet.
+        - @id:ar.vendor-management.spend The Spend section is a configurable dashboard: four stat tiles (total
+          annualised spend, fixed-term commitment not auto-renewing, the Strategic tier's share of spend, and the number
+          of cost centres with vendor spend) above a tabbed roll-up table, By vendor or By cost centre, showing a
+          share bar, spend, % of total and (when grouped) vendor count, sorted by spend descending with a total row. A
+          sidebar of Cost Centre and Owner facets narrows the tables (the stat tiles stay portfolio-wide). Selecting
+          a vendor row opens the shared vendor drawer in place.
 
-        - @id:ar.vendor-management.risk The Risk section has four header stats (High risk vendor count, vendors with
-          Concentration Risk ≥ 4, technologies nearing end-of-life, and Systems exposed to one), a two-column
-          criticality × risk-band matrix and risk register, and a technology end-of-life exposure table — layout and
-          composite scoring mirror the Claude Design reference (`vendor-data.jsx`/`vendor-views.jsx`) exactly. The
-          Vendor schema's derived `risk` field is a weighted average of security/concentration/financial/compliance
-          risk fields (weights 0.34 / 0.28 / 0.22 / 0.16) on their native 1-5 scale, linearly lifted by criticality
-          (±6% per point off a criticality of 3), rounded and clamped to [1, 5], then presented as Low (< 2.0) /
-          Moderate (< 2.7) / Elevated (< 3.4) / High.
-          The matrix (criticality 5 down to 2 × the four bands) lists each cell's vendors as clickable name tags (not a
-          count) that open the shared vendor drawer directly — it isn't itself a filter control. The risk
-          register (Vendor, Sec, Conc, Fin, Comp, Score) is sorted by score descending and filterable only by the
-          sidebar's Band facet. A technology end-of-life exposure table cross-references the Systems a vendor's
-          Contracts serve against those Systems' linked Technology Release records (Technology, Radar ring, Vendor,
-          Support ends, Runway in months, Systems affected), one row per vendor-and-technology pair; it depends on
-          the `vendor-management` capability's optional Technology Release entity schema binding (configured in
-          Applications & Capabilities, and auto-bound for a workspace using the default catalog) and on an entity
-          schema — typically Component or Resource — that links a System to that Technology Release schema; the
-          panel is hidden entirely, not shown with an explanatory empty state, when either is missing. The sidebar's
-          "Technology EOL" facet always shows its own group label (with its own empty-state message when there's no
-          exposure data) and lists the same exposed technologies, each opening its vendor.
+        - @id:ar.vendor-management.risk The Risk section is a configurable dashboard: four stat tiles (High risk
+          vendors, vendors with Concentration Risk ≥ 4, technology releases ending support within 12 months, and
+          releases already past end of life), a criticality × risk-band matrix next to the vendor risk register, and a
+          technology end-of-life table listing releases ending support within a year. The Vendor schema's derived
+          `risk` field is a weighted average of security/concentration/financial/compliance risk fields (weights
+          0.34 / 0.28 / 0.22 / 0.16) on their native 1-5 scale, linearly lifted by criticality (±6% per point off a
+          criticality of 3), rounded and clamped to [1, 5], then presented as Low (< 2.0) / Moderate (< 2.7) /
+          Elevated (< 3.4) / High. The matrix lists each cell's vendors as clickable name tags that open the vendor
+          drawer, and emphasises elevated and high cells for criticality 4 and above. The sidebar's Tier, Category and
+          Owner facets narrow the matrix and register; the stat tiles stay portfolio-wide.
 
-    - @id:ar.risk-compliance Workspaces can optionally enable Risk & Compliance as its own workspace application,
+    - @id:ar.risk-compliance Workspaces include Risk & Compliance as a seeded workspace application,
       with a dedicated left rail scoped to five sections (Overview, Risks, Controls, Retention, Assessments). The
-      default seeded workspace has this capability preconfigured, and the application is enabled once the workspace's
-      `risk-compliance` capability configuration is valid (the required
-      Risk entity schema binding resolved; the Control, Framework, and Compliance Requirement entity schema bindings
-      are optional). The Retention section gates separately, on the existing, workspace-wide `retention` capability
-      (policy entity schema and assignment relation schema bindings), rather than on `risk-compliance` — a workspace
-      can have Retention configured without the rest of Risk & Compliance being enabled, or vice versa.
+      application needs no capability binding: it is available to every member with application access, and its
+      dashboards (including Retention) reference the Risk, Control, Framework, Compliance Requirement, Data Entity,
+      Retention Policy, and retention-assignment schemas by name.
 
-        - @id:ar.risk-compliance.overview The Overview section (the app switcher's landing section) is a read-only
-          dashboard summarizing the other four sections, each panel linking into the section that owns the full
-          view — mirroring Vendor Management's own Overview (`ar.vendor-management`). A four-tile stat strip (risks
-          outside appetite, control coverage %, retention completeness, and open risk/control assessments due within
-          30 days), a two-column row of the same 5×5 risk matrix the Risks section uses (with its own
-          inherent/residual toggle) plus the highest-residual live risks, a second two-column row of coverage grouped
-          by `control_type` (standing in for "family", same substitution the Controls section makes) plus a table of
-          live risks with weak or missing control coverage, and a third row pairing an "upcoming reviews" panel (the
-          union of open risk and control assessments, reusing the Assessments section's `AssessmentDuePanel`) with a
-          list of retention assignments missing a required field. The design reference's "records past disposal" /
-          retention-expiry-summary panel has no analog here: `retention-assignment` links a policy to a Data Entity
-          category, not an individual record, so no per-record disposal date exists to summarize (the same
-          constraint that shaped `ar.risk-compliance.retention` below) — retention *completeness* (assignments
-          missing a field) is reported instead, as the closest thing the data can actually support. Selecting a risk
-          from either risk panel opens the shared Risk drawer in place, without navigating away from Overview.
+        - @id:ar.risk-compliance.overview The Overview section (the app switcher's landing section) is a
+          configurable dashboard (the same seeded, editable app dashboard as the Retention section) summarizing risk
+          posture, control coverage and what falls due next. The seeded layout has a three-tile stat strip (risks
+          outside appetite, control coverage %, and open risk/control assessments due within 30 days), the 5×5 risk
+          matrix the Risks section uses (with its own inherent/residual toggle) beside a table of live risks, a
+          ratio bar-list of control effectiveness grouped by `control_type` (standing in for "family", same
+          substitution the Controls section makes) beside an "upcoming reviews" list of open risk and control
+          assessments (day-count due labels and owning project), and a table of live risks with weak or missing
+          control coverage. Selecting a risk from the matrix or a table opens the shared Risk drawer in place. The
+          dashboard can be rearranged and its widgets reconfigured like any other app dashboard. The earlier
+          retention-completeness tile and retention-gaps panel are no longer on Overview; retention assignments are
+          reviewed in the Retention section (`ar.risk-compliance.retention`).
 
-        - @id:ar.risk-compliance.risks The Risks section has a sortable register (search; sidebar facets for
-          Category, Status, Owner, and an "outside appetite" toggle for residual scores banding high/critical) and a
-          5×5 likelihood × impact matrix, toggled by an inherent/residual axis switch — mutually exclusive views, not
-          shown side by side. Selecting a risk opens the shared Risk drawer; legacy `risk-compliance/risks/$riskId`
+        - @id:ar.risk-compliance.risks The Risks section is a configurable dashboard with a **Register** tab (a
+          sortable risk table; sort by clicking column headers) and a **Matrix** tab (5×5 likelihood × impact matrix with
+          an inherent/residual axis switch, including closed risks), both narrowed by the sidebar facets for Category,
+          Status and Owner. The active tab is kept in the URL (`tab`). The earlier free-text search, sort dropdown,
+          "outside appetite" toggle, per-risk sidebar list and `view`/`axis`/`category`/`status`/`owner` URL
+          parameters are no longer part of this screen; the register shows the residual score as a number rather than a
+          band pill. Selecting a risk opens the shared Risk drawer; legacy `risk-compliance/risks/$riskId`
           links redirect there. The drawer shows likelihood/impact,
           the existing `inherent_risk_score` and
           `residual_risk_score` and `risk_coverage` derived fields (the latter a numeric 0–100 percentage calculated
@@ -497,104 +498,71 @@
           and the residual-risk band; workspace administrators can configure supported fields, sections, order,
           labels, and item placement.
 
-        - @id:ar.risk-compliance.controls The Controls section has a sortable library table (search; sort by name,
-          risks mitigated, or last verified; columns for Name, Type, Effectiveness — a colour-outlined pill — Risks
-          mitigated, Assets protected, and Last verified) and a Coverage roll-up view. The sidebar's facets (Type,
-          Effectiveness, Framework — the last derived by joining each Control's satisfied Compliance Requirements to
-          their parent Framework, not a schema field) are counts only; it doesn't also list every Control
-          individually, unlike the Risks section's sidebar. The library table has no per-Control coverage
-          percentage — that would require combining one Control's coverage/effectiveness values across its
-          different Risks, which isn't a meaningful number (unlike combining multiple Controls over one Risk, which
-          the Risks section's own Coverage column does); `operating_effectiveness` is the field that actually
-          measures a Control's effectiveness. The Coverage view has three stat tiles scoped to the library's
-          current filters (Effective, Never tested, Uncontrolled risks), a "coverage by risk" bar-list of every live
-          (non-closed) Risk sorted weakest-`risk_coverage`-first (each row: residual score, the names of its
-          mitigating Controls or "no control", and a numeric coverage bar/percentage), and a "coverage by
-          information asset" table,
-          scoped to Data Entities only — asset name, the count of distinct Risks affecting it (`risk-affects`), and
-          the count of distinct Controls directly protecting it (`control-affects`, styled as "none" when zero),
-          sorted fewest-controls-first. `control-affects` ("Control Protection") is schema-constrained to the
-          `information-governance` template's Data Entity schema (a `control-protection` composition extension on
-          the `risk-compliance` template, materializing only when `information-governance` is also selected in the
-          workspace) — unlike `risk-affects` ("Risk Affects"), which stays unrestricted, since a Risk legitimately
-          affects Systems, Vendors, and Technology resources directly, not only information assets. Because
-          `risk-affects` can still surface non-Data-Entity assets, the coverage-by-asset table additionally filters
-          to the resolved Data Entity schema id (the capability's optional `dataEntity` binding role) rather than
-          relying on the relation constraint alone. A third, Traceability view is a dense table: the library's
-          currently filtered Controls as (sticky) rows, and — toggled by a "Controls × risks"/"Controls × assets"
-          switch in the toolbar — either every live Risk or the same Data-Entity-scoped assets as the Coverage
-          view's asset table as (sticky, vertically labelled) columns. A cell is a solid mark for a linked pair
-          whose Control is effective, an outlined mark for a link whose Control isn't, or empty for no link (a
-          legend in the panel header explains all three). Each row ends with its own total; a closing summary row
-          gives each column's total, with a red mark standing in for zero — an uncontrolled Risk or asset — instead
-          of the digit. Control row headers are clickable, opening the shared Control drawer; asset-dimension column
-          headers open the schema-configured generic entity drawer in place, while Risk-dimension column headers are
-          read-only. Selecting a control, a Coverage-view risk row, or a Coverage/Traceability-view asset row all open
-          through the same shared drawer stack, stacking rather than competing: the template-authored
-          default drawer profile preserves the current attributes and `control_type` badge, while registered Risk &
-          Compliance content slots show the Risks it mitigates (with the `coverage`/`effectiveness` it provides each one) and the Data Entities
-          it protects (via `control-affects`).
+        - @id:ar.risk-compliance.controls The Controls section is a configurable dashboard with Library, Coverage,
+          Controls × Risks, and Controls × Data Entities tabs and a facets sidebar (Type, Effectiveness) that narrows
+          the Library and matrix tabs; the active tab is kept in the URL. The Library tab is a Control table (Type, Operating
+          Effectiveness, Last Verified). The Coverage tab has three stat tiles (Effective, Never tested,
+          Uncontrolled risks), a risks table sorted
+          weakest-`risk_coverage`-first, and a Data Entity table with Risks (`risk-affects`) and Controls (`control-affects`) counts,
+          fewest controls first (available when the `information-governance` template is selected).
+          Both matrix tabs colour each filled cell by the Control's operating
+          effectiveness, with a legend. Control drawers show the Risks mitigated
+          (with the `coverage`/`effectiveness` each provides) and the Data Entities protected.
 
-        - @id:ar.risk-compliance.retention The Retention section — the first web UI consumer of the workspace-wide
-          `retention` capability — is a single register of Assignments ("Subject to Retention Policy" relations),
+        - @id:ar.risk-compliance.retention The Retention section is a single register of Assignments ("Subject to Retention Policy" relations),
           with no view toggle. It originally followed the Claude Design reference's `RCRetention` more closely (an
           expiry dashboard with Overdue/Next-30/31-60/61-90/Beyond-90 buckets, a separate Policies list, and a
           Holds/exceptions view), but the expiry framing was deliberately removed: a "Subject to Retention Policy"
           assignment links a policy to a Data Entity *category*, not to an individual record (see
-          `ar.workspace.home`'s note on what the `retention` capability actually captures), so a computed "expiry
+          `ar.workspace.home`'s note on what a retention assignment actually captures), so a computed "expiry
           date" per assignment could only ever say "how long this policy has nominally applied to this category" —
           labelling a category "Overdue" implied per-record actionability the data can't support. What remains
           reports what the data actually says as plain, uncoloured facts: each row is a governed entity, its
           policy, the policy's Period (duration + time unit, read via the capability's `policy`/`assignment` semantic
           field-role mappings — a
           workspace may map "duration" to any `number` field on its Policy schema, not only one literally named
-          `duration`), and the assignment's Activated-from date. A "Complete" column (and matching sidebar
-          "Incomplete" facet) flags assignments missing a policy, duration, time unit, or activation date — a
-          data-completeness signal, not a disposal-urgency one, so it was kept even though the expiry bucketing was
-          not. The sidebar is the only way to filter: "All" (count of every assignment), "Incomplete", and one row
-          per Retention Policy with its assignment count — selecting a policy narrows the register to its
-          assignments, shown as a dismissible chip in the toolbar.
+          `duration`), and the assignment's Activated-from date. The section is a configurable dashboard (the
+          `risk-compliance-retention` app dashboard: one entity-browser table of governed Data Entities with the
+          policy's name, duration and time unit and the assignment's activation date as columns) whose standard dashboard sidebar has a Retention Policy picker narrowing the
+          register to one policy's assignments (`policyId` search param). The earlier "Complete" column and
+          sidebar "Incomplete" facet were dropped; completeness is still summarised on the Overview.
 
-        - @id:ar.risk-compliance.assessments The Assessments section is a read view over the existing, generic
-          assessment machinery (the same `Assessment` model used by Projects, and by Strategy/Vendor Management's
-          own periodic reviews) — no new case kind — scoped down to whichever workspace assessments target the
-          Risk and/or Control entity schema (`assessment.scope`). Two "due soon" panels ("Risk reviews due",
-          "Control tests due" — the latter only when a Control schema is bound) list open, due-dated assessments in
-          each scope, soonest first, each row's due date shown as a coloured day-count ("18d" / "6d late") rather
-          than a plain date. Below them, a dense register table (a Risk/Control/All toggle, name search, and the
-          same Open-or-Closed/Draft/Archived/All status filter as a project's own Assessments tab) lists matching
-          assessments by Name, Scope (the schema names it targets), Progress (a bar plus completed/in-scope count),
-          Due (the same day-count styling), and a coloured Status pill. Assessments aren't owned by this app — each
-          belongs to a Project — so this section has no create/edit affordance; opening a register row or a
-          due-panel row navigates to the assessment's home project, deep-linked to its Assessments tab.
+        - @id:ar.risk-compliance.assessments The Assessments section is a configurable dashboard (seeded as the
+          `risk-compliance-assessments` app dashboard, editable like other app dashboards) over the existing,
+          generic assessment machinery (the same `Assessment` model used by Projects, and by Strategy/Vendor
+          Management's own periodic reviews) — no new case kind — scoped to whichever workspace assessments target
+          the Risk and/or Control entity schema (`assessment.scope`). It is built from generic dashboard widgets:
+          two "Assessments" lists ("Risk reviews due", "Control tests due") show open, due-dated assessments soonest
+          first with a day-count due label, and a tabbed pair of "Assessment progress" tables (Risks / Controls)
+          list each assessment's progress, due date and status. Assessments aren't owned by this app — each belongs
+          to a Project — so opening a row navigates to the assessment's home project, deep-linked to its
+          Assessments tab.
 
-    - @id:ar.data-stewardship Workspaces can optionally enable Data Stewardship as its own workspace application,
+    - @id:ar.data-stewardship Workspaces include Data Stewardship as a seeded workspace application,
       with a dedicated left rail scoped to five sections (My work, Stewardship, Classification, Change cases &
       exceptions, Assessments) — unlike Strategy & Capability Modelling / Vendor Management / Risk & Compliance,
       there is no separate Overview section; My work is both the first rail section and the application's landing
-      screen. The application is enabled once the workspace's `data-stewardship` capability configuration is valid (the
-      required Data Entity schema binding resolved — the same information-asset entities Risk & Compliance's
-      own optional `dataEntity` binding references). The Change cases & exceptions section reuses the existing
-      `entity.change-case` governance-case kind directly rather than a bound schema — Change Case is a built-in
-      governance-case type, not a workspace-defined entity schema, so the capability has only the one binding role.
+      screen. The application needs no capability binding: its dashboards find the Data Entity schema by name. The Change cases &
+      exceptions section reuses the existing `entity.change-case` governance-case kind directly rather than a
+      workspace-defined entity schema.
       A time-bound exception/waiver register was considered for this section (#3301) but removed after review —
       there is no exception/waiver concept anywhere in this application. All five sections have shipped their real
       content.
 
         - @id:ar.data-stewardship.my-work The My work section (the app switcher's landing section) is the review
           queue over the workspace's existing governance-case/reminder machinery — not a new queue model — scoped
-          down to cases against Data Entities. A four-tile stat strip (Assigned to me, Past due, Cases awaiting a
-          decision, Reviews overdue — substituting the design reference's "Exceptions lapsed or expiring" stat,
-          since there is no exception/waiver register in this application) sits above a six-week due-date calendar
-          (weekly buckets, an already-overdue item folded into the current week rather than dropped off the front,
-          mirroring `ar.vendor-management`'s own monthly renewal calendar's overdue handling) and the queue list
-          itself (kind, a derived priority pill, the dataset, and a due-date badge). Unlike every other section's
-          in-screen toggle, the scope tabs (Assigned to me / All open items / Past due) live in this section's own
-          primary sidebar as a facet, alongside a Kind facet and a derived Priority facet (High/Medium/Low, computed
-          from a case's due date and escalation state — governance cases carry no priority field of their own).
-          There is deliberately no Assignee facet or column: the workspace's "list my own assignments" endpoint only
-          resolves an assignment target for the current user's own tasks, so it can't be populated for the "All open
-          items"/"Past due" scopes; the "Assigned to me" scope already conveys assignment implicitly. The queue only
+          down to cases against Data Entities. The section renders a seeded, user-editable app dashboard (`data-stewardship`,
+          full-width, no sidebar) built from generic dashboard widgets configured for Data Entities: a four-tile stat strip (Assigned to me, Past
+          due, Cases awaiting a decision, Reviews overdue — substituting the design reference's "Exceptions lapsed or
+          expiring" stat, since there is no exception/waiver register in this application), a six-week due-date
+          calendar (weekly buckets, an already-overdue item folded into the current week rather than dropped off the
+          front, mirroring `ar.vendor-management`'s own monthly renewal calendar's overdue handling) and the queue
+          list itself (kind, a derived priority pill, the dataset, and a due-date badge, oldest deadline first). The
+          case widgets are configured per widget by scope (Assigned to me / All open items / Past due) and case
+          kind rather than through URL filters, and the priority (High/Medium/Low) is derived from a case's due date
+          and escalation state — governance cases carry no priority field of their own. There is deliberately no
+          Assignee column: the workspace's "list my own assignments" endpoint only resolves an assignment target for
+          the current user's own tasks, so it can't be populated for the "All open items"/"Past due" scopes. The queue only
           ever surfaces case kinds that actually exist in this codebase (dataset review-date reminders, entity
           change-case approvals, entity deprecation approvals) — the Claude Design reference's mocked "Access
           request" and "Data-subject request" queue kinds have no backing case-kind model anywhere in the workspace
@@ -614,180 +582,116 @@
           for most viewers of this queue). The shared entity drawer's own "Governance items" section shows the open
           governance cases for the current entity (opening the same case drawer, not a placeholder).
 
-        - @id:ar.data-stewardship.stewardship The Stewardship section has a four-tile stat strip (fully covered %,
-          missing an owner, reviews overdue, missing a steward), a "Gaps to close" panel (every dataset with a
-          coverage gap, each gap shown as a chip, opening the shared dataset drawer), and the full dataset table (search
-          across name/owner/steward; sort by gap count, next review date, or name; columns for Dataset,
-          Business owner, Steward, Classification, Next review, and Gaps). The sidebar swaps its plain section nav
-          for this section's own facets: an all-datasets/with-a-gap toggle and a Classification facet (counts only —
-          unlike `ar.risk-compliance.risks`'s sidebar, it doesn't also list every dataset individually; the dataset
-          table is where datasets are browsed one by one). Coverage reuses `ar.data-stewardship`'s dataset-coverage
-          roll-up (named owner, named steward, confirmed classification, current review) directly. The Claude
-          Design reference's `DSStewardship` also groups coverage by domain and sorts/reports a "quality" score and
-          a "certified" stat tile; none of the three exist as fields on Data Entity (no per-instance domain/category
-          field, no quality field, no certified flag), so the coverage-by-domain panel is dropped rather than
-          faked, quality/domain aren't offered as sort options, and the stat strip substitutes "Missing a steward"
-          for "Certified" — mirroring how `ar.risk-compliance.overview`/`ar.risk-compliance.controls` adapted their
-          own design references to the fields the shipped schema actually has. Opening a dataset (from the gaps
-          panel or the table) opens the configurable Data Entity drawer. Its default profile preserves the
+        - @id:ar.data-stewardship.stewardship The Stewardship section is a full-width configurable dashboard (no
+          sidebar) with a four-tile stat strip (fully covered %, missing an owner, reviews overdue, missing a
+          steward) and a "Gaps to close" panel listing the top datasets with active conformance violations, each
+          failing check shown as a chip, opening the shared dataset drawer. "Fully covered" is the share of Data
+          Entities whose conformance status is conformant, so it reflects the latest conformance evaluation. The
+          gaps are four seeded Data Entity conformance checks (no business owner, no steward, classification not
+          confirmed, review not current) that admins can edit in Workspace Settings → Conformance. The
+          `ConformanceViolations` dashboard widget (schema, optional check names, row limit) is generic and
+          available on any dashboard. The former dataset table, search/sort toolbar and facet sidebar were removed.
+          Opening a dataset opens the configurable Data Entity drawer. Its default profile preserves the
           dataset's attributes and stewardship fields and exposes Governance items, Cases, and the generic
           Assessments slot; unsupported placeholder-only Exceptions, Flows, and Systems sections are omitted.
 
-        - @id:ar.data-stewardship.classification The Classification section has three views, switched via an
-          in-screen toggle group in the screen's own header (mirroring the Claude Design reference's `DSClassification`
-          segmented control, and this codebase's own Controls-screen view toggle) — the sidebar carries dataset facets
-          only, shared with the Stewardship section's own shape (an all-datasets/with-a-gap toggle, a "Holds personal
-          data" toggle, and a Classification facet; no per-instance Domain field exists to facet by, same documented
-          gap as Stewardship's own dropped domain grouping). Classified data (every dataset, sorted
-          classification-first, with a "Datasets by classification" breakdown panel above the table, a derived
-          Personal data column, and a Lawful basis proxy column — Data Entity has no dedicated `personal_data` or
-          `lawful_basis` field, so Personal data is derived from Classification being sensitive/highly-sensitive, and
-          the proxy column shows Regulatory tags + Processing purposes instead) also supports the sidebar's
-          coverage-gap and personal-data toggles narrowing its table, same as Stewardship's own table. Each view's own
-          stat-tile row (three tiles, full width) sits between the view switcher and the view's own panel/table.
-          Restricted flows mirrors the design reference's own panel shape: a single titled table ("Flows carrying
-          restricted or confidential data" + a count) with one combined Flow (source → destination) column rather
-          than two, Dataset carried (clickable chips opening the shared dataset drawer), Classification, Protocol, and
-          Boundary (crosses/internal, off the real `cross_boundary` derived field) — the design reference's
-          Style/Adapter/Volume/Health columns come from the Integration Catalog app (#3150, not present in this repo)
-          and have no equivalent on the Data Flow relation schema, so they're dropped rather than faked. Cross-boundary
-          transfers renders as a card list, not a table, again mirroring the design reference: each card shows the
-          flow's route, a classification chip, a "personal data" chip when applicable, and a "no transfer safeguard
-          recorded" tag for every personal-data-carrying transfer — there is no exception/waiver register in this
-          application (considered for #3301, removed after review) to authorize a transfer against instead; a note
-          line (source/destination region and protocol) and a meta row of carried-dataset links plus the flow's
-          owner follow. Restricted flows and
-          Cross-boundary transfers both depend on a Data Flow relation schema existing in the workspace (resolved by
-          name, since relation schemas carry no stable symbolic id at runtime, and there is no dedicated capability
-          binding for this — unlike the app's own `dataEntity` binding); when absent, both views show a plain notice
-          instead of an empty table/list. No flow-detail drawer exists — each flow's row/card already carries every
-          field the Data Flow schema has.
+        - @id:ar.data-stewardship.classification The Classification section is a configurable dashboard (seeded as the
+          `data-stewardship-classification` app dashboard, editable like other app dashboards) with three tabs
+          (selected via the `tab` URL parameter) and a Classification facets sidebar. Every tab opens with three
+          `AggregateStat` tiles. Classified data: Restricted datasets, Missing lawful-basis proxy, Total datasets,
+          then a generic `EntityBrowserEmbed` table of Data Entities (Classification, Regulatory Tags, Processing
+          Purposes, Steward, Owner; sorted by Classification, with the embed's own search and column picker) narrowed
+          by the sidebar's Classification facet. Data Entity has no dedicated `personal_data` or `lawful_basis`
+          field, so the former derived Personal data column was dropped and Regulatory Tags / Processing Purposes
+          stand in as the lawful-basis proxy. Restricted flows: tiles plus a generic "Relation table" widget (any relation type, chosen columns,
+          optional query filter) on Data Flow, filtered to sensitive/highly-sensitive classification, with Data
+          Entities carried (clickable chips opening the shared dataset drawer), Classification, Protocol and the
+          derived Cross-Boundary Transfer field (same-region / cross-boundary / incomplete). Cross-boundary transfers: tiles plus a "Relation table" on Data Flow filtered to
+          `cross_boundary = "cross-boundary"` (Classification, source and destination residency regions, Protocol,
+          Data Entities carried, Owner). There is no exception/waiver register, so the former "personal data" chip
+          and "no transfer safeguard recorded" tag were dropped; the "Unsafeguarded personal-data transfers" tile
+          carries the same count as "Carrying personal data" for the same reason. Both flow tabs depend on a Data
+          Flow relation schema existing in the workspace (resolved by name) and show a plain "not found" message
+          when it is absent. The former "With a coverage gap" / "Holds personal data" sidebar toggles, and the
+          "Datasets by classification" breakdown were dropped in the migration.
 
         - @id:ar.data-stewardship.change-cases The Change cases & exceptions section (despite the name — the
           exceptions/waiver register #3301 considered was removed after review, so this is just "Change cases") is a
-          read list over the existing `entity.change-case` governance-case machinery — no new case kind, no new
-          workflow — scoped to cases whose subject is a Data Entity: columns for Kind, Dataset, Requester (the
-          case's initiating user, resolved against the workspace's member list), Steward (the linked dataset's own
-          steward field), Risk (the same derived priority bucket `ar.data-stewardship.my-work`'s queue computes —
-          governance cases carry no real risk/severity field), Raised, Due, and Status; a Status facet lives in the
-          section's own primary sidebar. Every status is shown here (unlike My work's queue, which only surfaces
-          open cases), since this is a register, not a personal work queue. Bulk entity-change proposals are out of
-          scope for this first cut, same call `ar.data-stewardship.my-work` already made. A row opens the same
-          shared, already-shipped case drawer `ar.data-stewardship.my-work`'s queue uses — a viewer who happens to
-          hold an open assignment on that case sees the same Approve/Acknowledge/Request-changes actions there as
-          from the workspace-wide governance inbox; this section doesn't add a second action surface. The section is
-          section's own rail icon is hidden entirely (rather than shown with an in-screen notice) unless the
-          configured Data Entity schema actually has its `entity.change-case` approval workflow enabled
-          (`schema.entity_approval_policy === 'required'`, the same field the Entities app checks before offering
-          "Propose a change") — without that, no `entity.change-case` governance cases are ever created for the
-          schema, so the register would always be empty. This gate is evaluated once, centrally, in
-          `WorkspaceLayout.tsx`'s rail-item visibility list (alongside the existing AI-feature gate on the
-          assistant/extract icons), not per-screen.
+          configurable dashboard (seeded as the `data-stewardship-change-cases` app dashboard, editable like other
+          app dashboards) around a single generic "Change case table" widget, scoped to `entity.change-case`
+          governance cases whose subject is a Data Entity — no new case kind, no new workflow. The table shows Kind,
+          Data Entity, Requester (the case's initiating user, resolved against the workspace's member list), Risk (the same derived priority bucket `ar.data-stewardship.my-work`'s
+          queue computes — governance cases carry no real risk/severity field), Raised, Due and Status. There is no
+          search box; the status filter (All / Open / Completed / Cancelled) is the dashboard's own
+          primary sidebar, a "fixed options" sidebar type — a single-select list of configured value/label pairs
+          (no counts) whose selection feeds the table's status setting, and which administrators can edit like the
+          other dashboard sidebars. Every
+          status is shown here (unlike My work's queue, which only surfaces open cases), since this is a register,
+          not a personal work queue. Bulk entity-change proposals are out of scope for this first cut, same call
+          `ar.data-stewardship.my-work` already made. A row opens the shared governance case drawer that
+          `ar.data-stewardship.my-work`'s queue also uses — a viewer who happens to hold an open assignment on that
+          case sees the same Approve/Acknowledge/Request-changes actions there as from the workspace-wide governance
+          inbox; this section doesn't add a second action surface. The "Change case table" widget is not specific to
+          Data Stewardship: the entity type, case kinds, status filter
+          and priority mode are config options, so it can be added to any workspace dashboard.
 
-        - @id:ar.data-stewardship.assessments The Assessments section is a read view over the existing, generic
+        - @id:ar.data-stewardship.assessments The Assessments section is a configurable dashboard (seeded as the
+          `data-stewardship-assessments` app dashboard, editable like other app dashboards) over the existing, generic
           assessment machinery (the same `Assessment`/`AssessmentResponse` model Projects and `ar.risk-compliance`'s
-          own Assessments screen already use — no new questionnaire engine), scoped to whichever assessments target
-          the workspace's Data Entity schema. One row per assessment — not per dataset, even though a real
-          `Assessment` can scope many dataset entities: an earlier version joined every in-scope assessment against
-          every dataset entity it targets (matching the Claude Design reference's `DSAssessments` mock, where each
-          mock assessment record is already bound to exactly one dataset), but that repeated a "progress" bar per row
-          for what is really one assessment-level number once an assessment spans several datasets, so it was
-          replaced with one row per assessment and an aggregate progress bar (in-scope datasets with a complete
-          response, over the total in scope, off `Assessment.completed_entity_count`) — mirroring
-          `ar.risk-compliance.assessments`'s own one-row-per-assessment register. A four-tile stat strip (Overdue, In
-          progress, Not started, Complete) sits above a searchable table (Assessment — name plus its `description` as
-          a subtitle, Kind, Project, a progress bar, Questions, Due, Status); the design reference's "Dataset",
-          "Owner", and "Findings" columns have no analog once a row is a whole assessment rather than one dataset (the
-          same "Kind/Owner/Findings/Opened" gap `ar.risk-compliance`'s own Assessments screen already
-          documents), so they're dropped — replaced with a Project column resolving `assessment.project_id` — rather
-          than invented, with "Not started" promoted to its own stat-strip tile in "Findings"'s place so the strip
-          stays a genuine 4-way partition. Kind is the assessment's workspace-managed assessment-type name (falling
-          back to "Uncategorized"); Questions is the assessment's field count. Status is Overdue once the assessment
-          is open and past its due date with an incomplete rollup, otherwise Complete/In progress/Not started off the
-          same rollup. Like `ar.risk-compliance.assessments`, a row click navigates to the assessment's owning
-          Project, deep-linked to its Assessments tab (assessments are authored/filled there, not in this app). The
-          status facet lives in this section's own primary sidebar (all/Overdue/In progress/Not started/Complete,
-          mirroring the stat strip's own buckets) rather than an in-page toggle, the same facet-sidebar shape
-          `ar.data-stewardship.stewardship`/`ar.data-stewardship.classification` use; only free-text search (name,
-          kind, project) stays in the screen's own toolbar. The per- (assessment, entity) join from the earlier
-          version still exists internally and backs the shared entity drawer's own Assessments section (that
-          entity's status on that assessment, listed alongside its attributes/stewardship/coverage/cases). A header
-          action links out to the My work section for sign-offs due, mirroring the design
-          reference.
+          Assessments dashboard use), scoped to the assessments that target the Data Entity schema. It is built from
+          two generic dashboard widgets that take the entity type as a config option: an "Assessment status" stat
+          tile (count of assessments that are Overdue, In progress, Not started or Complete, with a subtext
+          template) and an "Assessment progress" table — one row per assessment, not per dataset, with name plus
+          description, Kind, Project, an aggregate progress bar (in-scope datasets with a complete response), Questions,
+          Due and Status, rendered without a widget frame and optionally narrowed to one status. A row click
+          navigates to the assessment's owning Project, deep-linked to its Assessments tab. Status is Overdue once the
+          assessment is open and past its due date with an incomplete rollup, otherwise Complete/In progress/Not
+          started off the same rollup. The per-(assessment, entity) join still backs the shared entity drawer's own
+          Assessments section.
 
-    - @id:ar.api-integration-catalog Workspaces can optionally enable API & Integration Catalog as its own workspace
+    - @id:ar.api-integration-catalog Workspaces include API & Integration Catalog as a seeded workspace
       application, with a dedicated left rail scoped to four sections (Overview, APIs, Integrations, Impact).
       Unlike Data Stewardship, Overview is a separate landing section rather than doubling with the first facet
       section. Overview summarizes API statistics, open change and deprecation cases, most-consumed APIs, and at-risk
-      integrations, with links into the APIs and Integrations sections. Its four panels are also available as workspace
-      dashboard widgets. The application is enabled once the workspace's existing `api-specification` capability
-      configuration (@id:ar.integrations.api-specification-sync) is valid (the required API entity schema binding
-      resolves) — this promotes `api-specification` from a capability-only binding (configurable in
-      workspace settings but with no rail of its own) to a full application; it remains the same capability that the
-      Entities app's API artifact detail views already read. Sync remains a scaffolded placeholder pending its own
+      integrations, with links into the APIs and Integrations sections. It is built from generic dashboard widgets. The application is available to every member with application access; the
+      `api-specification` capability binding (@id:ar.integrations.api-specification-sync, set up by the workspace
+      template) remains what the Entities app's API artifact detail views read. Sync remains a scaffolded placeholder pending its own
       sub-issue of the API & Integration
       Catalog epic; Overview, APIs, Integrations, and Impact have their real content (below). Integration sync
       operations are available under Workspace Settings rather than in this catalog browsing application.
 
         - @id:ar.api-integration-catalog.overview The Overview section (the app switcher's landing section) summarizes
           API statistics, open change and deprecation cases, most-consumed APIs, and integrations needing attention,
-          with links into the APIs and Integrations sections. The statistics and three list panels can also be added
-          separately to workspace dashboards, where users can set a title and choose a visible-item limit for lists.
+          with links into the APIs and Integrations sections. It is built from generic dashboard widgets (stat, case count, top
+          entities, relation table, needs-attention queue) that can also be added to workspace dashboards.
           The section itself is a seeded dashboard built from these widgets; users with dashboard-management permission
           can edit its layout, and it does not appear among the workspace home dashboards.
 
-        - @id:ar.api-integration-catalog.apis The APIs section lists every entity of the workspace's `api` schema (@id:
-          ar.integrations.api-specification-sync) — name, protocol (s), declared API version, lifecycle, owner, and
-          the entities that provide and consume it (via the `Provides API`/`Consumes API` typed relations) —
-          searchable by name and sortable by name, provider count, consumer count, or normalized operations/messages
-          count (read from the entity's primary `api-specification` artifact's current revision, the same
-          normalized-catalog projection the Entities app's API artifact detail view reads; there is no telemetry
-          column, matching the epic's explicit non-goal of not being an API gateway or runtime observability tool).
-          The section's own primary sidebar replaces the app's plain section nav with Protocol, Lifecycle, and
-          Owning team facets over these entities (each option showing its count, state kept in the URL); the facets
-          narrow which APIs are in scope across both of the section's views below, not just the catalog table.
-          A toolbar toggle ("Catalog" / "Operations" / "Deprecated operations") additionally switches the table
-          between the catalog above and two flat, sortable cross-API tables built from the same feed: every
-          operation/message across the APIs in scope, or just the ones flagged deprecated (method, path, API,
-          deprecated flag) — there is no sunset-date countdown, since no such field exists on the normalized
-          operation model. A row click (in any view) opens a deep-linkable spec drawer (deep-linkable via its own
-          link-icon action) shared with any other section that links into a spec: attributes, providers/consumers, and the full specification
-          viewer — source/version picker, revision status notices, normalized operations/messages list,
-          and a raw-source preview dialog — rendered through the configurable entity drawer with the specification
-          viewer supplied by a registered API provider slot, reusing the same viewer as the Entities app's API
-          artifact detail tab rather than a separate implementation. Clicking a row in either operations view opens that operation's
-          parent API at the same drawer, not a per-operation deep link — the drawer has no per-operation addressing
-          to link into. The Deprecated operations view (#3347) was briefly deferred from #3345 after a fan-out
-          across every API's revisions surfaced a pre-existing server defect: `listApiSpecificationRevisions`
-          used to 409 its entire response whenever any revision of an artifact lacked a normalized projection row —
-          now fixed to omit that revision instead, rather than failing the whole list.
+        - @id:ar.api-integration-catalog.apis The APIs section is a seeded, editable dashboard: a tabs widget with a
+          Catalog tab (an entity browser over the workspace's `api` schema — protocols, API version, lifecycle,
+          owner, and the names of the entities that provide and consume each API via the `Provides API`/`Consumes
+          API` typed relations), an Operations tab, and a Deprecated operations tab (flat, sortable "Specification
+          operations" tables listing every operation/message — method, path, API, deprecated flag — read from the
+          APIs' primary `api-specification` artifact; there is no sunset-date countdown, no telemetry and no
+          operations-count column). The section's primary sidebar offers Protocol, Lifecycle, and Owning team facets
+          (each option showing its count, state kept in the URL) that narrow all three tabs. A row click opens the
+          shared spec drawer (deep-linkable through its link-icon action; an old `/apis/<id>` link still redirects
+          to it): attributes, providers/consumers, and the full specification viewer — source/version picker,
+          revision status notices, normalized operations/messages list, and a raw-source preview dialog. Clicking an
+          operation opens its parent API's drawer, not a per-operation deep link.
 
-        - @id:ar.api-integration-catalog.integrations The Integrations section lists every `Data Flow` typed relation
-          in the workspace (the same relation modeled for Data Stewardship's classification views) — source and
-          destination system, protocol, data classification, count of carried Data Entities, whether the flow
-          crosses a residency boundary, owner, and (when resolvable) the registered API either endpoint provides or
-          consumes — rather than a separate integration-relation model. Above the table, four stat tiles summarize
-          relation count and protocols in use, boundary-crossing count, restricted/highly-sensitive classification
-          count, and how many relations resolve to a registered API; the section's own primary sidebar replaces the
-          app's plain section nav with Protocol and Classification facets plus a "crosses a boundary" toggle (each
-          option showing its count, state kept in the URL), and the table itself is additionally searchable by flow,
-          protocol, or classification and sortable by flow, protocol, classification, or boundary. A row click opens
-          a detail drawer with the flow's endpoints (linking to their entity records), direction, protocol,
-          classification, carried Data Entities, owner, and the shared Data Flow governance fields (regulatory tags,
-          processing purposes, source/destination residency); when either endpoint provides or consumes a registered
-          API (via the `Provides API`/`Consumes API` typed relations), the drawer's footer links into the same
-          shared spec drawer the APIs section uses (@id:ar.api-integration-catalog.apis). There are no
-          adapter/health/latency/volume columns and no "relations per adapter" breakdown, matching the epic's
-          explicit non-goal of not being an API gateway or runtime observability tool; there is also no quick-create
-          action for new relations, since no generic schema-pre-filled quick-create flow exists in this codebase to
-          wire it to (the APIs section's own "Register API" action was dropped for the same reason). A fifth stat
-          tile counts `Provides`/`Consumes API` pairs with no matching Data Flow relation between their two
-          endpoints — Component-typed endpoints are excluded from this count as structurally ineligible, since Data
-          Flow relations are System-only. A toolbar toggle ("Data Flows" / "API Usage") switches the table between
-          this Data Flow relation list and a lighter provider/consumer pairs table (Consumer, API, Provider, and a
-          flag for whether a matching Data Flow relation exists), independent of whether a Data Flow relation exists
-          for a pair and without the governance fields (classification, carried data, boundary) that only exist on
-          Data Flow relations.
+        - @id:ar.api-integration-catalog.integrations The Integrations section is a seeded, editable dashboard with a
+          Data flows tab and an API usage tab. Data flows is a relation table over every `Data Flow` typed relation
+          (source and destination system, carried Data Entities, protocol, data classification, whether the flow
+          crosses a residency boundary, owner), with a sidebar of Protocol, Classification, and Boundary facets
+          (counts tallied from the relations themselves, state kept in the URL); a row click opens a generic relation
+          drawer with the flow's endpoints (linking to their entity records) and all populated fields, including the
+          shared Data Flow governance fields. API usage is a generic "Pair coverage" widget configured for APIs: it
+          lists every `Provides API` × `Consumes API` pairing of a registered API with a flag for whether a matching
+          Data Flow relation exists (endpoints of a type that can never carry a Data Flow, such as Components, are
+          shown as not applicable). There are no
+          adapter/health/latency/volume columns, matching the epic's explicit non-goal of not being an API gateway
+          or runtime observability tool, and no quick-create action for new relations.
 
         - @id:ar.workspace-settings.integration-sync Workspace administrators can open Integration sync from the
           Workspace Settings Administration group. It is an operational control center for manually configured and
@@ -838,7 +742,7 @@
           deep-links to an entity's Discussions tab (which the drawer has no equivalent surface for).
 
         - @id:ar.entities.fields Users can view and edit standard and schema-defined fields, including owners,
-          lifecycle, links, references, typed relations, currency values, ordered multi-valued scalar values, custom
+          lifecycle, links, references, typed relations, currency and duration values, ordered multi-valued scalar values, custom
           values, and principal fields that reference a user or a team (for example, a steward or custodian
           assignment). A schema field marked as externally
           managed (by AI, an integration, or an internal automation) is read-only to users; its current value stays
@@ -849,6 +753,13 @@
           case the Details/Edit screen renders that schema's configured tabs and panels instead.
           Entity saves return validation warnings and reject blocking validation rules atomically, including rules that
           evaluate direct dependent entities through the same bounded JSON context.
+
+        - @id:ar.entities.actions-menu Users get one consistent set of entity actions — open, open in new tab, copy
+          link, pin or unpin — in the same order wherever an entity appears: the "..." menus of table, cards and tree views
+          and the entity detail header, and the right-click menus of the pinned sidebar section, relation columns, graph
+          views and the topology tab. Each place layers its own entries on top, such as collections, clone, merge, delete and
+          project actions in lists, or exclude, focus and expand in graphs. Pin is offered where the full entity record
+          is available.
 
         - @id:ar.entities.json-view Users can open "View JSON" from an entity's details menu to inspect the
           depth-1 JSON projection used by entity derived fields, including metadata, direct references, and typed
@@ -878,16 +789,18 @@
           sources, repeat idempotently without duplicate revisions, and preserve the last successful revision when a
           refresh or completed source scan fails.
 
-        - @id:ar.entities.business-glossary Workspaces can enable a permission-aware business glossary backed by
-          ordinary entity schemas, surfaced as its own application (@id:ar.workspace.applications) with a
-          glossary-scoped left rail. Users can browse and deep-link to terms, search canonical names, synonyms, and
-          abbreviations, organize terms across flat many-to-many categories, inspect explicit usage across entities,
-          typed relations, Markdown, projects, and diagrams, and review unused, conflicting, deprecated, and ownerless
-          quality reports. Term drawers use the workspace's configurable schema-scoped entity drawer for declarative
-          term fields, metadata, ordering, and the generic `entity.usage` slot, while quality badges and permission-filtered
-          usage remain glossary-owned application content. Term definitions, aliases, category changes, ownership,
-          lifecycle, and status continue to use the existing entity permissions, history, and approval mechanisms;
-          generic entity behavior is unchanged.
+        - @id:ar.entities.business-glossary Workspaces can use a permission-aware business glossary backed by
+          ordinary entity schemas (Term and Term Category, found by the dashboard rather than bound through a capability), surfaced as its own application (@id:ar.workspace.applications) as a configurable
+          dashboard: a single full-width term table plus a facets sidebar (category, owner, lifecycle, each
+          multi-select with counts) that filters the table live. Administrators can edit the facets sidebar (add, remove, reorder facets) from the dashboard's Edit sidebar dialog. A facets sidebar can be built over an entity schema or over a relation type (e.g. Data Flow), tallying counts from the relations' own select/text fields. The table shows canonical name, synonyms,
+          abbreviations, categories, owner, lifecycle, status, and a usage count (entities, typed relations,
+          Markdown, projects, and diagrams referencing the term); clicking a row opens the term's entity drawer.
+          The table has sortable column headers but no free-text search box or pagination on this screen yet,
+          and unused/conflicting/deprecated/ownerless quality reporting is no longer surfaced here. Term drawers use
+          the workspace's configurable schema-scoped entity drawer for declarative term fields, metadata, ordering,
+          and the generic `entity.usage` slot. Term definitions, aliases, category changes, ownership, lifecycle,
+          and status continue to use the existing entity permissions, history, and approval mechanisms; generic
+          entity behavior is unchanged.
 
         - @id:ar.entities.strategy-model Workspaces can optionally enable a strategy model — nested Business
           Capability, Objective, Outcome, Initiative, and Measure entity schemas — bound to the workspace via a
@@ -906,8 +819,7 @@
           presentation field groups (Maturity & Performance, Strategic Assessment, Investment & Risk, Lifecycle
           & Review, Reference Models) on the detail screen. Measures carry baseline, current, target, and
           direction values for strategy roll-ups. Which of these attributes each Strategy & Capability Modelling
-          surface shows, and how they are aggregated and coloured, is set per workspace (@id:ar.strategy.view-config);
-          the roll-up metrics it lists are computed over each capability's full recursive containment subtree using
+          surface shows, and how they are aggregated and coloured, is configured on the app's dashboards; the roll-up metrics it lists are computed over each capability's full recursive containment subtree using
           the generic metric roll-up engine (@id:ar.entity-views.map).
 
         - @id:ar.entities.relations Users can create and inspect relationships between entities and navigate related,
@@ -950,16 +862,18 @@
           to field-group access control); these changes are saved together with the rest of the entity's edits in one
           atomic update. Each existing instance can also be expanded inline to edit its fields, or opened in a detail
           dialog showing its audit trail of create/update/delete events. Relation instances now retain version
-          history on create/update/delete and can be restored to an earlier version via the API, mirroring entity
-          version history's redaction and restore semantics; this is not yet surfaced in the relation instance UI
-          the way entity history is (@id:ar.entities.history). Relation instances can also go through
-          change-approval: a relation can require approval before edits apply (same policy-override precedence as
-          entities), a single-relation proposal can be submitted/resubmitted/withdrawn/bypassed via the API mirroring
-          the entity change-approval workflow, and a project's planned-change case can include relation instances
+          history on create/update/delete and can be restored to an earlier version, mirroring entity version
+          history's redaction and restore semantics (@id:ar.entities.history). The relation drawer lists these
+          versions and lets users with edit access restore one after reviewing a field-level diff. Relation instances can also go through
+          change-approval: a relation can require approval before edits apply (enabled per relation schema in Workspace settings > Workflows, like entity change approval; same policy-override precedence as
+          entities), a single-relation proposal can be submitted, resubmitted, withdrawn, or bypassed (audited, with a reason)
+          from the relation edit dialog and relation drawer, which shows the current proposal including its stale
+          and changes-requested states, and a project's planned-change case can include relation instances
           alongside entities as members (endpoints are immutable and a proposal that changes one is rejected).
           Approved and applied relation changes are wired into the same governance engine, timeline markers, and
-          workspace landscape-diff as entities; this relation change-approval/planned-change surface is not yet
-          exposed in the web UI (API-only so far). The
+          workspace landscape-diff as entities. In the web UI, relations are added and edited as members in the Plan
+          change dialog (alongside at least one entity), listed with entity members on the project's future-changes
+          view, and shown in a Planned changes section of the relation drawer. The
           entity detail screen's Relations tab and Topology view also surface typed relation instances (grouped by
           relation schema in Topology, using the schema's own color), each expandable in place to view field values
           and open the same audit-trail history dialog. Relation instances can additionally be browsed as
@@ -1000,11 +914,11 @@
           following each Control out to its mitigated Risks and protected entities.
 
         - @id:ar.entities.blast-radius On the entity detail screen, users can open a "Blast radius" tab alongside
-          Topology, Graph, and Dependents. It runs a bounded, permission-aware traversal outward from the entity
-          across every visible reference, containment, and typed relation, grouped and ranked by lifecycle, owner,
-          schema, and available criticality metadata, and lists each reachable entity with an explainable path
-          back to the subject; clicking a result opens that entity's drawer. Users can filter results by depth
-          (direct, or an extended two/three-hop traversal) and owner. The same panel is also reachable from a relation instance: a "View
+          Topology and Graph. It runs a bounded, permission-aware traversal outward from the entity across every
+          visible reference, containment, and typed relation and shows the result in two columns, Incoming (what
+          depends on the entity) and Outgoing (what it depends on), listing each reachable entity with an
+          explainable path back to the subject; clicking a result opens that entity's drawer. Users can filter
+          results by depth (direct, or an extended two/three-hop traversal) and owner. The same panel is also reachable from a relation instance: a "View
           blast radius" action in the Relations browser's row menu, and a "View blast radius" button in the
           relation detail popover shown by the entity graph and Topology views, both opening it in a dialog scoped
           to that relation's two endpoints. Restricted entities and relations are never disclosed through the
@@ -1050,10 +964,22 @@
           when the browser is in project context. Scalar-array filters use any-element matching for positive operators,
           while emptiness checks the list and sorting/chart metrics use its first value.
 
+          - @id:ar.entity-views.table.column-rendering Users can choose how each table column is rendered: plain text
+            (default), a color band (select options or number/date ranges mapped to green/amber/red), or a bar
+            against a min/max range with the value as label. This applies to schema fields and query-projection
+            columns, is set from Manage fields in the entity browser and in entity browser embeds, is saved with saved
+            views and embed configs, and seeds can set it by field name. Other views are unaffected.
+
           Entity lists also expose an aggregate Conformance status field that can be displayed and filtered in
           browser queries and saved views. The status distinguishes conformant, violating, acknowledged, exempt, and
           not-evaluated entities; unresolved filtering matches active or acknowledged violations, and stale evaluation
           coverage is shown separately from the substantive status.
+
+        - @id:ar.entity-views.help Users can click a "?" icon beside the View dropdown to see a short description of how
+          the currently selected view works.
+
+        - @id:ar.entity-views.grouped Users can pick a view from a View dropdown grouped under Lists, Charts, Time and
+          Relationships headings.
 
         - @id:ar.entity-views.cards Users can inspect entities as cards for quick scanning of record summaries.
 
@@ -1076,22 +1002,31 @@
         - @id:ar.entity-views.timeline Users can inspect date-driven entity history and planned change context in a
           condensed Entity + Project timeline, grouping rows by owner, type, or containment parent, with configurable
           project lanes, milestone guides, autosave snapshot visibility, and continuous Historical, Now, Next, and
-          Later horizon bands. The Capability + Entity + Project strategic roadmap mode aggregates accessible
-          project-linked workspace entities, keeps owners visible, and places undated entities in a separate section.
+          Later horizon bands. The Parent + Entity + Project strategic roadmap mode aggregates accessible
+          project-linked workspace entities and keeps owners visible. Entities without a date for the mapped fields
+          are listed among the dated ones (without a bar) in every grouping, and a toggle next to the date mapping
+          hides them.
           When grouped by Project + Entity, a project with both a start and target date set shows a gantt bar spanning
           that range in its group header.
 
         - @id:ar.entity-views.entity-detail Entity detail screens present metadata, project membership, and diagram
           membership in an accordion, with metadata open initially and project/diagram counts visible while their
           sections are collapsed. Valid typed relation schemas without projected fields have their own accordion
-          sections, and planned changes are available in a dedicated Future plans tab beside Change history. A
+          sections, and planned changes are available in a dedicated Planned changes tab in the Planning & review section. A
           Conformance tab shows the entity's own violations (active, acknowledged, exempt) with severity and
           last-seen timestamps, or a conformant/not-yet-evaluated state when none apply, with its tab title counting
           active violations; it is gated by the same permission as the workspace Conformance section and links out
           to it for further investigation.
+        - @id:ar.entity-views.conformance-overview A Conformance view type in the entity browser joins conformance
+          violations onto the entities matching the current search and filters, one row per violation, with its own
+          status, severity, and check filters; selecting a row opens the entity. It can be saved like any other view,
+          is gated by the same permission as the workspace Conformance section, and shows the first 200 violations
+          of the selected filters. The workspace Conformance section remains the place to manage checks, exemptions,
+          and runs.
 
-        - @id:ar.entity-views.diff Users can pick a future date and view a workspace-wide diff of what changes by
-          then — entities added, removed, or changed, with all applicable planned changes across projects applied,
+        - @id:ar.entity-views.diff Users can pick a date and view a workspace-wide diff: for a future date, what changes by
+          then — entities added, removed, or changed, with all applicable planned changes across projects applied;
+          for a past date, what changed since then (compared forward to today),
           scoped to the browser's current search/filter/project-scope selection, with a field-level diff on
           drill-down for changed entities. Planned changes with a target date already in the past but never applied
           are excluded by default (an "include overdue changes" toggle brings them back in). Field values from
@@ -1102,6 +1037,9 @@
         - @id:ar.entity-views.matrix Users can inspect relationship density and coverage in a matrix view, filterable
           by a specific relation field where typed relation instances are included alongside generic
           reference/containment relations and marked with their relation schema's colour/icon in the field picker.
+          For entity columns, filled cells can be coloured by a select field of the row entity, the column entity, or
+          the typed relation between them (e.g. a mitigation's effectiveness), with a legend of the field's options;
+          for a relation field where several relations connect a pair, the weakest value is shown.
 
         - @id:ar.entity-views.traceability Users can save a generic, path-configured traceability view that follows
           one or more bounded relationship paths from the current entity query, reports architecture and current
@@ -1144,8 +1082,11 @@
 
         - @id:ar.entity-views.map Users can inspect containment hierarchies, including the built-in Vendor-to-Contract
           path, as a nested capability map, colouring boxes by a configurable metric rolled up from descendant entities
+          (a numeric metric can alternatively be drawn in good/warn/bad severity bands, with a band legend, and its
+          gradient can use a blue, green, red, red-amber-green, or grayscale color scheme, optionally reversed)
           (numeric or currency fields, lifecycle state, or assessment fields), using count, leaf-count, sum, average,
-          minimum, maximum, dominant-option, worst, or percentage aggregation. Leaf-count counts only descendants
+          minimum, maximum, best, worst, most-common-option (for select fields and lifecycle states), or percentage aggregation, or no aggregation at all ("None"),
+          which colours only the leaf boxes by their own value and leaves parent boxes uncoloured. Leaf-count counts only descendants
           with no containment children of their own — used, for example, by the Strategy & Capability Modelling
           application's capability roll-up (@id:ar.entities.strategy-model). Percentage aggregation shows the share
           of descendants matching a configurable numerator condition against the same field set as the entity
@@ -1178,19 +1119,21 @@
           only top-most entities as roots. Repeated terminal sources are deduplicated and collapsed duplicates are
           marked in the map with a count and hover detail.
 
-        - @id:ar.entity-views.explore Users can inspect entity data in a configurable side-by-side exploration view,
-          using a scoped relation filter popup grouped by source entity schema and labelled with source schema,
-          predicate, and target schema; each non-center column can be filtered to a schema, with the selection
-          constraining subsequent traversal and persisting with the view configuration. Selected schema relationships
-          apply across matching entities, while typed relation instances remain included alongside generic reference
-          and containment relations by default. Entity cards provide context-menu actions to exclude an entity from
-          the exploration or focus the entity filter on that entity.
+        - @id:ar.entity-views.explore Users can inspect entity data in the Relation columns view, a configurable side-by-side exploration view,
+          using a per-column menu: each column can filter its outgoing relations (listed as source schema, predicate,
+          and target schema; for the filtered entities these are the relations that populate the next column to the
+          right), and each non-center column can be filtered to a schema, with the selections constraining subsequent traversal and persisting with the view
+          configuration; columns can also be added, hidden, or reset (which clears the filters set from that column
+          and the entities excluded from it). Typed relation instances remain included
+          alongside generic reference and containment relations by default. Entity cards provide context-menu
+          actions to exclude an entity from the exploration or focus the entity filter on that entity.
 
         - @id:ar.entity-views.saved-configuration Users can configure and reuse entity view fields, filters, sorting,
           display modes, and joined data such as assessment fields. Saved views may also use relationship-aware
           structured queries with projected fields. Schema templates (full or cross-cutting) can seed initial saved
           views into a workspace at creation time, so users see a populated view list for template-provided schemas
-          without configuring one themselves.
+          without configuring one themselves. Saved views are shared with everyone who can see the workspace or project;
+          admins can pin a view so that only admins can change it, and pinned views are listed separately.
 
         - @id:ar.entity-views.technology-lifecycle Users can use saved table, radar, and timeline views to review
           technology release lifecycles, radar governance status, and end-of-life planning dates.
@@ -1199,7 +1142,7 @@
       each hierarchy manually.
 
         - @id:ar.search.workspace Users can search across the current workspace and navigate to matching records and
-          content.
+          content. Type and overall result counts show full match totals even when displayed result rows are limited.
 
         - @id:ar.search.filters Users can combine search terms and structured filters to narrow results. Entity
           browser views provide a progressive filter builder popover (available alongside the multi-select sidebar
@@ -1215,7 +1158,9 @@
           segment's `[...]` scope — `technology_releases[eol_date < date("2026-06-30") columns eol_date as "TR EOL"]`,
           or a capture-only bracket for an unfiltered traversal — covering entity- and relation-rooted queries,
           `relationForward` hops, and whole-path (`path`, `includePath` in the IR) captures; each column binds to
-          that scope's match witness. an empty group is treated as no filter rather than matching nothing, and a blank
+          that scope's match witness. Duration fields filter by unit-aware literals in the Advanced text field (`notice_period > 3y`,
+          `term < "6 months"`; a bare number is days) and by an amount-and-unit input in the filter builder, and a multi-valued Duration field
+          matches when any of its values satisfies the comparison. an empty group is treated as no filter rather than matching nothing, and a blank
           free-text row as no
           filter rather than an error. A free-text clause is normally the dedicated search box, but a "Free text"
           entry in any condition row's field dropdown places one inside the boolean tree for the "text OR a field
@@ -1239,8 +1184,8 @@
         - @id:ar.search.navigation Search results provide context and links into the relevant entity, project, document,
           or workspace surface.
 
-        - @id:ar.search.glossary The dedicated glossary surface provides alias-aware term search and quality filters
-          without changing the semantics of generic workspace search.
+        - @id:ar.search.glossary The dedicated glossary surface provides category/owner/lifecycle faceted
+          browsing of terms without changing the semantics of generic workspace search.
 
     - @id:ar.projects Users can organize architecture work into projects containing files, content, diagrams,
       milestones, and assessments.
@@ -1248,7 +1193,9 @@
         - @id:ar.projects.lifecycle Users can create, edit, view, and delete projects and manage their project-level
           metadata, including optional start and target dates shown on the project home screen. Entities can be linked
           to one or more projects, making the project's milestones, assessments, and planned changes available as
-          project context for that entity.
+          project context for that entity. Within a project's entity list, users can add entities, mark each as done or
+          not done for the project, clone an entity into the project as a project-scoped copy, and remove it from the
+          project.
 
         - @id:ar.projects.dashboard The project home screen shows a composable dashboard of widgets scoped to that
           project, built from the same widget catalog as the workspace dashboard (stat metrics, saved-view embeds,
@@ -1271,23 +1218,24 @@
 
         - @id:ar.projects.markdown Users can create and edit Markdown documents with links, backlinks, attachments,
           metadata, and revision history. Project editors can manage project-specific Markdown templates from the
-          project home actions menu.
+          project home actions menu. Templates can target a document type or untyped Markdown. Users can link to another
+          wiki page from the text (toolbar or `/` menu); the link follows the page when it is renamed or moved, shows
+          an unavailable state if the page is deleted or unreadable, and the linking page appears in the target's
+          Backlinks under "Linked in text".
 
         - @id:ar.projects.revisions Users can inspect, create, restore, and validate revisions for supported project and
           workspace documents.
 
         - @id:ar.projects.milestones Users can manage project milestones with target dates and status, and associate
           planned entity changes with milestones.
+          A project's Plan section groups its timeline, planned changes, project diff, and milestones as tabs.
 
         - @id:ar.projects.planned-changes Users can record named, coordinated change cases for one or more entities
           within or outside a project without changing the current live entity state, including planning the
           introduction of new project-scoped entities. A member's recorded base and proposed state scrub field
           values from access-restricted field groups for viewers without view access to that group, with an
           undifferentiated "Restricted changes" indicator shown where redaction would otherwise leave a member's
-          diff looking empty. When the workspace has a strategy model, the planned-change editor also shows the
-          affected objectives derived from the selected existing entities' current `Objective Affects Entity`
-          relationships, with a deduplicated case-level summary and per-entity attribution; new draft entities have
-          no current objective links, and inaccessible relationships remain omitted.
+          diff looking empty.
 
             - @id:ar.projects.planned-changes.schedule Users can target a planned entity change to a future date or
               associate it with a project milestone.
@@ -1295,20 +1243,23 @@
             - @id:ar.projects.planned-changes.timeline Users can inspect planned entity changes in project and
               entity-oriented timeline views alongside historical change information.
 
-            - @id:ar.projects.planned-changes.apply Users can apply a planned entity change case atomically, promoting
-              all approved member states into the live entities.
+            - @id:ar.projects.planned-changes.apply Users can apply a planned change case atomically, promoting
+              all approved member states into the live entities and relations. Members changed since planning are
+              flagged for review, with per-field conflict resolution.
 
             - @id:ar.projects.planned-changes.traversal-diff Users can compare the entities, relations, and routes
               reachable from a selected subject before and after one planned-change case, with traversal limits and
               the caller's existing project and record visibility enforced.
 
-            - @id:ar.projects.planned-changes.whats-changed Users can view a summary of what changes across a
+            - @id:ar.projects.planned-changes.project-diff Users can view a Project Diff in the Plan section, a summary of what changes across a
               project's connected entities once all of its planned changes are applied, compared to the current
               live state — entities added, removed, or changed, with a field-level diff on drill-down for changed
               entities. The comparison date is fixed to the latest effective date among the project's planned
               changes, falling back to the project's target date when no planned change has a date. From this view,
-              users can compare the project's reconstructed future state with another project's future state, showing
-              entities present in only one scenario and field-level differences between both proposals. As with the
+              users can compare the project's reconstructed future state with another project's future state against
+              the live state, attributing each entity and relation to the project that changes it or flagging a conflict
+              when both change the same field differently, with field-level values from the live state and both
+              proposals. As with the
               workspace-wide diff, restricted field-group values are scrubbed per viewer, with a "Restricted changes"
               indicator standing in when redaction would otherwise leave a changed entity's diff empty.
 
@@ -1422,10 +1373,13 @@
               only affect future notifications, not existing Inbox items.
 
         - @id:ar.collaboration.governance-inbox Users can find open governance tasks, review completed task history,
-          filter work by task and due-date attributes, and navigate to governed cases.
+          filter work by task and due-date attributes, navigate to governed cases, and see sidebar counts that match
+          the default needs-attention and open-task lists.
 
             - @id:ar.collaboration.governance-inbox.my-submissions Users can review governance work they have submitted,
-              see what or who is currently blocking it, and withdraw an open submission where permitted. For an open
+              see what or who is currently blocking it, and withdraw an open submission where permitted. The sidebar
+              count includes open requests and requests awaiting changes, except proposals withdrawn in the entity
+              change workflow. For an open
               case with outstanding assignments, the initiator can also send an out-of-band reminder to the remaining
               assignees on demand, rate-limited to prevent spamming them.
 
@@ -1441,6 +1395,15 @@
                   saved configuration can enable or disable reminders and define the approaching/overdue cadence for a
                   workspace-wide or supported case-subkind scope. Each configuration has an administrator-defined short
                   name and optional description, which are shown in the configuration list.
+
+                - @id:ar.collaboration.governance-inbox.scheduled-reminders.workspace-config.multi-scope A
+                  configuration for entity change, entity deprecation, or relation change workflows can be attached
+                  to several entity schemas or relation schemas at once and edited in one place, instead of being
+                  duplicated per schema. The Workflows list shows every attached schema. A schema or relation schema
+                  can belong to only one configuration per workflow kind; saving an overlapping scope is rejected
+                  with the conflicting schemas named. Removing a schema from the scope, or deleting it, falls back to
+                  the workspace-wide configuration or default, and a configuration left without any schema is deleted.
+                  Workspace export and import carries shared configurations with their schema scope remapped.
 
             - @id:ar.collaboration.governance-inbox.escalation For governance case kinds that support escalation (entity
               changes, entity deprecations, and document status approvals), a case left open past a
@@ -1475,13 +1438,12 @@
           entity to the workspace's designated deprecated lifecycle state.
 
         - @id:ar.collaboration.entity-merge Workspace administrators with merge permission can merge a duplicate
-          entity into a canonical one from a "Merge into…" action on the entity detail page or the entity browser
-          (single or multi-select), via a four-step wizard: pick a same-schema target entity, review every field,
+          entity into a canonical one from a "Merge…" action on the entity detail page or an entity browser row
+          menu, via a four-step wizard: pick a same-schema target entity, review every field,
           relation, and side-table conflict plus repointed dependents and any blockers, type the source entity's name
           to confirm, then view the merged result. Field-group-restricted conflicts are shown read-only with an
           explanation rather than left for the user to resolve, and acknowledgeable blockers require an explicit
-          checkbox before the merge can proceed; merging several selected entities into the same target runs the
-          wizard once per source in sequence. Source and target must share project scope: a cross-project pair is a
+          checkbox before the merge can proceed. Source and target must share project scope: a cross-project pair is a
           hard blocker, an open governance case on the source is a hard blocker, and a merge that would drop a source's
           project confinement or move the canonical record into a project proceeds only on an acknowledged warning.
           Under the hood the wizard drives the preview/execute API: the preview is
@@ -1514,9 +1476,10 @@
         - @id:ar.authorization.teams Administrators can create teams, manage memberships, and use team assignments in
           authorization decisions.
 
-        - @id:ar.authorization.application-access Workspace administrators can control access to each installed
-          optional application independently from workspace roles, from the Access tab of that application's entry in
-          the "Applications & Capabilities" settings screen, granting all workspace members or selected people
+        - @id:ar.authorization.application-access Workspace administrators can control access to each
+          application independently from workspace roles, from the Access tab of that application's entry in
+          the "Applications & Capabilities" settings screen (visible to workspace administrators; the General
+          tab is available to users with dashboard-management rights), granting all workspace members or selected people
           and teams. Ordinary members must still have workspace view access; global administrators and workspace role
           managers retain access, and removing a policy returns the application to administrator-only access.
 
@@ -1527,8 +1490,8 @@
       and out of Arch Register.
 
         - @id:ar.import-export.workspace-export Authorized users can export selected or complete workspace data,
-          including supported content, workspace capability configuration, typed relation schemas, and typed relation
-          instances. Exported
+          including supported content, workspace capability configuration, typed relation schemas, typed relation
+          instances, and applications (@id:ar.import-export.workspace-applications). Exported
           entity and relation data is scrubbed of access-restricted field groups per exporting user, mirroring the
           redaction applied when viewing those records directly. Filtered exports omit relations whose endpoint
           entities are not included, report safe diagnostics when field values are omitted, and record those
@@ -1543,6 +1506,13 @@
           restricted values the importing caller cannot edit, redact restricted values from conflict previews, and
           report missing
           relation dependencies.
+
+        - @id:ar.import-export.workspace-applications Workspace exports and imports can include applications with
+          their ordered dashboards (widgets, sidebar, icon) and access policies, plus workspace home dashboards.
+          Personal and project dashboards are not included. Applications match by key; conflicts can be skipped,
+          overwritten, merged, or renamed. Widget schema references follow remapped schema IDs, policy teams follow
+          remapped teams, and policy users are not carried over. Overwrite replaces the access policy (clearing it
+          when the archive has none), and archives containing an application without dashboards are rejected.
 
         - @id:ar.import-export.workspace-replication Workspace copies preserve schema field groups, shared fieldgroup
           links, field-group access-control semantics, workspace capability bindings, and schema-scoped entity drawer

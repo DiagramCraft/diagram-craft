@@ -1,0 +1,173 @@
+.diagramThumb {
+  position: relative;
+  background: var(--base-bg);
+  height: 120px;
+  border-bottom: 1px solid var(--panel-border);
+  overflow: hidden;
+}
+
+.diagramThumbNodes {
+  position: absolute;
+  inset: 0;
+}
+
+.diagramThumbNodes svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Small corner icon for non-diagram items; must not inherit the full-size svg rule above */
+.diagramThumbNodes .diagramThumbIcon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.diagramMeta {
+  padding: 10px 12px;
+}
+
+.diagramName {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  color: var(--base-fg);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.diagramNameBadges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* Comment pill — frosted two-segment overlay, bottom-left of the thumbnail. */
+.cmtPill {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  display: inline-flex;
+  align-items: stretch;
+  height: 19px;
+  border-radius: 5px;
+  overflow: hidden;
+  font-size: 10.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+  border: 1px solid var(--cmp-border);
+  background: color-mix(in oklch, var(--panel-bg) 82%, transparent);
+  -webkit-backdrop-filter: blur(7px);
+  backdrop-filter: blur(7px);
+  box-shadow: 0 1px 4px oklch(0 0 0 / 0.28);
+}
+
+.cmtOpen,
+.cmtDone,
+.cmtTotal {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 7px;
+}
+
+.cmtOpen {
+  color: var(--warning-fg);
+  background: color-mix(in oklch, var(--warning-fg) 18%, transparent);
+  border-right: 1px solid color-mix(in oklch, var(--warning-fg) 35%, var(--cmp-border));
+}
+
+.cmtOpenDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--warning-fg);
+  box-shadow: 0 0 0 2px color-mix(in oklch, var(--warning-fg) 30%, transparent);
+}
+
+.cmtDone {
+  color: var(--green);
+  padding-right: 6px;
+  border-right: 1px solid var(--cmp-border);
+}
+
+.cmtTotal {
+  color: var(--base-fg-dim);
+}
+
+.cmtTotal svg {
+  color: var(--base-fg-more-dim);
+}
+
+.diagramSub {
+  font-size: 11px;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--cmp-fg-disabled);
+}
+
+.diagramRow {
+  display: grid;
+  grid-template-columns: 1fr 90px;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  text-align: left;
+  color: var(--base-fg-dim);
+  cursor: pointer;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--panel-border);
+  width: 100%;
+  font-size: 12px;
+}
+
+.diagramListHeadWithFolder,
+.diagramRowWithFolder {
+  grid-template-columns: 1fr 120px 90px;
+}
+
+.diagramRow:last-child {
+  border-bottom: none;
+}
+
+.diagramRow:hover {
+  background: var(--cmp-bg);
+}
+
+.diagramRowName {
+  color: var(--base-fg);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.diagramRowName > span:first-child {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.diagramRowFolder {
+  font-size: 11px;
+  color: var(--cmp-fg-disabled);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.diagramRowDate {
+  font-size: 11px;
+  color: var(--cmp-fg-disabled);
+}

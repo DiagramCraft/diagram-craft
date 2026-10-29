@@ -135,41 +135,27 @@ export const createSettingsWorkspaceRoutes = <TParentRoute extends AnyRoute>(
     })
   );
 
-  const globalSettingsRoute = withWorkspaceShell(
-    createRoute({
-      getParentRoute: () => workspaceRoute,
-      path: 'settings/global',
-      component: LazyGlobalSettingsScreen
-    }),
-    ctx => ({
-      variant: 'standard',
-      activeRailItem: null,
-      breadcrumbs: buildSettingsBreadcrumbs(
-        ctx,
-        'Global Settings',
-        '/$workspaceSlug/settings/global'
-      ),
-      primarySidebar: <GlobalSettingsSidebar />
-    })
-  );
+  const createGlobalSettingsRoute = <TPath extends string>(path: TPath) =>
+    withWorkspaceShell(
+      createRoute({
+        getParentRoute: () => workspaceRoute,
+        path,
+        component: LazyGlobalSettingsScreen
+      }),
+      ctx => ({
+        variant: 'standard',
+        activeRailItem: null,
+        breadcrumbs: buildSettingsBreadcrumbs(
+          ctx,
+          'Global Settings',
+          '/$workspaceSlug/settings/global'
+        ),
+        primarySidebar: <GlobalSettingsSidebar />
+      })
+    );
 
-  const globalUsersSettingsRoute = withWorkspaceShell(
-    createRoute({
-      getParentRoute: () => workspaceRoute,
-      path: 'settings/global/users',
-      component: LazyGlobalSettingsScreen
-    }),
-    ctx => ({
-      variant: 'standard',
-      activeRailItem: null,
-      breadcrumbs: buildSettingsBreadcrumbs(
-        ctx,
-        'Global Settings',
-        '/$workspaceSlug/settings/global'
-      ),
-      primarySidebar: <GlobalSettingsSidebar />
-    })
-  );
+  const globalSettingsRoute = createGlobalSettingsRoute('settings/global');
+  const globalUsersSettingsRoute = createGlobalSettingsRoute('settings/global/users');
 
   const schemaSettingsRoute = withWorkspaceShell(
     createRoute({

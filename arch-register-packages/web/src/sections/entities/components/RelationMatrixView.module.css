@@ -1,0 +1,236 @@
+/* ── Config bar ──────────────────────────────────────────────── */
+
+.noRel {
+  font-size: 11px;
+  color: var(--base-fg-more-dim);
+}
+
+/* ── Scroll container ────────────────────────────────────────── */
+
+.scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* ── Table ───────────────────────────────────────────────────── */
+
+.table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: max-content;
+  min-width: 100%;
+}
+
+/* Sticky corner */
+.corner {
+  position: sticky;
+  top: 0;
+  left: 0;
+  z-index: 30;
+  background: var(--panel-bg);
+  border-right: 1px solid var(--panel-border);
+  border-bottom: 1px solid var(--panel-border);
+  width: 220px;
+  min-width: 220px;
+  max-width: 220px;
+  padding: 8px 10px 5px;
+  vertical-align: bottom;
+  text-align: right;
+}
+
+.cornerLabel {
+  font-size: 10px;
+  color: var(--base-fg-more-dim);
+  font-family: var(--font-mono, monospace);
+  letter-spacing: 0.2px;
+}
+
+/* Column headers */
+.colHead {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--panel-bg);
+  border-right: 1px solid var(--panel-border);
+  border-bottom: 1px solid var(--panel-border);
+  width: 36px;
+  min-width: 36px;
+  max-width: 36px;
+  padding: 0 0 4px;
+  vertical-align: bottom;
+  text-align: center;
+  transition: background 80ms;
+}
+
+.colHeadHover {
+  background: color-mix(in oklch, var(--base-fg) 6%, transparent);
+}
+
+.colLabelWrap {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  min-height: 40px;
+  padding: 16px 0 6px;
+}
+
+.colLabel {
+  display: block;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 11.5px;
+  color: var(--base-fg);
+  font-weight: normal;
+  white-space: nowrap;
+  padding: 0 3px;
+  transition: color 80ms;
+  text-align: left;
+  line-height: 1.3;
+  background: transparent;
+  border: none;
+  cursor: default;
+  font-family: inherit;
+}
+
+button.colLabel {
+  cursor: pointer;
+}
+
+button.colLabel:hover {
+  color: var(--accent-fg);
+}
+
+.colCount {
+  display: block;
+  font-size: 9.5px;
+  color: var(--base-fg-more-dim);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.8;
+  min-height: 18px;
+}
+
+/* Row headers */
+.rowHead {
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  background: var(--panel-bg);
+  border-right: 1px solid var(--panel-border);
+  border-bottom: 1px solid var(--panel-border);
+  width: 220px;
+  min-width: 220px;
+  max-width: 220px;
+  padding: 0;
+  transition: background 80ms;
+}
+
+.row:hover .rowHead {
+  background: color-mix(in oklch, var(--base-fg) 4%, transparent);
+}
+
+.rowHeadInner {
+  display: flex;
+  align-items: center;
+  height: 32px;
+  width: 220px;
+}
+
+.rowBtn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex: 1;
+  min-width: 0;
+  height: 32px;
+  padding: 0 4px 0 10px;
+  text-align: left;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--base-fg);
+}
+
+.rowBtn:hover {
+  color: var(--accent-fg);
+}
+
+.rowName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.rowCount {
+  font-size: 10px;
+  color: var(--base-fg-more-dim);
+  font-variant-numeric: tabular-nums;
+  padding: 0 8px;
+  flex-shrink: 0;
+  min-width: 24px;
+  text-align: right;
+}
+
+/* Cells */
+.cell {
+  width: 36px;
+  min-width: 36px;
+  max-width: 36px;
+  height: 32px;
+  border-right: 1px solid var(--panel-border);
+  border-bottom: 1px solid var(--panel-border);
+  text-align: center;
+  vertical-align: middle;
+  transition: background 80ms;
+}
+
+.cellColHover {
+  background: color-mix(in oklch, var(--base-fg) 4%, transparent);
+}
+
+.row:hover .cell {
+  background: color-mix(in oklch, var(--base-fg) 2%, transparent);
+}
+
+.row:hover .cellColHover {
+  background: color-mix(in oklch, var(--base-fg) 6%, transparent);
+}
+
+.pip {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+/* Filler cell — absorbs remaining horizontal space */
+.filler {
+  width: auto;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.legendPopover {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 160px;
+  padding: 10px 12px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--base-fg-dim);
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.legendTitle {
+  font-weight: 600;
+}

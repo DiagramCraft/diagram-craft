@@ -1,172 +1,52 @@
-import { useState, useEffect, useCallback } from 'react';
 import { getRouteApi } from '@tanstack/react-router';
 import styles from './SchemaSettingsScreen.module.css';
-import { TbPlus, TbTrash, TbDots } from 'react-icons/tb';
+import { EditorActionsMenu, EditorSaveButtons } from './EditorActionsMenu';
+import { TbPlus, TbDots } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
-import type { WorkspaceEnumOption } from '@arch-register/api-types/enumContract';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { Menu } from '@diagram-craft/app-components/Menu';
 import { FieldConfig } from '../../components/FieldConfig';
 import { FieldConfigList } from '../../components/FieldConfigList';
-import { moveInArray } from '../../utils/arrayReorder';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import { useCreateEnum, useUpdateEnum, useDeleteEnum } from '../../hooks/useEnums';
 import { CategorySelect } from './CategorySelect';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { ErrorDialog } from '@diagram-craft/app-components/ErrorDialog';
 import { EmptyState } from '../../components/EmptyState';
 import { Title } from '../../components/Title';
+import { useEnumDraft } from './useEnumDraft';
 
 const OPTIONS_LIST_ID = 'enum-options';
 
-export const NEW_ENUM_ID = 'new';
-
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/schemas');
-
-type EditableOption = WorkspaceEnumOption & {
-  originalValue?: string;
-  pendingRemoval?: boolean;
-};
-
-const toEditableOption = (option: WorkspaceEnumOption): EditableOption => ({
-  ...option,
-  originalValue: option.value
-});
-
-const newEditableOption = (): EditableOption => ({
-  value: '',
-  label: '',
-  description: null,
-  retired: false,
-  restricted: false
-});
 
 export const EnumEditorScreen = () => {
   const navigate = routeApi.useNavigate();
-  const search = routeApi.useSearch();
-  const selectedEnumId = search.enumId ?? null;
-  const { workspaceSlug, enums, permissions, categories } = useWorkspaceContext();
+  const { workspaceSlug, permissions, categories } = useWorkspaceContext();
   const canEdit = permissions.canEditSchemas;
-
-  const isNew = selectedEnumId === NEW_ENUM_ID;
-
-  const [name, setName] = useState('');
-  const [categoryId, setCategoryId] = useState<string | null>(null);
-  const [options, setOptions] = useState<EditableOption[]>([]);
-  const [dirty, setDirty] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  const createEnumMutation = useCreateEnum(workspaceSlug);
-  const updateEnumMutation = useUpdateEnum(workspaceSlug);
-  const deleteEnumMutation = useDeleteEnum(workspaceSlug);
-
-  const selected = enums.find(e => e.id === selectedEnumId) ?? null;
-
-  useEffect(() => {
-    if (selected) {
-      setName(selected.name);
-      setCategoryId(selected.category?.id ?? null);
-      setOptions(selected.options.map(toEditableOption));
-      setDirty(false);
-    } else if (isNew) {
-      setName('');
-      setCategoryId(null);
-      setOptions([]);
-      setDirty(true);
-    }
-  }, [selected, isNew]);
-
-  const handleNewEnum = useCallback(() => {
-    navigate({
-      to: '/$workspaceSlug/settings/schemas',
-      params: { workspaceSlug },
-      search: { tab: 'enums', enumId: NEW_ENUM_ID }
-    });
-  }, [navigate, workspaceSlug]);
-
-  const handleSave = useCallback(async () => {
-    if (!dirty) return;
-    const parsedOptions: WorkspaceEnumOption[] = options
-      .filter(option => !option.pendingRemoval)
-      .map(
-        ({ originalValue: _originalValue, pendingRemoval: _pendingRemoval, ...option }) => option
-      );
-    try {
-      if (isNew) {
-        const created = await createEnumMutation.mutateAsync({
-          name,
-          category_id: categoryId,
-          options: parsedOptions
-        });
-        navigate({
-          to: '/$workspaceSlug/settings/schemas',
-          params: { workspaceSlug },
-          search: { tab: 'enums', enumId: created.id }
-        });
-      } else if (selected) {
-        await updateEnumMutation.mutateAsync({
-          enumId: selected.id,
-          data: { name, category_id: categoryId, options: parsedOptions }
-        });
-        setDirty(false);
-      }
-    } catch (cause) {
-      setErrorMessage(cause instanceof Error ? cause.message : 'Failed to save enum');
-    }
-  }, [
-    isNew,
+  const {
     selected,
-    dirty,
-    createEnumMutation,
-    updateEnumMutation,
-    navigate,
-    workspaceSlug,
+    isNew,
     name,
     categoryId,
-    options
-  ]);
-
-  const doDelete = useCallback(async () => {
-    if (!selected) return;
-    try {
-      await deleteEnumMutation.mutateAsync(selected.id);
-      navigate({
-        to: '/$workspaceSlug/settings/schemas',
-        params: { workspaceSlug },
-        search: { tab: 'enums' }
-      });
-    } catch (cause) {
-      setErrorMessage(cause instanceof Error ? cause.message : 'Failed to delete enum');
-    }
-  }, [selected, deleteEnumMutation, navigate, workspaceSlug]);
-
-  const addOption = () => {
-    setOptions(prev => [...prev, newEditableOption()]);
-    setDirty(true);
-  };
-
-  const updateOption = (index: number, patch: Partial<EditableOption>) => {
-    setOptions(prev => prev.map((o, i) => (i === index ? { ...o, ...patch } : o)));
-    setDirty(true);
-  };
-
-  const removeOption = (index: number) => {
-    const option = options[index];
-    if (option?.originalValue !== undefined) {
-      updateOption(index, { retired: true, pendingRemoval: true });
-      return;
-    }
-    setOptions(prev => prev.filter((_, i) => i !== index));
-    setDirty(true);
-  };
-
-  const reorderOptions = (fromIndex: number, toIndex: number) => {
-    setOptions(prev => moveInArray(prev, fromIndex, toIndex));
-    setDirty(true);
-  };
+    options,
+    dirty,
+    confirmDelete,
+    setConfirmDelete,
+    errorMessage,
+    setErrorMessage,
+    isSaving,
+    setName,
+    setCategoryId,
+    addOption,
+    updateOption,
+    removeOption,
+    reorderOptions,
+    revert,
+    save,
+    remove
+  } = useEnumDraft();
 
   return (
     <div className={styles.screen}>
@@ -179,15 +59,32 @@ export const EnumEditorScreen = () => {
             },
             { label: 'Settings' }
           ]}
-          eyebrow="Data model"
-          title="Enums"
-          description="Define reusable option sets that select fields can reference."
+          eyebrow="Enum"
           buttons={
-            canEdit && (
-              <Button variant="primary" icon={<TbPlus size={12} />} onClick={handleNewEnum}>
-                New enum
-              </Button>
-            )
+            canEdit && (selected || isNew) ? (
+              <EditorSaveButtons
+                canSave={dirty && name.trim() !== ''}
+                dirty={dirty}
+                onCancel={revert}
+                pending={isSaving}
+                onSave={() => void save()}
+              />
+            ) : undefined
+          }
+          menu={
+            canEdit && selected ? (
+              <EditorActionsMenu
+                deleteLabel="Delete enum"
+                onDelete={() => setConfirmDelete(true)}
+              />
+            ) : undefined
+          }
+          titleTestId={selected || isNew ? 'enum-editor-title' : undefined}
+          title={selected || isNew ? name || 'New enum' : 'Enums'}
+          description={
+            selected || isNew
+              ? `${options.length} options`
+              : 'Define reusable option sets that select fields can reference.'
           }
         />
       </div>
@@ -195,14 +92,6 @@ export const EnumEditorScreen = () => {
       {selected || isNew ? (
         <div>
           <div className={styles.editor}>
-            <div className={styles.editorHead}>
-              <Title
-                titleTestId="enum-editor-title"
-                title={name}
-                description={`${options.length} options`}
-              />
-            </div>
-
             <div className={styles.formRow}>
               <div>
                 <div className={styles.formLabel}>Name</div>
@@ -211,7 +100,6 @@ export const EnumEditorScreen = () => {
                   readOnly={!canEdit}
                   onChange={value => {
                     setName(value ?? '');
-                    setDirty(true);
                   }}
                 />
               </div>
@@ -226,7 +114,6 @@ export const EnumEditorScreen = () => {
                   disabled={!canEdit}
                   onChange={value => {
                     setCategoryId(value);
-                    setDirty(true);
                   }}
                 />
               </div>
@@ -334,45 +221,12 @@ export const EnumEditorScreen = () => {
                 No options defined yet. Click "Add option" to get started.
               </div>
             )}
-
-            <div className={styles.formActions}>
-              {canEdit && selected && (
-                <Button
-                  variant="danger"
-                  icon={<TbTrash size={12} />}
-                  onClick={() => setConfirmDelete(true)}
-                >
-                  Delete enum
-                </Button>
-              )}
-              <div style={{ flex: 1 }} />
-              {canEdit && dirty && (
-                <Button
-                  variant="primary"
-                  onClick={() => void handleSave()}
-                  disabled={
-                    updateEnumMutation.isPending || createEnumMutation.isPending || !name.trim()
-                  }
-                >
-                  {updateEnumMutation.isPending || createEnumMutation.isPending
-                    ? 'Saving...'
-                    : 'Save'}
-                </Button>
-              )}
-            </div>
           </div>
         </div>
       ) : (
         <EmptyState
           title="No enum selected"
           subtitle="Select an enum from the sidebar or create a new one."
-          action={
-            canEdit ? (
-              <Button variant="primary" icon={<TbPlus size={12} />} onClick={handleNewEnum}>
-                New enum
-              </Button>
-            ) : undefined
-          }
         />
       )}
 
@@ -390,7 +244,7 @@ export const EnumEditorScreen = () => {
         }
         detail="This can't be undone. The delete will fail if any schema field still references this enum."
         confirmLabel="Delete enum"
-        onConfirm={() => void doDelete()}
+        onConfirm={() => void remove()}
         onCancel={() => setConfirmDelete(false)}
       />
       <ErrorDialog

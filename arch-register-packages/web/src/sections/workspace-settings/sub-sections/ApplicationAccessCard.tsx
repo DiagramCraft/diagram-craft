@@ -1,10 +1,10 @@
+import { SaveBarButtons } from '../SaveBarButtons';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Button } from '@diagram-craft/app-components/Button';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { Banner } from '../../../components/Banner';
 import { LoadingState } from '../../../components/LoadingState';
-import { APP_DEFINITIONS } from '../../../shell/appShellRegistry';
+import { useApplications } from '../../../hooks/useApplications';
 import { PrincipalPicker } from '../../../components/PrincipalPicker';
 import type {
   ApplicationAccessMode,
@@ -13,8 +13,7 @@ import type {
 } from '@arch-register/api-types/workspaceConfigContract';
 import {
   useApplicationAccessConfiguration,
-  useUpdateApplicationAccessPolicy,
-  useWorkspaceCapabilityConfigurations
+  useUpdateApplicationAccessPolicy
 } from '../../../hooks/useWorkspaceConfig';
 import styles from './ApplicationAccessSubSection.module.css';
 
@@ -47,7 +46,7 @@ export const ApplicationAccessCard = ({
 }: {
   workspaceSlug: string;
   applicationId: ManagedApplicationId;
-  /** Hoists Cancel / Save changes to the screen header, matching the binding editor. */
+  /** Hoists Cancel / Save changes to the screen header. */
   onActionsChange: (actions: ReactNode | undefined) => void;
 }) => {
   const {
@@ -55,14 +54,13 @@ export const ApplicationAccessCard = ({
     isLoading,
     error
   } = useApplicationAccessConfiguration(workspaceSlug);
-  const { data: capabilityConfigurations = [] } =
-    useWorkspaceCapabilityConfigurations(workspaceSlug);
   const updatePolicy = useUpdateApplicationAccessPolicy(workspaceSlug);
   const [draft, setDraftState] = useState<AccessDraft>(toDraft(undefined));
 
+  const { data: applications } = useApplications(workspaceSlug);
   const app = useMemo(
-    () => APP_DEFINITIONS.find(candidate => candidate.applicationId === applicationId),
-    [applicationId]
+    () => applications?.find(candidate => candidate.key === applicationId),
+    [applications, applicationId]
   );
 
   const policy = useMemo(
@@ -81,14 +79,6 @@ export const ApplicationAccessCard = ({
   const savedDraft = useMemo(() => toDraft(policy), [policy]);
   const dirty = JSON.stringify(draft) !== JSON.stringify(savedDraft);
 
-  const installed = useMemo(() => {
-    const enablement = app?.enablement;
-    if (!enablement || enablement === 'always') return true;
-    return capabilityConfigurations.some(
-      item => item.type === enablement.capabilityType && item.valid
-    );
-  }, [app, capabilityConfigurations]);
-
   const save = useCallback(async () => {
     const next: ApplicationAccessPolicyInput = draft.allMembers
       ? { mode: 'all_members', user_ids: [], team_ids: [] }
@@ -102,16 +92,9 @@ export const ApplicationAccessCard = ({
 
   useEffect(() => {
     onActionsChange(
-      <>
-        <Button disabled={!dirty || busy} onClick={resetDraft}>
-          Cancel
-        </Button>
-        <Button variant="primary" disabled={!dirty || busy} onClick={() => void save()}>
-          {updatePolicy.isPending ? 'Saving...' : 'Save changes'}
-        </Button>
-      </>
+      <SaveBarButtons dirty={dirty} pending={busy} onCancel={resetDraft} onSave={save} />
     );
-  }, [dirty, busy, resetDraft, save, updatePolicy.isPending, onActionsChange]);
+  }, [dirty, busy, resetDraft, save, onActionsChange]);
 
   useEffect(() => () => onActionsChange(undefined), [onActionsChange]);
 
@@ -177,12 +160,6 @@ export const ApplicationAccessCard = ({
           </div>
         )}
       </div>
-
-      {!installed && (
-        <span className={styles.hint}>
-          Configure the app&apos;s capability binding before it can appear in the switcher.
-        </span>
-      )}
     </div>
   );
 };

@@ -59,10 +59,7 @@ export const Drawer = ({
   );
 
   return (
-    <div
-      className={`${styles.root} ${stacked ? styles.stackedRoot : ''}`}
-      aria-hidden={!active || undefined}
-    >
+    <div className={`${styles.root} ${stacked ? styles.stackedRoot : ''}`} inert={!active}>
       {!stacked && (
         <div
           className={`${styles.backdrop} ${isClosing ? styles.backdropClosing : ''}`}

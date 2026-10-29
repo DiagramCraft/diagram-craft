@@ -15,7 +15,7 @@ naming/breakpoint conventions to use, so individual widgets don't each invent th
 ## Summary
 
 - The query container is `WidgetFrame`'s `.body` element
-  (`arch-register-packages/web/src/sections/dashboard/widgets/WidgetFrame.module.css`), not
+  (`arch-register-packages/web/src/widgets/shared/dashboard/WidgetFrame.module.css`), not
   `WidgetFrame`'s own `.frame` root and not each widget's own root.
 - Containment is `inline-size` only. No widget currently needs block-size (height) queries.
 - The container is named `frame`: `container-name: frame`. Widget content should query
@@ -24,6 +24,10 @@ naming/breakpoint conventions to use, so individual widgets don't each invent th
 - `.body` also carries `data-frame="true"`, for the (rarer) cases where a plain descendant-combinator
   override reads better than a container query — e.g. unconditionally stripping a component's own
   chrome whenever it's rendered inside a frame, with no width threshold involved.
+- `.body` defines `--widget-inset-x` / `--widget-inset-y` (currently `10px` / `8px`) as the shared
+  content inset. It is applied as body padding when `padded`; widgets with `padded: false` (stat
+  tiles, tabs) must use these tokens for their own inset (with fallbacks, e.g.
+  `var(--widget-inset-x, 10px)`) so changing the token moves all widgets together.
 - `.body` exposes its own padding as `--_frame-top-padding` / `--_frame-left-padding` custom
   properties (currently `8px` / `10px`). Content that wants to bleed past the frame's padding to the
   container's edge can cancel it locally, e.g.:
@@ -35,7 +39,7 @@ naming/breakpoint conventions to use, so individual widgets don't each invent th
   The `, 0px` fallback keeps this a no-op when the component renders outside a frame (the variable
   is simply undefined there). The leading `_` follows this codebase's convention for
   locally-scoped/contextual custom properties, as opposed to shared design tokens like `--panel-bg`.
-- This convention isn't limited to components under `mdx-components/`: any component that may render
+- This convention isn't limited to components under `widgets/`: any component that may render
   as widget content — including screens that primarily live elsewhere, like
   `WorkspaceAnalyticsScreen`'s sections reused via `EntityActivityTrendChartWidget` — is expected to
   use `[data-frame="true"]` / `@container frame` rather than reinventing its own signal, since both

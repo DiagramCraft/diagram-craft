@@ -1,64 +1,49 @@
 import { useEffect, useRef, useState } from 'react';
+import { useOpenDiagram } from '../diagram/useOpenDiagram';
 import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
-import type { SavedView } from '@arch-register/api-types/viewContract';
-import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
-import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import {
   TbBinaryTree2,
-  TbCalendarWeek,
-  TbChartRadar,
   TbClipboardList,
-  TbColumns3,
   TbFileText,
-  TbFlag,
+  TbCalendarEvent,
   TbFolderOpen,
   TbHome,
-  TbLayoutGrid,
-  TbList,
-  TbMap,
-  TbVectorTriangle,
-  TbPencil,
   TbPlus,
-  TbTrash,
-  TbUpload
+  TbUpload,
+  TbBookmark
 } from 'react-icons/tb';
 import { ContentTree, type ContentTreeHandle } from '../../components/ContentTree';
-import { ContentFolderDialog } from '../../components/ContentFolderDialog';
-import { EditViewDialog } from '../entities/components/EntityBrowser';
-import { SidebarGroupLabel, SidebarHeader } from '../../components/sidebar/SidebarPrimitives';
+import { SidebarHeader } from '../../components/sidebar/SidebarPrimitives';
 import { TreeRow } from '../../components/TreeRow';
 import { useProjectAssessments } from '../../hooks/useAssessments';
-import { useEntityCount } from '../../hooks/useEntities';
-import { useMilestones } from '../../hooks/useMilestones';
-import { useDeleteSavedView, useSavedViews, useUpdateSavedView } from '../../hooks/useSavedViews';
+import { useChangeCasesByProject } from '../../hooks/useChangeCases';
 import {
-  contentDownloadUrl,
-  useContentScopeOperations,
-  type ContentScope
-} from '../../hooks/useContentScope';
+  flattenChangeCaseMembers,
+  flattenRelationChangeCaseMembers
+} from '../entities/components/snapshotDisplay';
+import { useEntityCount } from '../../hooks/useEntities';
+import { contentDownloadUrl, useContentScopeOperations } from '../../hooks/useContentScope';
 import { useProject } from '../../hooks/useProjects';
-import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import {
   asProjectPublicId,
   projectContentFolderRoute,
   projectDetailRoute,
   projectDiagramRoute,
-  projectMarkdownRoute,
-  projectMarkdownDraftRoute
+  projectMarkdownRoute
 } from '../../routes/publicObjectRoutes';
 import type { ProjectSearchParams } from '../../routes/searchParams';
 import styles from '../../shell/SidePanel.module.css';
-import { toSavedViewSearch } from '../entities/components/entityBrowserState';
-import { AddMarkdownDialog } from '../markdown/AddMarkdownDialog';
-import { AddDiagramDialog } from './AddDiagramDialog';
 import { downloadUrl } from '../../lib/browserDownload';
 import { BaselineSidebarSection } from '../baselines/BaselineSidebarSection';
+import { ProjectViewsPanel } from './ProjectViewsPanel';
+import { useCreateProjectBaseline } from './shared/CreateProjectBaselineDialog';
+import { useProjectContentCreateDialogs } from './useProjectContentCreateDialogs';
 
-type ProjectSection = 'home' | 'entities' | 'assessments' | 'milestones';
+type ProjectSection = 'home' | 'entities' | 'plan' | 'assessments';
 type SidebarTab = 'content' | 'views' | 'baselines';
 
 export const ProjectContentSidebar = ({
@@ -68,9 +53,8 @@ export const ProjectContentSidebar = ({
   workspaceSlug: string;
   projectId: string;
 }) => {
-  const scope: ContentScope = { kind: 'project', workspaceId: workspaceSlug, projectId };
+  const scope = { kind: 'project' as const, workspaceId: workspaceSlug, projectId };
   const operations = useContentScopeOperations(scope);
-  const { permissions } = useWorkspaceContext();
   const { data: project } = useProject(workspaceSlug, projectId);
   const { data: entityCount } = useEntityCount(
     workspaceSlug,
@@ -81,32 +65,25 @@ export const ProjectContentSidebar = ({
     { enabled: project != null }
   );
   const { data: assessments = [] } = useProjectAssessments(workspaceSlug, projectId);
-  const { data: milestones = [] } = useMilestones(workspaceSlug, project?.id);
-  const { data: savedViews = [] } = useSavedViews(workspaceSlug, { projectId });
-  const projectViews = savedViews.filter(view => view.scope === 'project');
-  const deleteView = useDeleteSavedView(workspaceSlug);
-  const updateView = useUpdateSavedView(workspaceSlug);
+  const { data: changeCases = [] } = useChangeCasesByProject(workspaceSlug, projectId);
+  // Distinct planned change cases, matching the count on the Plan screen's Planned changes tab.
+  const futureChangeCount = new Set(
+    [...flattenChangeCaseMembers(changeCases), ...flattenRelationChangeCaseMembers(changeCases)]
+      .filter(entry => entry.changeCase.status === 'planned')
+      .map(entry => entry.changeCase.id)
+  ).size;
   const treeRef = useRef<ContentTreeHandle>(null);
   const [tab, setTab] = useState<SidebarTab>('content');
-  const [folderDialog, setFolderDialog] = useState<{ open: boolean; parent: string | null }>({
-    open: false,
-    parent: null
-  });
-  const [diagramFolder, setDiagramFolder] = useState<string | null | undefined>(undefined);
-  const [markdownFolder, setMarkdownFolder] = useState<string | null | undefined>(undefined);
-  const [viewMenu, setViewMenu] = useState<{ x: number; y: number; view: SavedView } | null>(null);
-  const [renameView, setRenameView] = useState<SavedView | null>(null);
-  const [deleteViewTarget, setDeleteViewTarget] = useState<SavedView | null>(null);
+  const baseline = useCreateProjectBaseline(project);
   const navigate = useNavigate();
+  const { openDiagram, dialog: openDiagramDialog } = useOpenDiagram();
   const params = useParams({ strict: false });
   const search = useSearch({ strict: false }) as ProjectSearchParams;
   useEffect(() => {
     setTab(search.baselineId != null ? 'baselines' : 'content');
   }, [search.baselineId]);
   const section: ProjectSection =
-    search.section === 'entities' ||
-    search.section === 'assessments' ||
-    search.section === 'milestones'
+    search.section === 'entities' || search.section === 'plan' || search.section === 'assessments'
       ? search.section
       : 'home';
   const contentFolder = section === 'home' ? (params._splat ?? null) : null;
@@ -139,47 +116,19 @@ export const ProjectContentSidebar = ({
       navigate(projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), nextSearch));
     }
   };
-  const openFile = (file: ProjectFile) =>
-    navigate(
-      file.type === 'markdown'
-        ? projectMarkdownRoute(workspaceSlug, asProjectPublicId(projectId), file.id)
-        : projectDiagramRoute(workspaceSlug, asProjectPublicId(projectId), file.id)
-    );
+  const openFile = (file: ProjectFile) => {
+    if (file.type === 'markdown') {
+      navigate(projectMarkdownRoute(workspaceSlug, asProjectPublicId(projectId), file.id));
+    } else {
+      void openDiagram(file.id, () =>
+        navigate(projectDiagramRoute(workspaceSlug, asProjectPublicId(projectId), file.id))
+      );
+    }
+  };
   const download = (file: ProjectFile) => {
     downloadUrl(contentDownloadUrl(scope, file.path), file.original_filename ?? file.name);
   };
-  const viewIcon = (mode: SavedView['viewMode']) => {
-    switch (mode) {
-      case 'table':
-        return <TbList size={12} />;
-      case 'cards':
-        return <TbLayoutGrid size={12} />;
-      case 'tree':
-        return <TbBinaryTree2 size={12} />;
-      case 'radar':
-        return <TbChartRadar size={12} />;
-      case 'timeline':
-        return <TbCalendarWeek size={12} />;
-      case 'explore':
-        return <TbColumns3 size={12} />;
-      case 'map':
-        return <TbMap size={12} />;
-      case 'graph':
-        return <TbVectorTriangle size={12} />;
-      default:
-        return <TbHome size={12} />;
-    }
-  };
-  const applyView = (view: SavedView) =>
-    navigate(
-      projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), {
-        tab: search.tab,
-        section: 'entities',
-        contentQuery: search.contentQuery,
-        contentView: search.contentView,
-        ...toSavedViewSearch(view)
-      })
-    );
+  const createDialogs = useProjectContentCreateDialogs({ scope, operations, project, openFile });
   const openAddEntity = () => {
     const nextSearch = {
       tab: search.tab === 'archive' ? search.tab : undefined,
@@ -218,48 +167,25 @@ export const ProjectContentSidebar = ({
         onClick={() => navigateProject({ section: 'entities' })}
       />
       <TreeRow
+        testId="project-secondary-plan"
+        label={`Plan (${futureChangeCount})`}
+        icon={<TbCalendarEvent size={13} />}
+        active={section === 'plan'}
+        onClick={() => navigateProject({ section: 'plan' })}
+      />
+      <TreeRow
         testId="project-secondary-assessments"
         label={`Assessments (${assessments.length})`}
         icon={<TbClipboardList size={13} />}
         active={section === 'assessments'}
         onClick={() => navigateProject({ section: 'assessments' })}
       />
-      <TreeRow
-        testId="project-secondary-milestones"
-        label={`Milestones (${milestones.length})`}
-        icon={<TbFlag size={13} />}
-        active={section === 'milestones'}
-        onClick={() => navigateProject({ section: 'milestones' })}
-      />
     </>
   );
 
-  const renderViews = (admin: boolean, label: string) => {
-    const views = projectViews.filter(view => view.isAdminView === admin);
-    return views.length ? (
-      <>
-        <SidebarGroupLabel>{label}</SidebarGroupLabel>
-        {views.map(view => (
-          <TreeRow
-            key={view.id}
-            icon={viewIcon(view.viewMode)}
-            label={view.name}
-            active={search.viewId === view.id}
-            onClick={() => applyView(view)}
-            onContextMenu={event => {
-              if (admin ? !permissions.canManageAdminViews : !project?.canEdit) return;
-              event.preventDefault();
-              event.stopPropagation();
-              setViewMenu({ x: event.clientX, y: event.clientY, view });
-            }}
-          />
-        ))}
-      </>
-    ) : null;
-  };
-
   return (
     <>
+      {openDiagramDialog}
       <SidebarHeader
         actions={
           tab === 'content' ? (
@@ -275,14 +201,14 @@ export const ProjectContentSidebar = ({
                 <Menu.Item
                   disabled={!project?.canManageFiles}
                   leftSlot={<TbFolderOpen size={13} />}
-                  onClick={() => setFolderDialog({ open: true, parent: contentFolder })}
+                  onClick={() => createDialogs.openFolder(contentFolder)}
                 >
                   New folder
                 </Menu.Item>
                 <Menu.Item
                   disabled={!project?.canManageFiles}
                   leftSlot={<TbPlus size={13} />}
-                  onClick={() => setDiagramFolder(contentFolder)}
+                  onClick={() => createDialogs.openDiagram(contentFolder)}
                 >
                   New diagram
                 </Menu.Item>
@@ -296,7 +222,7 @@ export const ProjectContentSidebar = ({
                 <Menu.Item
                   disabled={!project?.canManageFiles}
                   leftSlot={<TbFileText size={13} />}
-                  onClick={() => setMarkdownFolder(contentFolder)}
+                  onClick={() => createDialogs.openMarkdown(contentFolder)}
                 >
                   New wiki page
                 </Menu.Item>
@@ -306,6 +232,25 @@ export const ProjectContentSidebar = ({
                   onClick={openAddEntity}
                 >
                   Add entity
+                </Menu.Item>
+              </MenuButton.Menu>
+            </MenuButton.Root>
+          ) : tab === 'baselines' ? (
+            <MenuButton.Root>
+              <MenuButton.Trigger
+                element={
+                  <button type="button" className={styles.action} title="Add">
+                    <TbPlus size={13} />
+                  </button>
+                }
+              />
+              <MenuButton.Menu>
+                <Menu.Item
+                  disabled={!project?.canEdit}
+                  leftSlot={<TbBookmark size={13} />}
+                  onClick={baseline.open}
+                >
+                  Create baseline
                 </Menu.Item>
               </MenuButton.Menu>
             </MenuButton.Root>
@@ -334,18 +279,16 @@ export const ProjectContentSidebar = ({
             onFolderClick={folder => navigateProject({ section: 'home', folder })}
             onFileClick={openFile}
             onDownload={download}
-            onCreateFolder={parent => setFolderDialog({ open: true, parent })}
-            onCreateDiagram={setDiagramFolder}
-            onCreateMarkdown={setMarkdownFolder}
+            onCreateFolder={createDialogs.openFolder}
+            onCreateDiagram={createDialogs.openDiagram}
+            onCreateMarkdown={createDialogs.openMarkdown}
           />
         ) : tab === 'views' ? (
-          <>
-            {renderViews(true, 'Workspace views')}
-            {renderViews(false, 'Views')}
-            {!projectViews.length && (
-              <div className={`${styles.emptyState} dim`}>No saved views yet.</div>
-            )}
-          </>
+          <ProjectViewsPanel
+            workspaceSlug={workspaceSlug}
+            projectId={projectId}
+            canEdit={project?.canEdit ?? false}
+          />
         ) : (
           <BaselineSidebarSection
             workspaceSlug={workspaceSlug}
@@ -354,98 +297,8 @@ export const ProjectContentSidebar = ({
           />
         )}
       </div>
-      {viewMenu && (
-        <ContextMenu.Imperative x={viewMenu.x} y={viewMenu.y} onClose={() => setViewMenu(null)}>
-          <Menu.Item leftSlot={<TbPencil size={13} />} onClick={() => setRenameView(viewMenu.view)}>
-            Rename
-          </Menu.Item>
-          <Menu.Separator />
-          <Menu.Item
-            type="danger"
-            leftSlot={<TbTrash size={13} />}
-            onClick={() => setDeleteViewTarget(viewMenu.view)}
-          >
-            Delete
-          </Menu.Item>
-        </ContextMenu.Imperative>
-      )}
-      {renameView && (
-        <EditViewDialog
-          open
-          currentName={renameView.name}
-          currentDescription={renameView.description}
-          onSave={(name, description) => {
-            updateView.mutate({ id: renameView.id, body: { name, description } });
-            setRenameView(null);
-          }}
-          onCancel={() => setRenameView(null)}
-        />
-      )}
-      <DeleteConfirmationDialog
-        open={!!deleteViewTarget}
-        title="Delete view?"
-        message={
-          <>
-            The view <b>{deleteViewTarget?.name}</b> will be permanently deleted.
-          </>
-        }
-        detail="This can't be undone."
-        confirmLabel="Delete view"
-        onConfirm={() => {
-          if (deleteViewTarget) deleteView.mutate(deleteViewTarget.id);
-          setDeleteViewTarget(null);
-        }}
-        onCancel={() => setDeleteViewTarget(null)}
-      />
-      {project?.canManageFiles && (
-        <ContentFolderDialog
-          open={folderDialog.open}
-          onClose={() => setFolderDialog({ open: false, parent: null })}
-          onCreated={() => setFolderDialog({ open: false, parent: null })}
-          onSubmit={path => operations.createFolder.mutateAsync(path)}
-          isPending={operations.createFolder.isPending}
-          parentFolder={folderDialog.parent ?? undefined}
-          placeholder="e.g. Architecture"
-        />
-      )}
-      {project?.canManageFiles && (
-        <AddDiagramDialog
-          open={diagramFolder !== undefined}
-          onClose={() => setDiagramFolder(undefined)}
-          onCreated={() => setDiagramFolder(undefined)}
-          workspaceId={workspaceSlug}
-          context="project"
-          projectId={projectId}
-          projectName={project.name}
-          folder={diagramFolder ?? null}
-        />
-      )}
-      {project?.canManageFiles && (
-        <AddMarkdownDialog
-          open={markdownFolder !== undefined}
-          onClose={() => setMarkdownFolder(undefined)}
-          workspaceSlug={workspaceSlug}
-          projectId={projectId}
-          onCreated={file => {
-            setMarkdownFolder(undefined);
-            openFile(file);
-          }}
-          onOpenDraft={draft =>
-            navigate(
-              projectMarkdownDraftRoute(workspaceSlug, asProjectPublicId(projectId), {
-                draftName: draft.name,
-                draftFolder: markdownFolder ?? undefined,
-                draftType: draft.documentTypeId ?? undefined,
-                draftTemplate: draft.templateId ?? undefined
-              })
-            )
-          }
-          onCreate={name =>
-            operations.createMarkdown.mutateAsync({ name, folder: markdownFolder ?? null })
-          }
-          isPending={operations.createMarkdown.isPending}
-        />
-      )}
+      {createDialogs.element}
+      {baseline.element}
     </>
   );
 };

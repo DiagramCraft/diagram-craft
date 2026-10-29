@@ -1,5 +1,4 @@
 import {
-  workspaceApplicationDefinitions,
   type AccessibleApplications,
   type ApplicationAccessConfiguration,
   type ApplicationAccessPolicyInput,
@@ -15,7 +14,6 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { runAuthorizedOperation } from '../operation';
 import { requireWorkspaceAdmin, requireWorkspaceCapability } from '../auth/authorization';
-import { listWorkspaceCapabilityConfigurations } from './workspaceCapabilityOperations';
 import { httpAssert } from '../../utils/httpAssert';
 import type {
   WorkspaceApplicationAccessPolicyDbResult,
@@ -24,13 +22,19 @@ import type {
 
 const checker = new PermissionChecker();
 
-const getApplicationDefinition = (applicationId: string) => {
-  const definition = workspaceApplicationDefinitions.find(item => item.id === applicationId);
-  httpAssert.present(definition, {
+const HOME_APPLICATION_ID = 'home';
+
+const requireInstalledApplication = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  applicationId: string
+): Promise<string> => {
+  const installed = await listInstalledApplicationIds(db, workspace);
+  httpAssert.true(installed.includes(applicationId), {
     status: 400,
     message: `Unknown workspace application '${applicationId}'`
   });
-  return definition!;
+  return applicationId;
 };
 
 const toPermissionPolicy = (
@@ -45,7 +49,7 @@ const toPermissionPolicy = (
       };
 
 const toPolicyOutput = (policy: WorkspaceApplicationAccessPolicyDbResult) => ({
-  application_id: policy.application_id as WorkspaceApplicationId,
+  application_id: policy.application_id,
   mode: policy.mode,
   user_ids: policy.user_ids,
   team_ids: policy.team_ids,
@@ -82,47 +86,52 @@ const runApplicationAccessOperation = <Result>(
 const listInstalledApplicationIds = async (
   db: DatabaseAdapter,
   workspace: string
-): Promise<WorkspaceApplicationId[]> => {
-  const configurations = await listWorkspaceCapabilityConfigurations(db, workspace);
-  const validCapabilityTypes = new Set(
-    configurations
-      .filter(configuration => configuration.valid)
-      .map(configuration => configuration.type)
-  );
-
-  return workspaceApplicationDefinitions
-    .filter(
-      definition =>
-        definition.capabilityType === null || validCapabilityTypes.has(definition.capabilityType)
-    )
-    .map(definition => definition.id);
-};
+): Promise<WorkspaceApplicationId[]> => [
+  HOME_APPLICATION_ID,
+  ...(await db.application.list(workspace)).map(application => application.key)
+];
 
 const hasApplicationAccessAdmin = (authCtx: WorkspaceAuthorizationContext) =>
   checker.hasApplicationAccessAdmin(authCtx);
 
-export const requireApplicationAccess = async (
+/**
+ * Throws 403 unless the caller may access the given application (by UUID). Dashboards that are
+ * not bound to an application (null id) fall back to workspace-level access.
+ */
+export const requireApplicationAccessById = async (
   db: DatabaseAdapter,
   workspace: string,
-  applicationId: Exclude<WorkspaceApplicationId, 'home'>,
   authCtx: WorkspaceAuthorizationContext,
-  event?: AuthenticatedEvent
+  applicationId: string | null | undefined
 ) => {
-  // API tokens retain their explicit capability-based authorization contract. The
-  // application entitlement is the interactive application-surface gate.
-  if (event?.context.apiToken) return;
-
-  const installedApplicationIds = await listInstalledApplicationIds(db, workspace);
-  httpAssert.true(installedApplicationIds.includes(applicationId), {
-    status: 404,
-    message: 'This application is not configured for the workspace'
-  });
-  const policy = await db.workspace.getWorkspaceApplicationAccessPolicy(workspace, applicationId);
-  httpAssert.true(checker.hasApplicationAccess(authCtx, toPermissionPolicy(policy)), {
+  if (applicationId == null || hasApplicationAccessAdmin(authCtx)) return;
+  const application = await db.application.get(workspace, applicationId);
+  if (!application) return;
+  const policy = await db.workspace.getWorkspaceApplicationAccessPolicy(workspace, application.key);
+  httpAssert.true(checker.hasApplicationAccess(authCtx, toPermissionPolicy(policy ?? null)), {
     status: 403,
     statusText: 'Forbidden',
     message: 'You do not have access to this application'
   });
+};
+
+/** Returns the keys of the given applications that the caller may access. */
+export const filterAccessibleApplicationKeys = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  authCtx: WorkspaceAuthorizationContext,
+  applicationKeys: string[]
+): Promise<Set<string>> => {
+  if (hasApplicationAccessAdmin(authCtx)) return new Set(applicationKeys);
+  const policies = await db.workspace.listWorkspaceApplicationAccessPolicies(workspace);
+  const policiesByApplication = new Map(
+    policies.map(policy => [policy.application_id, toPermissionPolicy(policy)])
+  );
+  return new Set(
+    applicationKeys.filter(key =>
+      checker.hasApplicationAccess(authCtx, policiesByApplication.get(key) ?? null)
+    )
+  );
 };
 
 export const listAccessibleApplications = async (
@@ -135,16 +144,14 @@ export const listAccessibleApplications = async (
       requireWorkspaceCapability(authCtx, 'ws.view');
     }
 
-    const [installedApplicationIds, policies] = await Promise.all([
-      listInstalledApplicationIds(db, ws),
-      db.workspace.listWorkspaceApplicationAccessPolicies(ws)
-    ]);
+    const installedApplicationIds = await listInstalledApplicationIds(db, ws);
+    const policies = await db.workspace.listWorkspaceApplicationAccessPolicies(ws);
     const policiesByApplication = new Map(
       policies.map(policy => [policy.application_id, toPermissionPolicy(policy)])
     );
     const accessibleApplicationIds = installedApplicationIds.filter(
       applicationId =>
-        applicationId === 'home' ||
+        applicationId === HOME_APPLICATION_ID ||
         checker.hasApplicationAccess(authCtx, policiesByApplication.get(applicationId) ?? null)
     );
 
@@ -197,8 +204,8 @@ export const updateApplicationAccessPolicy = async (
 ) =>
   runApplicationAccessOperation(db, workspace, event, async (ws, authCtx) => {
     requireWorkspaceAdmin(authCtx);
-    const definition = getApplicationDefinition(applicationId);
-    httpAssert.true(definition.id !== 'home', {
+    await requireInstalledApplication(db, ws, applicationId);
+    httpAssert.true(applicationId !== HOME_APPLICATION_ID, {
       status: 400,
       message: 'Home is always available and does not have an access policy'
     });
@@ -237,7 +244,7 @@ export const updateApplicationAccessPolicy = async (
     const now = new Date();
     const row: WorkspaceApplicationAccessPolicyDbCreate = {
       workspace: ws,
-      application_id: definition.id,
+      application_id: applicationId,
       mode: input.mode,
       user_ids: userIds,
       team_ids: teamIds,
@@ -255,11 +262,11 @@ export const resetApplicationAccessPolicy = async (
 ) =>
   runApplicationAccessOperation(db, workspace, event, async (ws, authCtx) => {
     requireWorkspaceAdmin(authCtx);
-    const definition = getApplicationDefinition(applicationId);
-    httpAssert.true(definition.id !== 'home', {
+    await requireInstalledApplication(db, ws, applicationId);
+    httpAssert.true(applicationId !== HOME_APPLICATION_ID, {
       status: 400,
       message: 'Home is always available and does not have an access policy'
     });
-    const deleted = await db.workspace.deleteWorkspaceApplicationAccessPolicy(ws, definition.id);
+    const deleted = await db.workspace.deleteWorkspaceApplicationAccessPolicy(ws, applicationId);
     return deleted ? toPolicyOutput(deleted) : null;
   });

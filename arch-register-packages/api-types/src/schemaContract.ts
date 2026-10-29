@@ -4,6 +4,7 @@ import {
   ws,
   wsAndUUID,
   currencyValueSchema,
+  durationValueSchema,
   externalFieldSchema,
   assertRefreshModeRequiresExternalKind,
   namedGroupSchema,
@@ -20,6 +21,10 @@ const requirementLevelSchema = z
 const baseFieldSchema = z.object({
   id: z.string().describe('Unique field identifier'),
   name: z.string().describe('Field name'),
+  description: z
+    .string()
+    .optional()
+    .describe('User-facing description of what the field holds, shown alongside the field label'),
   requirementLevel: requirementLevelSchema.describe(
     'Whether the field is required, expected, or optional'
   ),
@@ -72,6 +77,13 @@ const dateFieldSchema = baseFieldSchema.extend({
 const currencyFieldSchema = baseFieldSchema.extend({
   ...scalarCardinalitySchema,
   type: z.literal('currency').describe('Currency amount and currency code field')
+});
+
+const durationFieldSchema = baseFieldSchema.extend({
+  ...scalarCardinalitySchema,
+  type: z
+    .literal('duration')
+    .describe('Duration field: an amount and a unit (days, weeks, months, years)')
 });
 
 const numberFieldSchema = baseFieldSchema.extend({
@@ -144,7 +156,8 @@ const derivedResultTypeSchema = z.enum([
   'currency',
   'select',
   'boolean',
-  'rating'
+  'rating',
+  'duration'
 ]);
 
 const derivedFieldBaseSchema = baseFieldSchema
@@ -194,6 +207,7 @@ export const schemaFieldInputSchema = z
     booleanFieldSchema,
     dateFieldSchema,
     currencyFieldSchema,
+    durationFieldSchema,
     numberFieldSchema,
     selectFieldInputSchema,
     principalFieldSchema,
@@ -276,6 +290,7 @@ export const schemaFieldResponseSchema = z
     booleanFieldSchema,
     dateFieldSchema,
     currencyFieldSchema,
+    durationFieldSchema,
     numberFieldSchema,
     selectFieldResponseSchema,
     principalFieldSchema,
@@ -311,10 +326,12 @@ const entityTemplateFieldValueSchema = z.union([
   z.number(),
   z.boolean(),
   currencyValueSchema,
+  durationValueSchema,
   z.array(z.string()),
   z.array(z.number()),
   z.array(z.boolean()),
   z.array(currencyValueSchema),
+  z.array(durationValueSchema),
   z.array(typedRelationTemplateDraftSchema)
 ]);
 

@@ -1,24 +1,39 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
-import type { MetricAggregation, MetricConfig } from '@arch-register/api-types/metricContract';
+import {
+  ANY_SOURCE_SCHEMA,
+  type MetricAggregation,
+  type MetricConfig
+} from '@arch-register/api-types/metricContract';
 import type { PathStep } from '@arch-register/api-types/entityQueryIR';
 import type { FieldGroupAccess, FieldGroupAccessControl } from '@arch-register/permissions';
-import { TbChevronDown, TbEyeOff, TbTrash } from 'react-icons/tb';
-import styles from './MapView.module.css';
+import { TbArrowsExchange, TbChevronDown, TbEyeOff, TbTrash } from 'react-icons/tb';
+import styles from './NestedMapView.module.css';
 import type { PopoverActions } from '@diagram-craft/app-components/Popover';
 import { Popover } from '@diagram-craft/app-components/Popover';
-import { Button } from '@diagram-craft/app-components/Button';
+import { ToolbarButton } from '../../../components/ToolbarButton';
 import { FilterBuilder } from '../../../components/FilterBuilder';
-import { AGGREGATION_OPTIONS, isCurrencyMetric, isEnumSource, sourceKey } from './mapMetricConfig';
+import {
+  AGGREGATION_OPTIONS,
+  aggregationOptionLabel,
+  isCurrencyMetric,
+  isChoiceSource,
+  sourceKey
+} from './mapMetricConfig';
 import type { MetricSourceOption } from './mapMetricConfig';
 import type { MapConfig } from './mapViewConfig';
 import type { MapLevelConfig } from './mapViewState';
+import { LabeledSelect } from '../../../components/LabeledSelect';
+import { MAP_COLOR_SCHEME_OPTIONS, type MapColorScheme } from './mapColorScales';
 import { HopPicker } from './pathBuilder/HopPicker';
 import { HopSequence } from './pathBuilder/HopSequence';
+import { CollapsibleSection } from '../../../components/CollapsibleSection';
+import { LabeledValue } from '../../../components/LabeledValue';
+import { ViewControls } from '../../../components/ViewControls';
 import {
   pathStepContextWithFallbackDirection,
   pathStepOptions,
@@ -144,10 +159,19 @@ const MapLevelHop = ({
   // A freshly added level auto-picks its first legal hop for display, but that choice isn't saved
   // until the user touches the control - persist it immediately so the level actually contributes
   // to the map right away instead of silently doing nothing until re-selected.
+  // Guarded so it persists a given auto-picked step only once: the save round-trips
+  // asynchronously (URL), and `stepContext`/`onChangeStep` change identity on every render, so
+  // without the guard the effect re-fires each render until the saved step comes back.
+  const persistedAutoStepRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!hasSavedStep && step) {
-      onChangeStep(step, stepContext.options.find(option => option.step === step)?.targetSchemaIds);
+    if (hasSavedStep || !step) {
+      persistedAutoStepRef.current = null;
+      return;
     }
+    const key = JSON.stringify(step);
+    if (persistedAutoStepRef.current === key) return;
+    persistedAutoStepRef.current = key;
+    onChangeStep(step, stepContext.options.find(option => option.step === step)?.targetSchemaIds);
   }, [hasSavedStep, step, stepContext, onChangeStep]);
   const candidateSchemaIds = useMemo(
     () => (step && isLastLevel ? targetSchemaIdsForStep(step, schemas, relationSchemas) : []),
@@ -291,301 +315,265 @@ export const MapConfigControls = ({
   return (
     <>
       {!hideToolbar && (
-        <div className={styles.hierarchyConfig}>
-          <button
-            type="button"
-            className={styles.hierarchyToggle}
-            onClick={() => setHierarchyOpen(open => !open)}
-          >
-            <TbChevronDown
-              size={12}
-              className={styles.hierarchyToggleIcon}
-              data-open={hierarchyOpen ? 'true' : 'false'}
-            />
-            <span className={styles.axisKicker}>Hierarchy</span>
-          </button>
-          {hierarchyOpen && (
-            <div className={styles.hierarchyBody}>
-              <HopSequence
-                items={cfg.levelConfigs}
-                getItemKey={(_level, index) => index}
-                onAdd={() =>
-                  notify({
-                    levelConfigs: [
-                      ...cfg.levelConfigs,
-                      { schemaId: null, columns: 3, hidden: false }
-                    ]
-                  })
-                }
-                addLabel="Add level"
-                addDisabled={
-                  !(
-                    cfg.levelConfigs.at(-1)?.schemaId != null ||
-                    (useIncludePathTraversal && cfg.levelConfigs.length === 1)
-                  )
-                }
-                renderItem={(level, index) => {
-                  const { useHopPicker, stepContext, resolvedStep } = levelStepContexts[index]!;
+        <CollapsibleSection title="Hierarchy" open={hierarchyOpen} onOpenChange={setHierarchyOpen}>
+          <HopSequence
+            items={cfg.levelConfigs}
+            getItemKey={(_level, index) => index}
+            onAdd={() =>
+              notify({
+                levelConfigs: [...cfg.levelConfigs, { schemaId: null, columns: 3, hidden: false }]
+              })
+            }
+            addLabel="Add level"
+            addDisabled={
+              !(
+                cfg.levelConfigs.at(-1)?.schemaId != null ||
+                (useIncludePathTraversal && cfg.levelConfigs.length === 1)
+              )
+            }
+            renderItem={(level, index) => {
+              const { useHopPicker, stepContext, resolvedStep } = levelStepContexts[index]!;
 
-                  return (
-                    <div className={styles.levelControl}>
-                      {index === 0 && useIncludePathTraversal ? (
-                        <div className={styles.axisPill}>
-                          <span className={styles.pathSummary}>Root</span>
-                        </div>
-                      ) : useHopPicker && stepContext ? (
-                        <MapLevelHop
-                          index={index}
-                          step={resolvedStep}
-                          stepContext={stepContext}
-                          hasSavedStep={level.step != null}
-                          schemas={schemas}
-                          relationSchemas={relationSchemas}
-                          getFieldGroupAccess={getFieldGroupAccess}
-                          onChangeStep={(step, targetSchemaIds) => {
-                            const nextLevels = cfg.levelConfigs
-                              .slice(0, index + 1)
-                              .map((candidate, candidateIndex) =>
-                                candidateIndex === index
-                                  ? {
-                                      ...candidate,
-                                      schemaId: targetSchemaIds?.[0] ?? candidate.schemaId,
-                                      step
-                                    }
-                                  : candidate
-                              );
-                            notify({ levelConfigs: nextLevels });
-                          }}
-                          isLastLevel={index === cfg.levelConfigs.length - 1}
-                          targetSchemaId={level.targetSchemaId ?? null}
-                          onChangeTargetSchemaId={targetSchemaId => {
-                            const nextLevels = cfg.levelConfigs.map((candidate, candidateIndex) =>
-                              candidateIndex === index
-                                ? { ...candidate, targetSchemaId }
-                                : candidate
-                            );
-                            notify({ levelConfigs: nextLevels });
-                          }}
-                        />
-                      ) : (
-                        <SchemaSelect
-                          value={level.schemaId}
-                          options={levelSchemaOptions[index] ?? []}
-                          onChange={id => {
-                            const nextLevels = cfg.levelConfigs
-                              .slice(0, index + 1)
-                              .map((candidate, candidateIndex) =>
-                                candidateIndex === index
-                                  ? { ...candidate, schemaId: id, step: undefined }
-                                  : candidate
-                              );
-                            notify({ levelConfigs: nextLevels });
-                          }}
-                        />
-                      )}
-                      <ColsSelect
-                        value={level.columns}
-                        onChange={columns => {
+              return (
+                <div className={styles.levelControl}>
+                  {index === 0 && useIncludePathTraversal ? (
+                    <div className={styles.axisPill}>
+                      <span className={styles.pathSummary}>Root</span>
+                    </div>
+                  ) : useHopPicker && stepContext ? (
+                    <MapLevelHop
+                      index={index}
+                      step={resolvedStep}
+                      stepContext={stepContext}
+                      hasSavedStep={level.step != null}
+                      schemas={schemas}
+                      relationSchemas={relationSchemas}
+                      getFieldGroupAccess={getFieldGroupAccess}
+                      onChangeStep={(step, targetSchemaIds) => {
+                        const nextLevels = cfg.levelConfigs
+                          .slice(0, index + 1)
+                          .map((candidate, candidateIndex) =>
+                            candidateIndex === index
+                              ? {
+                                  ...candidate,
+                                  schemaId: targetSchemaIds?.[0] ?? candidate.schemaId,
+                                  step
+                                }
+                              : candidate
+                          );
+                        notify({ levelConfigs: nextLevels });
+                      }}
+                      isLastLevel={index === cfg.levelConfigs.length - 1}
+                      targetSchemaId={level.targetSchemaId ?? null}
+                      onChangeTargetSchemaId={targetSchemaId => {
+                        const nextLevels = cfg.levelConfigs.map((candidate, candidateIndex) =>
+                          candidateIndex === index ? { ...candidate, targetSchemaId } : candidate
+                        );
+                        notify({ levelConfigs: nextLevels });
+                      }}
+                    />
+                  ) : (
+                    <SchemaSelect
+                      value={level.schemaId}
+                      options={levelSchemaOptions[index] ?? []}
+                      onChange={id => {
+                        const nextLevels = cfg.levelConfigs
+                          .slice(0, index + 1)
+                          .map((candidate, candidateIndex) =>
+                            candidateIndex === index
+                              ? { ...candidate, schemaId: id, step: undefined }
+                              : candidate
+                          );
+                        notify({ levelConfigs: nextLevels });
+                      }}
+                    />
+                  )}
+                  <ColsSelect
+                    value={level.columns}
+                    onChange={columns => {
+                      const nextLevels = cfg.levelConfigs.map((candidate, candidateIndex) =>
+                        candidateIndex === index ? { ...candidate, columns } : candidate
+                      );
+                      notify({ levelConfigs: nextLevels });
+                    }}
+                  />
+                  {index > 0 && (
+                    <>
+                      <button
+                        type="button"
+                        className={`${styles.levelAction} ${level.hidden ? styles.levelHidden : ''}`}
+                        aria-label={`${level.hidden ? 'Show' : 'Hide'} level ${index + 1}`}
+                        aria-pressed={level.hidden === true}
+                        title={`${level.hidden ? 'Show' : 'Hide'} level ${index + 1}`}
+                        onClick={() => {
                           const nextLevels = cfg.levelConfigs.map((candidate, candidateIndex) =>
-                            candidateIndex === index ? { ...candidate, columns } : candidate
+                            candidateIndex === index
+                              ? { ...candidate, hidden: candidate.hidden !== true }
+                              : candidate
                           );
                           notify({ levelConfigs: nextLevels });
                         }}
-                      />
-                      {index > 0 && (
-                        <>
-                          <button
-                            type="button"
-                            className={`${styles.levelAction} ${level.hidden ? styles.levelHidden : ''}`}
-                            aria-label={`${level.hidden ? 'Show' : 'Hide'} level ${index + 1}`}
-                            aria-pressed={level.hidden === true}
-                            title={`${level.hidden ? 'Show' : 'Hide'} level ${index + 1}`}
-                            onClick={() => {
-                              const nextLevels = cfg.levelConfigs.map(
-                                (candidate, candidateIndex) =>
-                                  candidateIndex === index
-                                    ? { ...candidate, hidden: candidate.hidden !== true }
-                                    : candidate
-                              );
-                              notify({ levelConfigs: nextLevels });
-                            }}
-                          >
-                            <TbEyeOff size={13} />
-                          </button>
-                          {index === cfg.levelConfigs.length - 1 && (
-                            <button
-                              type="button"
-                              className={styles.levelAction}
-                              aria-label={`Remove level ${index + 1}`}
-                              onClick={() =>
-                                notify({
-                                  levelConfigs: cfg.levelConfigs.filter(
-                                    (_, candidateIndex) => candidateIndex !== index
-                                  )
-                                })
-                              }
-                            >
-                              <TbTrash size={13} />
-                            </button>
-                          )}
-                        </>
+                      >
+                        <TbEyeOff size={13} />
+                      </button>
+                      {index === cfg.levelConfigs.length - 1 && (
+                        <button
+                          type="button"
+                          className={styles.levelAction}
+                          aria-label={`Remove level ${index + 1}`}
+                          onClick={() =>
+                            notify({
+                              levelConfigs: cfg.levelConfigs.filter(
+                                (_, candidateIndex) => candidateIndex !== index
+                              )
+                            })
+                          }
+                        >
+                          <TbTrash size={13} />
+                        </button>
                       )}
-                    </div>
-                  );
-                }}
-              />
-            </div>
-          )}
-        </div>
+                    </>
+                  )}
+                </div>
+              );
+            }}
+          />
+        </CollapsibleSection>
       )}
 
       {!hideToolbar && (
-        <div className={styles.config}>
-          <div className={styles.axisPill}>
-            <span className={styles.axisKicker}>Metric</span>
-            <span className={styles.pathSummary}>
-              {metricTerminalSchema?.name ?? 'Select the final map level'}
-            </span>
-            <div className={styles.selectWrap}>
-              <select
-                className={styles.select}
-                value={metricConfig ? sourceKey(metricConfig.source) : ''}
-                disabled={mapTraversalError != null}
-                onChange={e => {
-                  const option = metricSourceOptions.find(
-                    candidate => sourceKey(candidate.source) === e.target.value
-                  );
-                  if (!option || !metricTerminalSchemaId) {
-                    setMetricConfig(null);
-                    return;
-                  }
-                  const nextIsEnum = isEnumSource(option.source);
-                  setMetricConfig({
-                    ...(metricConfig ?? {
-                      sourceSchemaId: metricTerminalSchemaId,
-                      source: option.source,
-                      aggregation: 'count'
-                    }),
-                    sourceSchemaId: metricTerminalSchemaId,
-                    sourceContext: metricTerminalContext,
-                    traversalPath: mapTraversalPath.length > 0 ? mapTraversalPath : undefined,
-                    traversalPathMode: 'suffixes',
+        <ViewControls variant="view">
+          <div className={styles.fieldGroup}>
+            <LabeledValue label="Type" value={metricTerminalSchema?.name ?? 'Any'} />
+            <LabeledSelect
+              label="Field"
+              value={metricConfig ? sourceKey(metricConfig.source) : ''}
+              disabled={mapTraversalError != null}
+              onChange={value => {
+                const option = metricSourceOptions.find(
+                  candidate => sourceKey(candidate.source) === value
+                );
+                // With no single terminal schema (e.g. the last step reaches several), only
+                // schema-independent sources are offered; they apply to terminals of any schema.
+                const sourceSchemaId = metricTerminalSchemaId ?? ANY_SOURCE_SCHEMA;
+                if (!option) {
+                  setMetricConfig(null);
+                  return;
+                }
+                const nextIsChoice = isChoiceSource(option.source);
+                const keepsAggregation =
+                  metricConfig != null &&
+                  ['none', 'count', 'best', 'worst'].includes(metricConfig.aggregation);
+                setMetricConfig({
+                  ...(metricConfig ?? {
+                    sourceSchemaId,
                     source: option.source,
-                    aggregation: nextIsEnum ? 'count' : (metricConfig?.aggregation ?? 'count'),
-                    worstDirection: nextIsEnum ? undefined : metricConfig?.worstDirection,
-                    targetCurrency: undefined
-                  });
-                }}
-              >
-                <option value="">None</option>
-                {metricSourceOptions.map(option => (
-                  <option key={sourceKey(option.source)} value={sourceKey(option.source)}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              <TbChevronDown size={11} />
-            </div>
+                    aggregation: 'count'
+                  }),
+                  sourceSchemaId,
+                  sourceContext: metricTerminalContext,
+                  traversalPath: mapTraversalPath.length > 0 ? mapTraversalPath : undefined,
+                  traversalPathMode: 'suffixes',
+                  source: option.source,
+                  aggregation: nextIsChoice
+                    ? keepsAggregation
+                      ? metricConfig.aggregation
+                      : 'count'
+                    : (metricConfig?.aggregation ?? 'count'),
+                  worstDirection: metricConfig?.worstDirection,
+                  targetCurrency: undefined
+                });
+              }}
+              options={[
+                { value: '', label: 'None' },
+                ...metricSourceOptions.map(option => ({
+                  value: sourceKey(option.source),
+                  label: option.label
+                }))
+              ]}
+            />
             {mapTraversalError && <span className={styles.metricError}>{mapTraversalError}</span>}
           </div>
 
           {metricConfig && (
             <>
-              <span className={styles.cross}>›</span>
-              <div className={styles.selectWrap}>
-                <select
-                  className={styles.select}
-                  value={metricConfig.aggregation}
-                  onChange={e => {
-                    const aggregation = e.target.value as MetricAggregation;
-                    setMetricConfig({
-                      ...metricConfig,
-                      aggregation,
-                      worstDirection:
-                        aggregation === 'worst'
-                          ? (metricConfig.worstDirection ?? 'high')
-                          : undefined,
-                      targetCurrency:
-                        aggregation === 'count' || aggregation === 'percentage'
-                          ? undefined
-                          : metricConfig.targetCurrency,
-                      numeratorCondition:
-                        aggregation === 'percentage' ? metricConfig.numeratorCondition : undefined
-                    });
-                  }}
-                >
-                  {(isEnumSource(metricConfig.source)
-                    ? AGGREGATION_OPTIONS.filter(o => o.value === 'count' || o.value === 'worst')
-                    : AGGREGATION_OPTIONS
-                  ).map(o => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
-                <TbChevronDown size={11} />
-              </div>
+              <LabeledSelect
+                label="Aggregate"
+                value={metricConfig.aggregation}
+                onChange={value => {
+                  const aggregation = value as MetricAggregation;
+                  setMetricConfig({
+                    ...metricConfig,
+                    aggregation,
+                    worstDirection:
+                      aggregation === 'worst' || aggregation === 'best'
+                        ? (metricConfig.worstDirection ?? 'high')
+                        : undefined,
+                    targetCurrency:
+                      aggregation === 'count' || aggregation === 'percentage'
+                        ? undefined
+                        : metricConfig.targetCurrency,
+                    numeratorCondition:
+                      aggregation === 'percentage' ? metricConfig.numeratorCondition : undefined
+                  });
+                }}
+                options={(isChoiceSource(metricConfig.source)
+                  ? AGGREGATION_OPTIONS.filter(
+                      o =>
+                        o.value === 'none' ||
+                        o.value === 'count' ||
+                        o.value === 'best' ||
+                        o.value === 'worst'
+                    )
+                  : AGGREGATION_OPTIONS
+                ).map(o => ({
+                  value: o.value,
+                  label: aggregationOptionLabel(o, isChoiceSource(metricConfig.source))
+                }))}
+              />
 
-              {metricConfig.aggregation === 'worst' && (
-                <div className={styles.selectWrap}>
-                  <select
-                    className={styles.select}
-                    value={metricConfig.worstDirection ?? 'high'}
-                    onChange={e =>
-                      setMetricConfig({
-                        ...metricConfig,
-                        worstDirection: e.target.value as 'low' | 'high'
-                      })
-                    }
-                  >
-                    {isEnumSource(metricConfig.source) ? (
-                      <>
-                        <option value="high">Last option is worst</option>
-                        <option value="low">First option is worst</option>
-                      </>
-                    ) : (
-                      <>
-                        <option value="high">High is worse</option>
-                        <option value="low">Low is worse</option>
-                      </>
-                    )}
-                  </select>
-                  <TbChevronDown size={11} />
-                </div>
+              {(metricConfig.aggregation === 'worst' || metricConfig.aggregation === 'best') && (
+                <LabeledSelect
+                  label="Direction"
+                  value={metricConfig.worstDirection ?? 'high'}
+                  onChange={value =>
+                    setMetricConfig({ ...metricConfig, worstDirection: value as 'low' | 'high' })
+                  }
+                  options={
+                    isChoiceSource(metricConfig.source)
+                      ? [
+                          { value: 'high', label: 'Last option is worst' },
+                          { value: 'low', label: 'First option is worst' }
+                        ]
+                      : [
+                          { value: 'high', label: 'High is worse' },
+                          { value: 'low', label: 'Low is worse' }
+                        ]
+                  }
+                />
               )}
 
               {isCurrencyMetric(metricConfig, metricSourceSchema) && (
-                <div className={styles.selectWrap}>
-                  <select
-                    className={styles.select}
-                    value={metricConfig.targetCurrency ?? currencies.default_currency}
-                    onChange={e =>
-                      setMetricConfig({
-                        ...metricConfig,
-                        targetCurrency: e.target.value
-                      })
-                    }
-                  >
-                    {currencies.currencies.map(currency => (
-                      <option key={currency.code} value={currency.code}>
-                        {currency.code} — {currency.label}
-                      </option>
-                    ))}
-                  </select>
-                  <TbChevronDown size={11} />
-                </div>
+                <LabeledSelect
+                  label="Currency"
+                  value={metricConfig.targetCurrency ?? currencies.default_currency}
+                  onChange={value => setMetricConfig({ ...metricConfig, targetCurrency: value })}
+                  options={currencies.currencies.map(currency => ({
+                    value: currency.code,
+                    label: `${currency.code} — ${currency.label}`
+                  }))}
+                />
               )}
 
               {metricConfig.aggregation === 'percentage' && metricTerminalEntitySchema && (
                 <Popover.Root actionsRef={numeratorConditionPopoverRef}>
                   <Popover.Trigger
                     element={
-                      <Button
-                        size="sm"
-                        variant={metricConfig.numeratorCondition ? 'primary' : 'secondary'}
+                      <ToolbarButton
+                        variant={metricConfig.numeratorCondition ? 'primary' : undefined}
                       >
                         {metricConfig.numeratorCondition ? 'Numerator: 1 condition' : 'Numerator…'}
-                      </Button>
+                      </ToolbarButton>
                     }
                   />
                   <Popover.Content sideOffset={4} align="start" arrow={false} closeButton={false}>
@@ -611,17 +599,39 @@ export const MapConfigControls = ({
                 </Popover.Root>
               )}
 
-              <label className={styles.metricToggle}>
-                <input
-                  type="checkbox"
-                  checked={cfg.hideMissingMetricData === true}
-                  onChange={e => notify({ hideMissingMetricData: e.target.checked })}
-                />
-                Hide missing
-              </label>
+              <LabeledSelect
+                label="Colors"
+                value={cfg.colorScheme ?? 'blue'}
+                onChange={value => notify({ colorScheme: value as MapColorScheme })}
+                options={MAP_COLOR_SCHEME_OPTIONS}
+              />
+
+              <ToolbarButton
+                variant={cfg.reverseColors ? 'primary' : undefined}
+                icon={<TbArrowsExchange size={13} />}
+                title={cfg.reverseColors ? 'Use the normal color order' : 'Reverse the color order'}
+                aria-label={
+                  cfg.reverseColors ? 'Use the normal color order' : 'Reverse the color order'
+                }
+                aria-pressed={cfg.reverseColors === true}
+                onClick={() => notify({ reverseColors: !cfg.reverseColors })}
+              />
+
+              <ToolbarButton
+                variant={cfg.hideMissingMetricData ? 'primary' : undefined}
+                icon={<TbEyeOff size={13} />}
+                title={
+                  cfg.hideMissingMetricData ? 'Show boxes without data' : 'Hide boxes without data'
+                }
+                aria-label={
+                  cfg.hideMissingMetricData ? 'Show boxes without data' : 'Hide boxes without data'
+                }
+                aria-pressed={cfg.hideMissingMetricData === true}
+                onClick={() => notify({ hideMissingMetricData: !cfg.hideMissingMetricData })}
+              />
             </>
           )}
-        </div>
+        </ViewControls>
       )}
     </>
   );

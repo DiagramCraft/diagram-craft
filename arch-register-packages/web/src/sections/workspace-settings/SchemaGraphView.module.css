@@ -25,6 +25,7 @@
     flex-shrink: 0;
     overflow-x: auto;
     overflow-y: hidden;
+    font-size: 12px;
 
     & > button {
       width: 10rem;
@@ -100,7 +101,7 @@
 }
 
 .categoryRowLabel {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--base-fg);
   overflow: hidden;
   text-overflow: ellipsis;

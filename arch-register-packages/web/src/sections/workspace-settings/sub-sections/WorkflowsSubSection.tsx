@@ -1,5 +1,10 @@
+import { Banner } from '../../../components/Banner';
+import { LoadingState } from '../../../components/LoadingState';
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@diagram-craft/app-components/Button';
+import { TbEdit, TbPlus, TbTrash } from 'react-icons/tb';
+import { DropdownMenu, type MenuItem } from '../../../components/DropdownMenu';
+import { SectionActions } from '../SectionActions';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { Select } from '@diagram-craft/app-components/Select';
@@ -19,21 +24,20 @@ import { WorkflowConfigDialog } from './WorkflowConfigDialog';
 import { WorkflowSubkindEditor } from './WorkflowSubkindEditor';
 import styles from './WorkflowsSubSection.module.css';
 
-export const WorkflowsSubSection = ({
-  workspaceSlug,
-  addDialogOpen,
-  onCloseAddDialog
-}: {
-  workspaceSlug: string;
-  addDialogOpen: boolean;
-  onCloseAddDialog: () => void;
-}) => {
+const scopeSummary = (labels: string[]) => {
+  if (labels.length === 0) return 'Workspace-wide';
+  if (labels.length <= 2) return labels.join(', ');
+  return `${labels.slice(0, 2).join(', ')} +${labels.length - 2}`;
+};
+
+export const WorkflowsSubSection = ({ workspaceSlug }: { workspaceSlug: string }) => {
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
   const { data, isLoading, isError } = useGovernanceWorkflowConfig(workspaceSlug);
   const upsert = useUpsertGovernanceWorkflowConfig(workspaceSlug);
   const reset = useResetGovernanceWorkflowConfig(workspaceSlug);
   const [editing, setEditing] = useState<GovernanceWorkflowConfigRow | null>(null);
   const [addingKind, setAddingKind] = useState<GovernanceWorkflowCaseKind | null>(null);
-  const [newSubkind, setNewSubkind] = useState<string | null>(null);
+  const [newSubkinds, setNewSubkinds] = useState<string[]>([]);
 
   const kindById = useMemo(
     () => new Map((data?.case_kinds ?? []).map(kind => [kind.case_kind, kind])),
@@ -44,216 +48,250 @@ export const WorkflowsSubSection = ({
       [...(data?.configs ?? [])].sort((left, right) => {
         const workflowOrder = left.name.localeCompare(right.name);
         if (workflowOrder !== 0) return workflowOrder;
-        return (left.case_subkind_label ?? '').localeCompare(right.case_subkind_label ?? '');
+        return left.case_subkind_labels
+          .join(',')
+          .localeCompare(right.case_subkind_labels.join(','));
       }),
     [data?.configs]
   );
 
   const closeAdd = () => {
     setAddingKind(null);
-    setNewSubkind(null);
-    onCloseAddDialog();
+    setNewSubkinds([]);
+    setAddDialogOpen(false);
   };
 
   const subkindReady =
     addingKind?.supportsSubkind !== true ||
-    (newSubkind != null &&
+    (newSubkinds.length > 0 &&
       (addingKind.case_kind === 'document.status' || addingKind.case_kind === 'field-date-reminder'
-        ? newSubkind.split(':').every(Boolean)
+        ? newSubkinds[0]!.split(':').every(Boolean)
         : true));
-  const duplicateConfig =
-    addingKind != null &&
-    subkindReady &&
-    (data?.configs ?? []).some(
-      row =>
-        row.case_kind === addingKind.case_kind &&
-        row.case_subkind === (addingKind.supportsSubkind ? newSubkind : null)
-    );
+  const scope = addingKind?.supportsSubkind ? newSubkinds : [];
+  const overlap =
+    addingKind != null && subkindReady
+      ? (data?.configs ?? []).filter(
+          row =>
+            row.case_kind === addingKind.case_kind &&
+            (scope.length === 0
+              ? row.case_subkinds.length === 0
+              : row.case_subkinds.some(subkind => scope.includes(subkind)))
+        )
+      : [];
+  const duplicateConfig = overlap.length > 0;
+  const overlappingLabels = overlap.flatMap(row =>
+    row.case_subkinds.flatMap((subkind, index) =>
+      scope.includes(subkind) ? [row.case_subkind_labels[index] ?? subkind] : []
+    )
+  );
 
   useEffect(() => {
     if (!addDialogOpen) {
       setAddingKind(null);
-      setNewSubkind(null);
+      setNewSubkinds([]);
       return;
     }
     setAddingKind(data?.case_kinds[0] ?? null);
   }, [addDialogOpen, data?.case_kinds]);
 
   return (
-    <div className={styles.blockList}>
-      {isLoading && <div className={styles.emptyNote}>Loading workflow configuration…</div>}
-      {isError && <div className={styles.emptyNote}>Unable to load workflow configuration.</div>}
-      {!isLoading && !isError && configs.length === 0 && (
-        <div className={styles.emptyNote}>No workspace workflow overrides are configured.</div>
-      )}
-      {!isLoading && !isError && configs.length > 0 && (
-        <Table.Root layout="fixed">
-          <Table.Head>
-            <Table.Row>
-              <Table.HeaderCell width={260}>Workflow</Table.HeaderCell>
-              <Table.HeaderCell width={220}>Scope</Table.HeaderCell>
-              <Table.HeaderCell>Configuration</Table.HeaderCell>
-              <Table.HeaderCell width={150}>Actions</Table.HeaderCell>
-            </Table.Row>
-          </Table.Head>
-          <Table.Body>
-            {configs.map(row => (
-              <Table.Row key={row.id}>
-                <Table.Cell>
-                  <div className={styles.cardTitle}>{row.name}</div>
-                  <div
-                    className={styles.cardSub}
-                    title={row.description ?? row.case_kind_description}
-                  >
-                    {row.description ?? row.case_kind_description}
-                  </div>
-                </Table.Cell>
-                <Table.Cell>{row.case_subkind_label ?? 'Workspace-wide'}</Table.Cell>
-                <Table.Cell>
-                  <div className={styles.configChips}>
-                    {row.config.approvals && <Chip dot="var(--accent-fg)">Approvals</Chip>}
-                    {row.config.reminders && (
-                      <Chip
-                        tone={row.config.reminders.enabled ? 'default' : 'ghost'}
-                        dot={
-                          row.config.reminders.enabled
-                            ? 'var(--success-fg, #4caf78)'
-                            : 'var(--cmp-fg-disabled)'
-                        }
-                      >
-                        Reminders
-                      </Chip>
-                    )}
-                    {row.config.escalation && (
-                      <Chip
-                        tone={row.config.escalation.enabled ? 'default' : 'ghost'}
-                        dot={
-                          row.config.escalation.enabled
-                            ? 'var(--warning-fg, #d69e45)'
-                            : 'var(--cmp-fg-disabled)'
-                        }
-                      >
-                        Escalation
-                      </Chip>
-                    )}
-                    {row.config.external && <Chip dot="var(--warning-fg, #d69e45)">External</Chip>}
-                    {!row.config.approvals &&
-                      !row.config.reminders &&
-                      !row.config.escalation &&
-                      !row.config.external && <span className={styles.summary}>None</span>}
-                  </div>
-                </Table.Cell>
-                <Table.Cell>
-                  <div className={styles.actions}>
-                    <Button variant="ghost" onClick={() => setEditing(row)}>
-                      Edit
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      onClick={() =>
-                        reset.mutate({ case_kind: row.case_kind, case_subkind: row.case_subkind })
-                      }
-                    >
-                      Remove
-                    </Button>
-                  </div>
-                </Table.Cell>
+    <>
+      <SectionActions>
+        <Button
+          variant="primary"
+          icon={<TbPlus size={12} />}
+          onClick={() => setAddDialogOpen(true)}
+        >
+          Add configuration
+        </Button>
+      </SectionActions>
+      <div className={styles.blockList}>
+        {isLoading && <LoadingState text="Loading workflow configuration…" size="sm" />}
+        {isError && <Banner variant="error">Failed to load workflow configuration.</Banner>}
+        {!isLoading && !isError && configs.length === 0 && (
+          <div className={styles.emptyNote}>No workspace workflow overrides are configured.</div>
+        )}
+        {!isLoading && !isError && configs.length > 0 && (
+          <Table.Root layout="fixed">
+            <Table.Head>
+              <Table.Row>
+                <Table.HeaderCell width={260}>Workflow</Table.HeaderCell>
+                <Table.HeaderCell width={180}>Type</Table.HeaderCell>
+                <Table.HeaderCell width={220}>Scope</Table.HeaderCell>
+                <Table.HeaderCell>Configuration</Table.HeaderCell>
+                <Table.HeaderCell width={48} />
               </Table.Row>
-            ))}
-          </Table.Body>
-        </Table.Root>
-      )}
+            </Table.Head>
+            <Table.Body>
+              {configs.map(row => (
+                <Table.Row key={row.id} onClick={() => setEditing(row)}>
+                  <Table.Cell>
+                    <div className={styles.cardTitle}>{row.name}</div>
+                    <div
+                      className={styles.cardSub}
+                      title={row.description ?? row.case_kind_description}
+                    >
+                      {row.description ?? row.case_kind_description}
+                    </div>
+                  </Table.Cell>
+                  <Table.Cell>{row.case_kind_label}</Table.Cell>
+                  <Table.Cell>{scopeSummary(row.case_subkind_labels)}</Table.Cell>
+                  <Table.Cell>
+                    <div className={styles.configChips}>
+                      {row.config.approvals && <Chip dot="var(--accent-fg)">Approvals</Chip>}
+                      {row.config.reminders && (
+                        <Chip
+                          tone={row.config.reminders.enabled ? 'default' : 'ghost'}
+                          dot={
+                            row.config.reminders.enabled
+                              ? 'var(--success-fg, #4caf78)'
+                              : 'var(--cmp-fg-disabled)'
+                          }
+                        >
+                          Reminders
+                        </Chip>
+                      )}
+                      {row.config.escalation && (
+                        <Chip
+                          tone={row.config.escalation.enabled ? 'default' : 'ghost'}
+                          dot={
+                            row.config.escalation.enabled
+                              ? 'var(--warning-fg, #d69e45)'
+                              : 'var(--cmp-fg-disabled)'
+                          }
+                        >
+                          Escalation
+                        </Chip>
+                      )}
+                      {row.config.external && (
+                        <Chip dot="var(--warning-fg, #d69e45)">External</Chip>
+                      )}
+                      {!row.config.approvals &&
+                        !row.config.reminders &&
+                        !row.config.escalation &&
+                        !row.config.external && <span className={styles.summary}>None</span>}
+                    </div>
+                  </Table.Cell>
+                  <Table.ActionsCell>
+                    <DropdownMenu
+                      trigger={<Table.DotsButton aria-label={`Actions for ${row.name}`} />}
+                      items={
+                        [
+                          {
+                            label: 'Edit',
+                            icon: <TbEdit size={14} />,
+                            onClick: () => setEditing(row)
+                          },
+                          {
+                            label: 'Remove',
+                            icon: <TbTrash size={14} />,
+                            danger: true,
+                            onClick: () => reset.mutate({ id: row.id })
+                          }
+                        ] satisfies MenuItem[]
+                      }
+                    />
+                  </Table.ActionsCell>
+                </Table.Row>
+              ))}
+            </Table.Body>
+          </Table.Root>
+        )}
 
-      <Dialog
-        open={addDialogOpen && addingKind != null}
-        onClose={closeAdd}
-        title="Add workflow configuration"
-        buttons={[
-          { label: 'Cancel', type: 'cancel', onClick: closeAdd },
-          {
-            label: 'Continue',
-            type: 'default',
-            disabled: addingKind == null || !subkindReady || duplicateConfig,
-            onClick: () => {
-              if (!addingKind) return;
-              setEditing({
-                id: '',
-                case_kind: addingKind.case_kind,
-                case_kind_label: addingKind.label,
-                case_kind_description: addingKind.description,
-                case_subkind: addingKind.supportsSubkind ? newSubkind : null,
-                case_subkind_label: null,
-                name: addingKind.label,
-                description: null,
-                enabled: true,
-                config: defaultWorkflowConfig(addingKind),
-                updated_at: new Date().toISOString(),
-                updated_by: null
-              });
-              closeAdd();
+        <Dialog
+          open={addDialogOpen && addingKind != null}
+          onClose={closeAdd}
+          title="Add workflow configuration"
+          buttons={[
+            { label: 'Cancel', type: 'cancel', onClick: closeAdd },
+            {
+              label: 'Continue',
+              type: 'default',
+              disabled: addingKind == null || !subkindReady || duplicateConfig,
+              onClick: () => {
+                if (!addingKind) return;
+                setEditing({
+                  id: '',
+                  case_kind: addingKind.case_kind,
+                  case_kind_label: addingKind.label,
+                  case_kind_description: addingKind.description,
+                  case_subkinds: scope,
+                  case_subkind_labels: [],
+                  name: addingKind.label,
+                  description: null,
+                  enabled: true,
+                  config: defaultWorkflowConfig(addingKind),
+                  updated_at: new Date().toISOString(),
+                  updated_by: null
+                });
+                closeAdd();
+              }
             }
-          }
-        ]}
-      >
-        <FormElement label="Workflow kind">
-          <Select.Root
-            value={addingKind?.case_kind}
-            onChange={value => {
-              const next = data?.case_kinds.find(kind => kind.case_kind === value) ?? null;
-              setAddingKind(next);
-              setNewSubkind(null);
+          ]}
+        >
+          <FormElement label="Workflow kind">
+            <Select.Root
+              value={addingKind?.case_kind}
+              onChange={value => {
+                const next = data?.case_kinds.find(kind => kind.case_kind === value) ?? null;
+                setAddingKind(next);
+                setNewSubkinds([]);
+              }}
+            >
+              {(data?.case_kinds ?? []).map(kind => (
+                <Select.Item key={kind.case_kind} value={kind.case_kind}>
+                  {kind.label}
+                </Select.Item>
+              ))}
+            </Select.Root>
+          </FormElement>
+          {addingKind?.supportsSubkind && (
+            <div className={styles.scopeEditor}>
+              <WorkflowSubkindEditor
+                workspaceSlug={workspaceSlug}
+                caseKind={addingKind}
+                value={newSubkinds}
+                onChange={setNewSubkinds}
+              />
+            </div>
+          )}
+          {duplicateConfig && (
+            <div className={styles.errorNote}>
+              {overlappingLabels.length > 0
+                ? `Another configuration of this workflow already covers: ${overlappingLabels.join(', ')}.`
+                : 'A workspace-wide configuration already exists for this workflow.'}
+            </div>
+          )}
+        </Dialog>
+
+        {editing && (
+          <WorkflowConfigDialog
+            row={editing}
+            caseKind={
+              kindById.get(editing.case_kind) ?? {
+                case_kind: editing.case_kind,
+                label: editing.case_kind_label,
+                description: editing.case_kind_description,
+                supportsSubkind: editing.case_subkinds.length > 0,
+                supportsMultiScope: editing.case_subkinds.length > 1,
+                supportsWorkspaceScope: true,
+                supportsApprovals: true,
+                supportsReminders: true,
+                supportsEscalation: true,
+                supportsInitiationFields: true,
+                approvalStrategies: [],
+                escalationStrategies: [],
+                defaultConfig: { extensions: {} }
+              }
+            }
+            workspaceSlug={workspaceSlug}
+            onClose={() => setEditing(null)}
+            onSave={body => {
+              upsert.mutate(body, { onSuccess: () => setEditing(null) });
             }}
-          >
-            {(data?.case_kinds ?? []).map(kind => (
-              <Select.Item key={kind.case_kind} value={kind.case_kind}>
-                {kind.label}
-              </Select.Item>
-            ))}
-          </Select.Root>
-        </FormElement>
-        {addingKind?.supportsSubkind && (
-          <div className={styles.scopeEditor}>
-            <WorkflowSubkindEditor
-              workspaceSlug={workspaceSlug}
-              caseKind={addingKind}
-              value={newSubkind}
-              onChange={setNewSubkind}
-            />
-          </div>
+          />
         )}
-        {duplicateConfig && (
-          <div className={styles.errorNote}>
-            A configuration already exists for this workflow and scope.
-          </div>
-        )}
-      </Dialog>
-
-      {editing && (
-        <WorkflowConfigDialog
-          row={editing}
-          caseKind={
-            kindById.get(editing.case_kind) ?? {
-              case_kind: editing.case_kind,
-              label: editing.case_kind_label,
-              description: editing.case_kind_description,
-              supportsSubkind: editing.case_subkind != null,
-              supportsWorkspaceScope: true,
-              supportsApprovals: true,
-              supportsReminders: true,
-              supportsEscalation: true,
-              supportsInitiationFields: true,
-              approvalStrategies: [],
-              escalationStrategies: [],
-              defaultConfig: { extensions: {} }
-            }
-          }
-          workspaceSlug={workspaceSlug}
-          onClose={() => setEditing(null)}
-          onSave={body => {
-            upsert.mutate(body, { onSuccess: () => setEditing(null) });
-          }}
-        />
-      )}
-    </div>
+      </div>
+    </>
   );
 };

@@ -5,6 +5,15 @@ import { entityRecordSchema } from '@arch-register/api-types/entityContract';
 import { relationRecordSchema } from '@arch-register/api-types/relationContract';
 import { entityQuerySchema } from '@arch-register/api-types/entityQueryIR';
 
+// Query strings arrive as text. `z.coerce.boolean()` would turn "false" into true (any non-empty
+// string is truthy), so parse the two serialized values explicitly.
+const booleanQuerySchema = z.preprocess(value => {
+  if (typeof value === 'boolean') return value;
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  return undefined;
+}, z.boolean().optional());
+
 export const baselineStatusSchema = z
   .enum(['active', 'stale', 'superseded'])
   .describe('Lifecycle status of a named architecture baseline');
@@ -137,9 +146,7 @@ export const baselineContract = oc.tag('Baselines').router({
         description: 'Lists named architecture baselines visible in the workspace.',
         tags: ['Baselines']
       })
-      .input(
-        z.object({ params: ws, query: z.object({ includeDeleted: z.coerce.boolean().optional() }) })
-      )
+      .input(z.object({ params: ws, query: z.object({ includeDeleted: booleanQuerySchema }) }))
       .output(z.array(baselineSummarySchema)),
     create: oc
       .route({

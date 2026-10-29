@@ -27,6 +27,24 @@ export const resolveJoinAssessmentId = (
     : null;
 };
 
+/**
+ * Open or closed assessments that can be joined into the entity browser, narrowed to one project
+ * when `projectId` is given. `projectId` is the project's internal id, as on `assessment.project_id`.
+ */
+export const buildAssessmentJoinOptions = (
+  assessments: Assessment[],
+  projects: Array<Pick<Project, 'id' | 'name'>>,
+  projectId?: string
+): AssessmentJoinOption[] =>
+  assessments
+    .filter(assessment => isJoinableAssessment(assessment))
+    .filter(assessment => !projectId || assessment.project_id === projectId)
+    .map(assessment => ({
+      assessment,
+      projectId: assessment.project_id,
+      projectName: projects.find(project => project.id === assessment.project_id)?.name ?? ''
+    }));
+
 export const useJoinedAssessment = (
   workspaceId: string,
   joinAssessmentId: string | null | undefined,
@@ -36,17 +54,10 @@ export const useJoinedAssessment = (
 ) => {
   const { data: assessments = [], isLoading, isSuccess } = useAssessments(workspaceId, enabled);
 
-  const options = useMemo<AssessmentJoinOption[]>(() => {
-    const activeProject = projects.find(project => project.public_id === projectId);
-    return assessments
-      .filter(assessment => isJoinableAssessment(assessment))
-      .filter(assessment => !projectId || assessment.project_id === activeProject?.id)
-      .map(assessment => ({
-        assessment,
-        projectId: assessment.project_id,
-        projectName: projects.find(project => project.id === assessment.project_id)?.name ?? ''
-      }));
-  }, [assessments, projectId, projects]);
+  const options = useMemo(
+    () => buildAssessmentJoinOptions(assessments, projects, projectId),
+    [assessments, projectId, projects]
+  );
 
   const joined = useMemo(
     () =>

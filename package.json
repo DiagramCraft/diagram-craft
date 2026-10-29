@@ -32,17 +32,17 @@
   "keywords": [],
   "author": "Magnus Johansson",
   "devDependencies": {
-    "@biomejs/biome": "2.5.12",
-    "@codspeed/vitest-plugin": "^5.7.1",
-    "@rollup/plugin-yaml": "^5.0.0",
+    "@biomejs/biome": "2.5.15",
+    "@codspeed/vitest-plugin": "^6.1.0",
+    "@rollup/plugin-yaml": "^5.0.1",
     "@types/jsdom": "^30.0.0",
-    "@vitest/coverage-v8": "^4.1.10",
+    "@vitest/coverage-v8": "5.0.5",
     "jsdom": "^30.0.1",
     "skott": "^0.35.10",
     "syncpack": "^15.3.2",
     "tsx": "^4.23.13",
     "typescript": "7.0.2",
-    "vitest": "^4.1.10"
+    "vitest": "5.0.5"
   },
   "dependencies": {
     "globals": "^17.12.0"

@@ -16,6 +16,7 @@ import type { DatabaseAdapter } from '../../db/database';
 import { httpAssert } from '../../utils/httpAssert';
 import { filterRestrictedFieldGroups } from '../auth/fieldGroupAccessControl';
 import { filterExternalMetadata } from '../externalMetadata/externalMetadataHelpers';
+import { getRelationApprovalPolicy } from '../governance/schemaGovernancePolicy';
 import { requireTypedRelationEdit } from './relationAccessControl';
 import { throwRelationConstraintError } from './relationConstraintErrors';
 
@@ -516,31 +517,41 @@ export const normalizeRelationEntityFields = ({
 
 /**
  * Mirrors `entityRequiresApproval` (entityChangeOperations.ts): an instance-level override always
- * wins; absent an override, the schema's policy decides. Relation schemas/instances already carry
- * `relation_approval_policy`/`approval_policy_override` (same columns as entities), but until this
- * fix the columns were only half-consulted — see `assertRelationMutationsSupported` below.
+ * wins; absent an override, the schema's policy decides (a `relation.change-case` workflow config
+ * row scoped to the relation schema, see schemaGovernancePolicy.ts).
  */
-export const relationRequiresApproval = (
-  schema: { relation_approval_policy?: 'required' | 'disabled' },
+export const relationRequiresApprovalWithPolicy = (
+  policy: 'required' | 'disabled' | undefined,
   relation: { approval_policy_override: 'required' | 'disabled' | null }
 ) =>
   relation.approval_policy_override === 'required' ||
-  (relation.approval_policy_override !== 'disabled' &&
-    (schema.relation_approval_policy ?? 'disabled') === 'required');
+  (relation.approval_policy_override !== 'disabled' && policy === 'required');
+
+export const relationRequiresApproval = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  schema: { id: string },
+  relation: { approval_policy_override: 'required' | 'disabled' | null }
+) =>
+  relationRequiresApprovalWithPolicy(
+    await getRelationApprovalPolicy(db, workspace, schema.id),
+    relation
+  );
 
 /**
  * Gates direct edits to an *existing* relation instance the same way `entityRequiresApproval`
  * gates entity update/restore (entityMutationOperations.ts, entityVersionOrpc.ts) — create and
  * delete are deliberately never gated here either, matching entity semantics: creating something
- * new has no prior approved state to protect, and deleting doesn't either. Change-case/proposal
- * support for relations (#2693) is still not implemented — today this only blocks a direct edit,
- * it does not offer a proposal path, same as it did before this fix.
+ * new has no prior approved state to protect, and deleting doesn't either. This blocks direct
+ * edits; changes go through the relation change-case flow (relationChangeOperations.ts).
  */
-export const assertRelationMutationsSupported = (
-  schema: RelationSchemaDbResult,
+export const assertRelationMutationsSupported = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  schema: { id: string },
   relation: { approval_policy_override: 'required' | 'disabled' | null }
 ) => {
-  httpAssert.true(!relationRequiresApproval(schema, relation), {
+  httpAssert.true(!(await relationRequiresApproval(db, workspace, schema, relation)), {
     status: 409,
     statusText: 'Conflict',
     message: 'This relation instance requires an approved change proposal before it can be edited'

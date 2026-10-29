@@ -5,10 +5,6 @@ import {
   type WorkspaceCapabilityType
 } from './workspaceCapabilityContract';
 import { z } from 'zod';
-import { businessGlossaryCapabilityDefinition } from './app/business-glossary/glossaryCapability';
-import { vendorManagementCapabilityDefinition } from './app/vendor-management/vendorManagementCapability';
-import { riskComplianceCapabilityDefinition } from './app/risk-compliance/riskComplianceCapability';
-import { dataStewardshipCapabilityDefinition } from './app/data-stewardship/dataStewardshipCapability';
 
 const capabilityFieldTypeSchema = z.enum([
   'text',
@@ -16,7 +12,8 @@ const capabilityFieldTypeSchema = z.enum([
   'select',
   'reference',
   'number',
-  'date'
+  'date',
+  'duration'
 ]);
 
 /** Integration-owned semantic field role metadata. */
@@ -106,128 +103,8 @@ const apiSpecificationFieldRoles: CapabilityFieldRole[] = [
   }
 ];
 
-const retentionPolicyFieldRoles: CapabilityFieldRole[] = [
-  {
-    id: 'duration',
-    label: 'Duration',
-    description: 'The numeric length of the retention period.',
-    required: true,
-    defaultFieldId: 'duration',
-    allowedTypes: ['number']
-  },
-  {
-    id: 'timeUnit',
-    label: 'Time unit',
-    description: 'The unit the duration is measured in (days, months, or years).',
-    required: true,
-    defaultFieldId: 'time_unit',
-    allowedTypes: ['select']
-  }
-];
-
-const retentionAssignmentFieldRoles: CapabilityFieldRole[] = [
-  {
-    id: 'activatedFrom',
-    label: 'Activated from',
-    description: 'The date the governed entity became subject to the assigned retention policy.',
-    required: true,
-    defaultFieldId: 'activated_from',
-    allowedTypes: ['date']
-  }
-];
-
 /** Integration-owned capabilities that can be configured at workspace scope. */
 export const workspaceCapabilityDefinitions: WorkspaceCapabilityDefinition[] = [
-  {
-    type: 'retention',
-    label: 'Retention policy',
-    description: 'Retention policy assignment and expiry evaluation for information assets.',
-    features: ['expiry-status'],
-    bindingRoles: [
-      {
-        id: 'policy',
-        label: 'Retention policy entity schema',
-        description: 'The entity schema used for retention policy records.',
-        required: true,
-        targetKind: 'entity_schema',
-        fieldRoles: retentionPolicyFieldRoles
-      },
-      {
-        id: 'assignment',
-        label: 'Retention assignment relation schema',
-        description: 'The relation schema linking a governed entity to its retention policy.',
-        required: true,
-        targetKind: 'relation_schema',
-        fieldRoles: retentionAssignmentFieldRoles
-      }
-    ]
-  },
-  {
-    type: 'strategy-model',
-    label: 'Strategy & Capability Modelling',
-    description:
-      'Strategic objectives, outcomes, initiatives, and measures for traceability views.',
-    features: ['traceability', 'roll-ups'],
-    bindingRoles: [
-      {
-        id: 'objective',
-        label: 'Objective entity schema',
-        description: 'The entity schema used for strategic objectives.',
-        required: true,
-        targetKind: 'entity_schema',
-        fieldRoles: []
-      },
-      {
-        id: 'outcome',
-        label: 'Outcome entity schema',
-        description: 'The entity schema used for measurable outcomes.',
-        required: true,
-        targetKind: 'entity_schema',
-        fieldRoles: []
-      },
-      {
-        id: 'initiative',
-        label: 'Initiative entity schema',
-        description: 'The entity schema used for strategic initiatives.',
-        required: true,
-        targetKind: 'entity_schema',
-        fieldRoles: []
-      },
-      {
-        id: 'measure',
-        label: 'Measure entity schema',
-        description: 'The entity schema used for strategic measures.',
-        required: true,
-        targetKind: 'entity_schema',
-        fieldRoles: []
-      },
-      {
-        id: 'business_capability',
-        label: 'Business Capability entity schema',
-        description: 'The entity schema used for nested business capability hierarchies.',
-        required: true,
-        targetKind: 'entity_schema',
-        fieldRoles: []
-      },
-      {
-        id: 'objective_supports_business_capability',
-        label: 'Objective supports Business Capability relation schema',
-        description: 'The relation schema linking objectives to the capabilities they support.',
-        required: true,
-        targetKind: 'relation_schema',
-        fieldRoles: []
-      },
-      {
-        id: 'business_capability_supports_entity',
-        label: 'Business Capability supports Entity relation schema',
-        description:
-          'The relation schema linking a capability to the applications/systems that realize it.',
-        required: true,
-        targetKind: 'relation_schema',
-        fieldRoles: []
-      }
-    ]
-  },
   {
     type: 'api-specification',
     label: 'API specification',
@@ -243,11 +120,7 @@ export const workspaceCapabilityDefinitions: WorkspaceCapabilityDefinition[] = [
         fieldRoles: apiSpecificationFieldRoles
       }
     ]
-  },
-  businessGlossaryCapabilityDefinition,
-  vendorManagementCapabilityDefinition,
-  riskComplianceCapabilityDefinition,
-  dataStewardshipCapabilityDefinition
+  }
 ];
 
 export const getWorkspaceCapabilityDefinition = (type: WorkspaceCapabilityType | string) =>

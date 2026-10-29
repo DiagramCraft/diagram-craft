@@ -1,4 +1,5 @@
 import type { AiConfigInputDbUpsert } from '../domain/ai/db/aiDatabase';
+import { seedDefaultApplications } from '../domain/application/applicationOperations';
 import type { Entity, SavedViewDbResult } from '../domain/catalog/db/catalogDatabase';
 import type { GlobalRoleAssignmentDbResult, UserDbCreate } from '../domain/auth/db/authDatabase';
 import type {
@@ -31,12 +32,23 @@ import {
   SEED_CAPABILITY_CONFIGURATION_IDS,
   seedTemplateDefinitions
 } from './seedData/templateDefinitions';
-import { WORKSPACE_ID, now } from './seedData/constants';
+import { SEED_SCHEMA_IDS, WORKSPACE_ID, now } from './seedData/constants';
+import { seedConformanceChecks } from './seedData/conformanceChecks';
 import { seedGovernanceCaseConfigs } from './seedData/governanceCaseConfigs';
 import { seedSavedViews } from './seedData/views';
 import { seededTestPassword } from './seedFixtures';
 import { hashPassword } from '../utils/password';
 import { randomUUID } from 'node:crypto';
+import {
+  ENTITY_CHANGE_CASE_KIND,
+  entityState,
+  resolveEntityApprovalTargets
+} from '../domain/catalog/entityChangeOperations';
+import { buildDiff } from '../domain/catalog/entityDiff';
+import { createGovernanceCaseInTransaction } from '../domain/governance/governanceOperations';
+import { encodeCaseSubkind } from '../domain/governance/governanceCaseSubkind';
+import { ENTITY_OWNER_ADMIN_STRATEGY } from '../domain/governance/schemaGovernancePolicy';
+import { changeCaseDate, demoChangeCases } from './seedData/demoChangeCases';
 
 export type WorkspaceSeedOptions = {
   supportedCurrencies?: boolean;
@@ -132,6 +144,7 @@ export const seedWorkspaceBase = async (
       workspace.id,
       workspace.created_at
     );
+    await seedDefaultApplications(db, workspace.id);
   }
 };
 
@@ -264,6 +277,10 @@ export const seedCatalogDefinitions = async (
     for (const config of seedGovernanceCaseConfigs) {
       await db.governanceCaseConfig.upsertCaseConfig(config);
     }
+
+    for (const check of seedConformanceChecks) {
+      await db.conformance.createCheck(check);
+    }
   }
 };
 
@@ -379,5 +396,141 @@ export const seedCatalogViews = async (
 ): Promise<void> => {
   for (const view of views) {
     await db.view.createSavedView(view);
+  }
+};
+
+/**
+ * Seeds `entity.change-case` proposals against the demo Data Entities (see `demoChangeCases`),
+ * going through the same records the real submit flow writes (approval + revision + governance
+ * case with assignments) and then closing the non-open ones. Requires the entities, teams, users
+ * and the Data Entity `entity.change-case` config row to already exist.
+ */
+export const seedDemoEntityChangeCases = async (db: DatabaseAdapter): Promise<void> => {
+  const seededAt = new Date();
+  const caseSubkind = encodeCaseSubkind(SEED_SCHEMA_IDS.dataEntity);
+
+  for (const spec of demoChangeCases) {
+    const entity = await db.catalog.getEntity(WORKSPACE_ID, spec.entityId);
+    if (!entity) throw new Error(`Seed change case references unknown entity ${spec.entityId}`);
+
+    const baseState = entityState(entity);
+    const proposedState = {
+      ...baseState,
+      ...spec.propose({ description: entity.description, data: entity.data })
+    };
+    const diff = buildDiff(baseState, proposedState);
+    const { config, targets } = await resolveEntityApprovalTargets(
+      db,
+      WORKSPACE_ID,
+      ENTITY_CHANGE_CASE_KIND,
+      caseSubkind,
+      [entity]
+    );
+    const raisedAt = changeCaseDate(-spec.raisedDaysAgo, seededAt);
+    const dueAt = spec.dueInDays == null ? null : changeCaseDate(spec.dueInDays, seededAt);
+    const policyVersion = `${SEED_SCHEMA_IDS.dataEntity}:1:inherit`;
+    const closedAt = changeCaseDate(-Math.max(spec.raisedDaysAgo - 2, 0), seededAt);
+
+    await db.core.transaction(async tx => {
+      const proposal = await tx.entityChange.createApproval({
+        id: randomUUID(),
+        workspace: WORKSPACE_ID,
+        entity_id: entity.id,
+        status: 'open',
+        initiator_user_id: spec.initiatorUserId,
+        created_at: raisedAt,
+        updated_at: raisedAt,
+        closed_at: null
+      });
+      const revision = await tx.entityChange.createApprovalRevision({
+        id: randomUUID(),
+        proposal_id: proposal.id,
+        workspace: WORKSPACE_ID,
+        entity_id: entity.id,
+        revision_number: 1,
+        base_version: entity.version ?? 1,
+        base_state: baseState,
+        proposed_state: proposedState,
+        diff,
+        policy_version: policyVersion,
+        resolved_policy: {
+          required: true,
+          selfApprovalAllowed: false,
+          policyVersion,
+          requiredApprovals: config.requiredApprovals,
+          strategy: config.strategy ?? ENTITY_OWNER_ADMIN_STRATEGY,
+          targets
+        },
+        message: spec.message,
+        created_by: spec.initiatorUserId,
+        status: 'submitted',
+        created_at: raisedAt,
+        resolved_at: null
+      });
+      const governanceCase = await createGovernanceCaseInTransaction(
+        tx,
+        WORKSPACE_ID,
+        spec.initiatorUserId,
+        {
+          caseKind: ENTITY_CHANGE_CASE_KIND,
+          caseSubkind,
+          subjectType: 'entity',
+          subjectId: entity.id,
+          subjectVersion: revision.id,
+          policyVersion,
+          selfApprovalAllowed: false,
+          dueAt,
+          payload: {
+            proposalId: proposal.id,
+            revisionId: revision.id,
+            entityId: entity.id,
+            requiredApprovals: config.requiredApprovals
+          },
+          assignments: targets.map(target => ({ action: 'approve' as const, target }))
+        },
+        raisedAt
+      );
+
+      if (spec.outcome === 'open') return;
+      if (spec.outcome === 'withdrawn') {
+        await tx.governance.cancelCaseIfOpen(governanceCase.id, closedAt);
+        await tx.entityChange.updateApprovalRevisionStatus(
+          WORKSPACE_ID,
+          revision.id,
+          'withdrawn',
+          closedAt
+        );
+        await tx.entityChange.updateApprovalStatus(
+          WORKSPACE_ID,
+          proposal.id,
+          'withdrawn',
+          closedAt,
+          closedAt
+        );
+        return;
+      }
+      const status = spec.outcome === 'approved' ? 'approved' : 'rejected';
+      await tx.governance.completeCaseIfOpen(
+        governanceCase.id,
+        spec.outcome === 'approved' ? 'approve' : 'reject',
+        closedAt
+      );
+      // Mirror decideGovernanceAssignment: completing a case supersedes its still-open assignments,
+      // otherwise they keep showing up as open tasks (and deciding them fails with a 409)
+      await tx.governance.supersedeAllOpenAssignmentsForCase(governanceCase.id, closedAt);
+      await tx.entityChange.updateApprovalRevisionStatus(
+        WORKSPACE_ID,
+        revision.id,
+        status,
+        closedAt
+      );
+      await tx.entityChange.updateApprovalStatus(
+        WORKSPACE_ID,
+        proposal.id,
+        status,
+        closedAt,
+        closedAt
+      );
+    });
   }
 };

@@ -15,15 +15,19 @@ type SeededFixtures = {
   otherUserId: string;
 };
 
+const mockChatOptions: Array<Record<string, unknown>> = [];
+
 const mockAiChatOverrides = {
   buildSystemPromptImpl: async () => 'Mock system prompt',
   createAiTextAdapterImpl: () => ({ provider: 'mock' }) as never,
   createAiChatToolsImpl: () => [],
   chatImpl: ((options: Record<string, unknown>) => {
+    mockChatOptions.push(options);
     if (options['stream'] === false) {
-      return Promise.resolve(
-        '[{"name":"Billing API","schema_id":"schema-api","fields":{"system":"Customer Portal"}}]'
-      );
+      return Promise.resolve({
+        text: '[{"name":"Billing API","schema_id":"schema-api","fields":{"system":"Customer Portal"}}]',
+        chunks: []
+      });
     }
 
     if (JSON.stringify(options['messages']).includes('provider error')) {
@@ -351,7 +355,9 @@ test.describe('ai chat routes', () => {
     expect(res.headers.get('content-type')).toContain('text/event-stream');
     expect(await res.text()).toContain('Mock assistant');
 
-    const messages = await server.db.ai.listMessages(conversationId);
+    const messages = await orpc.ai.listMessages({
+      params: { workspace: 'default', id: conversationId }
+    });
     expect(messages).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -397,9 +403,15 @@ test.describe('ai chat routes', () => {
 
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toContain('text/event-stream');
-    expect(await res.text()).toContain('Tool call reply');
+    const streamBody = await res.text();
+    expect(streamBody).toContain('Tool call reply');
+    expect(streamBody).toContain('TOOL_CALL_START');
+    expect(streamBody).toContain('call-a');
+    expect(streamBody).toContain('TOOL_CALL_RESULT');
 
-    const messages = await server.db.ai.listMessages(conversationId);
+    const messages = await orpc.ai.listMessages({
+      params: { workspace: 'default', id: conversationId }
+    });
     const assistantMessage = messages.find(message => message.role === 'assistant');
     expect(assistantMessage).toMatchObject({
       content: 'Tool call reply',
@@ -409,6 +421,41 @@ test.describe('ai chat routes', () => {
           { name: 'delete_entity', args: '{"id":"entity-b"}', result: 'deleted' }
         ]
       }
+    });
+  });
+
+  test('forwards v1 interrupt resumes to the server chat activity', async ({
+    server,
+    auth,
+    seeded: _
+  }) => {
+    mockChatOptions.length = 0;
+    const resume = [
+      {
+        interruptId: 'approval-1',
+        status: 'resolved',
+        payload: { approved: true }
+      }
+    ];
+
+    const res = await fetch(`${server.baseUrl}/api/application/v1/default/ai/chat`, {
+      method: 'POST',
+      headers: { Authorization: auth, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        threadId: 'thread-resume',
+        runId: 'run-continuation',
+        parentRunId: 'run-interrupted',
+        resume,
+        messages: [{ role: 'user', content: 'Continue after approval' }]
+      })
+    });
+
+    expect(res.status).toBe(200);
+    expect(mockChatOptions.at(-1)).toMatchObject({
+      threadId: 'thread-resume',
+      runId: 'run-continuation',
+      parentRunId: 'run-interrupted',
+      resume
     });
   });
 
@@ -435,6 +482,7 @@ test.describe('ai chat routes', () => {
       method: 'POST',
       headers: { 'Authorization': auth, 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        threadId: 'thread-missing-workspace',
         messages: [{ role: 'user', content: 'prompt' }]
       })
     });

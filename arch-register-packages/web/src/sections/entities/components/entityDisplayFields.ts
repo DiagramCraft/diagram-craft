@@ -2,7 +2,7 @@ import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntityConformanceStatus } from '@arch-register/api-types/conformanceContract';
 import type { ProjectionField } from '@arch-register/api-types/entityQueryIR';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
-import type { BrowserView } from '@arch-register/api-types/viewContract';
+import type { BrowserView, ColumnRenderConfig } from '@arch-register/api-types/viewContract';
 import type { Assessment } from '@arch-register/api-types/assessmentContract';
 import { getAssessmentEnumOptions } from '@arch-register/api-types/assessmentFieldOptions';
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
@@ -13,13 +13,14 @@ import {
 import type { BrowserEntityRecord } from './entityBrowserState';
 import { formatDate, type DateTimeFormatPreference } from '../../../utils/dateFormat';
 import { formatCurrencyValue } from '../../../utils/currencyFormat';
+import { formatDurationValue } from '../../../utils/durationFormat';
 
 export const DISPLAY_FIELD_VIEWS = new Set<BrowserView>([
   'table',
   'cards',
   'tree',
-  'explore',
-  'map'
+  'relation-columns',
+  'nested-map'
 ]);
 
 export type EntityDisplayField = {
@@ -44,19 +45,34 @@ const STANDARD_FIELDS: EntityDisplayField[] = [
   { id: '_namespace', label: 'Namespace', group: 'General' },
   { id: '_tags', label: 'Tags', group: 'General' },
   { id: '_completeness', label: 'Completeness', group: 'General' },
+  { id: '_usageCount', label: 'Usage count', group: 'General' },
   { id: '_projectRole', label: 'Project role', group: 'Project' },
   { id: '_projectStatus', label: 'Project status', group: 'Project' }
 ];
 
 export const DEFAULT_DISPLAY_FIELDS: Record<
-  'table' | 'cards' | 'tree' | 'explore' | 'map',
+  'table' | 'cards' | 'tree' | 'relation-columns' | 'nested-map',
   string[]
 > = {
   table: ['_description', '_owner', '_lifecycle', '_projectRole', '_namespace', '_completeness'],
   cards: ['_lifecycle', '_description', '_owner', '_projectRole', '_projectStatus'],
   tree: ['_description', '_owner', '_lifecycle', '_namespace'],
-  explore: ['_slug', '_owner'],
-  map: ['_description', '_lifecycle', '_owner', '_tags']
+  'relation-columns': ['_slug', '_owner'],
+  'nested-map': ['_description', '_lifecycle', '_owner', '_tags']
+};
+
+/** Number-like columns (number, currency, and derived number/currency/rating), shown right-aligned
+ *  in tables so digits line up. */
+export const isNumericDisplayField = (field: EntityDisplayField): boolean => {
+  const schemaField = field.schemaField;
+  if (!schemaField) return false;
+  if (schemaField.type === 'number' || schemaField.type === 'currency') return true;
+  return (
+    schemaField.type === 'derived' &&
+    (schemaField.resultType === 'number' ||
+      schemaField.resultType === 'currency' ||
+      schemaField.resultType === 'rating')
+  );
 };
 
 const SCALAR_TYPES = new Set([
@@ -66,6 +82,7 @@ const SCALAR_TYPES = new Set([
   'date',
   'number',
   'currency',
+  'duration',
   'select',
   'derived'
 ]);
@@ -153,7 +170,7 @@ export const buildEntityDisplayFields = (
 };
 
 export const getDisplayFieldIds = (
-  view: 'table' | 'cards' | 'tree' | 'explore' | 'map',
+  view: 'table' | 'cards' | 'tree' | 'relation-columns' | 'nested-map',
   config: unknown
 ): string[] => {
   if (
@@ -180,17 +197,30 @@ export const filterDisplayFieldIdsForContext = (
 ): string[] =>
   projectContext ? fieldIds : fieldIds.filter(fieldId => !PROJECT_DISPLAY_FIELD_IDS.has(fieldId));
 
-export const withDisplayFieldIds = (config: unknown, fieldIds: string[]) => ({
-  ...(config && typeof config === 'object' ? config : {}),
-  fieldIds
-});
+export const withDisplayFieldIds = (config: unknown, fieldIds: string[]) => {
+  const base = (config && typeof config === 'object' ? config : {}) as {
+    columnRenderers?: Record<string, ColumnRenderConfig>;
+  };
+  const columnRenderers = base.columnRenderers
+    ? Object.fromEntries(
+        Object.entries(base.columnRenderers).filter(([id]) => fieldIds.includes(id))
+      )
+    : undefined;
+  const { columnRenderers: _previous, ...rest } = base;
+  return {
+    ...rest,
+    ...(columnRenderers && Object.keys(columnRenderers).length > 0 ? { columnRenderers } : {}),
+    fieldIds
+  };
+};
 
 export const withoutDisplayFieldIds = (config: unknown): unknown => {
   if (config == null || typeof config !== 'object') return null;
-  const { fieldIds: _fieldIds, ...rest } = config as { fieldIds?: unknown } & Record<
-    string,
-    unknown
-  >;
+  const {
+    fieldIds: _fieldIds,
+    columnRenderers: _columnRenderers,
+    ...rest
+  } = config as { fieldIds?: unknown; columnRenderers?: unknown } & Record<string, unknown>;
   return Object.keys(rest).length === 0 ? null : rest;
 };
 
@@ -235,6 +265,8 @@ export const formatEntityDisplayValue = (
   if (field.id === '_tags') return entity._tags.length ? entity._tags.join(', ') : null;
   if (field.id === '_completeness')
     return entity._completeness == null ? null : `${entity._completeness}%`;
+  if (field.id === '_usageCount')
+    return entity._usageCount == null ? null : String(entity._usageCount);
   if (field.id === '_projectRole') return entity._projectLink?.entityType?.name ?? null;
   if (field.id === '_projectStatus')
     return entity._projectLink?.linked ? (entity._projectLink.isDone ? 'Done' : 'Open') : null;
@@ -262,6 +294,9 @@ export const formatEntityDisplayValue = (
     if (field.schemaField?.type === 'currency') {
       return value.map(item => formatCurrencyValue(item)).join(', ');
     }
+    if (field.schemaField?.type === 'duration') {
+      return value.map(item => formatDurationValue(item)).join(', ');
+    }
     return value.map(item => String(item)).join(', ');
   }
   if (
@@ -288,5 +323,55 @@ export const formatEntityDisplayValue = (
   ) {
     return formatCurrencyValue(value);
   }
+  if (
+    field.schemaField?.type === 'duration' ||
+    (field.schemaField?.type === 'derived' && field.schemaField.resultType === 'duration')
+  ) {
+    return formatDurationValue(value);
+  }
   return String(value);
+};
+
+/**
+ * The unformatted value of a column, for renderers that need the underlying number or option
+ * value rather than the display string. Multi-valued columns yield their first value.
+ */
+export const getEntityDisplayRawValue = (
+  entity: EntityRecord,
+  field: EntityDisplayField
+): string | number | null => {
+  let value: unknown;
+  if (field.assessmentField)
+    value = resolveAssessmentValue(entity as BrowserEntityRecord, field.id);
+  else if (field.id === '_completeness') value = entity._completeness;
+  else if (field.id === '_usageCount') value = entity._usageCount;
+  else if (field.id.startsWith(PROJECTION_FIELD_PREFIX))
+    value = entity._projections?.[field.id.slice(PROJECTION_FIELD_PREFIX.length)];
+  else if (field.id.startsWith('_')) return null;
+  else value = entity[field.id];
+
+  if (Array.isArray(value)) value = value[0];
+  if (value == null || value === '') return null;
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  return String(value);
+};
+
+/** Returns `config` with the per-column renderer map replaced; an empty map removes the key. */
+export const withColumnRenderers = (
+  config: unknown,
+  columnRenderers: Record<string, ColumnRenderConfig>
+) => {
+  const { columnRenderers: _previous, ...rest } = (
+    config && typeof config === 'object' ? config : {}
+  ) as Record<string, unknown>;
+  return Object.keys(columnRenderers).length === 0 ? rest : { ...rest, columnRenderers };
+};
+
+/** The renderer configured for `fieldId`, tolerating missing or malformed config (plain). */
+export const getColumnRenderer = (config: unknown, fieldId: string): ColumnRenderConfig => {
+  const renderers =
+    config && typeof config === 'object'
+      ? (config as { columnRenderers?: Record<string, ColumnRenderConfig> }).columnRenderers
+      : undefined;
+  return renderers?.[fieldId] ?? { type: 'plain' };
 };

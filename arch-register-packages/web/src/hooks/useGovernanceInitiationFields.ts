@@ -14,10 +14,13 @@ export const useGovernanceInitiationFields = (
     const kind = query.data?.case_kinds.find(candidate => candidate.case_kind === caseKind);
     if (!kind || kind.supportsInitiationFields === false) return [];
     const row = query.data?.configs.find(
-      candidate => candidate.case_kind === caseKind && candidate.case_subkind === caseSubkind
+      candidate =>
+        candidate.case_kind === caseKind &&
+        caseSubkind != null &&
+        candidate.case_subkinds.includes(caseSubkind)
     );
     const workspaceRow = query.data?.configs.find(
-      candidate => candidate.case_kind === caseKind && candidate.case_subkind == null
+      candidate => candidate.case_kind === caseKind && candidate.case_subkinds.length === 0
     );
     const resolved =
       row?.config.initiationFields ??

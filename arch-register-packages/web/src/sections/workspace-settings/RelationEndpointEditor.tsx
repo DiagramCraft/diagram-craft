@@ -1,53 +1,67 @@
-import { Checkbox } from '@diagram-craft/app-components/Checkbox';
+import { MultiSelect } from '@diagram-craft/app-components/MultiSelect';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
-import type { EntitySchema } from '@arch-register/api-types/schemaContract';
+import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
+import { useCanEditSchemas } from './schemaEditorContext';
 import type { RelationEndpoint } from '@arch-register/api-types/relationSchemaContract';
-import { SchemaMultiSelect } from '../../components/SchemaMultiSelect';
 import { setEndpointSchemaIds } from './relationSchemaSettingsHelpers';
 import styles from './SchemaSettingsScreen.module.css';
+import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
 
 export const RelationEndpointEditor = ({
   label,
-  hint,
   endpoint,
-  schemas,
-  canEdit,
   onChange
 }: {
   label: string;
-  hint: string;
   endpoint: RelationEndpoint;
-  schemas: EntitySchema[];
-  canEdit: boolean;
   onChange: (endpoint: RelationEndpoint) => void;
-}) => (
-  <div>
-    <div className={styles.formLabel}>{label}</div>
-    <TextInput
-      value={endpoint.label ?? ''}
-      disabled={!canEdit}
-      placeholder="Contextual label"
-      onChange={value => {
-        const trimmed = value?.trim() ?? '';
-        onChange({ ...endpoint, label: trimmed === '' ? undefined : trimmed });
-      }}
-      style={{ width: '100%', marginBottom: 8 }}
-    />
-    <Checkbox
-      label="Allow any entity type"
-      value={endpoint.schemaIds === 'any'}
-      disabled={!canEdit}
-      onChange={value => onChange(setEndpointSchemaIds(endpoint, value ? 'any' : []))}
-    />
-    {endpoint.schemaIds !== 'any' && (
-      <SchemaMultiSelect
-        label=""
-        hint={hint}
-        schemas={schemas}
-        selectedIds={endpoint.schemaIds}
+}) => {
+  const { schemas } = useWorkspaceContext();
+  const canEdit = useCanEditSchemas();
+
+  return (
+    <div style={{ fontSize: '12px', marginBottom: '8px' }}>
+      <div className={styles.formLabel}>{label}</div>
+      <TextInput
+        value={endpoint.label ?? ''}
         disabled={!canEdit}
-        onChange={schemaIds => onChange(setEndpointSchemaIds(endpoint, schemaIds))}
+        placeholder="Contextual label"
+        onChange={value => {
+          const trimmed = value?.trim() ?? '';
+          onChange({ ...endpoint, label: trimmed === '' ? undefined : trimmed });
+        }}
       />
-    )}
-  </div>
-);
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px' }}>
+        <ToggleButtonGroup.Root
+          type="single"
+          value={endpoint.schemaIds === 'any' ? 'any' : 'select'}
+          onChange={value => {
+            if (value) onChange(setEndpointSchemaIds(endpoint, value === 'any' ? 'any' : []));
+          }}
+        >
+          <ToggleButtonGroup.Item value="any">Any</ToggleButtonGroup.Item>
+          <ToggleButtonGroup.Item value="select">Select</ToggleButtonGroup.Item>
+        </ToggleButtonGroup.Root>
+
+        {endpoint.schemaIds !== 'any' && (
+          <MultiSelect
+            selectedValues={endpoint.schemaIds}
+            availableItems={[
+              ...schemas.map(schema => ({ value: schema.id, label: schema.name })),
+              // Keep selections whose schema no longer exists visible and removable
+              ...endpoint.schemaIds
+                .filter(id => !schemas.some(schema => schema.id === id))
+                .map(id => ({ value: id, label: 'Unavailable type' }))
+            ]}
+            maxSuggestions={schemas.length}
+            onSelectionChange={schemaIds => onChange(setEndpointSchemaIds(endpoint, schemaIds))}
+            placeholder="Select entity types..."
+            disabled={!canEdit}
+            style={{ width: '100%' }}
+          />
+        )}
+      </div>
+    </div>
+  );
+};

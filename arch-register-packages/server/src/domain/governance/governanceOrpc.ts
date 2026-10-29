@@ -1,10 +1,12 @@
 import { implement } from '@orpc/server';
+import { resolveGovernanceCaseSubjects } from './governanceCaseSubjectOperations';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { createOrpcHandler } from '../../utils/orpcHandler';
 import { orpcErrorMiddleware } from '../../utils/orpcErrors';
 import {
   cancelGovernanceCase,
+  countMySubmittedGovernanceCases,
   decideGovernanceAssignment,
   getGovernanceCase,
   listGovernanceCaseEvents,
@@ -67,6 +69,14 @@ export const createGovernanceORPCRouter = (registry: GovernanceRegistry) =>
             registry
           );
         }),
+        subjects: governanceRouter.governance.cases.subjects.handler(async ({ input, context }) => {
+          return await resolveGovernanceCaseSubjects(
+            context.db,
+            input.params.workspace,
+            context.event,
+            input.body.cases
+          );
+        }),
         remind: governanceRouter.governance.cases.remind.handler(async ({ input, context }) => {
           return await sendGovernanceCaseReminder(
             context.db,
@@ -116,6 +126,13 @@ export const createGovernanceORPCRouter = (registry: GovernanceRegistry) =>
             context.event,
             input.query,
             registry
+          );
+        }),
+        count: governanceRouter.governance.submissions.count.handler(async ({ input, context }) => {
+          return await countMySubmittedGovernanceCases(
+            context.db,
+            input.params.workspace,
+            context.event
           );
         })
       }

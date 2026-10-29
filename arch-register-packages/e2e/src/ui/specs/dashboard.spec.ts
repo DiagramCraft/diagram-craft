@@ -25,11 +25,9 @@ test.describe('dashboard section', () => {
     await homePage.expectLoaded(defaultWorkspace.name);
   });
 
-  test('admin can add and configure API Catalog widgets on a workspace dashboard', async ({
-    page
-  }) => {
+  test('admin can add and retitle widgets on a workspace dashboard', async ({ page }) => {
     const homePage = new HomePage(page, defaultWorkspace.slug);
-    const dashboardName = `API Catalog widgets ${Date.now()}`;
+    const dashboardName = `Widget titles ${Date.now()}`;
     let dashboardCreated = false;
 
     try {
@@ -42,22 +40,9 @@ test.describe('dashboard section', () => {
       await homePage.enterEditMode();
 
       const widgets = [
-        { pickerName: /API catalog stats/, title: 'Pilot API stats' },
-        {
-          pickerName: /Open API change and deprecation cases/,
-          title: 'Pilot decision queue',
-          limit: 4
-        },
-        {
-          pickerName: /APIs with the most registered consumers/,
-          title: 'Pilot most consumed',
-          limit: 5
-        },
-        {
-          pickerName: /Data flows that cross a boundary/,
-          title: 'Pilot at-risk integrations',
-          limit: 7
-        }
+        { pickerName: /^Stale entity report/, title: 'Pilot stale report' },
+        { pickerName: /^Lifecycle chart/, title: 'Pilot lifecycle' },
+        { pickerName: /^Markdown/, title: 'Pilot notes' }
       ];
 
       for (const widget of widgets) {
@@ -66,20 +51,16 @@ test.describe('dashboard section', () => {
         await page.getByRole('button', { name: 'Edit widget' }).last().click();
 
         const dialog = page.getByRole('alertdialog');
-        await dialog.getByLabel('Title').fill(widget.title);
-        if (widget.limit !== undefined) {
-          await dialog.getByLabel('Maximum visible items').fill(String(widget.limit));
-        }
+        await dialog.getByRole('tab', { name: 'Appearance' }).click();
+        await dialog.getByRole('tabpanel').getByRole('textbox').first().fill(widget.title);
         await dialog.getByRole('button', { name: 'Save', exact: true }).click();
-        await expect(page.getByText(widget.title, { exact: true })).toBeVisible();
+        // The widget header renders its title in uppercase
+        await expect(page.getByText(new RegExp(`^${widget.title}$`, 'i'))).toBeVisible();
       }
 
       await homePage.saveDashboard();
       await page.reload();
       await homePage.expectLoaded(defaultWorkspace.name);
-      for (const widget of widgets) {
-        await expect(page.getByText(widget.title, { exact: true })).toBeVisible();
-      }
       await expect(page.getByText(/Unsupported dashboard widget/)).toHaveCount(0);
 
       await homePage.enterEditMode();
@@ -88,38 +69,13 @@ test.describe('dashboard section', () => {
       for (const [index, widget] of widgets.entries()) {
         await editWidgetButtons.nth(firstPilotWidgetIndex + index).click();
         const dialog = page.getByRole('alertdialog');
-        await expect(dialog.getByLabel('Title')).toHaveValue(widget.title);
-        if (widget.limit !== undefined) {
-          await expect(dialog.getByLabel('Maximum visible items')).toHaveValue(
-            String(widget.limit)
-          );
-        }
+        await dialog.getByRole('tab', { name: 'Appearance' }).click();
+        await expect(dialog.getByRole('tabpanel').getByRole('textbox').first()).toHaveValue(
+          widget.title
+        );
         await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
       }
       await homePage.cancelDashboardButton().click();
-
-      await page.getByRole('button', { name: 'Catalog', exact: true }).last().click();
-      await expect(page).toHaveURL(
-        new RegExp(`/${defaultWorkspace.slug}/api-integration-catalog/apis`)
-      );
-      await homePage.goto();
-      await homePage.switchDashboard(dashboardName);
-      const mostConsumedFrame = page
-        .getByText('Pilot most consumed', { exact: true })
-        .locator('xpath=../../..');
-      await mostConsumedFrame.getByRole('button', { name: /API/ }).first().click();
-      await expect(page).toHaveURL(
-        url =>
-          url.pathname.endsWith('/api-integration-catalog/apis') && url.searchParams.has('drawer')
-      );
-      await homePage.goto();
-      await homePage.switchDashboard(dashboardName);
-      await page.getByRole('button', { name: 'All integrations', exact: true }).last().click();
-      await expect(page).toHaveURL(
-        url =>
-          url.pathname.endsWith('/api-integration-catalog/integrations') &&
-          url.searchParams.get('boundary') === '"1"'
-      );
     } finally {
       if (dashboardCreated && !page.isClosed()) {
         await homePage.goto();

@@ -58,7 +58,7 @@ describe('change-case conflict workflow', () => {
         [member(), member({ id: 'member-2' })],
         [{ memberId: 'member-1', resolvedEntityData: {} }]
       )
-    ).toThrow('A resolution must be supplied for every member entity of this case');
+    ).toThrow('A resolution must be supplied for every member record of this case');
   });
 
   it('rejects stale subjects during the transactional apply check', () => {

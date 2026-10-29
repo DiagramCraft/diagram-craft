@@ -17,7 +17,22 @@ const isLiveChangeCase = (changeCase: ChangeCase) =>
 export const flattenChangeCaseMembers = (changeCases: ChangeCase[]): ChangeCaseMemberEntry[] =>
   changeCases
     .filter(isLiveChangeCase)
-    .flatMap(changeCase => changeCase.members.map(member => ({ changeCase, member })));
+    .flatMap(changeCase =>
+      changeCase.members
+        .filter(member => member.kind === 'entity')
+        .map(member => ({ changeCase, member }))
+    );
+
+export const flattenRelationChangeCaseMembers = (
+  changeCases: ChangeCase[]
+): ChangeCaseMemberEntry[] =>
+  changeCases
+    .filter(isLiveChangeCase)
+    .flatMap(changeCase =>
+      changeCase.members
+        .filter(member => member.kind === 'relation')
+        .map(member => ({ changeCase, member }))
+    );
 
 // A change case targets either a raw target_date or a milestone (never both) — the milestone's
 // target_date is its effective date. These helpers centralize that resolution so every display
@@ -31,6 +46,14 @@ export const getSnapshotEffectiveDate = (
   (changeCase.milestone_id != null
     ? (milestonesById.get(changeCase.milestone_id)?.target_date ?? null)
     : null);
+
+/** True when a planned change's effective date (yyyy-mm-dd, optionally with a time part) is before today. */
+export const isChangeOverdue = (effectiveDate: string | null, now: Date = new Date()): boolean => {
+  if (!effectiveDate) return false;
+  const pad = (value: number) => String(value).padStart(2, '0');
+  const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  return effectiveDate.slice(0, 10) < today;
+};
 
 export const getProjectScenarioDate = (
   projectTargetDate: string | null | undefined,

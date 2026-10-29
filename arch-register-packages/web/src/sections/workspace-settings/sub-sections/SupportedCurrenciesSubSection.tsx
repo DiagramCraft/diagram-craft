@@ -1,11 +1,13 @@
-import { useEffect, useState } from 'react';
+import { SaveBarButtons } from '../SaveBarButtons';
+import { Fragment, useEffect, useState } from 'react';
 import { TbPlus, TbTrash } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
-import { Select } from '@diagram-craft/app-components/Select';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import type { SupportedCurrency } from '@arch-register/api-types/workspaceConfigContract';
 import { useUpdateSupportedCurrencies } from '../../../hooks/useWorkspaceConfig';
-import styles from './LifecycleSubSection.module.css';
+import { SettingsBlock, SettingsBlockList } from '../SettingsBlock';
+import { SectionActions } from '../SectionActions';
+import styles from './SupportedCurrenciesSubSection.module.css';
 
 export const SupportedCurrenciesSubSection = ({
   workspaceId,
@@ -28,8 +30,20 @@ export const SupportedCurrenciesSubSection = ({
   const dirty =
     JSON.stringify(items) !== JSON.stringify(currencies) || defaultCode !== defaultCurrency;
 
-  const update = (index: number, patch: Partial<SupportedCurrency>) =>
+  const update = (index: number, patch: Partial<SupportedCurrency>) => {
+    // Keep the default pointing at the same row when its code is edited
+    if (patch.code !== undefined && items[index]?.code === defaultCode) {
+      setDefaultCode(patch.code);
+    }
     setItems(current => current.map((item, i) => (i === index ? { ...item, ...patch } : item)));
+  };
+
+  const remove = (index: number) => {
+    if (items[index]?.code === defaultCode) {
+      setDefaultCode(items.find((item, i) => i !== index && item.code)?.code ?? '');
+    }
+    setItems(current => current.filter((_, i) => i !== index));
+  };
 
   const save = async () => {
     await mutation.mutateAsync({
@@ -39,56 +53,63 @@ export const SupportedCurrenciesSubSection = ({
   };
 
   return (
-    <div className={styles.blockList}>
-      <div className={styles.sectionActions}>
-        <Button
-          disabled={!dirty || mutation.isPending}
-          onClick={() => {
+    <>
+      <SectionActions>
+        <SaveBarButtons
+          dirty={dirty}
+          pending={mutation.isPending}
+          onCancel={() => {
             setItems(currencies);
             setDefaultCode(defaultCurrency);
           }}
+          onSave={save}
+        />
+      </SectionActions>
+      <SettingsBlockList>
+        <SettingsBlock
+          title="Supported currencies"
+          description="Currency fields accept codes in this list. Removing a code does not change existing values. The default currency is used when entering an amount without an explicit currency."
         >
-          Cancel
-        </Button>
-        <Button
-          variant="primary"
-          disabled={!dirty || mutation.isPending}
-          onClick={() => void save()}
-        >
-          {mutation.isPending ? 'Saving...' : 'Save changes'}
-        </Button>
-      </div>
-      <div className={styles.section}>
-        <div className={styles.sectionHead}>
-          <div className={styles.sectionTitle}>Supported currencies</div>
-          <div className={styles.sectionSub}>
-            Currency fields accept codes in this list. Removing a code does not change existing
-            values.
+          <div className={styles.fieldGrid}>
+            {items.map((currency, index) => (
+              <Fragment key={index}>
+                <input
+                  type="radio"
+                  name="default-currency"
+                  className={styles.defaultRadio}
+                  aria-label={`Use ${currency.code || 'this currency'} as default`}
+                  checked={currency.code !== '' && currency.code === defaultCode}
+                  disabled={currency.code === ''}
+                  onChange={() => setDefaultCode(currency.code)}
+                />
+                <TextInput
+                  value={currency.code}
+                  onChange={value => update(index, { code: (value ?? '').toUpperCase() })}
+                />
+                <TextInput
+                  value={currency.label}
+                  onChange={value => update(index, { label: value ?? '' })}
+                />
+                <Button
+                  onClick={() => remove(index)}
+                  variant={'danger'}
+                  style={{ marginLeft: '1rem' }}
+                >
+                  <TbTrash size={12} />
+                </Button>
+
+                {index < items.length - 1 && (
+                  <div
+                    style={{
+                      gridColumn: '1 / 5',
+                      borderBottom: '1px dashed var(--panel-border)',
+                      marginBottom: '4px'
+                    }}
+                  />
+                )}
+              </Fragment>
+            ))}
           </div>
-        </div>
-        <div className={styles.sectionBody}>
-          {items.map((currency, index) => (
-            <div
-              key={`${currency.code}-${index}`}
-              className={styles.field}
-              style={{ gridTemplateColumns: '120px 1fr auto' }}
-            >
-              <TextInput
-                value={currency.code}
-                onChange={value => update(index, { code: (value ?? '').toUpperCase() })}
-              />
-              <TextInput
-                value={currency.label}
-                onChange={value => update(index, { label: value ?? '' })}
-              />
-              <Button
-                onClick={() => setItems(current => current.filter((_, i) => i !== index))}
-                style={{ padding: '0 6px' }}
-              >
-                <TbTrash size={12} />
-              </Button>
-            </div>
-          ))}
           <Button
             icon={<TbPlus size={12} />}
             onClick={() =>
@@ -97,27 +118,8 @@ export const SupportedCurrenciesSubSection = ({
           >
             Add currency
           </Button>
-        </div>
-      </div>
-      <div className={styles.section}>
-        <div className={styles.sectionHead}>
-          <div className={styles.sectionTitle}>Default currency</div>
-          <div className={styles.sectionSub}>
-            Used when entering an amount without an explicit currency.
-          </div>
-        </div>
-        <div className={styles.sectionBody}>
-          <Select.Root value={defaultCode} onChange={value => setDefaultCode(value ?? '')}>
-            {items
-              .filter(item => item.code)
-              .map(currency => (
-                <Select.Item key={currency.code} value={currency.code}>
-                  {currency.code} — {currency.label}
-                </Select.Item>
-              ))}
-          </Select.Root>
-        </div>
-      </div>
-    </div>
+        </SettingsBlock>
+      </SettingsBlockList>
+    </>
   );
 };

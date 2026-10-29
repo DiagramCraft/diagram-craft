@@ -23,9 +23,13 @@ export const Tooltip = (props: Props) => {
   return (
     <BaseUITooltip.Provider>
       <BaseUITooltip.Root>
-        <BaseUITooltip.Trigger render={props.element} />
+        <BaseUITooltip.Trigger render={props.element} delay={props.delay} />
         <BaseUITooltip.Portal>
-          <BaseUITooltip.Positioner sideOffset={5} side={'bottom'}>
+          <BaseUITooltip.Positioner
+            className={styles.cTooltipPositioner}
+            sideOffset={5}
+            side={'bottom'}
+          >
             <BaseUITooltip.Popup className={styles.cTooltip}>
               {props.message}
               <BaseUITooltip.Arrow className={styles.eArrow} />
@@ -40,4 +44,6 @@ export const Tooltip = (props: Props) => {
 type Props = {
   message: React.ReactNode;
   element: ReactElement;
+  /** Delay in milliseconds before the tooltip opens on hover; uses the library default if omitted. */
+  delay?: number;
 };

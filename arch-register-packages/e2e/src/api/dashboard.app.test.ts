@@ -7,7 +7,7 @@ const APP_KEY = 'api-integration-catalog';
 test.describe('App Dashboard API', () => {
   let appDashboardId: string;
 
-  test('getApp seeds the default layout on first access', async ({ orpc }) => {
+  test('getApp returns the bootstrap-seeded layout', async ({ orpc }) => {
     const dashboard = await orpc.dashboard.getApp({
       params: { workspace: 'default', appKey: APP_KEY }
     });
@@ -16,18 +16,18 @@ test.describe('App Dashboard API', () => {
     expect(dashboard.name).toBe('Overview');
     expect(dashboard.description).not.toBe('');
     expect(dashboard.widgets.map(w => w.type)).toEqual([
-      'api-integration-catalog-needs-attention-count',
+      'CaseCount',
       'AggregateStat',
       'AggregateStat',
-      'api-integration-catalog-pair-gaps',
-      'api-integration-catalog-needs-attention',
-      'api-integration-catalog-most-consumed',
-      'api-integration-catalog-at-risk'
+      'RelationPairGaps',
+      'NeedsAttentionQueue',
+      'TopEntities',
+      'RelationTable'
     ]);
     appDashboardId = dashboard.id;
   });
 
-  test('getApp is idempotent and does not overwrite user edits', async ({ orpc }) => {
+  test('getApp returns user edits unchanged', async ({ orpc }) => {
     await orpc.dashboard.update({
       params: { workspace: 'default', id: appDashboardId },
       body: { widgets: [], name: 'Catalog home', description: 'Custom description' }
@@ -68,7 +68,7 @@ test.describe('App Dashboard sidebar', () => {
       variableName: 'apiEntityId',
       itemLabel: 'APIs'
     });
-    expect(dashboard.widgets.map(w => w.type)).toEqual(['api-integration-catalog-impact']);
+    expect(dashboard.widgets.map(w => w.type)).toEqual(['blast-radius']);
   });
 
   test('the seeded sidebar is still returned after the dashboard has been edited', async ({

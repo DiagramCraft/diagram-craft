@@ -10,7 +10,9 @@ import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
-import { entityMenuItems, projectEntityMenuItems } from './entityBrowserViewShared';
+import { browserEntityMenuItems } from './entityBrowserViewShared';
+import type { EntityCommonActions } from './entityMenu';
+import { useEntityCommonActions } from './useEntityCommonActions';
 import {
   isEntityInProject,
   type ProjectBrowserContext,
@@ -44,6 +46,8 @@ export type TreeViewProps = {
   onEntityClick: (entityId: string) => void;
   onDelete: (entity: EntityRecord) => void;
   onClone: (entity: EntityRecord) => void;
+  onManageCollections?: (entity: EntityRecord) => void;
+  onMerge?: (entity: EntityRecord) => void;
   lifecycleStates: WorkspaceLifecycleState[];
   projectContext?: ProjectBrowserContext;
   readOnly?: boolean;
@@ -77,6 +81,8 @@ export const TreeView = ({
   onEntityClick,
   onDelete,
   onClone,
+  onManageCollections,
+  onMerge,
   lifecycleStates,
   projectContext,
   readOnly,
@@ -86,6 +92,7 @@ export const TreeView = ({
   responsesByEntity,
   onCountChange
 }: TreeViewProps) => {
+  const commonActions = useEntityCommonActions();
   const {
     treeNodes: nodes,
     treeEdges: edges,
@@ -186,8 +193,11 @@ export const TreeView = ({
             onEntityClick={onEntityClick}
             onDelete={onDelete}
             onClone={onClone}
+            onManageCollections={onManageCollections}
+            onMerge={onMerge}
             lifecycleStates={lifecycleStates}
             projectContext={projectContext}
+            commonActions={commonActions}
             readOnly={readOnly}
             columns={columns}
             displayFields={displayFields}
@@ -205,8 +215,11 @@ const TreeNodeRow = ({
   onEntityClick,
   onDelete,
   onClone,
+  onManageCollections,
+  onMerge,
   lifecycleStates,
   projectContext,
+  commonActions,
   readOnly,
   columns,
   displayFields
@@ -217,8 +230,11 @@ const TreeNodeRow = ({
   onEntityClick: (entityId: string) => void;
   onDelete: (entity: EntityRecord) => void;
   onClone: (entity: EntityRecord) => void;
+  onManageCollections?: (entity: EntityRecord) => void;
+  onMerge?: (entity: EntityRecord) => void;
   lifecycleStates: WorkspaceLifecycleState[];
   projectContext?: ProjectBrowserContext;
+  commonActions: EntityCommonActions;
   readOnly?: boolean;
   columns: EntityDisplayField[];
   displayFields: EntityDisplayField[];
@@ -229,10 +245,11 @@ const TreeNodeRow = ({
   const isAncestor = !item._isMatch;
   const menuItems = readOnly
     ? []
-    : [
-        ...entityMenuItems(item as unknown as EntityRecord, onClone, onDelete),
-        ...projectEntityMenuItems(item, projectContext)
-      ];
+    : browserEntityMenuItems(
+        item,
+        { onClone, onDelete, onManageCollections, onMerge, projectContext },
+        commonActions
+      );
 
   return (
     <>
@@ -305,8 +322,11 @@ const TreeNodeRow = ({
             onEntityClick={onEntityClick}
             onDelete={onDelete}
             onClone={onClone}
+            onManageCollections={onManageCollections}
+            onMerge={onMerge}
             lifecycleStates={lifecycleStates}
             projectContext={projectContext}
+            commonActions={commonActions}
             readOnly={readOnly}
             columns={columns}
             displayFields={displayFields}

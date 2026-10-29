@@ -1,3 +1,4 @@
+import { CloneEntityDialog } from './components/CloneEntityDialog';
 import { useMemo, useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import styles from './EntityDetailScreen.module.css';
@@ -15,7 +16,9 @@ import {
 import { useEntityTypedRelations } from '../../hooks/useRelations';
 import { useEntityVersions } from '../../hooks/useEntityVersions';
 import { useChangeCasesByEntity } from '../../hooks/useChangeCases';
-import { useEntityChangeApproval } from '../../hooks/useEntityChanges';
+import { useQueryClient } from '@tanstack/react-query';
+import { useBypassEntityApproval, useEntityChangeApproval } from '../../hooks/useEntityChanges';
+import { invalidateEntityChangeQueries } from '../../queries/entityChanges';
 import { useEntityDeprecation } from '../../hooks/useEntityDeprecation';
 import { useConformanceViolations } from '../../hooks/useConformance';
 import { EntityDeprecationPanel } from './components/EntityDeprecationPanel';
@@ -80,6 +83,8 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   } = useWorkspaceContext();
   const workspaceId = workspaceSlug;
   const { canOverrideEntityApproval } = useWorkspaceAuthorization(workspaceId);
+  const queryClient = useQueryClient();
+  const bypassEntityApproval = useBypassEntityApproval(workspaceId, entityId);
   const { data: workspaceCapabilityConfigurations = [] } =
     useWorkspaceCapabilityConfigurations(workspaceId);
   const canViewAudit = permissions.canViewAudit;
@@ -87,8 +92,8 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   const contentFolder = folder ?? null;
 
   const navigateToEntity = useCallback(
-    (id: string) => {
-      navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(id)));
+    (id: string, tab?: TabId) => {
+      navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(id), tab ? { tab } : undefined));
     },
     [navigate, workspaceSlug]
   );
@@ -158,6 +163,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   const [collectionPickerOpen, setCollectionPickerOpen] = useState(false);
   const [proposeDeprecationOpen, setProposeDeprecationOpen] = useState(false);
   const [mergeWizardOpen, setMergeWizardOpen] = useState(false);
+  const [cloneConfirmOpen, setCloneConfirmOpen] = useState(false);
   const [initiationFieldValues, setInitiationFieldValues] = useState<Record<string, unknown>>({});
 
   const schema = schemaEntry?.schema ?? null;
@@ -264,7 +270,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   const outgoing: Relation[] = relations.outgoing;
   const incoming: Relation[] = relations.incoming;
   const relationCount = outgoing.length + incoming.length;
-  const futurePlansCount = flattenChangeCaseMembers(entityChangeCases).filter(
+  const plannedChangesCount = flattenChangeCaseMembers(entityChangeCases).filter(
     entry => entry.changeCase.status === 'planned'
   ).length;
 
@@ -328,9 +334,13 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   });
 
   const handleClone = () => {
-    cloneEntity.mutate(entityId, {
-      onSuccess: cloned => navigateToEntity(cloned._publicId)
-    });
+    setCloneConfirmOpen(false);
+    cloneEntity.mutate(
+      { entityId },
+      {
+        onSuccess: cloned => navigateToEntity(cloned._publicId)
+      }
+    );
   };
 
   if (loading) {
@@ -403,7 +413,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
           onViewJson={() => setViewJsonOpen(true)}
           onOpenCollections={() => setCollectionPickerOpen(true)}
           onProposeDeprecation={() => setProposeDeprecationOpen(true)}
-          onClone={handleClone}
+          onClone={() => setCloneConfirmOpen(true)}
           onMergeInto={() => setMergeWizardOpen(true)}
         />
       )}
@@ -413,8 +423,11 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
         <EntityChangeApprovalPanel
           revision={latestApprovalRevision}
           workspaceId={workspaceId}
-          entityId={entityId}
+          recordKind="entity"
+          caseKind="entity.change-case"
           canOverrideApproval={canOverrideEntityApproval}
+          invalidate={() => invalidateEntityChangeQueries(queryClient, workspaceId, entityId)}
+          bypass={bypassEntityApproval}
         />
       )}
 
@@ -454,7 +467,6 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
           setTab={setTab}
           layout={layout}
           relationCount={relationCount}
-          futurePlansCount={futurePlansCount}
           activeViolationCount={activeViolationCount}
           canViewAudit={canViewAudit}
           overviewProps={{
@@ -494,6 +506,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
             entitySchemaId: schema?.id ?? '',
             entityName: entity._name
           }}
+          relatedContentProps={{ workspaceId, entityId }}
           changeHistoryProps={{
             workspaceId,
             entityId,
@@ -504,11 +517,6 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
             teams,
             canViewAudit
           }}
-          futurePlansProps={{
-            workspaceId,
-            entityProjects,
-            changeCases: entityChangeCases
-          }}
           conformanceProps={{
             workspaceId,
             entityId: entity._uid,
@@ -517,12 +525,11 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
         />
       )}
 
-      {/* Context: Topology / Graph / Dependents / Related content */}
+      {/* Context: Topology / Graph / Blast radius */}
       {!contentFolder && CONTEXT_TAB_IDS.includes(tab) && (
         <EntityContextSection
           tab={tab}
           setTab={setTab}
-          dependentsCount={incoming.length}
           topologyProps={{
             workspaceId,
             entity,
@@ -532,7 +539,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
             incoming,
             schemas,
             lifecycleStates,
-            onEntityClick: navigateToEntity
+            onEntityClick: id => navigateToEntity(id, 'topology')
           }}
           graphProps={{
             workspaceId,
@@ -540,16 +547,16 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
             rootEntityName: entity._name ?? entity._slug,
             rootEntitySchemaId: entity._schema.id,
             schemas,
-            onEntityClick: navigateToEntity
+            layout: 'force',
+            maxDepth: 1,
+            onEntityClick: id => navigateToEntity(id, 'graph')
           }}
-          dependentsProps={{ workspaceId, entityId, schemas, lifecycleStates }}
           blastRadiusProps={{
             workspaceId,
-            subject: { kind: 'entity', entityId: entity?._uid ?? entityId },
+            entityId: entity?._uid ?? entityId,
             schemas,
             lifecycleStates
           }}
-          relatedContentProps={{ workspaceId, entityId }}
         />
       )}
 
@@ -562,12 +569,18 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
         />
       )}
 
-      {/* Planning & review: Assessments / Timeline */}
+      {/* Planning & review: Timeline / Assessments / Planned changes */}
       {!contentFolder && PLANNING_TAB_IDS.includes(tab) && (
         <EntityPlanningReviewSection
           tab={tab}
           setTab={setTab}
           assessmentsProps={{ workspaceId, entity, schema }}
+          plannedChangesCount={plannedChangesCount}
+          plannedChangesProps={{
+            workspaceId,
+            entityProjects,
+            changeCases: entityChangeCases
+          }}
           timelineProps={{
             workspaceId,
             versions: entityVersions,
@@ -618,6 +631,12 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
         entityInitiationFields={entityInitiationFields}
         initiationFieldValues={initiationFieldValues}
         setInitiationFieldValues={setInitiationFieldValues}
+      />
+      <CloneEntityDialog
+        open={cloneConfirmOpen}
+        entityName={entityName}
+        onConfirm={handleClone}
+        onCancel={() => setCloneConfirmOpen(false)}
       />
     </div>
   );

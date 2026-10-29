@@ -1,0 +1,124 @@
+/* Structural rules for a sticky trace/coverage-matrix table — a real table, not a CSS grid, with
+   a sticky corner/header row and sticky first column. Both axes are open-ended, so this scrolls
+   in both directions. Domain styling (cell marks, legends) lives with the caller. */
+.wrap {
+  overflow: auto;
+  max-height: 620px;
+}
+
+.empty {
+  padding: 32px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.table {
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 11px;
+}
+
+.table th,
+.table td {
+  border-bottom: 1px solid var(--panel-border);
+  border-right: 1px solid var(--panel-border);
+}
+
+.table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--panel-bg);
+  height: 110px;
+  vertical-align: bottom;
+  padding: 0;
+  font-weight: 400;
+}
+
+.hd0 {
+  position: sticky;
+  left: 0;
+  top: 0;
+  z-index: 4;
+  text-align: left;
+  padding: 0 10px 8px !important;
+  font-weight: 500;
+  color: var(--base-fg-more-dim);
+  vertical-align: bottom;
+  min-width: 230px;
+}
+
+.vert {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  padding: 8px 0 10px;
+  font-size: 10px;
+  color: var(--base-fg-more-dim);
+  white-space: nowrap;
+  max-height: 100px;
+  overflow: hidden;
+  margin: 0 auto;
+}
+
+.columnButton {
+  all: unset;
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  color: inherit;
+}
+
+.columnButton:focus-visible {
+  outline: 2px solid var(--accent-fg);
+  outline-offset: -2px;
+}
+
+.table tbody th {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: var(--panel-bg);
+  text-align: left;
+  font-weight: 400;
+  padding: 6px 10px;
+  min-width: 230px;
+  max-width: 300px;
+}
+
+.rowHeaderCellClickable {
+  cursor: pointer;
+}
+
+.table tbody tr:hover th,
+.table tbody tr:hover td {
+  background: var(--cmp-bg-hover, var(--cmp-bg));
+}
+
+.rowname {
+  color: var(--base-fg);
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.table td {
+  width: 30px;
+  min-width: 30px;
+  text-align: center;
+  padding: 0;
+  height: 30px;
+}
+
+.tot {
+  font-size: 10px;
+  color: var(--base-fg-more-dim);
+  background: var(--panel-bg);
+}
+
+.totLabel {
+  font-size: 10px;
+  color: var(--base-fg-more-dim);
+}

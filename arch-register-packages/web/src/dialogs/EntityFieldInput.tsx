@@ -1,4 +1,5 @@
 import { FormElement } from '@diagram-craft/app-components/FormElement';
+import { MultiSelect, type MultiSelectItem } from '@diagram-craft/app-components/MultiSelect';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
@@ -9,6 +10,7 @@ import { MultiValueEditor } from '../components/MultiValueEditor';
 import { isMultiValuedScalarField } from '../lib/scalarFieldValues';
 import { selectableEnumOptions } from '../utils/enumOptions';
 import { Chip } from '../components/Chip';
+import { DurationInput } from '../components/DurationInput';
 import { UserGroupPicker } from '../components/UserGroupPicker';
 import { usePrincipalLabel } from '../hooks/usePrincipalLabel';
 
@@ -32,22 +34,22 @@ export const EntityFieldInput = ({
   if (field.type === 'reference') {
     const candidates = referenceOptions?.[field.schemaId] ?? [];
     return (
-      <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
-        <select
-          multiple
+      <FormElement
+        label={field.name}
+        hint={field.description}
+        required={field.requirementLevel !== 'optional'}
+      >
+        <MultiSelect
+          selectedValues={Array.isArray(value) ? (value as string[]) : []}
+          availableItems={candidates.map(entity => ({
+            value: entity._uid,
+            label: entity._name ?? entity._slug
+          }))}
+          onSelectionChange={onChange}
           disabled={disabled}
-          value={Array.isArray(value) ? value : []}
-          onChange={event =>
-            onChange(Array.from(event.currentTarget.selectedOptions, option => option.value))
-          }
-          style={{ width: '100%', minHeight: 120 }}
-        >
-          {candidates.map(entity => (
-            <option key={entity._uid} value={entity._uid}>
-              {entity._name ?? entity._slug}
-            </option>
-          ))}
-        </select>
+          placeholder={`Search ${field.name.toLowerCase()}...`}
+          style={{ width: '100%' }}
+        />
       </FormElement>
     );
   }
@@ -56,7 +58,11 @@ export const EntityFieldInput = ({
     const candidates = referenceOptions?.[field.schemaId] ?? [];
     const selected = Array.isArray(value) ? (value[0] ?? '') : '';
     return (
-      <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
+      <FormElement
+        label={field.name}
+        hint={field.description}
+        required={field.requirementLevel !== 'optional'}
+      >
         <Select.Root
           value={selected ?? undefined}
           disabled={disabled}
@@ -74,25 +80,30 @@ export const EntityFieldInput = ({
     );
   }
 
+  if (isMultiValuedScalarField(field) && field.type === 'select') {
+    const availableItems: MultiSelectItem[] = selectableEnumOptions(field.options, value).map(
+      option => ({ value: option.value, label: option.label })
+    );
+    return (
+      <FormElement
+        label={field.name}
+        hint={field.description}
+        required={field.requirementLevel !== 'optional'}
+      >
+        <MultiSelect
+          selectedValues={Array.isArray(value) ? (value as string[]) : []}
+          availableItems={availableItems}
+          onSelectionChange={onChange}
+          disabled={disabled}
+          placeholder={`Select ${field.name.toLowerCase()}...`}
+          style={{ width: '100%' }}
+        />
+      </FormElement>
+    );
+  }
+
   if (isMultiValuedScalarField(field)) {
     const renderItem = (item: unknown, _index: number, update: (value: unknown) => void) => {
-      if (field.type === 'select') {
-        return (
-          <select
-            value={typeof item === 'string' ? item : ''}
-            disabled={disabled}
-            onChange={event => update(event.target.value)}
-            style={{ width: '100%' }}
-          >
-            <option value="">—</option>
-            {selectableEnumOptions(field.options, item).map(option => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        );
-      }
       if (field.type === 'longtext') {
         return (
           <TextArea
@@ -106,16 +117,16 @@ export const EntityFieldInput = ({
       }
       if (field.type === 'boolean') {
         return (
-          <select
+          <Select.Root
             value={item === true ? 'true' : item === false ? 'false' : ''}
             disabled={disabled}
-            onChange={event => update(event.target.value === 'true')}
+            onChange={next => update(next === 'true')}
+            placeholder="Not set"
             style={{ width: '100%' }}
           >
-            <option value="">Not set</option>
-            <option value="true">True</option>
-            <option value="false">False</option>
-          </select>
+            <Select.Item value="true">True</Select.Item>
+            <Select.Item value="false">False</Select.Item>
+          </Select.Root>
         );
       }
       if (field.type === 'date') {
@@ -153,7 +164,10 @@ export const EntityFieldInput = ({
               value={currencyValue.currency ?? defaultCurrency ?? ''}
               disabled={disabled}
               onChange={next =>
-                update({ amount: currencyValue.amount, currency: (next ?? '').toUpperCase() })
+                update({
+                  amount: currencyValue.amount,
+                  currency: (next ?? '').toUpperCase()
+                })
               }
               placeholder="Currency"
               style={{ width: 110 }}
@@ -166,6 +180,9 @@ export const EntityFieldInput = ({
             </Select.Root>
           </div>
         );
+      }
+      if (field.type === 'duration') {
+        return <DurationInput value={item} onChange={update} disabled={disabled} />;
       }
       if (field.type === 'number') {
         return (
@@ -197,7 +214,11 @@ export const EntityFieldInput = ({
     };
 
     return (
-      <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
+      <FormElement
+        label={field.name}
+        hint={field.description}
+        required={field.requirementLevel !== 'optional'}
+      >
         <MultiValueEditor
           value={value}
           onChange={onChange}
@@ -206,9 +227,11 @@ export const EntityFieldInput = ({
               ? false
               : field.type === 'currency'
                 ? { amount: undefined, currency: defaultCurrency ?? 'USD' }
-                : field.type === 'number'
-                  ? ''
-                  : ''
+                : field.type === 'duration'
+                  ? { amount: undefined, unit: 'years' }
+                  : field.type === 'number'
+                    ? ''
+                    : ''
           }
           renderItem={renderItem}
         />
@@ -218,7 +241,11 @@ export const EntityFieldInput = ({
 
   if (field.type === 'select') {
     return (
-      <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
+      <FormElement
+        label={field.name}
+        hint={field.description}
+        required={field.requirementLevel !== 'optional'}
+      >
         <Select.Root
           value={typeof value === 'string' ? (value ?? undefined) : undefined}
           disabled={disabled}
@@ -238,7 +265,11 @@ export const EntityFieldInput = ({
 
   if (field.type === 'longtext') {
     return (
-      <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
+      <FormElement
+        label={field.name}
+        hint={field.description}
+        required={field.requirementLevel !== 'optional'}
+      >
         <TextArea
           value={typeof value === 'string' ? value : ''}
           disabled={disabled}
@@ -252,7 +283,11 @@ export const EntityFieldInput = ({
 
   if (field.type === 'boolean') {
     return (
-      <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
+      <FormElement
+        label={field.name}
+        hint={field.description}
+        required={field.requirementLevel !== 'optional'}
+      >
         <Select.Root
           value={typeof value === 'string' ? (value ?? undefined) : undefined}
           disabled={disabled}
@@ -269,7 +304,11 @@ export const EntityFieldInput = ({
 
   if (field.type === 'date') {
     return (
-      <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
+      <FormElement
+        label={field.name}
+        hint={field.description}
+        required={field.requirementLevel !== 'optional'}
+      >
         <input
           type="date"
           disabled={disabled}
@@ -281,13 +320,29 @@ export const EntityFieldInput = ({
     );
   }
 
+  if (field.type === 'duration') {
+    return (
+      <FormElement
+        label={field.name}
+        hint={field.description}
+        required={field.requirementLevel !== 'optional'}
+      >
+        <DurationInput value={value} onChange={onChange} disabled={disabled} />
+      </FormElement>
+    );
+  }
+
   if (field.type === 'currency') {
     const currencyValue =
       typeof value === 'object' && value !== null && !Array.isArray(value)
         ? (value as { amount?: number; currency?: string })
         : {};
     return (
-      <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
+      <FormElement
+        label={field.name}
+        hint={field.description}
+        required={field.requirementLevel !== 'optional'}
+      >
         <div style={{ display: 'flex', gap: 6 }}>
           <input
             type="number"
@@ -327,7 +382,11 @@ export const EntityFieldInput = ({
 
   if (field.type === 'number') {
     return (
-      <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
+      <FormElement
+        label={field.name}
+        hint={field.description}
+        required={field.requirementLevel !== 'optional'}
+      >
         <input
           type="number"
           step="1"
@@ -344,14 +403,22 @@ export const EntityFieldInput = ({
 
   if (field.type === 'principal') {
     return (
-      <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
+      <FormElement
+        label={field.name}
+        hint={field.description}
+        required={field.requirementLevel !== 'optional'}
+      >
         <PrincipalInput value={value} onChange={onChange} disabled={disabled} />
       </FormElement>
     );
   }
 
   return (
-    <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
+    <FormElement
+      label={field.name}
+      hint={field.description}
+      required={field.requirementLevel !== 'optional'}
+    >
       <TextInput
         value={typeof value === 'string' ? value : ''}
         disabled={disabled}

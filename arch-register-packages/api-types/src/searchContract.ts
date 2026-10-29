@@ -74,8 +74,23 @@ const schemaSearchResultSchema = z.object({
   fieldMatches: z.array(schemaFieldMatchSchema).describe('Fields that matched the search query')
 });
 
+const searchTotalCountsSchema = z.object({
+  projects: z.number().int().nonnegative().describe('Total matching projects before result limits'),
+  files: z.number().int().nonnegative().describe('Total matching files before result limits'),
+  entities: z.number().int().nonnegative().describe('Total matching entities before result limits'),
+  schemas: z.number().int().nonnegative().describe('Total matching schemas before result limits'),
+  relations: z
+    .number()
+    .int()
+    .nonnegative()
+    .describe('Total matching relations before result limits')
+});
+
 const searchResponseSchema = z.object({
   query: z.string().describe('The search query that was executed'),
+  totalCounts: searchTotalCountsSchema.describe(
+    'Total matching results by type before result limits'
+  ),
   projects: z.array(projectSearchResultSchema).describe('Matching projects'),
   files: z.array(fileSearchResultSchema).describe('Matching files (diagrams, markdown, etc.)'),
   entities: z.array(entitySearchResultSchema).describe('Matching entities'),
@@ -129,4 +144,5 @@ export type ProjectFileSearchResult = z.infer<typeof fileSearchResultSchema>;
 export type EntitySearchResult = z.infer<typeof entitySearchResultSchema>;
 export type SchemaSearchResult = z.infer<typeof schemaSearchResultSchema>;
 export type RelationSearchResult = z.infer<typeof relationSearchResultSchema>;
+export type SearchTotalCounts = z.infer<typeof searchTotalCountsSchema>;
 export type SearchResponse = z.infer<typeof searchResponseSchema>;

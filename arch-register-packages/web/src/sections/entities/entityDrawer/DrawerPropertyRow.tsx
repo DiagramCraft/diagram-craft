@@ -5,6 +5,7 @@ import { relationIds } from '../../../lib/entityEditState';
 import { useEntitiesByIds } from '../../../hooks/useEntities';
 import { EntityNavigationLink } from '../../../components/EntityNavigationLink';
 import { ExternalMetadataIndicator } from '../../../components/ExternalMetadataIndicator';
+import { FieldDescriptionIcon } from '../../../components/FieldDescriptionIcon';
 import {
   formatRelationFieldValue,
   renderEntityRelationFieldValue
@@ -175,11 +176,16 @@ export const DrawerPropertyRow = ({
       ? styles.statLabel
       : styles.metadataLabel;
   const valueClass =
-    presentation === 'mini-panel' && !isMiniPanelRelation ? styles.statValue : styles.metadataValue;
+    presentation === 'mini-panel' && !isMiniPanelRelation
+      ? styles.statValue
+      : `${styles.metadataValue} ${styles.metadataLinkedValue}`;
 
   return (
     <div className={rowClass}>
-      <span className={labelClass}>{label ?? field.name}</span>
+      <span className={labelClass}>
+        {label ?? field.name}
+        <FieldDescriptionIcon description={field.description} />
+      </span>
       <span className={valueClass}>
         {display}
         {isExternal && (

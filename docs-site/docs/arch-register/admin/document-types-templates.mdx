@@ -94,7 +94,7 @@ compliance with the new type, including removing metadata that is not defined by
 
 ## Create A Document Template
 
-A document template belongs to one document type and contains:
+A document template belongs to one document type, or to **Untyped Markdown**, and contains:
 
 - a template name
 - a Markdown body
@@ -105,6 +105,7 @@ the template, that token is replaced with the document name.
 
 Metadata defaults use the field IDs from the selected document type. They must use valid values for those fields;
 enum defaults must be one of the configured options, and links must contain valid entity or document IDs.
+Templates for **Untyped Markdown** have no metadata defaults, since untyped documents have no fields.
 
 Workspace templates are created in the **Templates** tab of Workspace Settings. Project templates are created from
 the project home and are restricted to that project. Archived templates remain available for existing
@@ -117,7 +118,7 @@ From workspace, project, or entity content:
 1. Choose **New wiki page**.
 2. Enter the document name.
 3. Select a **Document type**, or choose **Untyped Markdown** for a legacy-style document.
-4. Optionally select a **Template**.
+4. Optionally select a **Template**. Only templates for the selected type (or for untyped Markdown) are listed.
 5. Complete the document body and any required properties, then save.
 
 Selecting a template also selects its document type and fills the body and metadata defaults. Without a template,

@@ -1,5 +1,9 @@
 import { toolDefinition } from '@tanstack/ai';
 import { randomUUID } from 'node:crypto';
+import {
+  createEntityChatToolInputSchema,
+  updateEntityChatToolInputSchema
+} from '@arch-register/api-types/aiChatApprovalToolSchemas';
 import { decodeRefs } from '../../types';
 import {
   filterLiveFieldGroups,
@@ -163,22 +167,7 @@ const createEntityTool = toolDefinition({
   description:
     'Create a new entity in the workspace. Requires explicit user approval before execution.',
   needsApproval: true,
-  inputSchema: {
-    type: 'object',
-    properties: {
-      schemaId: { type: 'string' },
-      name: { type: 'string' },
-      slug: { type: 'string' },
-      namespace: { type: 'string' },
-      description: { type: 'string' },
-      owner: { type: ['string', 'null'] },
-      lifecycle: { type: ['string', 'null'] },
-      tags: { type: 'array', items: { type: 'string' } },
-      fields: { type: 'object', additionalProperties: true }
-    },
-    required: ['schemaId'],
-    additionalProperties: false
-  },
+  inputSchema: createEntityChatToolInputSchema,
   outputSchema: {
     type: 'object',
     properties: {
@@ -195,22 +184,7 @@ const updateEntityTool = toolDefinition({
   description:
     'Update an existing entity in the workspace. Requires explicit user approval before execution.',
   needsApproval: true,
-  inputSchema: {
-    type: 'object',
-    properties: {
-      entityId: { type: 'string' },
-      name: { type: 'string' },
-      slug: { type: 'string' },
-      namespace: { type: 'string' },
-      description: { type: 'string' },
-      owner: { type: ['string', 'null'] },
-      lifecycle: { type: ['string', 'null'] },
-      tags: { type: 'array', items: { type: 'string' } },
-      fields: { type: 'object', additionalProperties: true }
-    },
-    required: ['entityId'],
-    additionalProperties: false
-  },
+  inputSchema: updateEntityChatToolInputSchema,
   outputSchema: {
     type: 'object',
     properties: {

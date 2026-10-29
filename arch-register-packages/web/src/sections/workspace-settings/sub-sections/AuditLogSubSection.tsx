@@ -12,12 +12,16 @@ import {
 } from '../../../routes/publicObjectRoutes';
 import { useEntityDrawer } from '../../entities/entityDrawer/useEntityDrawer';
 import { formatRelativeTime } from '../../../utils/dateFormat';
+import { LabeledDateInput } from '../../../components/LabeledDateInput';
+import { ViewControls } from '../../../components/ViewControls';
+import { LabeledSelect } from '../../../components/LabeledSelect';
+import { Table } from '../../../components/table/Table';
 import { EmptyState } from '../../../components/EmptyState';
 import { LoadingState } from '../../../components/LoadingState';
 import { ENTITY_TYPE_LABELS, OPERATION_LABELS } from '../../../utils/auditLabels';
 
 const AUDIT_ENTITY_TYPES: Array<{ value: '' | AuditEntityType; label: string }> = [
-  { value: '', label: 'All object types' },
+  { value: '', label: 'All' },
   { value: 'workspace', label: 'Workspace' },
   { value: 'entity_schema', label: 'Schema' },
   { value: 'workspace_field_group', label: 'Shared fieldgroup' },
@@ -33,7 +37,7 @@ const AUDIT_ENTITY_TYPES: Array<{ value: '' | AuditEntityType; label: string }> 
 ];
 
 const AUDIT_OPERATIONS: Array<{ value: '' | AuditOperation; label: string }> = [
-  { value: '', label: 'All actions' },
+  { value: '', label: 'All' },
   { value: 'create', label: 'Created' },
   { value: 'update', label: 'Updated' },
   { value: 'delete', label: 'Deleted' }
@@ -142,92 +146,57 @@ export const AuditLogSubSection = ({
 
   return (
     <div className={styles.blockList}>
-      <div className={styles.auditFilters}>
-        <div className={styles.filterGrid}>
-          <label className={styles.filterField}>
-            <select
-              aria-label="Object type"
-              className={styles.input}
-              value={entityType}
-              onChange={e => setEntityType(e.target.value as '' | AuditEntityType)}
-            >
-              {AUDIT_ENTITY_TYPES.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
+      <ViewControls variant="page">
+        <LabeledSelect
+          label="Object type"
+          value={entityType}
+          onChange={value => setEntityType(value as '' | AuditEntityType)}
+          options={AUDIT_ENTITY_TYPES}
+        />
+        <LabeledSelect
+          label="Action"
+          value={operation}
+          onChange={value => setOperation(value as '' | AuditOperation)}
+          options={AUDIT_OPERATIONS}
+        />
+        <LabeledDateInput label="From" value={startDate} onChange={setStartDate} />
+        <LabeledDateInput label="To" value={endDate} onChange={setEndDate} />
+      </ViewControls>
 
-          <label className={styles.filterField}>
-            <select
-              aria-label="Action"
-              className={styles.input}
-              value={operation}
-              onChange={e => setOperation(e.target.value as '' | AuditOperation)}
-            >
-              {AUDIT_OPERATIONS.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className={styles.filterField}>
-            <input
-              aria-label="From"
-              className={styles.input}
-              type="date"
-              value={startDate}
-              onChange={e => setStartDate(e.target.value)}
-            />
-          </label>
-
-          <label className={styles.filterField}>
-            <input
-              aria-label="To"
-              className={styles.input}
-              type="date"
-              value={endDate}
-              onChange={e => setEndDate(e.target.value)}
-            />
-          </label>
-        </div>
-      </div>
-
-      <div className={styles.section}>
-        <div className={`${styles.sectionBody} ${styles.auditSectionBody}`}>
-          <div className={styles.activityList}>
-            {loading ? (
-              <LoadingState text="Loading activity..." size="sm" />
-            ) : entries.length > 0 ? (
-              entries.map(entry => (
-                <button
-                  key={entry.id}
-                  type="button"
-                  className={styles.activityRow}
-                  onClick={() => handleEntryClick(entry)}
-                >
+      {loading ? (
+        <LoadingState text="Loading activity..." size="sm" />
+      ) : entries.length === 0 ? (
+        <EmptyState compact title="No audit log entries match the current filters." />
+      ) : (
+        <Table.Root>
+          <Table.Head>
+            <Table.Row>
+              <Table.HeaderCell width={140}>Object type</Table.HeaderCell>
+              <Table.HeaderCell width={120}>When</Table.HeaderCell>
+              <Table.HeaderCell width={160}>User</Table.HeaderCell>
+              <Table.HeaderCell width={100}>Action</Table.HeaderCell>
+              <Table.HeaderCell>Target</Table.HeaderCell>
+            </Table.Row>
+          </Table.Head>
+          <Table.Body>
+            {entries.map(entry => (
+              <Table.Row key={entry.id} onClick={() => handleEntryClick(entry)}>
+                <Table.Cell>
                   <span
                     className={`${styles.activityTypeBadge} ${getEntityTypeTone(entry.entity_type)}`}
                   >
                     {getEntityTypeLabel(entry.entity_type)}
                   </span>
-                  <span className={styles.activityDate}>{formatRelativeTime(entry.timestamp)}</span>
-                  <span className={styles.activityWho}>
-                    {entry.user_display_name ?? entry.user_id ?? 'Unknown'}
-                  </span>
-                  <span className={styles.activityVerb}>{getOperationLabel(entry.operation)}</span>
-                  <span className={styles.activityTarget}>{entry.entity_name}</span>
-                </button>
-              ))
-            ) : (
-              <EmptyState compact title="No audit log entries match the current filters." />
-            )}
-          </div>
-        </div>
-      </div>
+                </Table.Cell>
+                <Table.Cell>{formatRelativeTime(entry.timestamp)}</Table.Cell>
+                <Table.Cell>{entry.user_display_name ?? entry.user_id ?? 'Unknown'}</Table.Cell>
+                <Table.Cell>{getOperationLabel(entry.operation)}</Table.Cell>
+                <Table.Cell>{entry.entity_name}</Table.Cell>
+              </Table.Row>
+            ))}
+          </Table.Body>
+        </Table.Root>
+      )}
     </div>
   );
 };

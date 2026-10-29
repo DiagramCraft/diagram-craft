@@ -21,6 +21,7 @@ import { WorkflowEscalationEditor } from './WorkflowEscalationEditor';
 import { WorkflowInitiationFieldsEditor } from './WorkflowInitiationFieldsEditor';
 import { WorkflowReminderEditor } from './WorkflowReminderEditor';
 import { WorkflowStatusValuesEditor } from './WorkflowStatusValuesEditor';
+import { WorkflowSubkindEditor } from './WorkflowSubkindEditor';
 import styles from './WorkflowsSubSection.module.css';
 
 export type WorkflowConfigDialogProps = {
@@ -44,13 +45,8 @@ export const WorkflowConfigDialog = ({
   const [name, setName] = useState(row?.name ?? caseKind.label);
   const [description, setDescription] = useState(row?.description ?? '');
   const [enabled, setEnabled] = useState(row?.enabled ?? true);
-  const [tab, setTab] = useState(
-    caseKind.supportsApprovals !== false
-      ? 'approvals'
-      : caseKind.supportsReminders !== false
-        ? 'reminders'
-        : 'escalation'
-  );
+  const [subkinds, setSubkinds] = useState<string[]>(row?.case_subkinds ?? []);
+  const [tab, setTab] = useState('overview');
   const statusValues = useMemo(
     () => documentStatusExtension(config).statusesRequiringApprovals,
     [config]
@@ -59,7 +55,7 @@ export const WorkflowConfigDialog = ({
     workspaceSlug,
     caseKind.case_kind === 'document.status'
   );
-  const [documentTypeId, fieldId] = row?.case_subkind?.split(':') ?? [];
+  const [documentTypeId, fieldId] = row?.case_subkinds[0]?.split(':') ?? [];
   const enumField = documentTypes
     .find(type => type.id === documentTypeId)
     ?.fields.find(field => field.id === fieldId && field.type === 'enum');
@@ -90,13 +86,7 @@ export const WorkflowConfigDialog = ({
     setName(row?.name ?? caseKind.label);
     setDescription(row?.description ?? '');
     setEnabled(row?.enabled ?? true);
-    setTab(
-      caseKind.supportsApprovals !== false
-        ? 'approvals'
-        : caseKind.supportsReminders !== false
-          ? 'reminders'
-          : 'escalation'
-    );
+    setTab('overview');
   }, [caseKind, row]);
 
   const update = (patch: Partial<GovernanceWorkflowConfig>) =>
@@ -122,11 +112,16 @@ export const WorkflowConfigDialog = ({
         {
           label: 'Save workflow',
           type: 'default',
-          disabled: name.trim() === '',
+          disabled:
+            name.trim() === '' ||
+            (caseKind.supportsMultiScope &&
+              row?.case_subkinds.length !== 0 &&
+              subkinds.length === 0),
           onClick: () =>
             onSave({
+              id: row?.id ? row.id : undefined,
               case_kind: caseKind.case_kind,
-              case_subkind: row?.case_subkind ?? null,
+              case_subkinds: subkinds,
               name: name.trim(),
               description: normalizedMetadata(description),
               enabled,
@@ -135,45 +130,9 @@ export const WorkflowConfigDialog = ({
         }
       ]}
     >
-      <div className={styles.workflowToggles}>
-        <label className={styles.check}>
-          <Checkbox value={enabled} onChange={checked => setEnabled(checked ?? false)} />
-          Enable workflow
-        </label>
-        <label className={styles.check}>
-          <Checkbox
-            value={config.external ?? false}
-            onChange={checked => update({ external: checked ?? false })}
-          />
-          External
-        </label>
-      </div>
-      <div className={styles.formGrid}>
-        <FormElement label="Name" hint="Label shown in the Workflows list.">
-          <TextInput
-            value={name}
-            maxLength={200}
-            placeholder="e.g. Contract review"
-            onChange={value => setName(value ?? '')}
-          />
-        </FormElement>
-        <FormElement
-          label="Description"
-          required={false}
-          hint="Optional context shown below the workflow name."
-        >
-          <TextArea
-            value={description}
-            maxLength={2000}
-            rows={3}
-            allowMaximize={false}
-            placeholder="Describe what this configuration is for"
-            onChange={value => setDescription(value ?? '')}
-          />
-        </FormElement>
-      </div>
       <Tabs.Root value={tab} onValueChange={setTab}>
         <Tabs.List aria-label="Workflow configuration sections">
+          <Tabs.Trigger value="overview">Overview</Tabs.Trigger>
           {caseKind.supportsApprovals !== false && (
             <Tabs.Trigger value="approvals">
               {isFieldDateReminder ? 'Routing' : 'Approvals'}
@@ -193,6 +152,55 @@ export const WorkflowConfigDialog = ({
           )}
           {isFieldDateReminder && <Tabs.Trigger value="recurrence">Recurrence</Tabs.Trigger>}
         </Tabs.List>
+        <Tabs.Content value="overview" style={{ height: 'auto' }}>
+          <div className={styles.workflowToggles}>
+            <label className={styles.check}>
+              <Checkbox value={enabled} onChange={checked => setEnabled(checked ?? false)} />
+              Enabled
+            </label>
+            <label className={styles.check}>
+              <Checkbox
+                value={config.external ?? false}
+                onChange={checked => update({ external: checked ?? false })}
+              />
+              External
+            </label>
+          </div>
+          <div className={`${styles.formGrid} ${styles.formGridSingle}`}>
+            <FormElement label="Name" hint="Label shown in the Workflows list.">
+              <TextInput
+                value={name}
+                maxLength={200}
+                placeholder="e.g. Contract review"
+                onChange={value => setName(value ?? '')}
+              />
+            </FormElement>
+            <FormElement
+              label="Description"
+              required={false}
+              hint="Optional context shown below the workflow name."
+            >
+              <TextArea
+                value={description}
+                maxLength={2000}
+                rows={3}
+                allowMaximize={false}
+                placeholder="Describe what this configuration is for"
+                onChange={value => setDescription(value ?? '')}
+              />
+            </FormElement>
+          </div>
+          {caseKind.supportsMultiScope && (
+            <div className={styles.scopeEditor}>
+              <WorkflowSubkindEditor
+                workspaceSlug={workspaceSlug}
+                caseKind={caseKind}
+                value={subkinds}
+                onChange={setSubkinds}
+              />
+            </div>
+          )}
+        </Tabs.Content>
         {caseKind.supportsApprovals !== false && (
           <Tabs.Content value="approvals" style={{ height: 'auto' }}>
             <WorkflowApprovalEditor

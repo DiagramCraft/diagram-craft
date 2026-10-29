@@ -1,9 +1,19 @@
+import { useState } from 'react';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbEdit, TbPlus, TbTrash } from 'react-icons/tb';
-import type { EntityTemplate } from '@arch-register/api-types/schemaContract';
+import type {
+  EntitySchema,
+  EntityTemplate,
+  SchemaField,
+  SchemaGroup
+} from '@arch-register/api-types/schemaContract';
+import { EntityTemplateDialog } from '../../dialogs/EntityTemplateDialog';
+import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
+import type { EntityEditorExtra } from './entitySchemaAdapter';
+import { useCanEditSchemas, useSchemaEditor } from './schemaEditorContext';
 import styles from './SchemaSettingsScreen.module.css';
 
-export const SchemaTemplatesEditor = ({
+const TemplateList = ({
   templates,
   canEdit,
   onAdd,
@@ -61,3 +71,64 @@ export const SchemaTemplatesEditor = ({
     </div>
   </>
 );
+
+/** Templates tab of the entity schema editor; owns the template dialog. */
+export const SchemaTemplatesTab = () => {
+  const editor = useSchemaEditor<SchemaField, SchemaGroup, EntityEditorExtra, EntitySchema>();
+  const canEdit = useCanEditSchemas();
+  const { workspaceSlug, teams, lifecycleStates } = useWorkspaceContext();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<EntityTemplate | null>(null);
+  const { draft, selected } = editor;
+
+  if (!draft) return null;
+
+  const saveTemplate = (template: EntityTemplate) => {
+    editor.updateDraft(current => {
+      const exists = current.templates.some(item => item.id === template.id);
+      return {
+        ...current,
+        templates: exists
+          ? current.templates.map(item => (item.id === template.id ? template : item))
+          : [...current.templates, template]
+      };
+    });
+    setDialogOpen(false);
+  };
+
+  return (
+    <>
+      <TemplateList
+        templates={draft.templates}
+        canEdit={canEdit}
+        onAdd={() => {
+          setEditing(null);
+          setDialogOpen(true);
+        }}
+        onEdit={template => {
+          setEditing(template);
+          setDialogOpen(true);
+        }}
+        onDelete={templateId =>
+          editor.updateDraft(current => ({
+            ...current,
+            templates: current.templates.filter(template => template.id !== templateId)
+          }))
+        }
+      />
+      {selected && (
+        <EntityTemplateDialog
+          open={dialogOpen}
+          onClose={() => setDialogOpen(false)}
+          onSave={saveTemplate}
+          workspaceId={workspaceSlug}
+          schema={{ ...selected, fields: draft.fields, templates: draft.templates } as EntitySchema}
+          template={editing}
+          templates={draft.templates}
+          teams={teams}
+          lifecycleStates={lifecycleStates}
+        />
+      )}
+    </>
+  );
+};

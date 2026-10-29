@@ -129,6 +129,22 @@ export const projectMarkdownContract = {
       })
     )
     .output(z.record(z.string(), z.unknown())),
+  hasDiagramContent: oc
+    .route({
+      method: 'GET',
+      path: '/{workspace}/files/{fileId}/content/exists',
+      inputStructure: 'detailed',
+      summary: 'Check diagram content exists',
+      description:
+        'Checks whether the stored content of a diagram file exists, without reading it.',
+      tags: ['Projects']
+    })
+    .input(
+      z.object({
+        params: ws.extend({ fileId: z.string().describe('File identifier') })
+      })
+    )
+    .output(z.object({ exists: z.boolean() })),
   getMarkdownContent: oc
     .route({
       method: 'GET',

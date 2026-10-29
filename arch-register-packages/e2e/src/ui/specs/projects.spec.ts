@@ -98,7 +98,15 @@ test.describe('projects section', () => {
     await projectsPage.secondaryBaselinesTab().click();
     await expect(projectsPage.projectBaselinesSection()).toBeVisible();
     await projectsPage.openCreateBaselineDialog();
-    await expect(page.getByText('Project entities and links', { exact: true })).toBeVisible();
+  });
+
+  test('opens project baseline creation from the Baselines tab add menu', async ({ page }) => {
+    const projectsPage = new ProjectsPage(page, defaultWorkspace.slug);
+
+    await projectsPage.gotoProject(authMigrationProject.id);
+    await projectsPage.expectProjectOpened(authMigrationProject.name);
+    await projectsPage.secondaryBaselinesTab().click();
+    await projectsPage.openCreateBaselineFromSidebar();
   });
 
   test('opens a project baseline in the project entity context', async ({ page }) => {
@@ -123,6 +131,28 @@ test.describe('projects section', () => {
     await expect(
       projectsPage.page.getByRole('button', { name: /Back to (Project entities|baselines)/ })
     ).toHaveCount(0);
+  });
+
+  test('removes a project baseline and drops it from the sidebar', async ({ page }) => {
+    const projectsPage = new ProjectsPage(page, defaultWorkspace.slug);
+    const baseline = await projectsPage.createProjectBaseline(
+      authMigrationProject.id,
+      `UI removable ${Date.now()}`
+    );
+
+    await projectsPage.gotoProject(authMigrationProject.id);
+    await projectsPage.secondaryBaselinesTab().click();
+    await page.getByTestId(`project-baseline-${baseline.id}`).click();
+    await page.getByRole('button', { name: 'Remove', exact: true }).click();
+    await page
+      .getByRole('alertdialog', { name: 'Remove baseline?' })
+      .getByRole('button', { name: 'Remove baseline' })
+      .click();
+
+    await expect(page).not.toHaveURL(/baselineId=/);
+    await projectsPage.secondaryBaselinesTab().click();
+    await expect(projectsPage.projectBaselinesSection()).toBeVisible();
+    await expect(page.getByTestId(`project-baseline-${baseline.id}`)).toHaveCount(0);
   });
 
   test('opens dashboard editing from the project actions menu', async ({ page }) => {
@@ -170,12 +200,11 @@ test.describe('projects section', () => {
       `/${defaultWorkspace.slug}/projects/${authMigrationProject.id}/folders/Test?tab=projects&q=auth&viewMode=timeline`
     );
 
-    const filterInput = page.getByPlaceholder('Filter diagrams…');
-    const listViewButton = page.locator('button[title="List view"]');
-    const gridViewButton = page.locator('button[title="Grid view"]');
+    const filterInput = page.getByPlaceholder('Filter…');
+    const listViewButton = page.locator('select:has(option[value="list"])');
 
     await filterInput.fill('migration');
-    await listViewButton.click();
+    await listViewButton.selectOption('list');
 
     await expect(page).toHaveURL(/q=auth/);
     await expect(page).toHaveURL(/viewMode=timeline/);
@@ -184,15 +213,14 @@ test.describe('projects section', () => {
 
     await page.reload();
     await expect(filterInput).toHaveValue('migration');
-    await expect(listViewButton).toHaveClass(/iconBtnActive/);
-    await expect(gridViewButton).not.toHaveClass(/iconBtnActive/);
+    await expect(listViewButton).toHaveValue('list');
 
     await page.goBack();
     await expect(filterInput).toHaveValue('migration');
     await expect(page).not.toHaveURL(/contentView=list/);
     await expect(page).toHaveURL(/q=auth/);
     await expect(page).toHaveURL(/viewMode=timeline/);
-    await expect(gridViewButton).toHaveClass(/iconBtnActive/);
+    await expect(listViewButton).toHaveValue('grid');
   });
 
   test('navigates directly to project content folders, including nested folders', async ({
@@ -205,8 +233,8 @@ test.describe('projects section', () => {
     await expect(page).toHaveURL(
       /\/projects\/DW-2\/folders\/Test\?contentQuery=migration&contentView=list/
     );
-    await expect(page.getByPlaceholder('Filter diagrams…')).toHaveValue('migration');
-    await expect(page.locator('button[title="List view"]')).toHaveClass(/iconBtnActive/);
+    await expect(page.getByPlaceholder('Filter…')).toHaveValue('migration');
+    await expect(page.locator('select:has(option[value="list"])')).toHaveValue('list');
 
     await page.goto(`/${defaultWorkspace.slug}/projects/${authMigrationProject.id}/folders/Test`);
 

@@ -1,18 +1,24 @@
 import { TbHistory } from 'react-icons/tb';
-import { Button } from '@diagram-craft/app-components/Button';
+import { ViewControls } from '../../../components/ViewControls';
+import { ToolbarButton } from '../../../components/ToolbarButton';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type {
   WorkspaceLifecycleState,
   WorkspaceOwnerOption
 } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
-import type { BrowserView, FilterCondition } from '@arch-register/api-types/viewContract';
+import type {
+  BrowserView,
+  ColumnRenderConfig,
+  FilterCondition
+} from '@arch-register/api-types/viewContract';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import type { Assessment } from '@arch-register/api-types/assessmentContract';
-import { FilterDropdown } from '../../../components/FilterDropdown';
-import styles from './EntityBrowser.module.css';
+import { LabeledSelect } from '../../../components/LabeledSelect';
 import { ManageFieldsPopover } from './ManageFieldsPopover';
 import { AssessmentJoinPicker } from './AssessmentJoinPicker';
+import { BROWSER_VIEW_OPTIONS, groupViewOptions } from './browserViewMeta';
+import { ViewHelpPopover } from './ViewHelpPopover';
 import { QueryModeControls } from './QueryModeControls';
 import type { EntityDisplayField } from './entityDisplayFields';
 import type { AssessmentJoinOption } from './useJoinedAssessment';
@@ -45,6 +51,8 @@ type EntityBrowserToolbarProps = {
   displayFields?: EntityDisplayField[];
   selectedDisplayFieldIds?: string[];
   onDisplayFieldsChange?: (fieldIds: string[]) => void;
+  columnRenderers?: Record<string, ColumnRenderConfig>;
+  onColumnRenderersChange?: (columnRenderers: Record<string, ColumnRenderConfig>) => void;
   onDisplayFieldsReset?: () => void;
   joinOptions?: AssessmentJoinOption[];
   joinAssessmentId?: string | null;
@@ -83,6 +91,8 @@ export const EntityBrowserToolbar = ({
   asOf,
   displayFields,
   selectedDisplayFieldIds,
+  columnRenderers,
+  onColumnRenderersChange,
   onDisplayFieldsChange,
   onDisplayFieldsReset,
   joinOptions,
@@ -95,7 +105,7 @@ export const EntityBrowserToolbar = ({
   allowedViews
 }: EntityBrowserToolbarProps) => {
   return (
-    <div className={styles.toolbar}>
+    <ViewControls variant="page">
       <QueryModeControls
         workspaceId={workspaceId}
         q={q}
@@ -123,7 +133,7 @@ export const EntityBrowserToolbar = ({
         />
       )}
       {projectId && !readOnly && (
-        <FilterDropdown
+        <LabeledSelect
           label="Scope"
           value={projectScope}
           onChange={v => setProjectScope((v as 'project' | 'all') ?? 'project')}
@@ -134,45 +144,40 @@ export const EntityBrowserToolbar = ({
         />
       )}
       <div style={{ flex: 1 }} />
-      <FilterDropdown label="Sort" value={sort} onChange={setSort} options={sortOptions} />
-      <FilterDropdown
-        label="View"
-        value={view}
-        onChange={v => setView(v as BrowserView)}
-        options={
-          allowedViews ?? [
-            { value: 'table', label: 'Table' },
-            { value: 'cards', label: 'Cards' },
-            { value: 'tree', label: 'Tree' },
-            { value: 'radar', label: 'Radar' },
-            { value: 'bubble', label: 'Bubble' },
-            { value: 'heatmap', label: 'Heat map' },
-            { value: 'timeline', label: 'Timeline' },
-            { value: 'matrix', label: 'Matrix' },
-            { value: 'explore', label: 'Explore' },
-            { value: 'map', label: 'Map' },
-            { value: 'diff', label: 'Diff' },
-            { value: 'graph', label: 'Graph' },
-            { value: 'traceability', label: 'Traceability' },
-            { value: 'path-walker', label: 'Path walker' }
-          ]
-        }
-      />
+      <LabeledSelect label="Sort" value={sort} onChange={setSort} options={sortOptions} />
+      {(() => {
+        const viewOptions = allowedViews ?? BROWSER_VIEW_OPTIONS;
+        return (
+          <>
+            <LabeledSelect
+              label="View"
+              value={view}
+              onChange={v => setView(v as BrowserView)}
+              groups={groupViewOptions(viewOptions)}
+            />
+            <ViewHelpPopover
+              view={view}
+              label={viewOptions.find(o => o.value === view)?.label ?? view}
+            />
+          </>
+        );
+      })()}
       <ManageFieldsPopover
         fields={displayFields ?? []}
         selectedIds={selectedDisplayFieldIds ?? []}
         onChange={onDisplayFieldsChange ?? (() => {})}
         onReset={onDisplayFieldsReset}
+        columnRenderers={columnRenderers}
+        onColumnRenderersChange={onColumnRenderersChange}
         disabled={!displayFields || !selectedDisplayFieldIds || !onDisplayFieldsChange}
       />
       {onToggleTimeline && (
-        <Button
-          size="sm"
+        <ToolbarButton
           variant={tlOpen || asOf ? 'primary' : 'secondary'}
           icon={<TbHistory size={12} />}
           onClick={onToggleTimeline}
         />
       )}
-    </div>
+    </ViewControls>
   );
 };

@@ -1,0 +1,26 @@
+.modeTabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.modeTab {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: var(--r);
+  border: 1px solid var(--panel-border);
+  background: var(--cmp-bg);
+  color: var(--base-fg-dim);
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--cmp-border-hover);
+    color: var(--base-fg);
+  }
+}
+
+.modeTabActive {
+  background: var(--accent-bg);
+  border-color: var(--accent-border, var(--accent-bg));
+  color: var(--accent-fg);
+}

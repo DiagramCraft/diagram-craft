@@ -1,4 +1,5 @@
 import type { AnyRoute } from '@tanstack/react-router';
+import { createApplicationWorkspaceRoutes } from './createDashboardSectionRoute';
 import { createHomeWorkspaceRoute } from './homeWorkspaceRoute';
 import { createContentWorkspaceRoutes } from './contentWorkspaceRoutes';
 import { createProjectWorkspaceRoutes } from './projectWorkspaceRoutes';
@@ -7,12 +8,6 @@ import { createSearchWorkspaceRoute } from './searchWorkspaceRoute';
 import { createSettingsWorkspaceRoutes } from './settingsWorkspaceRoutes';
 import { createAssistantWorkspaceRoutes } from './assistantWorkspaceRoutes';
 import { createGovernanceWorkspaceRoute } from './governanceWorkspaceRoute';
-import { createGlossaryWorkspaceRoutes } from '../../app/business-glossary/glossaryWorkspaceRoute';
-import { createStrategyWorkspaceRoutes } from '../../app/strategy-model/strategyWorkspaceRoute';
-import { createVendorManagementWorkspaceRoutes } from '../../app/vendor-management/vendorManagementWorkspaceRoute';
-import { createRiskComplianceWorkspaceRoutes } from '../../app/risk-compliance/riskComplianceWorkspaceRoute';
-import { createDataStewardshipWorkspaceRoutes } from '../../app/data-stewardship/dataStewardshipWorkspaceRoute';
-import { createApiIntegrationCatalogWorkspaceRoutes } from '../../app/api-integration-catalog/apiIntegrationCatalogWorkspaceRoute';
 
 export const createWorkspaceRouteEntries = <TParentRoute extends AnyRoute>(
   workspaceRoute: TParentRoute
@@ -22,12 +17,7 @@ export const createWorkspaceRouteEntries = <TParentRoute extends AnyRoute>(
     ...createContentWorkspaceRoutes(workspaceRoute),
     ...createProjectWorkspaceRoutes(workspaceRoute),
     ...createEntityWorkspaceRoutes(workspaceRoute),
-    ...createGlossaryWorkspaceRoutes(workspaceRoute),
-    ...createStrategyWorkspaceRoutes(workspaceRoute),
-    ...createVendorManagementWorkspaceRoutes(workspaceRoute),
-    ...createRiskComplianceWorkspaceRoutes(workspaceRoute),
-    ...createDataStewardshipWorkspaceRoutes(workspaceRoute),
-    ...createApiIntegrationCatalogWorkspaceRoutes(workspaceRoute),
+    ...createApplicationWorkspaceRoutes(workspaceRoute),
     ...createSearchWorkspaceRoute(workspaceRoute),
     ...createGovernanceWorkspaceRoute(workspaceRoute),
     ...createSettingsWorkspaceRoutes(workspaceRoute),

@@ -91,7 +91,8 @@ run_e2e_api_tests() {
     # Each API test file provisions and drops its own PostgreSQL schema. Run
     # those files serially to avoid concurrent DDL and connection spikes.
     run_step "Running Arch Register API suite with PostgreSQL..." \
-      pnpm --filter @arch-register/e2e exec vitest run --no-file-parallelism
+      pnpm --filter @arch-register/e2e exec vitest run
+    # --no-file-parallelism
   else
     run_step "Running Arch Register API suite with SQLite..." \
       pnpm --filter @arch-register/e2e test:api

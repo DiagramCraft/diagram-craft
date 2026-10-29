@@ -12,6 +12,7 @@ test.describe('Workspace Dashboard API', () => {
     const [dashboard] = dashboards;
     expect(dashboard!.workspaceId).toBeTruthy();
     expect(dashboard!.name).toBe('Overview');
+    expect(dashboard!.key).toBe('overview');
     expect(dashboard!.order).toBe(0);
     expect(dashboard!.widgets).toEqual([]);
     expect(dashboard!.updatedAt).not.toBeNull();
@@ -224,5 +225,35 @@ test.describe('Workspace Dashboard API', () => {
     expect(dashboards[0]!.id).toBe(created.id);
 
     homeDashboardId = created.id;
+  });
+
+  test('keys are generated, validated and unique among home dashboards', async ({ orpc }) => {
+    const params = { workspace: 'default' };
+    const created = await orpc.dashboard.create({ params, body: { name: 'Security Posture' } });
+    expect(created.key).toBe('security-posture');
+
+    const sameName = await orpc.dashboard.create({ params, body: { name: 'Security Posture' } });
+    expect(sameName.key).toBe('security-posture-2');
+
+    await expect(
+      orpc.dashboard.create({ params, body: { name: 'Other', key: 'security-posture' } })
+    ).rejects.toMatchObject({ code: 'CONFLICT' });
+    await expect(
+      orpc.dashboard.create({ params, body: { name: 'Other', key: 'Not A Slug' } })
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+
+    const renamed = await orpc.dashboard.update({
+      params: { ...params, id: created.id },
+      body: { key: 'security' }
+    });
+    expect(renamed.key).toBe('security');
+    await expect(
+      orpc.dashboard.update({ params: { ...params, id: sameName.id }, body: { key: 'security' } })
+    ).rejects.toMatchObject({ code: 'CONFLICT' });
+    // Keeping the current key is not a conflict
+    await orpc.dashboard.update({
+      params: { ...params, id: created.id },
+      body: { key: 'security' }
+    });
   });
 });

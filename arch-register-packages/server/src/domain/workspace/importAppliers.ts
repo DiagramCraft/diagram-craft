@@ -1,4 +1,12 @@
+import { upsertRelationApprovalPolicy } from '../governance/schemaGovernancePolicy';
+import { upsertGovernanceConfigClaimingScope } from '../governance/governanceScope';
 import { randomUUID } from 'node:crypto';
+import {
+  dashboardKeyFromName,
+  isValidDashboardKey,
+  uniqueDashboardKey
+} from '../dashboard/dashboardKey';
+import { getWorkspaceCapabilityDefinition } from '@arch-register/api-types/integrationCatalog';
 import type {
   DatabaseAdapter,
   ContentNodeDbUpsert,
@@ -28,8 +36,12 @@ import type {
   ExportContentNode,
   IdMapping,
   ExportDocumentData,
-  ExportSharedFieldGroup
+  ExportSharedFieldGroup,
+  ExportApplicationData,
+  ExportDashboard
 } from './exportTypes';
+import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
+import { resolveTemplateDashboardWidgets } from '../catalog/schemaTemplates';
 import { requireNoRestrictedFieldWrites } from '../auth/fieldGroupAccessControl';
 import { DOCUMENT_STATUS_CASE_KIND } from '../document/documentWorkflowOperations';
 import { encodeCaseSubkind } from '../governance/governanceCaseSubkind';
@@ -369,6 +381,9 @@ export const importWorkspaceCapabilityConfigurations = async (
   let imported = 0;
   for (const configuration of configurations) {
     if (hasSkipResolution(resolutions, configuration.id)) continue;
+    // Exports from before bindings were removed for dashboard apps may carry configurations for
+    // capabilities that no longer exist; they have no effect, so they are ignored.
+    if (!getWorkspaceCapabilityDefinition(configuration.type)) continue;
 
     const bindings = Object.fromEntries(
       await Promise.all(
@@ -416,7 +431,6 @@ export const importWorkspaceCapabilityConfigurations = async (
       workspace,
       type: configuration.type,
       bindings,
-      view_config: configuration.view_config ?? null,
       created_at: existing?.created_at ?? now,
       updated_at: now
     });
@@ -424,6 +438,19 @@ export const importWorkspaceCapabilityConfigurations = async (
   }
   return imported;
 };
+
+/** This schema plus the other schemas that share its workflow (source ids remapped, skipped ones dropped). */
+const sharedWorkflowSubkinds = (
+  nextId: string,
+  sharedWith: string[] | undefined,
+  mapping: Map<string, string>
+) => [
+  encodeCaseSubkind(nextId),
+  ...(sharedWith ?? []).flatMap(sourceId => {
+    const mapped = mapping.get(sourceId);
+    return mapped ? [encodeCaseSubkind(mapped)] : [];
+  })
+];
 
 export const importSchemas = async (
   db: DatabaseAdapter,
@@ -586,10 +613,10 @@ export const importSchemas = async (
       created++;
     }
     for (const config of schema.governance_configs ?? []) {
-      await db.governanceCaseConfig.upsertCaseConfig({
+      await upsertGovernanceConfigClaimingScope(db, {
         workspace,
         case_kind: config.case_kind,
-        case_subkind: encodeCaseSubkind(nextId),
+        case_subkinds: sharedWorkflowSubkinds(nextId, config.shared_with, idMapping.schemas),
         name: config.name,
         description: config.description,
         enabled: config.enabled,
@@ -634,11 +661,6 @@ export const importRelationSchemas = async (
       existing?.id ??
       (preserveIds ? source.id : randomUUID());
     idMapping.relation_schemas.set(source.id, nextId);
-    if (source.relation_approval_policy === 'required') {
-      throw new Error(
-        `Relation schema '${source.name}' uses unsupported approval policy 'required'; relation approval workflow is provided by #2574`
-      );
-    }
 
     const fields = source.fields.map(field => {
       const withGroup =
@@ -690,7 +712,6 @@ export const importRelationSchemas = async (
       })),
       color: source.color,
       icon: source.icon,
-      relation_approval_policy: 'disabled' as const,
       unique_endpoint_pair: source.unique_endpoint_pair ?? false,
       version: source.version ?? 1,
       created_at: existing?.created_at ?? now,
@@ -729,7 +750,6 @@ export const importRelationSchemas = async (
         shared_field_group_links: input.shared_field_group_links,
         color: input.color,
         icon: input.icon,
-        relation_approval_policy: input.relation_approval_policy,
         unique_endpoint_pair: input.unique_endpoint_pair,
         version: input.version,
         updated_at: input.updated_at
@@ -743,6 +763,31 @@ export const importRelationSchemas = async (
     } else {
       await db.relation.createRelationSchema(input);
       created++;
+    }
+    await upsertRelationApprovalPolicy(
+      db,
+      workspace,
+      nextId,
+      source.relation_approval_policy ?? 'disabled',
+      now,
+      null
+    );
+    for (const config of source.governance_configs ?? []) {
+      await upsertGovernanceConfigClaimingScope(db, {
+        workspace,
+        case_kind: config.case_kind,
+        case_subkinds: sharedWorkflowSubkinds(
+          nextId,
+          config.shared_with,
+          idMapping.relation_schemas
+        ),
+        name: config.name,
+        description: config.description,
+        enabled: config.enabled,
+        config: remapGovernanceConfigTeams(config.config, idMapping.teams),
+        updated_at: now,
+        updated_by: null
+      });
     }
   }
 
@@ -959,14 +1004,6 @@ export const importRelations = async (
       status: 409,
       message: `Relation schema '${relation.schema_id}' is unavailable while importing relation '${relation.id}'`
     });
-    httpAssert.true(schema.relation_approval_policy !== 'required', {
-      status: 400,
-      message: `Relation schema '${schema.name}' uses unsupported approval policy 'required'; relation approval workflow is provided by #2574`
-    });
-    httpAssert.true(relation.approval_policy_override !== 'required', {
-      status: 400,
-      message: `Relation '${relation.id}' uses unsupported approval policy override 'required'; relation approval workflow is provided by #2574`
-    });
 
     const [inEntity, outEntity] = await Promise.all([
       db.catalog.getEntity(workspace, resolveMappedId(idMapping.entities, relation.in_entity_id)),
@@ -1179,6 +1216,200 @@ export const importProjects = async (
   return { created, updated };
 };
 
+// Widgets reference schemas by id in `config.schema`; remap them, including inside nested widget
+// lists, so imported dashboards point at the schemas created in this workspace.
+const remapDashboardWidgets = (
+  widgets: DashboardWidget[],
+  schemaIdMap: ReadonlyMap<string, string>
+): DashboardWidget[] =>
+  resolveTemplateDashboardWidgets(widgets, schemaIdMap).map(widget => {
+    const nested = widget.config['widgets'];
+    return Array.isArray(nested)
+      ? {
+          ...widget,
+          config: {
+            ...widget.config,
+            widgets: remapDashboardWidgets(nested as DashboardWidget[], schemaIdMap)
+          }
+        }
+      : widget;
+  });
+
+const uniqueName = (name: string, taken: Set<string>): string => {
+  const base = name.trim() || 'Dashboard';
+  let candidate = base;
+  let suffix = 2;
+  while (taken.has(candidate.toLocaleLowerCase())) {
+    candidate = `${base} (${suffix})`;
+    suffix += 1;
+  }
+  taken.add(candidate.toLocaleLowerCase());
+  return candidate;
+};
+
+export const importApplications = async (
+  db: DatabaseAdapter,
+  authCtx: WorkspaceAuthorizationContext,
+  workspace: string,
+  data: ExportApplicationData,
+  resolutions: Record<string, ImportResolution>,
+  idMapping: IdMapping
+): Promise<{ created: number; updated: number; dashboards: number; warnings: string[] }> => {
+  const warnings: string[] = [];
+  const now = new Date();
+  let created = 0;
+  let updated = 0;
+  let dashboardCount = 0;
+
+  const writeDashboard = async (
+    dashboard: ExportDashboard,
+    placement: {
+      name: string;
+      sort_order: number;
+      application_id: string | null;
+      application_order: number | null;
+    }
+  ) => {
+    const appKeyTaken =
+      dashboard.app_key != null &&
+      (await db.dashboard.getByAppKey(workspace, dashboard.app_key)) != null;
+    const row = await db.dashboard.create({
+      id: randomUUID(),
+      workspace,
+      name: placement.name,
+      key: await uniqueDashboardKey(
+        db,
+        workspace,
+        placement.application_id,
+        dashboard.key && isValidDashboardKey(dashboard.key)
+          ? dashboard.key
+          : dashboardKeyFromName(placement.name)
+      ),
+      description: dashboard.description,
+      sort_order: placement.sort_order,
+      app_key: appKeyTaken ? null : dashboard.app_key,
+      application_id: placement.application_id,
+      application_order: placement.application_order,
+      icon: dashboard.icon,
+      rail_label: dashboard.rail_label,
+      updated_by: authCtx.userId
+    });
+    await db.dashboard.update(workspace, row.id, {
+      layout: remapDashboardWidgets(dashboard.widgets, idMapping.schemas),
+      sidebar: dashboard.sidebar,
+      updated_by: authCtx.userId
+    });
+    dashboardCount++;
+  };
+
+  const existingTeamIds = new Set((await db.workspace.listTeams(workspace)).map(team => team.id));
+
+  for (const application of data.applications) {
+    if (hasSkipResolution(resolutions, application.id)) continue;
+    const mode = resolutions[application.id]?.action;
+    let row = await db.application.getByKey(workspace, application.key);
+    const dashboardsToWrite = application.dashboards;
+    let baseOrder = 0;
+    const takenNames = new Set<string>();
+
+    if (row) {
+      const existingDashboards = await db.dashboard.listByApplication(workspace, row.id);
+      if (mode === 'merge') {
+        // Keep the existing application and append the imported dashboards.
+        for (const dashboard of existingDashboards)
+          takenNames.add(dashboard.name.toLocaleLowerCase());
+        baseOrder =
+          existingDashboards.reduce((max, d) => Math.max(max, d.application_order ?? -1), -1) + 1;
+      } else {
+        for (const dashboard of existingDashboards) {
+          await db.dashboard.remove(workspace, dashboard.id);
+        }
+        row =
+          (await db.application.update(workspace, row.id, {
+            name: application.name,
+            description: application.description,
+            accent_color: application.accent_color,
+            updated_by: authCtx.userId
+          })) ?? row;
+      }
+      updated++;
+    } else {
+      const existing = await db.application.list(workspace);
+      row = await db.application.create({
+        id: randomUUID(),
+        workspace,
+        key: application.key,
+        name: application.name,
+        description: application.description,
+        accent_color: application.accent_color,
+        sort_order: existing.reduce((max, item) => Math.max(max, item.sort_order), -1) + 1,
+        updated_by: authCtx.userId
+      });
+      created++;
+    }
+
+    for (const [index, dashboard] of dashboardsToWrite.entries()) {
+      await writeDashboard(dashboard, {
+        name: uniqueName(dashboard.name, takenNames),
+        sort_order: baseOrder + index,
+        application_id: row.id,
+        application_order: baseOrder + index
+      });
+    }
+
+    if (!application.access_policy && mode !== 'merge') {
+      await db.workspace.deleteWorkspaceApplicationAccessPolicy(workspace, application.key);
+    } else if (application.access_policy && mode !== 'merge') {
+      const teamIds = [
+        ...new Set(
+          application.access_policy.team_ids.flatMap(teamId => {
+            const mapped =
+              idMapping.teams.get(teamId) ?? (existingTeamIds.has(teamId) ? teamId : null);
+            return mapped == null ? [] : [mapped];
+          })
+        )
+      ];
+      if (application.access_policy.mode === 'selected' && teamIds.length === 0) {
+        await db.workspace.deleteWorkspaceApplicationAccessPolicy(workspace, application.key);
+        warnings.push(
+          `Access policy for application '${application.name}' was not imported: no matching teams`
+        );
+      } else {
+        await db.workspace.upsertWorkspaceApplicationAccessPolicy({
+          workspace,
+          application_id: application.key,
+          mode: application.access_policy.mode,
+          user_ids: [],
+          team_ids: application.access_policy.mode === 'selected' ? teamIds : [],
+          created_at: now,
+          updated_at: now
+        });
+      }
+    }
+  }
+
+  if (data.home_dashboards.length > 0) {
+    const existing = await db.dashboard.list(workspace);
+    const taken = new Set(
+      existing.filter(row => row.application_id == null).map(row => row.name.toLocaleLowerCase())
+    );
+    let nextOrder =
+      existing
+        .filter(row => row.application_id == null)
+        .reduce((max, row) => Math.max(max, row.sort_order), -1) + 1;
+    for (const dashboard of data.home_dashboards) {
+      await writeDashboard(dashboard, {
+        name: uniqueName(dashboard.name, taken),
+        sort_order: nextOrder++,
+        application_id: null,
+        application_order: null
+      });
+    }
+  }
+
+  return { created, updated, dashboards: dashboardCount, warnings };
+};
+
 export const importContentNodes = async (
   db: DatabaseAdapter,
   storage: StorageAdapter | undefined,
@@ -1384,7 +1615,7 @@ export const importDocuments = async (
     await db.governanceCaseConfig.upsertCaseConfig({
       workspace,
       case_kind: config.case_kind ?? DOCUMENT_STATUS_CASE_KIND,
-      case_subkind: encodeCaseSubkind(documentTypeId, fieldId),
+      case_subkinds: [encodeCaseSubkind(documentTypeId, fieldId)],
       name: config.name,
       description: config.description,
       enabled: config.enabled,
@@ -1400,7 +1631,7 @@ export const importDocuments = async (
     if (template.project_id != null && !idMapping.projects.has(template.project_id)) continue;
     const projectId = resolveMappedIdOrNull(idMapping.projects, template.project_id);
     const documentTypeId = resolveMappedIdOrNull(typeMapping, template.document_type_id);
-    if (!documentTypeId) continue;
+    if (template.document_type_id != null && !documentTypeId) continue;
     const resolution = resolutions[template.id];
     const existing = existingTemplates.find(
       candidate =>
@@ -1427,7 +1658,7 @@ export const importDocuments = async (
       project_id: projectId,
       name: template.name,
       body: template.body,
-      document_type_id: documentTypeId,
+      document_type_id: documentTypeId ?? null,
       metadata_defaults: metadataDefaults,
       updated_at: new Date()
     };

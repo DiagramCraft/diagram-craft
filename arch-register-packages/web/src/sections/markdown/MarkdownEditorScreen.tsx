@@ -1,4 +1,5 @@
 import { useCallback, useMemo } from 'react';
+import { useOpenDiagram } from '../diagram/useOpenDiagram';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import type { MarkdownSearchParams } from '../../routes/searchParams';
 import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
@@ -59,6 +60,7 @@ export const MarkdownEditorScreen = () => {
   const isDraft = !params.nodeId;
   const { projectId, entityId } = params;
   const navigate = useNavigate();
+  const { openDiagram, dialog: openDiagramDialog } = useOpenDiagram();
   const requestedMode = search.mode;
   const requestedPanel = search.panel;
   const historyMode = search.historyMode === 'compare' ? 'compare' : 'preview';
@@ -222,18 +224,20 @@ export const MarkdownEditorScreen = () => {
         return;
       }
 
-      if (projectId) {
-        navigate(projectDiagramRoute(workspaceSlug, asProjectPublicId(projectId), attachment.id));
-      } else if (entityId) {
-        navigate(entityDiagramRoute(workspaceSlug, asEntityPublicId(entityId), attachment.id));
-      } else {
-        navigate({
-          to: '/$workspaceSlug/content/diagrams/$diagramId',
-          params: { workspaceSlug, diagramId: attachment.id }
-        });
-      }
+      void openDiagram(attachment.id, () => {
+        if (projectId) {
+          navigate(projectDiagramRoute(workspaceSlug, asProjectPublicId(projectId), attachment.id));
+        } else if (entityId) {
+          navigate(entityDiagramRoute(workspaceSlug, asEntityPublicId(entityId), attachment.id));
+        } else {
+          navigate({
+            to: '/$workspaceSlug/content/diagrams/$diagramId',
+            params: { workspaceSlug, diagramId: attachment.id }
+          });
+        }
+      });
     },
-    [entityId, navigate, projectId, workspaceSlug]
+    [entityId, navigate, openDiagram, projectId, workspaceSlug]
   );
 
   const controller = useMarkdownEditorController({
@@ -308,6 +312,7 @@ export const MarkdownEditorScreen = () => {
     <MdxContext.Provider
       value={{ workspaceSlug, projectId, entityId, nodeId: isDraft ? undefined : nodeId }}
     >
+      {openDiagramDialog}
       <MarkdownDiagramSessionContext.Provider
         value={{ sessionId: diagram.sessionId, trackCreatedDiagram: diagram.trackCreatedDiagram }}
       >

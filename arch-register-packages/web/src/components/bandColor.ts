@@ -1,7 +1,7 @@
-import type {
-  BandTone,
-  ColourBand
-} from '@arch-register/api-types/app/strategy-model/strategyModelViewConfig';
+export type BandTone = 'good' | 'warn' | 'bad';
+
+/** A colour band: `max: null` = open top band. Evaluated low-to-high. */
+export type ColourBand = { max: number | null; tone: BandTone };
 
 export type ToneOrNeutral = BandTone | 'neutral';
 
@@ -30,6 +30,21 @@ export const bandTone = (
 };
 
 export const toneColor = (tone: ToneOrNeutral): string => BAND_TONE_COLORS[tone];
+
+export type MinBand = { min: number; tone: ToneOrNeutral };
+
+/**
+ * The tone for `value` against ascending `min`-threshold bands — the tone of the last
+ * band whose `min` the value meets or exceeds. Complements `bandTone`'s max-based
+ * (descending) bands for scales phrased as "band N starts at score X".
+ */
+export const minBandTone = (value: number, bands: MinBand[]): ToneOrNeutral => {
+  let result: ToneOrNeutral = bands[0]?.tone ?? 'neutral';
+  for (const { min, tone } of bands) {
+    if (value >= min) result = tone;
+  }
+  return result;
+};
 
 const HEAT_BANDS: ColourBand[] = [
   { max: 2, tone: 'bad' },

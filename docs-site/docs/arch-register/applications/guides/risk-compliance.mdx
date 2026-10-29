@@ -27,45 +27,44 @@ project assessment workflow.
 
 ## Enable and configure the application
 
-In **Workspace Settings → Applications & Capabilities**, configure **Risk & Compliance** and bind a **Risk** entity
-schema. **Control**, **Framework**, **Compliance Requirement**, and **Data Entity** bindings are optional. The Data
-Entity binding scopes the asset coverage views; Control and related bindings add control and framework coverage where
-configured. The seeded default workspace has Risk & Compliance configured.
+Risk & Compliance needs no binding; its dashboards read the **Risk**, **Control**, **Framework**, **Compliance
+Requirement**, and **Data Entity** schemas of the workspace by name, and the seeded default workspace includes them.
 
-Application access is configured separately in the capability's **Access** tab. Members also need workspace access and
-a valid capability binding. See [Workspace Templates and Capabilities](../../admin/workspace-templates-capabilities) and
+Application access is configured in the application's **Access** tab in **Workspace Settings → Applications &
+Capabilities**. Members also need workspace access. See [Workspace Templates and Capabilities](../../admin/workspace-templates-capabilities) and
 [Roles and Permissions](../../admin/roles-permissions).
 
 **Retention** uses the separate workspace-wide **Retention** capability. Configure its Policy entity schema and
 **Subject to Retention Policy** relation schema under **Applications & Capabilities** to enable that section; it can be
-configured independently of the Risk & Compliance capability. The capability also maps **Duration** to a number field,
-**Time unit** to a select field, and **Activated from** to a date field; the default catalog uses fields with those
+configured independently of the Risk & Compliance capability. The capability also maps **Period** to a duration field and **Activated from** to a date field (workspaces created before
+the duration field type can keep mapping **Duration** to a number field and **Time unit** to a select field); the default catalog uses fields with those
 standard roles, while a custom model can map its own fields.
 
 ## Review risks, controls, and assessments
 
-**Overview** summarizes risks outside appetite, control coverage, retention completeness, and upcoming risk or control
-assessments. Use **Risks** to search and filter the register, or switch to a 5×5 likelihood and impact matrix. The
-matrix can show inherent or residual risk. Open a risk to review its scores, mitigating controls, and entities it affects.
+**Overview** is a configurable dashboard summarizing risks outside appetite, control coverage, a risk matrix, and upcoming
+risk or control assessments. Use **Risks** to filter by category, status and owner in the sidebar, then switch between the **Register** tab and a
+5×5 likelihood and impact matrix on the **Matrix** tab. The matrix can show inherent or residual risk. Open a risk to review its scores, mitigating controls, and entities it affects.
 
-In **Controls**, use the library to inspect controls and their operating effectiveness. Switch to **Coverage** to review
-coverage by risk or information asset, or to **Traceability** to compare controls against risks or assets. Coverage of
-information assets depends on a Data Entity binding and the corresponding Control Protection relation in the workspace
+In **Controls**, filter by type and operating effectiveness in the sidebar and use the **Library** tab to inspect
+controls. Switch to **Coverage** to review coverage by risk or information asset, or to **Controls × Risks** (cells are coloured by the control's
+operating effectiveness) or **Controls × Data Entities** to trace controls. Coverage of
+information assets depends on a Data Entity schema and the corresponding Control Protection relation in the workspace
 model.
 
 **Retention** lists policy assignments to governed entity categories, including the assigned period and activation
-date. It flags incomplete assignments. **Assessments** is a read-only view of project assessments that target the Risk
-schema and, when configured, the Control schema. Open a row to continue in its owning project's Assessments tab; create,
-edit, and answer assessments there.
+date. It is a configurable dashboard; use the sidebar to narrow the register to one retention policy. **Assessments** is a configurable dashboard of project assessments that target the Risk
+schema and, when configured, the Control schema: lists of reviews and tests due, plus progress tables per schema. Open a
+row to continue in its owning project's Assessments tab; create, edit, and answer assessments there.
 
 ## Retention scope and shared workflows
 
 Retention assignments apply a policy to a Data Entity category, not to each individual record. The section therefore
-reports assignment completeness; it does not calculate per-record disposal dates or an overdue disposal queue.
+lists what is assigned and since when; it does not calculate per-record disposal dates or an overdue disposal queue.
 
 Risk, Control, Framework, Requirement, and Data Entity records are maintained in [Entities](../../use/entities), using
 the schemas and relations described in [Data Modeling and Schemas](../../use/data-modeling-schemas). Use [Entity Views](../../use/entity-views)
 and [Entity Relationship Views](../../use/entity-relationship-views) to inspect the wider catalog. For assessment setup
 and responses, see [Projects](../../use/projects) and [Assessments](../../use/assessments); for approval workflows, see
-[Governance and Approvals](../../use/governance). Administrators configure bindings in [Workspace Settings](../../admin/workspace-settings)
-and access in [Roles and Permissions](../../admin/roles-permissions).
+[Governance and Approvals](../../use/governance). Administrators configure application access in [Workspace Settings](../../admin/workspace-settings)
+and roles in [Roles and Permissions](../../admin/roles-permissions).

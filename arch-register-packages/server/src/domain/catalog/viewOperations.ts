@@ -230,7 +230,7 @@ const configUsesRestrictedField = (
     addField(root.sort.slice('date:'.length));
   }
 
-  for (const key of ['table', 'cards', 'tree', 'explore']) {
+  for (const key of ['table', 'cards', 'tree', 'relation-columns']) {
     const viewConfig = root[key];
     if (viewConfig && typeof viewConfig === 'object') {
       addFields((viewConfig as Record<string, unknown>).fieldIds);
@@ -264,13 +264,13 @@ const configUsesRestrictedField = (
     addField(value.endFieldId);
   }
 
-  const matrix = root.matrix;
+  const matrix = root['relation-matrix'];
   if (matrix && typeof matrix === 'object') {
     const value = matrix as Record<string, unknown>;
     addField(value.colEnumFieldId, value.colSchemaId);
   }
 
-  const bubble = root.bubble;
+  const bubble = root['bubble-chart'];
   if (bubble && typeof bubble === 'object') {
     const value = bubble as Record<string, unknown>;
     addField(value.xFieldId);
@@ -287,7 +287,7 @@ const configUsesRestrictedField = (
     addField(value.colorFieldId);
   }
 
-  const map = root.map;
+  const map = root['nested-map'];
   if (map && typeof map === 'object') {
     const value = map as Record<string, unknown>;
     addFields(value.fieldIds);

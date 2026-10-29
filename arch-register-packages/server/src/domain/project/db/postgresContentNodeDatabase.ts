@@ -5,6 +5,7 @@ import { isUuidLike } from '../../../utils/publicIds';
 import type {
   ContentNodeDatabase,
   ContentNodeDbResult,
+  ContentNodeDbRelocate,
   ContentNodeDbUpsert
 } from './contentNodeDatabase';
 import { CONTENT_NODE_SELECT_SQL, contentNodeMapper } from './contentNodeDatabase';
@@ -396,6 +397,22 @@ export class PostgresContentNodeDatabase
         RETURNING *
       `;
       return row ? contentNodeMapper(row) : null;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async relocateContentNode(workspace: string, nodeId: string, input: ContentNodeDbRelocate) {
+    try {
+      await this.sql`
+        UPDATE content_node
+        SET parent_id = ${input.parent_id}, path = ${input.path}, name = ${input.name},
+            original_filename = ${input.original_filename}, size_bytes = ${input.size_bytes},
+            comment_count = ${input.comment_count},
+            unresolved_comment_count = ${input.unresolved_comment_count},
+            updated_at = ${input.updated_at}, updated_by = ${input.updated_by}
+        WHERE workspace = ${workspace} AND id = ${nodeId}
+      `;
     } catch (error) {
       return normalizePostgresError(error);
     }

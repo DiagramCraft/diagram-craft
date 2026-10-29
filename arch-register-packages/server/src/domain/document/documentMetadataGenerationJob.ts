@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
 import type { AuthenticatedEvent } from '../../middleware/auth';
@@ -466,13 +467,16 @@ const processGenerationRow = async (
       { id: scheduledByUser.id, displayName: scheduledByUser.display_name },
       { readOnly: true, toolIds: action.tools }
     );
+    const threadId = randomUUID();
     try {
       const structured = await chat({
         adapter,
         messages: [{ role: 'user', content: prompt }],
+        threadId,
         tools,
         modelOptions: { temperature: aiConfig.temperature },
         outputSchema: documentMetadataGenerationOutputSchema(outputField),
+        stream: false,
         abortController: linkedAbort.controller
       });
       throwIfAborted(signal);
@@ -493,13 +497,14 @@ const processGenerationRow = async (
       const legacyAnswer = await chat({
         adapter,
         messages: [{ role: 'user', content: prompt }],
+        threadId,
         tools,
         modelOptions: { temperature: aiConfig.temperature },
         stream: false,
         abortController: linkedAbort.controller
       });
       throwIfAborted(signal);
-      rawAnswer = legacyAnswer;
+      rawAnswer = legacyAnswer.text;
       const parsedResponse = parseGeneratedResponse(outputField, rawAnswer);
       if (!parsedResponse.ok) throw new Error(parsedResponse.error);
       generatedResponse = parsedResponse;

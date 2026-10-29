@@ -3,31 +3,23 @@ import { Tabs } from '@diagram-craft/app-components/Tabs';
 import styles from '../EntityDetailScreen.module.css';
 import { EntityTopologyTab } from './EntityTopologyTab';
 import { EntityGraphView } from './EntityGraphView';
-import { EntityDependentsTab } from './EntityDependentsTab';
-import { BlastRadiusPanel } from './BlastRadiusPanel';
-import { EntityRelatedContentTab } from './EntityRelatedContentTab';
+import { EntityBlastRadiusTab } from './EntityBlastRadiusTab';
 import type { TabId } from '../types/entityDetailTypes';
 
 type Props = {
   tab: TabId;
   setTab: (tab: TabId) => void;
-  dependentsCount: number;
   topologyProps: ComponentProps<typeof EntityTopologyTab>;
   graphProps: ComponentProps<typeof EntityGraphView>;
-  dependentsProps: ComponentProps<typeof EntityDependentsTab>;
-  blastRadiusProps: ComponentProps<typeof BlastRadiusPanel>;
-  relatedContentProps: ComponentProps<typeof EntityRelatedContentTab>;
+  blastRadiusProps: ComponentProps<typeof EntityBlastRadiusTab>;
 };
 
 export const EntityContextSection = ({
   tab,
   setTab,
-  dependentsCount,
   topologyProps,
   graphProps,
-  dependentsProps,
-  blastRadiusProps,
-  relatedContentProps
+  blastRadiusProps
 }: Props) => (
   <>
     <div className={styles.tabBar}>
@@ -35,11 +27,7 @@ export const EntityContextSection = ({
         <Tabs.List overflow>
           <Tabs.Trigger value="topology">Topology</Tabs.Trigger>
           <Tabs.Trigger value="graph">Graph</Tabs.Trigger>
-          <Tabs.Trigger value="dependents">
-            Dependents{dependentsCount > 0 ? ` (${dependentsCount})` : ''}
-          </Tabs.Trigger>
           <Tabs.Trigger value="blast-radius">Blast radius</Tabs.Trigger>
-          <Tabs.Trigger value="related-content">Related content</Tabs.Trigger>
         </Tabs.List>
       </Tabs.Root>
     </div>
@@ -49,8 +37,6 @@ export const EntityContextSection = ({
         <EntityGraphView {...graphProps} />
       </div>
     )}
-    {tab === 'dependents' && <EntityDependentsTab {...dependentsProps} />}
-    {tab === 'blast-radius' && <BlastRadiusPanel {...blastRadiusProps} />}
-    {tab === 'related-content' && <EntityRelatedContentTab {...relatedContentProps} />}
+    {tab === 'blast-radius' && <EntityBlastRadiusTab {...blastRadiusProps} />}
   </>
 );

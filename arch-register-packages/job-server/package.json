@@ -7,15 +7,15 @@
   "scripts": {
     "dev": "node --watch --import tsx --import ../server/src/serverSetup.mjs src/main.ts",
     "start": "node --import tsx --import ../server/src/serverSetup.mjs src/main.ts",
-    "test": "vitest run"
+    "test": "vitest run --config ../../vitest.config.ts"
   },
   "dependencies": {
     "@arch-register/server": "workspace:*",
-    "dotenv": "^17.2.3",
+    "dotenv": "^18.0.8",
     "tsx": "^4.23.13"
   },
   "devDependencies": {
     "@types/node": "^26.4.0",
-    "vitest": "^4.1.10"
+    "vitest": "5.0.5"
   }
 }

@@ -193,6 +193,27 @@ function resolveRelationFieldVal(field: AnyRelationField | undefined, value: unk
   return String(value);
 }
 
+// Relation equivalent of diffSnapshotState for version snapshots. Only `data` is diffed: endpoints
+// and schema are immutable, and owner/lifecycle are not restored with a relation version.
+export function diffRelationSnapshotState(
+  base: SnapshotState | null | undefined,
+  proposed: SnapshotState | null | undefined,
+  schema: RelationSchema | null
+): ChangeRow[] {
+  if (!proposed) return [];
+  const changes: ChangeRow[] = [];
+  const baseData = (base?.data ?? {}) as Record<string, unknown>;
+  const proposedData = (proposed.data ?? {}) as Record<string, unknown>;
+  for (const [fieldId, toVal] of Object.entries(proposedData)) {
+    const field = schema?.fields.find(f => f.id === fieldId);
+    const from = resolveRelationFieldVal(field, baseData[fieldId]);
+    const to = resolveRelationFieldVal(field, toVal);
+    if (from === to) continue;
+    changes.push({ label: field?.name ?? fieldId, from, to });
+  }
+  return changes;
+}
+
 // Relation equivalent of mapEntityLandscapeDiffToChangeRows. Relation endpoints (_in/_out) are
 // immutable, so the backend diff for a relation only ever contains field-data changes keyed under
 // `data` — there's no top-level built-in-field case to handle the way entities have

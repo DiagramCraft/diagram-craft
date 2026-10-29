@@ -1,0 +1,149 @@
+import type { Assessment } from '@arch-register/api-types/assessmentContract';
+import { getAssessmentEnumOptions } from '@arch-register/api-types/assessmentFieldOptions';
+import type { AssessmentResponse } from '@arch-register/api-types/assessmentResponseContract';
+import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
+import styles from './AssessmentSummaryTab.module.css';
+import { EmptyState } from '../../../components/EmptyState';
+import { ProgressBar } from '../../../components/ProgressBar';
+
+type Props = {
+  assessment: Assessment;
+  responses: AssessmentResponse[];
+  entityCount: number;
+  enums: WorkspaceEnum[];
+};
+
+const teamStatusLabel: Record<Assessment['team_acknowledge_status'][number]['status'], string> = {
+  open: 'Pending',
+  completed: 'Acknowledged',
+  superseded: 'Superseded'
+};
+
+const teamStatusClass: Record<Assessment['team_acknowledge_status'][number]['status'], string> = {
+  open: styles.teamStatusOpen ?? '',
+  completed: styles.teamStatusCompleted ?? '',
+  superseded: styles.teamStatusSuperseded ?? ''
+};
+
+export const AssessmentSummaryTab = ({ assessment, responses, entityCount, enums }: Props) => {
+  const total = responses.length;
+  const pctAssessed = entityCount > 0 ? Math.round((total / entityCount) * 100) : 0;
+
+  return (
+    <div className={styles.wrap}>
+      <div className={styles.grid}>
+        <div className={styles.card}>
+          <div className={styles.cardTitle}>Entities assessed</div>
+          <div className={styles.statBig}>
+            {total} / {entityCount}
+          </div>
+          <ProgressBar className={styles.progress} height={5} percent={pctAssessed} />
+          <div className={styles.statSub}>
+            {pctAssessed}% of in-scope entities have a recorded response
+          </div>
+        </div>
+
+        {assessment.team_acknowledge_status.length > 0 && (
+          <div className={styles.card}>
+            <div className={styles.cardTitle}>Team acknowledgement</div>
+            <div className={styles.teamList}>
+              {assessment.team_acknowledge_status.map(team => (
+                <div key={team.team_id} className={styles.teamRow}>
+                  <span className={styles.teamName}>{team.team_name}</span>
+                  <span className={`${styles.teamStatus} ${teamStatusClass[team.status]}`}>
+                    {teamStatusLabel[team.status]}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {total === 0 ? (
+          <div className={styles.empty}>
+            <EmptyState compact title="No responses recorded yet." />
+          </div>
+        ) : (
+          assessment.fields.map(field => {
+            if (field.type === 'rating') {
+              const max = field.max ?? 5;
+              const values = responses
+                .map(r => r.values[field.id])
+                .filter((v): v is number => typeof v === 'number');
+              const avg =
+                values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : null;
+              return (
+                <div key={field.id} className={styles.card}>
+                  <div className={styles.cardTitle}>{field.label}</div>
+                  <div className={styles.statBig}>
+                    {avg !== null ? avg.toFixed(1) : '—'} / {max}
+                  </div>
+                  {avg !== null && (
+                    <ProgressBar
+                      className={styles.progress}
+                      height={5}
+                      percent={(avg / max) * 100}
+                    />
+                  )}
+                  <div className={styles.statSub}>
+                    {values.length} of {total} answered
+                  </div>
+                </div>
+              );
+            }
+
+            if (field.type === 'enum') {
+              const options = getAssessmentEnumOptions(field, enums);
+              const counts = new Map<string, number>();
+              for (const r of responses) {
+                const value = r.values[field.id];
+                if (value === undefined) continue;
+                const key = String(value);
+                counts.set(key, (counts.get(key) ?? 0) + 1);
+              }
+              return (
+                <div key={field.id} className={styles.card}>
+                  <div className={styles.cardTitle}>{field.label}</div>
+                  {counts.size === 0 ? (
+                    <div className={styles.statSub}>No responses</div>
+                  ) : (
+                    <div className={styles.distribution}>
+                      {[...counts.entries()].map(([value, count]) => {
+                        const label = options.find(o => o.value === value)?.label ?? value;
+                        const pct = Math.round((count / total) * 100);
+                        return (
+                          <div key={value} className={styles.distRow}>
+                            <span className={styles.distLabel}>{label}</span>
+                            <div className={styles.distBarTrack}>
+                              <div className={styles.distBarFill} style={{ width: `${pct}%` }} />
+                            </div>
+                            <span className={styles.distValue}>
+                              {count} ({pct}%)
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
+            const answered = responses.filter(r => r.values[field.id] !== undefined).length;
+            const pct = total > 0 ? Math.round((answered / total) * 100) : 0;
+            return (
+              <div key={field.id} className={styles.card}>
+                <div className={styles.cardTitle}>{field.label}</div>
+                <div className={styles.statBig}>{pct}%</div>
+                <ProgressBar className={styles.progress} height={5} percent={pct} />
+                <div className={styles.statSub}>
+                  {answered} of {total} filled in
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+};

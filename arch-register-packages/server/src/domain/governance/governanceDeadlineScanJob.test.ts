@@ -103,7 +103,7 @@ const makeCaseConfigRow = (
   id: 'config-1',
   workspace: 'ws-1',
   case_kind: 'entity.change-case',
-  case_subkind: null,
+  case_subkinds: [],
   name: 'Workflow configuration',
   description: null,
   enabled: true,
@@ -293,7 +293,7 @@ describe('createGovernanceDeadlineScanJobHandler', () => {
   it('uses a subkind override for a scoped case', async () => {
     const caseRow = makeCase({ case_subkind: 'schema-1' });
     const override = makeCaseConfigRow({
-      case_subkind: 'schema-1',
+      case_subkinds: ['schema-1'],
       config: { reminders: { enabled: true, approachingDays: [], overdueDays: [5] } }
     });
     const { db, appendEvent } = makeDb([caseRow], override);

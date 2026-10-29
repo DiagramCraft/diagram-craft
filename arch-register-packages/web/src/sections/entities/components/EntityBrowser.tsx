@@ -6,11 +6,13 @@ import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { Select } from '@diagram-craft/app-components/Select';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
+import type { ColumnRenderConfig } from '@arch-register/api-types/viewContract';
 import { Pagination } from '../../../components/Pagination';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useEntityDrawer } from '../entityDrawer/useEntityDrawer';
 import { BulkEditToolbar } from './BulkEditToolbar';
+import { CloneEntityDialog } from './CloneEntityDialog';
 import {
   buildEntityQueryFromBrowserFilters,
   hasFacetConditions,
@@ -35,6 +37,7 @@ import {
   DISPLAY_FIELD_VIEWS,
   filterDisplayFieldIdsForContext,
   getDisplayFieldIds,
+  withColumnRenderers,
   withDisplayFieldIds,
   withoutDisplayFieldIds
 } from './entityDisplayFields';
@@ -47,6 +50,8 @@ type EntityBrowserProps = {
   onCountChange?: (count: number) => void;
   timelineMarkers?: AsOfMarker[];
   onFirstFilteredSchemaIdChange?: (schemaId: string | null) => void;
+  /** In table view, clicking a row opens the entity page rather than the drawer. */
+  tableRowOpensEntityPage?: boolean;
 };
 
 export const SaveViewDialog = ({
@@ -55,7 +60,8 @@ export const SaveViewDialog = ({
   onSave,
   scopeOptions,
   defaultScope,
-  showAdminOption
+  showAdminOption,
+  adminOptionLabel = 'Pin as shared view (managed by admins)'
 }: {
   open: boolean;
   onClose: () => void;
@@ -68,6 +74,7 @@ export const SaveViewDialog = ({
   scopeOptions?: Array<{ value: 'workspace' | 'project'; label: string }>;
   defaultScope?: 'workspace' | 'project';
   showAdminOption?: boolean;
+  adminOptionLabel?: string;
 }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -147,7 +154,7 @@ export const SaveViewDialog = ({
             }}
           >
             <Checkbox value={isAdminView} onChange={v => setIsAdminView(v ?? false)} />
-            <span>Pin as workspace view (visible to all members)</span>
+            <span>{adminOptionLabel}</span>
           </label>
         )}
       </div>
@@ -217,7 +224,8 @@ export const EntityBrowser = ({
   projectContext,
   onCountChange,
   timelineMarkers,
-  onFirstFilteredSchemaIdChange
+  onFirstFilteredSchemaIdChange,
+  tableRowOpensEntityPage
 }: EntityBrowserProps) => {
   const { openEntityDrawer } = useEntityDrawer();
   const {
@@ -308,14 +316,14 @@ export const EntityBrowser = ({
     projectId,
     setJoinAssessmentId
   ]);
-  const readOnly = !!asOf && !collectionId && view !== 'diff';
+  const readOnly = !!asOf && !collectionId && view !== 'compare-dates';
   const [tlOpen, setTlOpen] = useState(!!asOf && !collectionId);
   const [includeOverdueChanges, setIncludeOverdueChanges] = useState(false);
   useEffect(() => {
     if (asOf && !collectionId) setTlOpen(true);
   }, [asOf, collectionId]);
   useEffect(() => {
-    if (view === 'diff' && !collectionId) setTlOpen(true);
+    if (view === 'compare-dates' && !collectionId) setTlOpen(true);
   }, [view, collectionId]);
   const { data: fetchedTimelineMarkers = [] } = useTimelineMarkers(
     workspaceId,
@@ -403,6 +411,9 @@ export const EntityBrowser = ({
   );
 
   const {
+    cloneTarget,
+    confirmCloneEntity,
+    setCloneTarget,
     confirmDeleteEntity,
     deleteTarget: hookDeleteTarget,
     handleCloneEntity,
@@ -413,7 +424,8 @@ export const EntityBrowser = ({
     setMergeSource
   } = useEntityBrowserEntityActions({
     workspaceId,
-    onNavigateToEntity: navigateToEntity
+    onNavigateToEntity: navigateToEntity,
+    projectId
   });
   const {
     addFieldRow,
@@ -482,7 +494,7 @@ export const EntityBrowser = ({
     [displayFieldSchemas, entityQuery?.projections, projectContext, joinedAssessmentContext]
   );
   const displayView = DISPLAY_FIELD_VIEWS.has(view)
-    ? (view as 'table' | 'cards' | 'tree' | 'explore' | 'map')
+    ? (view as 'table' | 'cards' | 'tree' | 'relation-columns' | 'nested-map')
     : null;
   const selectedDisplayFieldIds = displayView
     ? filterDisplayFieldIdsForContext(
@@ -537,6 +549,17 @@ export const EntityBrowser = ({
             ? fieldIds => setActiveViewConfig(withDisplayFieldIds(activeViewConfig, fieldIds))
             : undefined
         }
+        columnRenderers={
+          view === 'table' && !readOnly
+            ? (activeViewConfig as { columnRenderers?: Record<string, ColumnRenderConfig> } | null)
+                ?.columnRenderers
+            : undefined
+        }
+        onColumnRenderersChange={
+          view === 'table' && !readOnly
+            ? renderers => setActiveViewConfig(withColumnRenderers(activeViewConfig, renderers))
+            : undefined
+        }
         onDisplayFieldsReset={
           displayView && !readOnly
             ? () => setActiveViewConfig(withoutDisplayFieldIds(activeViewConfig))
@@ -560,7 +583,10 @@ export const EntityBrowser = ({
           includePlannedChanges={projectId ? undefined : includePlannedChanges}
           onToggleIncludePlannedChanges={projectId ? undefined : setIncludePlannedChanges}
           includeOverdueChanges={includeOverdueChanges}
-          onToggleIncludeOverdueChanges={view === 'diff' ? setIncludeOverdueChanges : undefined}
+          onToggleIncludeOverdueChanges={
+            view === 'compare-dates' ? setIncludeOverdueChanges : undefined
+          }
+          disablePlannedTogglesForPast={view === 'compare-dates'}
         />
       )}
 
@@ -588,7 +614,6 @@ export const EntityBrowser = ({
               setStep={setStep}
               onClear={clearSelection}
               onConfirm={handleConfirm}
-              onNavigateToEntity={navigateToEntity}
             />
           )}
           <div className={view === 'graph' ? styles.graphView : undefined}>
@@ -623,6 +648,8 @@ export const EntityBrowser = ({
               linkedEntityIds={linkedEntityIds}
               onFocusEntity={focusEntity}
               activeDateField={dateBrowserEnabled ? activeDateField : null}
+              sort={sort}
+              onSortChange={next => setSort(next)}
               joinAssessmentId={effectiveJoinAssessmentId}
               joinedAssessment={joinedAssessmentContext}
               responsesByEntity={responsesByEntity}
@@ -639,12 +666,15 @@ export const EntityBrowser = ({
                     }
                   : {
                       kind: 'interactive',
+                      tableRowOpensEntityPage,
                       onConfigChange: setActiveViewConfig,
                       onEntityClick: navigateToEntity,
                       onDelete: handleDeleteEntity,
                       onClone: handleCloneEntity,
-                      onManageCollections: entity => setCollectionTarget(entity),
-                      onMerge: handleMergeEntity,
+                      onManageCollections: projectContext
+                        ? undefined
+                        : entity => setCollectionTarget(entity),
+                      onMerge: projectContext ? undefined : handleMergeEntity,
                       selectedIds,
                       onSelectAll: handleSelectAll,
                       onSelectRow: handleSelectRow
@@ -664,6 +694,12 @@ export const EntityBrowser = ({
           onNext={goToNextPage}
         />
       )}
+      <CloneEntityDialog
+        open={!!cloneTarget}
+        entityName={cloneTarget ? (cloneTarget._name ?? cloneTarget._slug) : ''}
+        onConfirm={confirmCloneEntity}
+        onCancel={() => setCloneTarget(null)}
+      />
       <DeleteConfirmationDialog
         open={!!hookDeleteTarget}
         title="Delete entity?"

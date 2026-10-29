@@ -5,14 +5,17 @@ import type { EntityRecord } from '@arch-register/api-types/entityContract';
 type UseEntityBrowserEntityActionsProps = {
   workspaceId: string;
   onNavigateToEntity: (entityPublicId: string) => void;
+  projectId?: string;
 };
 
 export const useEntityBrowserEntityActions = ({
   workspaceId,
-  onNavigateToEntity
+  onNavigateToEntity,
+  projectId
 }: UseEntityBrowserEntityActionsProps) => {
   const [deleteTarget, setDeleteTarget] = useState<EntityRecord | null>(null);
   const [mergeSource, setMergeSource] = useState<EntityRecord | null>(null);
+  const [cloneTarget, setCloneTarget] = useState<EntityRecord | null>(null);
   const deleteMutation = useDeleteEntity(workspaceId);
   const cloneMutation = useCloneEntity(workspaceId);
 
@@ -30,23 +33,32 @@ export const useEntityBrowserEntityActions = ({
     }
   }, [deleteMutation, deleteTarget]);
 
-  const handleCloneEntity = useCallback(
-    async (entity: EntityRecord) => {
-      try {
-        const cloned = await cloneMutation.mutateAsync(entity._uid);
-        onNavigateToEntity(cloned._publicId);
-      } catch {
-        // Error handling is done by TanStack Query
-      }
-    },
-    [cloneMutation, onNavigateToEntity]
-  );
+  const handleCloneEntity = useCallback((entity: EntityRecord) => {
+    setCloneTarget(entity);
+  }, []);
+
+  const confirmCloneEntity = useCallback(async () => {
+    if (!cloneTarget) return;
+    setCloneTarget(null);
+    try {
+      const cloned = await cloneMutation.mutateAsync({
+        entityId: cloneTarget._uid,
+        projectId
+      });
+      onNavigateToEntity(cloned._publicId);
+    } catch {
+      // Error handling is done by TanStack Query
+    }
+  }, [cloneMutation, cloneTarget, onNavigateToEntity, projectId]);
 
   const handleMergeEntity = useCallback((entity: EntityRecord) => {
     setMergeSource(entity);
   }, []);
 
   return {
+    cloneTarget,
+    confirmCloneEntity,
+    setCloneTarget,
     confirmDeleteEntity,
     deleteTarget,
     handleCloneEntity,

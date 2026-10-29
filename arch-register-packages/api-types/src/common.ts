@@ -47,6 +47,19 @@ export const currencyValueSchema = z.object({
 
 export type CurrencyValue = z.infer<typeof currencyValueSchema>;
 
+export const durationUnits = ['days', 'weeks', 'months', 'years'] as const;
+
+export const durationUnitSchema = z.enum(durationUnits);
+
+export type DurationUnit = z.infer<typeof durationUnitSchema>;
+
+export const durationValueSchema = z.object({
+  amount: z.number().finite().min(0),
+  unit: durationUnitSchema
+});
+
+export type DurationValue = z.infer<typeof durationValueSchema>;
+
 export const namedGroupSchema = z.object({
   id: z.string().min(1).describe('Stable group identifier'),
   name: z.string().min(1).describe('Group display name'),

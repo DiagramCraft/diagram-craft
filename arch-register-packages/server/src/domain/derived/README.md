@@ -41,6 +41,7 @@ The available result types are:
 - `select` — also requires an `enumId`
 - `boolean`
 - `rating` — an integer from 1 to 5
+- `duration` — an object with a non-negative `amount` and a `unit` (`days`, `weeks`, `months`, `years`); a string such as `"3 years"` is also accepted
 
 Derived fields are always optional and cannot be written directly by entity or assessment
 mutations. The server recalculates them from the submitted source values.
@@ -128,14 +129,14 @@ expanded target has the same JSON shape, with nested relations left at depth 0:
 entity.dataFlowsIn
   .filter(.entity.metadata.schemaId == 'system')
   .map(.entity.annual_cost.amount)
-  |> sum
+  .sum()
 ```
 
 To return a currency value, combine the aggregate with an explicit currency code:
 
 ```text
 {
-  amount: entity.contracts.map(.entity.annual_cost.amount) |> sum,
+  amount: entity.contracts.map(.entity.annual_cost.amount).sum(),
   currency: 'USD'
 }
 ```
@@ -165,7 +166,7 @@ Numeric arrays can be combined multiplicatively with the `product` transform. It
 an empty array, matching the multiplicative identity:
 
 ```text
-entity.layers.map(.coverage) |> product
+entity.layers.map(.coverage).product()
 ```
 
 ## Evaluation behavior
@@ -220,7 +221,7 @@ entities:
   "name": "Annual contract cost",
   "type": "derived",
   "requirementLevel": "optional",
-  "expression": "entity.contracts.map(.entity.annual_cost.amount) |> sum",
+  "expression": "entity.contracts.map(.entity.annual_cost.amount).sum()",
   "resultType": "number"
 }
 ```

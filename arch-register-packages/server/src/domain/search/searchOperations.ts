@@ -116,7 +116,15 @@ const searchWorkspaceForContext = async (
   const limitPerType = params.limitPerType ?? SEARCH_DEFAULTS.LIMIT_PER_TYPE;
   const types = parseTypesFromString(params.types);
 
-  const empty = { query: q, projects: [], files: [], entities: [], schemas: [], relations: [] };
+  const empty = {
+    query: q,
+    totalCounts: { projects: 0, files: 0, entities: 0, schemas: 0, relations: 0 },
+    projects: [],
+    files: [],
+    entities: [],
+    schemas: [],
+    relations: []
+  };
   if (q === '') return empty;
 
   const normalizedQuery = q.toLowerCase();
@@ -164,7 +172,7 @@ const searchWorkspaceForContext = async (
     )
   );
 
-  const projectsResults = types.includes('projects')
+  const projectMatches = types.includes('projects')
     ? visibleProjects
         .filter(
           project =>
@@ -172,7 +180,6 @@ const searchWorkspaceForContext = async (
             includesQuery(project.description, normalizedQuery)
         )
         .sort((a, b) => a.name.localeCompare(b.name))
-        .slice(0, limitPerType)
     : [];
 
   const filesResults: Array<{
@@ -326,7 +333,7 @@ const searchWorkspaceForContext = async (
 
   const schemasById = new Map(schemas.map(schema => [schema.id, schema]));
 
-  const entityResults = types.includes('entities')
+  const entityMatches = types.includes('entities')
     ? visibleEntities
         .map(entity => {
           const matchedFields = collectMatchedFields(
@@ -363,10 +370,9 @@ const searchWorkspaceForContext = async (
         })
         .filter((entity): entity is NonNullable<typeof entity> => entity !== null)
         .sort((a, b) => a._name.localeCompare(b._name))
-        .slice(0, limitPerType)
     : [];
 
-  const schemaResults = types.includes('schemas')
+  const schemaMatches = types.includes('schemas')
     ? schemas
         .map(schema => {
           const fieldMatches = collectFieldMatches(schema.fields, normalizedQuery);
@@ -376,10 +382,9 @@ const searchWorkspaceForContext = async (
         })
         .filter((schema): schema is NonNullable<typeof schema> => schema !== null)
         .sort((a, b) => a.name.localeCompare(b.name))
-        .slice(0, limitPerType)
     : [];
 
-  const relationResults = types.includes('relations')
+  const relationMatches = types.includes('relations')
     ? visibleRelations
         .map(relation => {
           const matchedFields = collectMatchedFields(
@@ -408,16 +413,22 @@ const searchWorkspaceForContext = async (
         })
         .filter((relation): relation is NonNullable<typeof relation> => relation !== null)
         .sort((a, b) => a.schemaName.localeCompare(b.schemaName))
-        .slice(0, limitPerType)
     : [];
 
   return {
     query: q,
-    projects: projectsResults,
+    totalCounts: {
+      projects: projectMatches.length,
+      files: filesResults.length,
+      entities: entityMatches.length,
+      schemas: schemaMatches.length,
+      relations: relationMatches.length
+    },
+    projects: projectMatches.slice(0, limitPerType),
     files: filesResults.slice(0, limitPerType),
-    entities: entityResults,
-    schemas: schemaResults,
-    relations: relationResults
+    entities: entityMatches.slice(0, limitPerType),
+    schemas: schemaMatches.slice(0, limitPerType),
+    relations: relationMatches.slice(0, limitPerType)
   };
 };
 

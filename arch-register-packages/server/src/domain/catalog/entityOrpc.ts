@@ -58,7 +58,13 @@ const entityHandlers = {
   list: entityRouter.entities.list.handler(async ({ input, context }) => {
     const { workspace, authCtx } = context;
     const { query } = await prepareEntityQueryRequest(context.db, workspace, authCtx, input.query);
-    return await listEntitiesWithCount(context.db, workspace, authCtx, query);
+    return await listEntitiesWithCount(context.db, workspace, authCtx, {
+      ...query,
+      includeUsageCount: input.query.includeUsageCount,
+      usageContext: input.query.includeUsageCount
+        ? { workspaceSlug: input.params.workspace, event: context.event }
+        : null
+    });
   }),
 
   count: entityRouter.entities.count.handler(async ({ input, context }) => {
@@ -212,10 +218,14 @@ const entityHandlers = {
   clone: entityRouter.entities.clone.handler(async ({ input, context }) => {
     const { workspace, authCtx } = context;
     const auditUser = context.event.context.user;
-    return await cloneEntity(context.db, workspace, input.params.id, authCtx, {
-      id: auditUser.id,
-      displayName: auditUser.display_name
-    });
+    return await cloneEntity(
+      context.db,
+      workspace,
+      input.params.id,
+      authCtx,
+      { id: auditUser.id, displayName: auditUser.display_name },
+      input.body?.project_id
+    );
   }),
 
   remove: entityRouter.entities.remove.handler(async ({ input, context }) => {

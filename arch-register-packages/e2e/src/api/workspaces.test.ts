@@ -48,7 +48,7 @@ test.describe('workspace routes', () => {
     expect(templates.find(template => template.id === 'default')?.template_object_count).toBe(24);
     expect(
       templates.find(template => template.id === 'information-governance')?.template_object_count
-    ).toBe(12);
+    ).toBe(11);
     expect(
       templates.filter(template => template.category === 'cross-cutting').map(t => t.id)
     ).toEqual(
@@ -287,7 +287,6 @@ test.describe('workspace routes', () => {
         'Regulatory Tags',
         'Processing Purposes',
         'Residency Regions',
-        'Retention Time Unit',
         'PII Classification'
       ])
     );
@@ -335,10 +334,6 @@ test.describe('workspace routes', () => {
       server.db.view.listSavedViews(created.id),
       server.db.catalog.listSchemas(created.id)
     ]);
-    const strategyConfiguration = await server.db.workspace.getWorkspaceCapabilityConfiguration(
-      created.id,
-      'strategy-model'
-    );
     const businessCapability = schemas.find(schema => schema.name === 'Business Capability');
     const objective = schemas.find(schema => schema.name === 'Objective');
     const initiative = schemas.find(schema => schema.name === 'Initiative');
@@ -357,9 +352,6 @@ test.describe('workspace routes', () => {
         })
       ])
     );
-    expect(strategyConfiguration?.bindings.business_capability).toEqual({
-      target: { kind: 'entity_schema', id: businessCapability?.id }
-    });
     const objectivesView = views.find(view => view.name === 'Objectives');
     expect(objectivesView).toMatchObject({
       workspace: created.id,

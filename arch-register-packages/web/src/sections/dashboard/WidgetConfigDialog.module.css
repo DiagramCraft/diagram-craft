@@ -20,10 +20,6 @@
   color: var(--base-fg);
 }
 
-.optionControl {
-  min-width: 180px;
-}
-
 .labelInput {
   width: 100%;
   box-sizing: border-box;
@@ -60,26 +56,27 @@
   color: var(--cmp-fg-disabled);
 }
 
-.markdownInput {
-  width: 100%;
-  min-height: 220px;
-  box-sizing: border-box;
-  resize: vertical;
-  padding: 8px;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  line-height: 1.5;
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r);
-  background: var(--cmp-bg);
-  color: var(--base-fg);
-  outline: none;
+/* Config dialogs that need the whole screen (e.g. Tabs); the body scrolls inside the fixed-height popup. */
+.largeDialog {
+  height: calc(100vh - 12vh);
 }
 
-.markdownInput:focus {
-  border-color: var(--accent-fg);
+.largeDialog > div:nth-child(2) {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
 }
 
-.markdownInput::placeholder {
-  color: var(--cmp-fg-disabled);
+.tabs {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.tabs > :global(.cTabs) {
+  flex: 1;
+  min-height: 0;
 }

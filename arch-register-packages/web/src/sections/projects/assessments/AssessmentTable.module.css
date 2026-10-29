@@ -1,0 +1,73 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 0;
+}
+
+.status {
+  font-size: 10.5px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px solid;
+  line-height: 1.6;
+  flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.statusOpen {
+  color: var(--green);
+  border-color: color-mix(in oklch, var(--green) 35%, transparent);
+  background: color-mix(in oklch, var(--green) 10%, transparent);
+}
+
+.statusDraft {
+  color: var(--cmp-fg-dim);
+  border-color: var(--cmp-border-strong, var(--cmp-border));
+  background: transparent;
+}
+
+.statusClosed {
+  color: var(--warn, orange);
+  border-color: color-mix(in oklch, var(--warn, orange) 35%, transparent);
+  background: color-mix(in oklch, var(--warn, orange) 10%, transparent);
+}
+
+.statusArchived {
+  color: var(--cmp-fg-disabled);
+  border-color: var(--cmp-border);
+  background: transparent;
+}
+
+.metaScope {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.completion {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.completionLabel {
+  font-size: 11.5px;
+  font-family: var(--font-mono, monospace);
+  color: var(--cmp-fg-disabled);
+}
+
+.completionBar {
+  flex: 1;
+  max-width: 120px;
+}
+
+.completionPct {
+  font-size: 11px;
+  font-family: var(--font-mono, monospace);
+  color: var(--cmp-fg-disabled);
+  min-width: 30px;
+  text-align: right;
+}

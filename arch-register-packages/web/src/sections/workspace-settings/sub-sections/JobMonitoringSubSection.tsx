@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { TbEdit, TbPlayerPause, TbPlayerPlay, TbRefresh } from 'react-icons/tb';
+import { TbEdit, TbHistory, TbPlayerPause, TbPlayerPlay, TbRefresh } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
+import { TbPlus } from 'react-icons/tb';
+import { CreateJobDialog } from '../../../components/jobs/CreateJobDialog';
+import { SectionActions } from '../SectionActions';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
@@ -19,10 +22,15 @@ import {
   useUpdateJobSchedule
 } from '../../../hooks/useJobs';
 import { useWorkspaceAuthorization } from '../../../auth/WorkspaceAuthorizationContext';
+import { DropdownMenu, type MenuItem } from '../../../components/DropdownMenu';
+import { LabeledDateInput } from '../../../components/LabeledDateInput';
+import { ViewControls } from '../../../components/ViewControls';
+import { LabeledSelect } from '../../../components/LabeledSelect';
 import { Table } from '../../../components/table/Table';
 import { Chip } from '../../../components/Chip';
-import { EmptyState } from '../../../components/EmptyState';
-import { LoadingState } from '../../../components/LoadingState';
+import { Banner } from '../../../components/Banner';
+import { QueryState } from '../QueryState';
+import { MutationError } from '../MutationError';
 import { formatDateTime } from '../../../utils/dateFormat';
 import styles from './JobMonitoringSubSection.module.css';
 
@@ -238,7 +246,7 @@ const ScheduleEditorDialog = ({
           <Checkbox value={enabled} onChange={value => setEnabled(value ?? false)} /> Enabled
         </label>
 
-        {error && <div className={styles.error}>{error.message}</div>}
+        <MutationError error={error} />
       </div>
     </Dialog>
   );
@@ -309,6 +317,7 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
   const [editTarget, setEditTarget] = useState<JobSchedule | null>(null);
   const [runNowTarget, setRunNowTarget] = useState<string | null>(null);
   const [runNowError, setRunNowError] = useState<string | null>(null);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   const {
     data: servers = [],
@@ -361,375 +370,331 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
     setOffset(0);
   };
 
-  const selectedSchedule = schedules.find(schedule => schedule.id === scheduleId);
+  const showScheduleHistory = (schedule: (typeof schedules)[number]) => {
+    updateFilter(() => setScheduleId(schedule.id === scheduleId ? '' : schedule.id));
+    setTab('history');
+  };
 
   return (
-    <div className={styles.stack}>
-      <div className={styles.notice}>
-        Planned execution times are best-effort. A queued run may start later when workers are at
-        capacity or another scheduled job is using this workspace. Running jobs cannot be stopped
-        from here.
-      </div>
-
-      <Tabs.Root value={tab} onValueChange={v => setTab(v as JobsTab)}>
-        <Tabs.List>
-          <Tabs.Trigger value="schedules">Schedules ({schedules.length})</Tabs.Trigger>
-          <Tabs.Trigger value="history">Run history</Tabs.Trigger>
-          <Tabs.Trigger value="servers">Servers ({servers.length})</Tabs.Trigger>
-        </Tabs.List>
-      </Tabs.Root>
-
-      {tab === 'servers' && (
-        <section className={styles.section}>
-          <div className={styles.sectionHead}>
-            <div>
-              <div className={styles.sectionTitle}>Job servers</div>
-              <div className={styles.sectionSub}>
-                Servers are unavailable after two minutes without a status ping.
-              </div>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              icon={<TbRefresh size={13} />}
-              onClick={() => void refetchServers()}
-            >
-              Refresh
-            </Button>
-          </div>
-          {serversLoading ? (
-            <LoadingState text="Loading job servers…" size="sm" />
-          ) : serversError ? (
-            <div className={styles.error}>Job servers could not be loaded.</div>
-          ) : servers.length === 0 ? (
-            <EmptyState compact title="No job servers have registered yet." />
-          ) : (
-            <div className={styles.tableWrap}>
-              <Table.Root layout="fixed" bordered={false}>
-                <Table.Head>
-                  <Table.Row>
-                    <Table.HeaderCell>Name</Table.HeaderCell>
-                    <Table.HeaderCell width={130}>Status</Table.HeaderCell>
-                    <Table.HeaderCell width={180}>Last seen</Table.HeaderCell>
-                  </Table.Row>
-                </Table.Head>
-                <Table.Body>
-                  {servers.map(server => (
-                    <Table.Row key={server.id}>
-                      <Table.Cell>
-                        <div>{server.name}</div>
-                        <div className={styles.muted}>{server.id}</div>
-                      </Table.Cell>
-                      <Table.Cell>
-                        <Chip
-                          dot={server.status === 'available' ? 'var(--green)' : 'var(--error-fg)'}
-                          tone="ghost"
-                        >
-                          {server.status === 'available' ? 'Available' : 'Unavailable'}
-                        </Chip>
-                      </Table.Cell>
-                      <Table.Cell>{formatDateTime(server.last_seen_at)}</Table.Cell>
-                    </Table.Row>
-                  ))}
-                </Table.Body>
-              </Table.Root>
-            </div>
-          )}
-        </section>
-      )}
-
-      {tab === 'schedules' && (
-        <section className={styles.section}>
-          <div className={styles.sectionHead}>
-            <div>
-              <div className={styles.sectionTitle}>Recurring schedules</div>
-              <div className={styles.sectionSub}>
-                {canManageJobs
-                  ? 'Workspace admins can edit recurrence, priority, and enabled state. Recurring jobs run on registered job servers.'
-                  : 'Schedules are managed by workspace administrators.'}
-              </div>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              icon={<TbRefresh size={13} />}
-              onClick={() => void refetchSchedules()}
-            >
-              Refresh
-            </Button>
-          </div>
-          {runNowError && <div className={styles.error}>{runNowError}</div>}
-          {schedulesLoading ? (
-            <LoadingState text="Loading schedules…" size="sm" />
-          ) : schedulesError ? (
-            <div className={styles.error}>Schedules could not be loaded.</div>
-          ) : schedules.length === 0 ? (
-            <EmptyState compact title="No recurring schedules exist for this workspace." />
-          ) : (
-            <div className={styles.tableWrap}>
-              <Table.Root layout="fixed" bordered={false}>
-                <Table.Head>
-                  <Table.Row>
-                    <Table.HeaderCell>Job type</Table.HeaderCell>
-                    <Table.HeaderCell>Target schema</Table.HeaderCell>
-                    <Table.HeaderCell>Recurrence</Table.HeaderCell>
-                    <Table.HeaderCell width={70} numeric>
-                      Priority
-                    </Table.HeaderCell>
-                    <Table.HeaderCell width={90}>State</Table.HeaderCell>
-                    <Table.HeaderCell width={170}>Next planned run</Table.HeaderCell>
-                    {canManageJobs && <Table.HeaderCell width={150} />}
-                  </Table.Row>
-                </Table.Head>
-                <Table.Body>
-                  {schedules.map(schedule => (
-                    <Table.Row key={schedule.id} selected={schedule.id === scheduleId}>
-                      <Table.Cell
-                        onClick={() => {
-                          updateFilter(() =>
-                            setScheduleId(schedule.id === scheduleId ? '' : schedule.id)
-                          );
-                          setTab('history');
-                        }}
-                      >
-                        <div>{schedule.job_type}</div>
-                        <div className={styles.muted}>{schedule.system_identity}</div>
-                      </Table.Cell>
-                      <Table.Cell>
-                        {schedule.target_schema_name ?? <span className={styles.muted}>—</span>}
-                      </Table.Cell>
-                      <Table.Cell>{formatRecurrence(schedule.recurrence)}</Table.Cell>
-                      <Table.Cell numeric>{schedule.priority}</Table.Cell>
-                      <Table.Cell>
-                        <Chip
-                          dot={schedule.enabled ? 'var(--green)' : 'var(--cmp-fg-disabled)'}
-                          tone="ghost"
-                        >
-                          {schedule.enabled ? 'Enabled' : 'Disabled'}
-                        </Chip>
-                      </Table.Cell>
-                      <Table.Cell>{formatDateTime(schedule.next_occurrence_at)}</Table.Cell>
-                      {canManageJobs && (
-                        <Table.ActionsCell>
-                          <Button
-                            variant="ghost"
-                            size="xs"
-                            icon={<TbPlayerPlay size={13} />}
-                            disabled={!schedule.enabled || runNowTarget === schedule.id}
-                            title={
-                              schedule.enabled
-                                ? 'Run this job now, outside its normal schedule'
-                                : 'Enable the schedule to run it now'
-                            }
-                            onClick={() => handleRunNow(schedule)}
-                          >
-                            {runNowTarget === schedule.id ? 'Starting…' : 'Run now'}
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="xs"
-                            icon={<TbEdit size={13} />}
-                            onClick={() => setEditTarget(schedule)}
-                          >
-                            Edit
-                          </Button>
-                        </Table.ActionsCell>
-                      )}
-                    </Table.Row>
-                  ))}
-                </Table.Body>
-              </Table.Root>
-            </div>
-          )}
-        </section>
-      )}
-
-      {tab === 'history' && (
-        <section className={styles.section}>
-          <div className={styles.sectionHead}>
-            <div>
-              <div className={styles.sectionTitle}>Run history</div>
-              <div className={styles.sectionSub}>
-                {selectedSchedule
-                  ? `Filtered to ${selectedSchedule.job_type}`
-                  : 'Retained indefinitely'}
-              </div>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              icon={<TbRefresh size={13} />}
-              onClick={() =>
-                void Promise.all([refetchServers(), refetchSchedules(), refetchRuns()])
-              }
-            >
-              Refresh
-            </Button>
-          </div>
-          <div className={styles.filters}>
-            <select
-              aria-label="Schedule"
-              className={styles.input}
-              value={scheduleId}
-              onChange={event => updateFilter(() => setScheduleId(event.target.value))}
-            >
-              <option value="">All schedules</option>
-              {schedules.map(schedule => (
-                <option key={schedule.id} value={schedule.id}>
-                  {schedule.job_type}
-                </option>
-              ))}
-            </select>
-            <select
-              aria-label="Status"
-              className={styles.input}
-              value={status}
-              onChange={event =>
-                updateFilter(() => setStatus(event.target.value as '' | JobRunStatus))
-              }
-            >
-              {STATUS_OPTIONS.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <input
-              aria-label="Planned from"
-              className={styles.input}
-              type="date"
-              value={plannedFrom}
-              onChange={event => updateFilter(() => setPlannedFrom(event.target.value))}
-            />
-            <input
-              aria-label="Planned to"
-              className={styles.input}
-              type="date"
-              value={plannedTo}
-              onChange={event => updateFilter(() => setPlannedTo(event.target.value))}
-            />
-          </div>
-          {runsLoading ? (
-            <LoadingState text="Loading job history…" size="sm" />
-          ) : runsError ? (
-            <div className={styles.error}>Job history could not be loaded.</div>
-          ) : runs == null || runs.items.length === 0 ? (
-            <EmptyState compact title="No job runs match the current filters." />
-          ) : (
-            <>
-              <div className={styles.tableWrap}>
-                <Table.Root layout="fixed" bordered={false}>
-                  <Table.Head>
-                    <Table.Row>
-                      <Table.HeaderCell width={150}>Job</Table.HeaderCell>
-                      <Table.HeaderCell width={155}>Planned</Table.HeaderCell>
-                      <Table.HeaderCell width={155}>Started</Table.HeaderCell>
-                      <Table.HeaderCell width={155}>Completed</Table.HeaderCell>
-                      <Table.HeaderCell width={90}>Queue</Table.HeaderCell>
-                      <Table.HeaderCell width={90}>Duration</Table.HeaderCell>
-                      <Table.HeaderCell width={100}>Status</Table.HeaderCell>
-                      <Table.HeaderCell>Worker / result</Table.HeaderCell>
-                      <Table.HeaderCell width={90}>Action</Table.HeaderCell>
-                    </Table.Row>
-                  </Table.Head>
-                  <Table.Body>
-                    {runs.items.map(run => (
-                      <Table.Row key={run.id}>
-                        <Table.Cell>
-                          <div>{run.job_type}</div>
-                          <div className={styles.muted}>
-                            Priority {run.priority} · attempt {run.attempt_count}/{run.max_attempts}
-                          </div>
-                        </Table.Cell>
-                        <Table.Cell>{formatDateTime(run.planned_at)}</Table.Cell>
-                        <Table.Cell>{formatDateTime(run.started_at)}</Table.Cell>
-                        <Table.Cell>{formatDateTime(run.completed_at)}</Table.Cell>
-                        <Table.Cell>{formatDuration(run.queue_delay_ms)}</Table.Cell>
-                        <Table.Cell>{formatDuration(run.duration_ms)}</Table.Cell>
-                        <Table.Cell>
-                          <Chip dot={statusColor[run.status]} tone="ghost">
-                            {run.status}
-                          </Chip>
-                        </Table.Cell>
-                        <Table.Cell>
-                          <div>{run.worker_id ?? 'Not started'}</div>
-                          <div
-                            className={styles.summary}
-                            title={formatSummary(run.result, run.error)}
-                          >
-                            {formatSummary(run.result, run.error)}
-                          </div>
-                        </Table.Cell>
-                        <Table.Cell>
-                          {run.status === 'queued' ? (
-                            <Button
-                              variant="danger"
-                              size="xs"
-                              icon={<TbPlayerPause size={12} />}
-                              onClick={() => setCancelTarget(run.id)}
-                            >
-                              Cancel
-                            </Button>
-                          ) : (
-                            <span className={styles.muted}>—</span>
-                          )}
-                        </Table.Cell>
+    <>
+      <SectionActions>
+        <Button
+          icon={<TbRefresh size={12} />}
+          onClick={() => void Promise.all([refetchServers(), refetchSchedules(), refetchRuns()])}
+        >
+          Refresh
+        </Button>
+        <Button
+          variant="primary"
+          icon={<TbPlus size={12} />}
+          onClick={() => setCreateDialogOpen(true)}
+        >
+          Add job
+        </Button>
+      </SectionActions>
+      <CreateJobDialog
+        open={createDialogOpen}
+        workspaceSlug={workspaceSlug}
+        onClose={() => setCreateDialogOpen(false)}
+      />
+      <div className={styles.stack}>
+        <Tabs.Root value={tab} onValueChange={v => setTab(v as JobsTab)}>
+          <Tabs.List>
+            <Tabs.Trigger value="schedules">Schedules ({schedules.length})</Tabs.Trigger>
+            <Tabs.Trigger value="history">Run history</Tabs.Trigger>
+            <Tabs.Trigger value="servers">Servers ({servers.length})</Tabs.Trigger>
+          </Tabs.List>
+          <Tabs.Content value="servers" style={{ height: 'auto' }}>
+            <section className={styles.section}>
+              <QueryState
+                isLoading={serversLoading}
+                error={serversError}
+                isEmpty={servers.length === 0}
+                subject="job servers"
+                empty={{ compact: true, title: 'No job servers have registered yet.' }}
+              >
+                <div className={styles.tableWrap}>
+                  <Table.Root layout="fixed" bordered={false}>
+                    <Table.Head>
+                      <Table.Row>
+                        <Table.HeaderCell>Name</Table.HeaderCell>
+                        <Table.HeaderCell width={130}>Status</Table.HeaderCell>
+                        <Table.HeaderCell width={180}>Last seen</Table.HeaderCell>
                       </Table.Row>
-                    ))}
-                  </Table.Body>
-                </Table.Root>
-              </div>
-              <div className={styles.pagination}>
-                <div className={styles.pageLabel}>
-                  {runs.total} run{runs.total === 1 ? '' : 's'} · page {currentPage} of {pageCount}
+                    </Table.Head>
+                    <Table.Body>
+                      {servers.map(server => (
+                        <Table.Row key={server.id}>
+                          <Table.Cell>
+                            <div>{server.name}</div>
+                            <div className={styles.muted}>{server.id}</div>
+                          </Table.Cell>
+                          <Table.Cell>
+                            <Chip
+                              dot={
+                                server.status === 'available' ? 'var(--green)' : 'var(--error-fg)'
+                              }
+                              tone="ghost"
+                            >
+                              {server.status === 'available' ? 'Available' : 'Unavailable'}
+                            </Chip>
+                          </Table.Cell>
+                          <Table.Cell>{formatDateTime(server.last_seen_at)}</Table.Cell>
+                        </Table.Row>
+                      ))}
+                    </Table.Body>
+                  </Table.Root>
                 </div>
-                <Button
-                  variant="secondary"
-                  size="xs"
-                  disabled={offset === 0}
-                  onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}
-                >
-                  Previous
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="xs"
-                  disabled={currentPage >= pageCount}
-                  onClick={() => setOffset(offset + PAGE_SIZE)}
-                >
-                  Next
-                </Button>
-              </div>
-            </>
-          )}
-        </section>
-      )}
+              </QueryState>
+            </section>
+          </Tabs.Content>
 
-      <ScheduleEditorDialog
-        schedule={editTarget}
-        pending={updateSchedule.isPending}
-        error={updateSchedule.error as Error | null}
-        onClose={() => setEditTarget(null)}
-        onSave={input => {
-          if (editTarget == null) return;
-          void updateSchedule.mutateAsync({ id: editTarget.id, body: input }).then(() => {
-            setEditTarget(null);
-          });
-        }}
-      />
+          <Tabs.Content value="schedules" style={{ height: 'auto' }}>
+            <section className={styles.section}>
+              {runNowError && <Banner variant="error">{runNowError}</Banner>}
+              <QueryState
+                isLoading={schedulesLoading}
+                error={schedulesError}
+                isEmpty={schedules.length === 0}
+                subject="schedules"
+                empty={{ compact: true, title: 'No recurring schedules exist for this workspace.' }}
+              >
+                <div className={styles.tableWrap}>
+                  <Table.Root layout="fixed" bordered={false}>
+                    <Table.Head>
+                      <Table.Row>
+                        <Table.HeaderCell>Job type</Table.HeaderCell>
+                        <Table.HeaderCell>Target schema</Table.HeaderCell>
+                        <Table.HeaderCell>Recurrence</Table.HeaderCell>
+                        <Table.HeaderCell width={70} numeric>
+                          Priority
+                        </Table.HeaderCell>
+                        <Table.HeaderCell width={90}>State</Table.HeaderCell>
+                        <Table.HeaderCell width={170}>Next planned run</Table.HeaderCell>
+                        <Table.HeaderCell width={48} />
+                      </Table.Row>
+                    </Table.Head>
+                    <Table.Body>
+                      {schedules.map(schedule => (
+                        <Table.Row
+                          key={schedule.id}
+                          selected={schedule.id === scheduleId}
+                          onClick={() =>
+                            canManageJobs ? setEditTarget(schedule) : showScheduleHistory(schedule)
+                          }
+                        >
+                          <Table.Cell>
+                            <div className={styles.name}>{schedule.job_type}</div>
+                            <div className={styles.muted}>{schedule.system_identity}</div>
+                          </Table.Cell>
+                          <Table.Cell>
+                            {schedule.target_schema_name ?? <span className={styles.muted}>—</span>}
+                          </Table.Cell>
+                          <Table.Cell>{formatRecurrence(schedule.recurrence)}</Table.Cell>
+                          <Table.Cell numeric>{schedule.priority}</Table.Cell>
+                          <Table.Cell>
+                            <Chip
+                              dot={schedule.enabled ? 'var(--green)' : 'var(--cmp-fg-disabled)'}
+                              tone="ghost"
+                            >
+                              {schedule.enabled ? 'Enabled' : 'Disabled'}
+                            </Chip>
+                          </Table.Cell>
+                          <Table.Cell>{formatDateTime(schedule.next_occurrence_at)}</Table.Cell>
+                          <Table.ActionsCell>
+                            <DropdownMenu
+                              trigger={
+                                <Table.DotsButton aria-label={`Actions for ${schedule.job_type}`} />
+                              }
+                              items={
+                                [
+                                  ...(canManageJobs
+                                    ? [
+                                        {
+                                          label: 'Edit',
+                                          icon: <TbEdit size={14} />,
+                                          onClick: () => setEditTarget(schedule)
+                                        },
+                                        {
+                                          label:
+                                            runNowTarget === schedule.id ? 'Starting…' : 'Run now',
+                                          icon: <TbPlayerPlay size={14} />,
+                                          disabled:
+                                            !schedule.enabled || runNowTarget === schedule.id,
+                                          onClick: () => handleRunNow(schedule)
+                                        }
+                                      ]
+                                    : []),
+                                  {
+                                    label: 'View run history',
+                                    icon: <TbHistory size={14} />,
+                                    onClick: () => showScheduleHistory(schedule)
+                                  }
+                                ] satisfies MenuItem[]
+                              }
+                            />
+                          </Table.ActionsCell>
+                        </Table.Row>
+                      ))}
+                    </Table.Body>
+                  </Table.Root>
+                </div>
+              </QueryState>
+            </section>
+          </Tabs.Content>
 
-      <DeleteConfirmationDialog
-        open={cancelTarget != null}
-        title="Cancel queued run?"
-        message="This queued run will be marked as cancelled. The recurring schedule will continue producing future runs."
-        detail="Running jobs cannot be killed from the workspace admin UI."
-        confirmLabel={cancelRun.isPending ? 'Cancelling…' : 'Cancel run'}
-        onCancel={() => setCancelTarget(null)}
-        onConfirm={() => {
-          if (cancelTarget == null || cancelRun.isPending) return;
-          void cancelRun.mutateAsync(cancelTarget).then(() => setCancelTarget(null));
-        }}
-      />
-    </div>
+          <Tabs.Content value="history" style={{ height: 'auto' }}>
+            <ViewControls variant="tab">
+              <LabeledSelect
+                label="Schedule"
+                value={scheduleId}
+                onChange={value => updateFilter(() => setScheduleId(value))}
+                options={[
+                  { value: '', label: 'All schedules' },
+                  ...schedules.map(schedule => ({ value: schedule.id, label: schedule.job_type }))
+                ]}
+              />
+              <LabeledSelect
+                label="Status"
+                value={status}
+                onChange={value => updateFilter(() => setStatus(value as '' | JobRunStatus))}
+                options={STATUS_OPTIONS}
+              />
+              <LabeledDateInput
+                label="Planned from"
+                value={plannedFrom}
+                onChange={value => updateFilter(() => setPlannedFrom(value))}
+              />
+              <LabeledDateInput
+                label="Planned to"
+                value={plannedTo}
+                onChange={value => updateFilter(() => setPlannedTo(value))}
+              />
+            </ViewControls>
+            <section className={styles.section}>
+              <QueryState
+                isLoading={runsLoading}
+                error={runsError}
+                isEmpty={runs == null || runs.items.length === 0}
+                subject="job history"
+                empty={{ compact: true, title: 'No job runs match the current filters.' }}
+              >
+                <div className={styles.tableWrap}>
+                  <Table.Root layout="fixed" bordered={false}>
+                    <Table.Head>
+                      <Table.Row>
+                        <Table.HeaderCell width={150}>Job</Table.HeaderCell>
+                        <Table.HeaderCell width={155}>Planned</Table.HeaderCell>
+                        <Table.HeaderCell width={155}>Started</Table.HeaderCell>
+                        <Table.HeaderCell width={155}>Completed</Table.HeaderCell>
+                        <Table.HeaderCell width={90}>Queue</Table.HeaderCell>
+                        <Table.HeaderCell width={90}>Duration</Table.HeaderCell>
+                        <Table.HeaderCell width={100}>Status</Table.HeaderCell>
+                        <Table.HeaderCell>Worker / result</Table.HeaderCell>
+                        <Table.HeaderCell width={90}>Action</Table.HeaderCell>
+                      </Table.Row>
+                    </Table.Head>
+                    <Table.Body>
+                      {(runs?.items ?? []).map(run => (
+                        <Table.Row key={run.id}>
+                          <Table.Cell>
+                            <div className={styles.name}>{run.job_type}</div>
+                            <div className={styles.muted}>
+                              Priority {run.priority} · attempt {run.attempt_count}/
+                              {run.max_attempts}
+                            </div>
+                          </Table.Cell>
+                          <Table.Cell>{formatDateTime(run.planned_at)}</Table.Cell>
+                          <Table.Cell>{formatDateTime(run.started_at)}</Table.Cell>
+                          <Table.Cell>{formatDateTime(run.completed_at)}</Table.Cell>
+                          <Table.Cell>{formatDuration(run.queue_delay_ms)}</Table.Cell>
+                          <Table.Cell>{formatDuration(run.duration_ms)}</Table.Cell>
+                          <Table.Cell>
+                            <Chip dot={statusColor[run.status]} tone="ghost">
+                              {run.status}
+                            </Chip>
+                          </Table.Cell>
+                          <Table.Cell>
+                            <div>{run.worker_id ?? 'Not started'}</div>
+                            <div
+                              className={styles.summary}
+                              title={formatSummary(run.result, run.error)}
+                            >
+                              {formatSummary(run.result, run.error)}
+                            </div>
+                          </Table.Cell>
+                          <Table.Cell>
+                            {run.status === 'queued' ? (
+                              <Button
+                                variant="danger"
+                                size="xs"
+                                icon={<TbPlayerPause size={12} />}
+                                onClick={() => setCancelTarget(run.id)}
+                              >
+                                Cancel
+                              </Button>
+                            ) : (
+                              <span className={styles.muted}>—</span>
+                            )}
+                          </Table.Cell>
+                        </Table.Row>
+                      ))}
+                    </Table.Body>
+                  </Table.Root>
+                </div>
+                <div className={styles.pagination}>
+                  <div className={styles.pageLabel}>
+                    {runs?.total ?? 0} run{runs?.total === 1 ? '' : 's'} · page {currentPage} of{' '}
+                    {pageCount}
+                  </div>
+                  <Button
+                    variant="secondary"
+                    size="xs"
+                    disabled={offset === 0}
+                    onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="xs"
+                    disabled={currentPage >= pageCount}
+                    onClick={() => setOffset(offset + PAGE_SIZE)}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </QueryState>
+            </section>
+          </Tabs.Content>
+        </Tabs.Root>
+
+        <ScheduleEditorDialog
+          schedule={editTarget}
+          pending={updateSchedule.isPending}
+          error={updateSchedule.error as Error | null}
+          onClose={() => setEditTarget(null)}
+          onSave={input => {
+            if (editTarget == null) return;
+            void updateSchedule.mutateAsync({ id: editTarget.id, body: input }).then(() => {
+              setEditTarget(null);
+            });
+          }}
+        />
+
+        <DeleteConfirmationDialog
+          open={cancelTarget != null}
+          title="Cancel queued run?"
+          message="This queued run will be marked as cancelled. The recurring schedule will continue producing future runs."
+          detail="Running jobs cannot be killed from the workspace admin UI."
+          confirmLabel={cancelRun.isPending ? 'Cancelling…' : 'Cancel run'}
+          onCancel={() => setCancelTarget(null)}
+          onConfirm={() => {
+            if (cancelTarget == null || cancelRun.isPending) return;
+            void cancelRun.mutateAsync(cancelTarget).then(() => setCancelTarget(null));
+          }}
+        />
+      </div>
+    </>
   );
 };

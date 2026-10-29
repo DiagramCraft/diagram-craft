@@ -2,8 +2,6 @@
   padding: 20px 24px;
   display: flex;
   flex-direction: column;
-  height: 100%;
-  overflow-y: auto;
 }
 
 .header {
@@ -11,6 +9,7 @@
 }
 
 .graphMode {
+  height: 100%;
   overflow: hidden;
 }
 
@@ -35,4 +34,10 @@
 
 .entityLink:hover {
   text-decoration: underline;
+}
+
+.endpoint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }

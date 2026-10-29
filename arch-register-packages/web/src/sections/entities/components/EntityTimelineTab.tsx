@@ -17,6 +17,7 @@ import {
   type TimelineColumnWidths,
   type TimelineZoom
 } from '../../../components/timeline/timelineUtils';
+import { SnapshotChangeList } from './SnapshotChangeList';
 import styles from '../EntityDetailScreen.module.css';
 import { detectConflicts, diffSnapshotState, type SnapshotState } from './entityTimelineHelpers';
 import { EmptyState } from '../../../components/EmptyState';
@@ -30,6 +31,8 @@ import {
   type ChangeCaseMemberEntry
 } from './snapshotDisplay';
 import { getOwnTimelineVersions, getOwnVersionDisplayStatus } from './timelineViewState';
+import { EntityTabPage } from './EntityTabPage';
+import { TbTimeline } from 'react-icons/tb';
 
 type EntityProject = { project: Project; entity_type: ProjectEntity['entity_type'] };
 
@@ -155,10 +158,14 @@ export const EntityTimelineTab = ({
 
   if (!hasData) {
     return (
-      <EmptyState
-        title="No snapshot history yet"
-        subtitle="Snapshots are created automatically when the entity is saved."
-      />
+      <EntityTabPage>
+        <EmptyState
+          framed
+          icon={<TbTimeline size={20} />}
+          title="No snapshot history yet"
+          subtitle="Snapshots are created automatically when the entity is saved."
+        />
+      </EntityTabPage>
     );
   }
 
@@ -510,21 +517,14 @@ const SnapDetail = ({
         {changes.length > 0 && (
           <div className={styles.etlDetailChanges}>
             <div className={styles.etlDetailSectionLabel}>Changes</div>
-            {changes.map(change => (
-              <div key={change.label} className={styles.etlChgRow}>
-                <span className={styles.etlChgField}>{change.label}</span>
-                <span className={styles.etlChgFrom}>{change.from}</span>
-                <span className={styles.etlChgArrow}>→</span>
-                <span className={styles.etlChgTo}>{change.to}</span>
-              </div>
-            ))}
+            <SnapshotChangeList changes={changes} />
           </div>
         )}
 
         {changes.length === 0 && snapshot.source === 'project' && (
           <div className={styles.etlDetailChanges}>
             <div className={styles.etlDetailSectionLabel}>Changes</div>
-            <div className={styles.etlChgRow}>Restricted changes</div>
+            <SnapshotChangeList changes={[]} emptyText="Restricted changes" />
           </div>
         )}
 

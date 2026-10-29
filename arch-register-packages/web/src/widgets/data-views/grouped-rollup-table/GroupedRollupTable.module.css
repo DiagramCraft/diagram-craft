@@ -1,0 +1,17 @@
+.track {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-width: 80px;
+  height: 6px;
+  background: var(--cmp-bg);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  background: var(--accent-fg);
+  border-radius: 3px;
+}

@@ -47,11 +47,12 @@ export class DataModelPage extends WorkspacePage {
   };
 
   deleteSelectedEntityType = async () => {
-    const deleteButton = this.page.getByRole('button', { name: 'Delete type' });
-    if ((await deleteButton.count()) === 0) return;
+    const actionsButton = this.page.getByRole('button', { name: 'Actions', exact: true });
+    if ((await actionsButton.count()) === 0) return;
 
     const deletedName = await this.editorTitle().textContent();
-    await deleteButton.click();
+    await actionsButton.click();
+    await this.page.getByRole('menuitem', { name: 'Delete type' }).click();
     await this.page.getByRole('alertdialog').getByRole('button', { name: 'Delete type' }).click();
     if (deletedName) {
       await expect(this.schemaTypeRow(deletedName)).toHaveCount(0);

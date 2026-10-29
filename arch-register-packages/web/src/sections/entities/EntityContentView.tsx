@@ -1,13 +1,14 @@
 import { useMemo, useRef, useState } from 'react';
+import { useOpenDiagram } from '../diagram/useOpenDiagram';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { TbFileText, TbFolderOpen, TbPlus, TbUpload } from 'react-icons/tb';
-import styles from '../projects/ProjectDetailScreen.module.css';
+import styles from './EntityContentView.module.css';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Title } from '../../components/Title';
-import { AddDiagramDialog } from '../projects/AddDiagramDialog';
+import { AddDiagramDialog } from '../../dialogs/AddDiagramDialog';
 import { AddMarkdownDialog } from '../markdown/AddMarkdownDialog';
-import { AddEntityFolderDialog } from './AddEntityFolderDialog';
+import { AddContentFolderDialog } from '../../components/AddContentFolderDialog';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import {
   DiagramBrowserToolbar,
@@ -39,6 +40,7 @@ type EntityContentViewProps = {
 
 export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityContentViewProps) => {
   const navigate = useNavigate();
+  const { openDiagram, dialog: openDiagramDialog } = useOpenDiagram();
   const search = useSearch({ strict: false }) as EntityDetailSearchParams;
   const scope: ContentScope = useMemo(
     () => ({ kind: 'entity', workspaceId: workspaceSlug, entityId }),
@@ -77,11 +79,13 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
   };
 
   const handleDiagramClick = (fileId: string, projectId: string | null) => {
-    if (projectId) {
-      navigate(projectDiagramRoute(workspaceSlug, asProjectPublicId(projectId), fileId));
-    } else {
-      navigate(entityDiagramRoute(workspaceSlug, asEntityPublicId(entityId), fileId));
-    }
+    void openDiagram(fileId, () => {
+      if (projectId) {
+        navigate(projectDiagramRoute(workspaceSlug, asProjectPublicId(projectId), fileId));
+      } else {
+        navigate(entityDiagramRoute(workspaceSlug, asEntityPublicId(entityId), fileId));
+      }
+    });
   };
 
   const handleMarkdownClick = (fileId: string, mode: 'edit' | 'preview' = 'preview') => {
@@ -110,6 +114,7 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
 
   return (
     <div className={styles.screen}>
+      {openDiagramDialog}
       <div className={styles.header}>
         <Title
           title={folderName}
@@ -169,7 +174,7 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
       <DiagramBrowserView
         hasFilter={filter.length > 0}
         viewMode={viewMode}
-        listItems={filtered.map(file => ({ file, folder }))}
+        listItems={filtered.map(file => ({ file }))}
         gridSections={[
           {
             key: 'entity-content',
@@ -215,6 +220,8 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
         open={addMarkdownOpen}
         onClose={() => setAddMarkdownOpen(false)}
         workspaceSlug={workspaceSlug}
+        scope={scope}
+        folder={folder || null}
         onCreated={file => {
           setAddMarkdownOpen(false);
           handleMarkdownClick(file.id, 'edit');
@@ -233,13 +240,13 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
         isPending={contentOperations.createMarkdown.isPending}
       />
 
-      <AddEntityFolderDialog
+      <AddContentFolderDialog
+        scope={scope}
         open={addFolderOpen}
         onClose={() => setAddFolderOpen(false)}
         onCreated={() => setAddFolderOpen(false)}
-        workspaceSlug={workspaceSlug}
-        entityId={entityId}
         parentFolder={folder}
+        placeholder="e.g. Architecture diagrams"
       />
     </div>
   );

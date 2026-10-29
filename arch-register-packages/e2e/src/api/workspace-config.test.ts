@@ -288,8 +288,9 @@ test.describe('workspace config routes', () => {
     const created = await orpc.governanceWorkflowConfig.upsert({
       params: { workspace: 'default' },
       body: {
+        id: existing!.id,
         case_kind: existing!.case_kind,
-        case_subkind: existing!.case_subkind,
+        case_subkinds: existing!.case_subkinds,
         name: 'Assessment response review',
         description: 'Review submitted assessment responses.',
         enabled: true,
@@ -312,8 +313,9 @@ test.describe('workspace config routes', () => {
     const updated = await orpc.governanceWorkflowConfig.upsert({
       params: { workspace: 'default' },
       body: {
+        id: created.id,
         case_kind: existing!.case_kind,
-        case_subkind: existing!.case_subkind,
+        case_subkinds: existing!.case_subkinds,
         name: 'Updated assessment review',
         description: null,
         enabled: true,
@@ -331,13 +333,92 @@ test.describe('workspace config routes', () => {
         params: { workspace: 'default' },
         body: {
           case_kind: 'assessment.response',
-          case_subkind: null,
+          case_subkinds: [],
           name: '   ',
           enabled: true,
           config: existing!.config
         }
       })
     ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+  });
+
+  test('attaches one workflow to several schemas, rejects overlap and cleans up on schema deletion', async ({
+    orpc,
+    seededUsers: _
+  }) => {
+    const suffix = Math.random().toString(36).slice(2, 8);
+    const createSchema = (letter: string) =>
+      orpc.schemas.create({
+        params: { workspace: 'default' },
+        body: { name: `${letter} ${suffix}` }
+      });
+    const first = await createSchema('Alpha');
+    const second = await createSchema('Bravo');
+    const third = await createSchema('Charlie');
+    const workflow = {
+      case_kind: 'entity.change-case',
+      name: `Shared change review ${suffix}`,
+      enabled: true,
+      config: { extensions: {} }
+    };
+
+    const shared = await orpc.governanceWorkflowConfig.upsert({
+      params: { workspace: 'default' },
+      body: { ...workflow, case_subkinds: [first.id, second.id] }
+    });
+    expect([...shared.case_subkinds].sort()).toEqual([first.id, second.id].sort());
+    expect([...shared.case_subkind_labels].sort()).toEqual([first.name, second.name].sort());
+
+    // Overlap is rejected and names the conflicting schema
+    await expect(
+      orpc.governanceWorkflowConfig.upsert({
+        params: { workspace: 'default' },
+        body: { ...workflow, name: 'Overlapping', case_subkinds: [second.id, third.id] }
+      })
+    ).rejects.toMatchObject({ code: 'CONFLICT', message: expect.stringContaining(second.name) });
+
+    // Pair-scoped kinds cannot be attached to several scopes
+    await expect(
+      orpc.governanceWorkflowConfig.upsert({
+        params: { workspace: 'default' },
+        body: {
+          ...workflow,
+          case_kind: 'field-date-reminder',
+          name: 'Reminder',
+          case_subkinds: [`${first.id}:a`, `${second.id}:b`]
+        }
+      })
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+
+    // Editing the scope in place frees the removed schema
+    const narrowed = await orpc.governanceWorkflowConfig.upsert({
+      params: { workspace: 'default' },
+      body: { ...workflow, id: shared.id, case_subkinds: [first.id] }
+    });
+    expect(narrowed.id).toBe(shared.id);
+    expect(narrowed.case_subkinds).toEqual([first.id]);
+    const widened = await orpc.governanceWorkflowConfig.upsert({
+      params: { workspace: 'default' },
+      body: { ...workflow, id: shared.id, case_subkinds: [first.id, second.id] }
+    });
+    expect(widened.case_subkinds).toHaveLength(2);
+
+    // Deleting one schema shrinks the workflow; deleting the last one removes it
+    await orpc.schemas.remove({ params: { workspace: 'default', id: first.id } });
+    const afterFirst = await orpc.governanceWorkflowConfig.list({
+      params: { workspace: 'default' }
+    });
+    expect(afterFirst.configs.find(row => row.id === shared.id)?.case_subkinds).toEqual([
+      second.id
+    ]);
+
+    await orpc.schemas.remove({ params: { workspace: 'default', id: second.id } });
+    const afterSecond = await orpc.governanceWorkflowConfig.list({
+      params: { workspace: 'default' }
+    });
+    expect(afterSecond.configs.some(row => row.id === shared.id)).toBe(false);
+
+    await orpc.schemas.remove({ params: { workspace: 'default', id: third.id } });
   });
 
   test('configures a workspace capability against a schema and reports invalid bindings', async ({
@@ -409,86 +490,14 @@ test.describe('workspace config routes', () => {
     expect(removed.id).toBe(configured.id);
   });
 
-  test('configures a business glossary against custom term and category schemas', async ({
+  test('rejects configuring a capability that no longer exists', async ({
     orpc,
     seededUsers: _
   }) => {
-    const statusEnum = await orpc.enums.create({
-      params: { workspace: 'default' },
-      body: {
-        name: `Glossary status ${crypto.randomUUID()}`,
-        options: [
-          { value: 'draft', label: 'Draft' },
-          { value: 'approved', label: 'Approved' }
-        ]
-      }
-    });
-    const category = await orpc.schemas.create({
-      params: { workspace: 'default' },
-      body: { name: `Term category ${crypto.randomUUID()}`, fields: [] }
-    });
-    const term = await orpc.schemas.create({
-      params: { workspace: 'default' },
-      body: {
-        name: `Business term ${crypto.randomUUID()}`,
-        fields: [
-          { id: 'definition', name: 'Definition', type: 'longtext' },
-          {
-            id: 'synonyms',
-            name: 'Synonyms',
-            type: 'text',
-            minCardinality: 0,
-            maxCardinality: -1
-          },
-          {
-            id: 'abbreviations',
-            name: 'Abbreviations',
-            type: 'text',
-            minCardinality: 0,
-            maxCardinality: -1
-          },
-          {
-            id: 'categories',
-            name: 'Categories',
-            type: 'reference',
-            schemaId: category.id,
-            minCount: 0,
-            maxCount: -1
-          },
-          { id: 'status', name: 'Status', type: 'select', enumId: statusEnum.id }
-        ]
-      }
-    });
-
-    const configured = await orpc.config.capabilityConfigurations.upsert({
-      params: { workspace: 'default', type: 'business-glossary' },
-      body: {
-        bindings: {
-          term: { target: { kind: 'entity_schema', id: term.id } },
-          category: { target: { kind: 'entity_schema', id: category.id } }
-        }
-      }
-    });
-
-    expect(configured).toMatchObject({
-      type: 'business-glossary',
-      valid: true,
-      bindings: {
-        term: { target: { kind: 'entity_schema', id: term.id } },
-        category: { target: { kind: 'entity_schema', id: category.id } }
-      },
-      diagnostics: []
-    });
-
     await expect(
       orpc.config.capabilityConfigurations.upsert({
         params: { workspace: 'default', type: 'business-glossary' },
-        body: {
-          bindings: {
-            term: { target: { kind: 'entity_schema', id: term.id } },
-            category: { target: { kind: 'entity_schema', id: term.id } }
-          }
-        }
+        body: { bindings: {} }
       })
     ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
   });
@@ -870,10 +879,6 @@ test.describe('workspace config routes', () => {
     );
     expect(initial.installed_application_ids).toContain('risk-compliance');
     expect(initial.accessible_application_ids).toEqual(['home']);
-    await expect(
-      memberOrpc.glossary.config({ params: { workspace: 'default' } })
-    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
-
     await orpc.config.applicationAccess.update({
       params: { workspace: 'default', applicationId: 'business-glossary' },
       body: { mode: 'all_members', user_ids: [], team_ids: [] }
@@ -882,12 +887,6 @@ test.describe('workspace config routes', () => {
       params: { workspace: 'default' }
     });
     expect(allMembers.accessible_application_ids).toContain('business-glossary');
-    await expect(
-      memberOrpc.glossary.config({ params: { workspace: 'default' } })
-    ).resolves.toMatchObject({
-      termSchemaId: expect.any(String),
-      categorySchemaId: expect.any(String)
-    });
 
     await orpc.config.applicationAccess.update({
       params: { workspace: 'default', applicationId: 'business-glossary' },
@@ -905,6 +904,37 @@ test.describe('workspace config routes', () => {
       params: { workspace: 'default' }
     });
     expect(reset.accessible_application_ids).toEqual(['home']);
+  });
+
+  test('rejects application management for members without dashboard management', async ({
+    server,
+    orpc,
+    seededUsers
+  }) => {
+    await orpc.config.members.updateRole({
+      params: { workspace: 'default', id: seededUsers.configUserId },
+      body: { roleId: 'viewer' }
+    });
+    const memberOrpc = createTestORPCClient(
+      server.baseUrl,
+      await makeAuthHeader(server.db, seededUsers.configUserId)
+    );
+    const params = { workspace: 'default' };
+
+    await expect(
+      memberOrpc.workspaceApplications.create({ params, body: { key: 'viewer-app', name: 'Nope' } })
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+
+    const [first] = await orpc.workspaceApplications.list({ params });
+    await expect(
+      memberOrpc.workspaceApplications.update({
+        params: { ...params, id: first!.id },
+        body: { name: 'Renamed by viewer' }
+      })
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(
+      memberOrpc.workspaceApplications.remove({ params: { ...params, id: first!.id } })
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
   });
 
   test('workspace config routes return 401 without auth and 404 for unknown workspaces', async ({

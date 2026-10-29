@@ -153,9 +153,7 @@ describe('validateEntitySearch', () => {
     expect(validateEntitySearch({ entityQuery }).entityQuery).toBe(entityQuery);
   });
 
-  it('maps the former Filters tab to Home and accepts the Baselines tab', () => {
-    expect(validateEntitySearch({ sidebarTab: 'filters' }).sidebarTab).toBe('home');
-    expect(validateEntitySearch({ sidebarTab: 'baselines' }).sidebarTab).toBe('baselines');
+  it('accepts a baselineId', () => {
     expect(validateEntitySearch({ baselineId: 'baseline-1' }).baselineId).toBe('baseline-1');
   });
 
@@ -171,8 +169,7 @@ describe('validateEntitySearch', () => {
         sort: 'owner',
         projectScope: 'all',
         viewConfigs:
-          '{"radar":{"schemaId":"application"},"timeline":{"groupBy":"owner"},"map":{"levels":2},"explore":{"leftDepth":2,"rightDepth":1,"relationFieldNames":["Depends On"]}}',
-        sidebarTab: 'views'
+          '{"radar":{"schemaId":"application"},"timeline":{"groupBy":"owner"},"nested-map":{"levels":2},"relation-columns":{"leftDepth":2,"rightDepth":1,"relationFieldNames":["Depends On"]}}'
       })
     ).toEqual({
       type: 'application',
@@ -184,8 +181,7 @@ describe('validateEntitySearch', () => {
       sort: 'owner',
       projectScope: 'all',
       viewConfigs:
-        '{"radar":{"schemaId":"application"},"timeline":{"groupBy":"owner"},"map":{"levels":2},"explore":{"leftDepth":2,"rightDepth":1,"relationFieldNames":["Depends On"]}}',
-      sidebarTab: 'views',
+        '{"radar":{"schemaId":"application"},"timeline":{"groupBy":"owner"},"nested-map":{"levels":2},"relation-columns":{"leftDepth":2,"rightDepth":1,"relationFieldNames":["Depends On"]}}',
       filters: undefined
     });
   });
@@ -194,8 +190,7 @@ describe('validateEntitySearch', () => {
     expect(
       validateEntitySearch({
         type: 123,
-        viewMode: 'kanban',
-        sidebarTab: 'other'
+        viewMode: 'kanban'
       })
     ).toEqual({
       type: undefined,
@@ -207,7 +202,6 @@ describe('validateEntitySearch', () => {
       sort: undefined,
       projectScope: undefined,
       viewConfigs: undefined,
-      sidebarTab: undefined,
       filters: undefined
     });
   });
@@ -241,7 +235,6 @@ describe('validateProjectSearch', () => {
       sort: 'date:goLive',
       projectScope: 'project',
       viewConfigs: undefined,
-      sidebarTab: undefined,
       filters: '[{"fieldId":"_schemaId","op":"equals","value":"application"}]',
       contentQuery: 'diagram',
       contentView: 'list'

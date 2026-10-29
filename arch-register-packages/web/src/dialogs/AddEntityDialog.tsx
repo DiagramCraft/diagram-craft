@@ -1,17 +1,14 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
-import { FormElement } from '@diagram-craft/app-components/FormElement';
-import { FormGroup } from '@diagram-craft/app-components/FormGroup';
 import { Select } from '@diagram-craft/app-components/Select';
-import { TextArea } from '@diagram-craft/app-components/TextArea';
-import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { orpcClient } from '../lib/orpcClient';
 import { ApiError } from '../lib/http';
 import { Banner } from '../components/Banner';
+import { EntityFormFields } from '../components/EntityFormFields';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import { useWorkspaceAuthorization } from '../auth/WorkspaceAuthorizationContext';
 import { useEntitiesBySchema } from '../hooks/useEntities';
-import { TbInfoCircle, TbAdjustments } from 'react-icons/tb';
 import styles from './AddEntityDialog.module.css';
 import {
   EntitySchema,
@@ -20,10 +17,13 @@ import {
 import type { FieldGroupAccess } from '@arch-register/permissions';
 import type { EntitySummary } from '@arch-register/api-types/entityContract';
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
-import { EntityFieldInput } from './EntityFieldInput';
-import { applyEntityTemplate, createEntityFormDefaults } from '../lib/entityTemplates';
+import {
+  applyEntityTemplate,
+  createEntityFormDefaults,
+  type EntityFormDefaults
+} from '../lib/entityTemplates';
+import type { EntityEditState } from '../lib/entityEditState';
 import { useAutoFocus } from '../hooks/useAutoFocus';
-import { useSupportedCurrencies } from '../hooks/useWorkspaceConfig';
 import { resolveGroupAccessControl } from '../lib/fieldGroupAccess';
 
 type EntityApiResponse = {
@@ -32,13 +32,22 @@ type EntityApiResponse = {
   [key: string]: unknown;
 };
 
-const getRelationFieldValue = (value: unknown): string[] =>
-  Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
+// The form is one flat edit state (the same shape the change case editor uses): metadata under
+// `_`-prefixed keys, schema fields under their field id.
+const toFormState = (name: string, defaults: EntityFormDefaults): EntityEditState => ({
+  ...defaults.fields,
+  _name: name,
+  _description: defaults.meta.description,
+  _owner: defaults.meta.owner,
+  _lifecycle: defaults.meta.lifecycle,
+  _namespace: defaults.meta.namespace,
+  _tags: defaults.meta.tags
+});
 
 type AddEntityDialogProps = {
   open: boolean;
   onClose: () => void;
-  onCreated: (entity: EntityApiResponse) => void;
+  onCreated?: (entity: EntityApiResponse) => void;
   onDraftCreated?: (state: Record<string, unknown>) => void;
   draftMode?: boolean;
   referenceOptionsExtra?: Record<string, EntitySummary[]>;
@@ -66,17 +75,10 @@ export const AddEntityDialog = ({
   const [schemaId, setSchemaId] = useState('');
   const [templateId, setTemplateId] = useState('');
   const [templateWarnings, setTemplateWarnings] = useState<string[]>([]);
-  const [entityName, setEntityName] = useState('');
-  const [fields, setFields] = useState<Record<string, unknown>>({});
-  const [meta, setMeta] = useState({
-    description: '',
-    owner: '',
-    lifecycle: '',
-    namespace: 'default',
-    tags: ''
-  });
+  const [form, setForm] = useState<EntityEditState>(() =>
+    toFormState('', createEntityFormDefaults())
+  );
   const [error, setError] = useState('');
-  const currencyConfig = useSupportedCurrencies(workspaceId, open);
   const [submitting, setSubmitting] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
   useAutoFocus(nameRef, { enabled: open });
@@ -90,14 +92,12 @@ export const AddEntityDialog = ({
     if (open) {
       const initial = preselectedSchemaId ?? schemas[0]?.id ?? '';
       setSchemaId(initial);
-      setEntityName('');
       const baseline = createEntityFormDefaults(
         canCreateWithoutOwner ? '' : (creatableTeams[0]?.id ?? '')
       );
       setTemplateId('');
       setTemplateWarnings([]);
-      setFields(baseline.fields);
-      setMeta(baseline.meta);
+      setForm(toFormState('', baseline));
       setError('');
     }
   }, [canCreateWithoutOwner, creatableTeams, open, preselectedSchemaId, schemas]);
@@ -165,7 +165,7 @@ export const AddEntityDialog = ({
         ? [`${field.name} contains unavailable entities`]
         : [];
     });
-    setFields(current => {
+    setForm(current => {
       let changed = false;
       const next = { ...current };
       for (const field of relationshipFields) {
@@ -198,9 +198,11 @@ export const AddEntityDialog = ({
     );
     setTemplateId(nextTemplateId);
     setTemplateWarnings([]);
+    // The name is typed independently of the template, so it survives a template change.
+    const keepName = (applied: EntityFormDefaults) =>
+      setForm(current => toFormState((current['_name'] as string) ?? '', applied));
     if (!schema || !nextTemplateId) {
-      setFields(baseline.fields);
-      setMeta(baseline.meta);
+      keepName(baseline);
       return;
     }
     const template = schema.templates.find(item => item.id === nextTemplateId);
@@ -218,20 +220,17 @@ export const AddEntityDialog = ({
         ])
       )
     });
-    setFields(applied.fields);
-    setMeta(applied.meta);
+    keepName(applied);
     setTemplateWarnings(applied.warnings);
   };
-
-  const setField = (id: string, value: unknown) => setFields(f => ({ ...f, [id]: value }));
-  const setMetaField = (key: string, value: string) => setMeta(m => ({ ...m, [key]: value }));
 
   const handleSubmit = async () => {
     if (!schemaId) {
       setError('Please select a schema type');
       return;
     }
-    if (!entityName.trim()) {
+    const entityName = ((form['_name'] as string) ?? '').trim();
+    if (!entityName) {
       setError('Name is required');
       return;
     }
@@ -244,11 +243,11 @@ export const AddEntityDialog = ({
       for (const f of selectedSchema.fields) {
         if (fieldAccessById.get(f.id) === 'none') continue;
         if (f.type === 'typedRelation') continue;
-        const val = fields[f.id];
+        const val = form[f.id];
         const isEmptyArray = Array.isArray(val) && val.length === 0;
         if (val !== undefined && val !== '' && !isEmptyArray) {
           if (f.type === 'boolean') {
-            dataFields[f.id] = val === 'true';
+            dataFields[f.id] = val === true || val === 'true';
           } else if (f.type === 'number') {
             dataFields[f.id] = Number(val);
           } else {
@@ -258,19 +257,20 @@ export const AddEntityDialog = ({
       }
     }
 
-    const tags = meta.tags
+    const tags = ((form['_tags'] as string) ?? '')
       .split(',')
       .map(s => s.trim())
       .filter(Boolean);
-    const owner = meta.owner.trim();
-    const namespace = meta.namespace.trim();
+    const owner = ((form['_owner'] as string) ?? '').trim();
+    const lifecycle = (form['_lifecycle'] as string) ?? '';
+    const namespace = ((form['_namespace'] as string) ?? '').trim();
 
     const body = {
       _schemaId: schemaId,
-      _name: entityName.trim(),
-      _description: meta.description.trim(),
+      _name: entityName,
+      _description: ((form['_description'] as string) ?? '').trim(),
       _owner: owner === '' ? null : owner,
-      _lifecycle: meta.lifecycle === '' ? null : meta.lifecycle,
+      _lifecycle: lifecycle === '' ? null : lifecycle,
       _namespace: namespace === '' ? 'default' : namespace,
       _tags: tags,
       _links: [],
@@ -280,11 +280,8 @@ export const AddEntityDialog = ({
     if (draftMode) {
       onDraftCreated?.({
         schema_id: schemaId,
-        name: entityName.trim(),
-        slug: entityName
-          .trim()
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, '-'),
+        name: entityName,
+        slug: entityName.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
         namespace: body._namespace,
         description: body._description,
         owner: body._owner,
@@ -305,7 +302,7 @@ export const AddEntityDialog = ({
         params: { workspace: workspaceId },
         body
       });
-      onCreated(entity);
+      onCreated?.(entity);
       onClose();
     } catch (err) {
       if (err instanceof ApiError) {
@@ -323,7 +320,7 @@ export const AddEntityDialog = ({
       open={open}
       onClose={onClose}
       title="New entity"
-      width="min(1040px, calc(100vw - 48px))"
+      width="min(640px, calc(100vw - 48px))"
       buttons={[
         { label: 'Cancel', type: 'cancel', onClick: onClose },
         {
@@ -389,115 +386,20 @@ export const AddEntityDialog = ({
           </div>
         </div>
 
-        {/* Name field */}
-        <FormElement label="Name" required>
-          <TextInput
-            ref={nameRef}
-            value={entityName}
-            onChange={value => setEntityName(value ?? '')}
-            placeholder="Entity name"
-            style={{ width: '100%' }}
-          />
-        </FormElement>
-
-        <div className={styles.contentGrid}>
-          {/* Schema-specific fields */}
-          <FormGroup label="Properties" icon={<TbAdjustments size={12} />}>
-            {selectedSchema && (
-              <div className={styles.propertiesList}>
-                {selectedSchema.fields
-                  .filter(
-                    f =>
-                      f.id !== 'name' &&
-                      f.type !== 'derived' &&
-                      // typedRelation instances aren't part of the entity's data blob and have no
-                      // create-flow editor yet (#2606) — set them after creation instead.
-                      f.type !== 'typedRelation' &&
-                      fieldAccessById.get(f.id) !== 'none'
-                  )
-                  .map(f => (
-                    <EntityFieldInput
-                      key={f.id}
-                      field={f}
-                      value={
-                        f.type === 'reference' || f.type === 'containment'
-                          ? getRelationFieldValue(fields[f.id])
-                          : f.type === 'currency'
-                            ? fields[f.id]
-                            : ((fields[f.id] ?? '') as string)
-                      }
-                      onChange={v => setField(f.id, v)}
-                      referenceOptions={derivedReferenceOptions}
-                      currencyOptions={currencyConfig.data?.currencies}
-                      defaultCurrency={currencyConfig.data?.default_currency}
-                      disabled={fieldAccessById.get(f.id) === 'view'}
-                    />
-                  ))}
-              </div>
-            )}
-          </FormGroup>
-
-          {/* Metadata */}
-          <FormGroup label="Metadata" icon={<TbInfoCircle size={11} />}>
-            <FormElement label="Description" required={false}>
-              <TextArea
-                value={meta.description}
-                onChange={value => setMetaField('description', value ?? '')}
-                placeholder="Brief description of this entity"
-                rows={3}
-                style={{ width: '100%' }}
-              />
-            </FormElement>
-            <div className={styles.row}>
-              <FormElement label="Owner" required={false}>
-                <Select.Root
-                  value={meta.owner ?? undefined}
-                  onChange={value => setMetaField('owner', value ?? '')}
-                  placeholder="—"
-                  style={{ width: '100%' }}
-                >
-                  {creatableTeams.map(team => (
-                    <Select.Item key={team.id} value={team.id}>
-                      {team.name}
-                    </Select.Item>
-                  ))}
-                </Select.Root>
-              </FormElement>
-              <FormElement label="Lifecycle" required={false}>
-                <Select.Root
-                  value={meta.lifecycle ?? undefined}
-                  onChange={value => setMetaField('lifecycle', value ?? '')}
-                  placeholder="—"
-                  style={{ width: '100%' }}
-                >
-                  {lifecycleStates.map(s => (
-                    <Select.Item key={s.id} value={s.id}>
-                      {s.label}
-                    </Select.Item>
-                  ))}
-                </Select.Root>
-              </FormElement>
-            </div>
-            <div className={styles.row}>
-              <FormElement label="Namespace" required={false}>
-                <TextInput
-                  value={meta.namespace}
-                  onChange={value => setMetaField('namespace', value ?? '')}
-                  placeholder="default"
-                  style={{ width: '100%' }}
-                />
-              </FormElement>
-              <FormElement label="Tags" required={false}>
-                <TextInput
-                  value={meta.tags}
-                  onChange={value => setMetaField('tags', value ?? '')}
-                  placeholder="comma-separated"
-                  style={{ width: '100%' }}
-                />
-              </FormElement>
-            </div>
-          </FormGroup>
-        </div>
+        <EntityFormFields
+          workspaceId={workspaceId}
+          schema={selectedSchema ?? null}
+          state={form}
+          setState={updater => setForm(updater)}
+          teams={creatableTeams}
+          lifecycleStates={lifecycleStates}
+          referenceOptions={derivedReferenceOptions}
+          fieldAccessById={fieldAccessById}
+          showNamespaceAndTags
+          nameRequired
+          allowNoOwner={canCreateWithoutOwner}
+          nameRef={nameRef}
+        />
 
         {error && <Banner variant="error">{error}</Banner>}
         {templateWarnings.length > 0 && (

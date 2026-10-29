@@ -7,6 +7,8 @@ import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import { isNowDateLiteral } from '@arch-register/api-types/nowDateLiteral';
 import styles from './FilterBuilder.module.css';
 import { EmptyState } from './EmptyState';
+import { DurationInput, type DurationInputValue } from './DurationInput';
+import { daysToDuration, durationToDays } from '../utils/durationFormat';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import {
   WorkspaceLifecycleState,
@@ -31,6 +33,21 @@ export const TEXT_OPERATORS = [
   { value: 'empty', label: 'Is empty' },
   { value: 'not_empty', label: 'Is not empty' }
 ];
+
+// Multi-value membership. Offered only where a row opts in (`allowIn`) - the visual query builder -
+// because its value is an array (literal values and/or `$variable` references) rather than a scalar.
+export const IN_OPERATOR = { value: 'in', label: 'Is any of' };
+
+const withIn = (ops: { value: string; label: string }[]) => {
+  const emptyIdx = ops.findIndex(o => o.value === 'empty');
+  return [...ops.slice(0, emptyIdx), IN_OPERATOR, ...ops.slice(emptyIdx)];
+};
+
+const parseInValue = (raw: string): string[] =>
+  raw
+    .split(',')
+    .map(v => v.trim())
+    .filter(v => v !== '');
 
 export const DATE_OPERATORS = [
   { value: 'on', label: 'On' },
@@ -83,7 +100,16 @@ export type FieldDef = {
   // 'freetext' is not a real schema field - the visual query builder injects one synthetic
   // 'freetext' entry so a condition row's field picker can also switch the row to a root
   // free-text clause. It has no operator; the row collapses to a single text input.
-  type: 'text' | 'date' | 'select' | 'boolean' | 'number' | 'rating' | 'presence' | 'freetext';
+  type:
+    | 'text'
+    | 'date'
+    | 'select'
+    | 'boolean'
+    | 'number'
+    | 'duration'
+    | 'rating'
+    | 'presence'
+    | 'freetext';
   options?: { value: string; label: string }[];
 };
 
@@ -116,6 +142,9 @@ export const getSchemaFieldDefs = (
         const en = enums.find(e => e.id === f.enumId);
         options = en?.options ?? [];
       } else if (f.type === 'boolean') type = 'boolean';
+      // Duration filters are stored as a number of days; stored values in other units are
+      // normalised by the server.
+      else if (f.type === 'duration') type = 'duration';
       else if (f.type === 'number' || f.type === 'currency') type = 'number';
       else if (f.type === 'derived') {
         type =
@@ -123,7 +152,7 @@ export const getSchemaFieldDefs = (
             ? 'select'
             : f.resultType === 'rating'
               ? 'rating'
-              : f.resultType === 'currency'
+              : f.resultType === 'currency' || f.resultType === 'duration'
                 ? 'number'
                 : f.resultType;
         if (type === 'select') options = f.options ?? [];
@@ -162,6 +191,7 @@ export const getEntityFilterFieldDefs = ({
   const builtIn: FieldDef[] = [
     { id: '_name', name: 'Name', type: 'text' },
     { id: '_slug', name: 'Slug', type: 'text' },
+    { id: '_id', name: 'ID', type: 'text' },
     {
       id: '_owner',
       name: 'Owner',
@@ -231,6 +261,34 @@ export const getEntityFilterFieldDefs = ({
     : [];
 
   return [...builtIn, ...schemaFields, ...assessmentFields];
+};
+
+/** The operator a condition starts with when its field is chosen. */
+export const defaultOpForField = (field: FieldDef): FilterCondition['op'] => {
+  if (field.type === 'date') return 'on';
+  if (field.type === 'select' || field.type === 'number' || field.type === 'duration') {
+    return 'equals';
+  }
+  if (field.type === 'rating') return 'gte';
+  if (field.type === 'presence') return 'not_empty';
+  return 'contains';
+};
+
+/** Applies `updates` to a condition, resetting its operator and value when the field changes. */
+export const applyConditionUpdate = (
+  condition: FilterCondition,
+  updates: Partial<FilterCondition>,
+  fields: FieldDef[]
+): FilterCondition => {
+  const updated = { ...condition, ...updates };
+  if (updates.fieldId) {
+    const field = fields.find(f => f.id === updates.fieldId);
+    if (field) {
+      updated.op = defaultOpForField(field);
+      updated.value = '';
+    }
+  }
+  return updated;
 };
 
 type Props = {
@@ -312,22 +370,7 @@ export const FilterBuilder = ({
 
   const updateCondition = (index: number, updates: Partial<FilterCondition>) => {
     const next = [...conditions];
-    const updated = { ...next[index]!, ...updates };
-
-    // Reset op/value if field changed
-    if (updates.fieldId) {
-      const field = fields.find(f => f.id === updates.fieldId);
-      if (field) {
-        if (field.type === 'date') updated.op = 'on';
-        else if (field.type === 'select' || field.type === 'number') updated.op = 'equals';
-        else if (field.type === 'rating') updated.op = 'gte';
-        else if (field.type === 'presence') updated.op = 'not_empty';
-        else updated.op = 'contains';
-        updated.value = '';
-      }
-    }
-
-    next[index] = updated;
+    next[index] = applyConditionUpdate(next[index]!, updates, fields);
     onChange(next);
   };
 
@@ -376,7 +419,8 @@ export const FilterRow = ({
   fields,
   onUpdate,
   onRemove,
-  hideRemove = false
+  hideRemove = false,
+  allowIn = false
 }: {
   condition: FilterCondition;
   fields: FieldDef[];
@@ -385,32 +429,59 @@ export const FilterRow = ({
   // The visual query builder owns a single remove control per condition row (top-right), so it
   // suppresses FilterRow's own trailing X to avoid two X buttons on the same row.
   hideRemove?: boolean;
+  // Adds the multi-value "Is any of" operator for text and select fields.
+  allowIn?: boolean;
 }) => {
   const field = fields.find(f => f.id === condition.fieldId) ?? fields[0]!;
 
   // Local draft value for text inputs — only committed on Enter to avoid per-keystroke requests
-  const [localTextValue, setLocalTextValue] = React.useState((condition.value as string) ?? '');
+  const isIn = condition.op === 'in';
+  const toDraft = (value: unknown) =>
+    Array.isArray(value) ? value.join(', ') : ((value as string) ?? '');
+  const [localTextValue, setLocalTextValue] = React.useState(toDraft(condition.value));
   // biome-ignore lint/correctness/useExhaustiveDependencies: fieldId is intentional — resets localTextValue when field changes, even if condition.value was already ''
   React.useEffect(() => {
-    setLocalTextValue((condition.value as string) ?? '');
+    setLocalTextValue(toDraft(condition.value));
+  }, [condition.fieldId, condition.value]);
+
+  // Duration filters store a day count; the draft keeps the chosen unit, which the day count
+  // alone cannot (12 months and 1 year are the same number of days).
+  const [durationDraft, setDurationDraft] = React.useState<DurationInputValue>(() =>
+    typeof condition.value === 'number' ? daysToDuration(condition.value) : {}
+  );
+  // biome-ignore lint/correctness/useExhaustiveDependencies: only re-derive the draft when the stored value no longer matches it
+  React.useEffect(() => {
+    const draftDays =
+      durationDraft.amount === undefined
+        ? undefined
+        : durationDraft.amount *
+          (durationToDays({ amount: 1, unit: durationDraft.unit ?? 'years' }) ?? 1);
+    const stored = typeof condition.value === 'number' ? condition.value : undefined;
+    if (stored !== draftDays) {
+      setDurationDraft(stored === undefined ? {} : daysToDuration(stored));
+    }
   }, [condition.fieldId, condition.value]);
 
   const commitTextValue = () =>
-    onUpdate({
-      // `rating` keeps its numeric value in the IR; text / number / free text stay strings, as
-      // before this row switched from a raw <input> to the shared TextInput.
-      value:
-        field.type === 'rating' && localTextValue !== '' ? Number(localTextValue) : localTextValue
-    });
+    isIn
+      ? onUpdate({ value: parseInValue(localTextValue) })
+      : onUpdate({
+          // `rating` keeps its numeric value in the IR; text / number / free text stay strings, as
+          // before this row switched from a raw <input> to the shared TextInput.
+          value:
+            field.type === 'rating' && localTextValue !== ''
+              ? Number(localTextValue)
+              : localTextValue
+        });
 
   const operators = React.useMemo(() => {
     if (field.type === 'date') return DATE_OPERATORS;
-    if (field.type === 'select') return SELECT_OPERATORS;
-    if (field.type === 'number') return NUMBER_OPERATORS;
+    if (field.type === 'select') return allowIn ? withIn(SELECT_OPERATORS) : SELECT_OPERATORS;
+    if (field.type === 'number' || field.type === 'duration') return NUMBER_OPERATORS;
     if (field.type === 'rating') return RATING_OPERATORS;
     if (field.type === 'presence') return PRESENCE_OPERATORS;
-    return TEXT_OPERATORS;
-  }, [field.type]);
+    return allowIn ? withIn(TEXT_OPERATORS) : TEXT_OPERATORS;
+  }, [field.type, allowIn]);
 
   const isFreeText = field.type === 'freetext';
   const showValueInput = isFreeText || (condition.op !== 'empty' && condition.op !== 'not_empty');
@@ -421,6 +492,7 @@ export const FilterRow = ({
       onBlur={e => {
         if (
           (field.type === 'text' ||
+            isIn ||
             field.type === 'number' ||
             field.type === 'rating' ||
             isFreeText) &&
@@ -444,7 +516,19 @@ export const FilterRow = ({
           <div className={styles.tokOp}>
             <Select.Root
               value={condition.op}
-              onChange={v => onUpdate({ op: v as FilterCondition['op'] })}
+              onChange={v => {
+                const op = v as FilterCondition['op'];
+                // Convert the value between scalar and array shape when crossing the `in` boundary.
+                if (op === 'in' && !isIn) {
+                  const current = typeof condition.value === 'string' ? condition.value : '';
+                  onUpdate({ op, value: parseInValue(current) });
+                } else if (op !== 'in' && isIn) {
+                  const first = Array.isArray(condition.value) ? condition.value[0] : undefined;
+                  onUpdate({ op, value: typeof first === 'string' ? first : '' });
+                } else {
+                  onUpdate({ op });
+                }
+              }}
             >
               {operators.map(o => (
                 <Select.Item key={o.value} value={o.value}>
@@ -458,7 +542,16 @@ export const FilterRow = ({
 
       {showValueInput && (
         <div className={styles.rowBody}>
-          {field.type === 'select' ? (
+          {isIn ? (
+            <TextInput
+              value={localTextValue}
+              placeholder="value, value, $variable"
+              onChange={v => setLocalTextValue(v ?? '')}
+              onKeyDown={(e: React.KeyboardEvent) => {
+                if (e.key === 'Enter') commitTextValue();
+              }}
+            />
+          ) : field.type === 'select' ? (
             <Select.Root value={condition.value as string} onChange={v => onUpdate({ value: v })}>
               {field.options?.map(o => (
                 <Select.Item key={o.value} value={o.value}>
@@ -511,6 +604,20 @@ export const FilterRow = ({
                 </button>
               </div>
             )
+          ) : field.type === 'duration' ? (
+            <DurationInput
+              value={durationDraft}
+              onChange={next => {
+                setDurationDraft(next);
+                onUpdate({
+                  value:
+                    next.amount === undefined
+                      ? ''
+                      : next.amount *
+                        (durationToDays({ amount: 1, unit: next.unit ?? 'years' }) ?? 1)
+                });
+              }}
+            />
           ) : field.type === 'number' || field.type === 'rating' ? (
             <TextInput
               type="number"

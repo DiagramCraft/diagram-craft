@@ -1,3 +1,4 @@
+import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { useState, type RefCallback } from 'react';
 
 import { TbEye, TbDots } from 'react-icons/tb';
@@ -139,6 +140,16 @@ export const DocumentFieldRow = ({
 
   return (
     <FieldConfig
+      description={
+        <FieldConfig.Cell label="Description">
+          <TextArea
+            rows={5}
+            value={field.description ?? ''}
+            allowMaximize={false}
+            onChange={value => onUpdate({ description: value?.trim() ? value : undefined })}
+          />
+        </FieldConfig.Cell>
+      }
       dragHandleRef={dragHandleRef}
       options={options}
       menu={

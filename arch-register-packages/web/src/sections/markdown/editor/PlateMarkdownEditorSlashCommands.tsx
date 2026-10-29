@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { PlateElement, useEditorRef } from 'platejs/react';
@@ -6,7 +6,12 @@ import type { PlateElementProps } from 'platejs/react';
 import type { TElement } from 'platejs';
 import { toggleList } from '@platejs/list';
 import { getNodeText } from './EditorBlock';
-import { MDX_COMPONENTS } from '../mdx-components/mdxRegistry';
+import { getWidgetDefinitions } from '../../../widgets/shared/widgetRegistry';
+import {
+  WIDGET_CATEGORIES,
+  type WidgetCategory,
+  matchesCatalogSearch
+} from '../../../widgets/shared/widgetCategories';
 import styles from './PlateMarkdownEditor.module.css';
 
 type PlateEditor = ReturnType<typeof useEditorRef>;
@@ -63,6 +68,8 @@ export type SlashCommandItem = {
   description: string;
   icon: ReactNode;
   keywords?: string[];
+  /** Shared catalog category shown above the item in the menu. */
+  category: WidgetCategory;
   onSelect: (editor: PlateEditor) => void;
 };
 
@@ -70,6 +77,7 @@ export type SlashCommandItem = {
 export const BUILTIN_SLASH_COMMANDS: SlashCommandItem[] = [
   {
     key: 'h1',
+    category: 'basic-blocks',
     label: 'Heading 1',
     description: 'Large section heading',
     icon: (
@@ -82,6 +90,7 @@ export const BUILTIN_SLASH_COMMANDS: SlashCommandItem[] = [
   },
   {
     key: 'h2',
+    category: 'basic-blocks',
     label: 'Heading 2',
     description: 'Medium section heading',
     icon: (
@@ -94,6 +103,7 @@ export const BUILTIN_SLASH_COMMANDS: SlashCommandItem[] = [
   },
   {
     key: 'h3',
+    category: 'basic-blocks',
     label: 'Heading 3',
     description: 'Small section heading',
     icon: (
@@ -106,6 +116,7 @@ export const BUILTIN_SLASH_COMMANDS: SlashCommandItem[] = [
   },
   {
     key: 'p',
+    category: 'basic-blocks',
     label: 'Paragraph',
     description: 'Plain text paragraph',
     icon: <span className={styles.slashIcon}>¶</span>,
@@ -114,6 +125,7 @@ export const BUILTIN_SLASH_COMMANDS: SlashCommandItem[] = [
   },
   {
     key: 'ul',
+    category: 'basic-blocks',
     label: 'Bulleted List',
     description: 'Unordered list',
     icon: <span className={styles.slashIcon}>•</span>,
@@ -122,6 +134,7 @@ export const BUILTIN_SLASH_COMMANDS: SlashCommandItem[] = [
   },
   {
     key: 'ol',
+    category: 'basic-blocks',
     label: 'Numbered List',
     description: 'Ordered list',
     icon: <span className={styles.slashIcon}>1.</span>,
@@ -130,6 +143,7 @@ export const BUILTIN_SLASH_COMMANDS: SlashCommandItem[] = [
   },
   {
     key: 'checklist',
+    category: 'basic-blocks',
     label: 'Checklist',
     description: 'List of tasks with checkboxes',
     icon: <span className={styles.slashIcon}>☑</span>,
@@ -138,6 +152,7 @@ export const BUILTIN_SLASH_COMMANDS: SlashCommandItem[] = [
   },
   {
     key: 'code',
+    category: 'basic-blocks',
     label: 'Code Block',
     description: 'Fenced code block',
     icon: (
@@ -154,6 +169,7 @@ export const BUILTIN_SLASH_COMMANDS: SlashCommandItem[] = [
   },
   {
     key: 'blockquote',
+    category: 'basic-blocks',
     label: 'Quote',
     description: 'Blockquote callout',
     icon: <span className={styles.slashIcon}>"</span>,
@@ -163,6 +179,7 @@ export const BUILTIN_SLASH_COMMANDS: SlashCommandItem[] = [
   },
   {
     key: 'table',
+    category: 'basic-blocks',
     label: 'Table',
     description: 'Insert a table',
     icon: <span className={styles.slashIcon}>⊞</span>,
@@ -190,6 +207,7 @@ export const BUILTIN_SLASH_COMMANDS: SlashCommandItem[] = [
   },
   {
     key: 'hr',
+    category: 'basic-blocks',
     label: 'Divider',
     description: 'Horizontal rule',
     icon: <span className={styles.slashIcon}>—</span>,
@@ -221,18 +239,25 @@ export const BUILTIN_SLASH_COMMANDS: SlashCommandItem[] = [
   }
 ];
 
-// MDX component slash commands — derived from the registry
-export const MDX_SLASH_COMMANDS: SlashCommandItem[] = Object.entries(MDX_COMPONENTS).flatMap(
-  ([, spec]) => {
-    const cmd = spec.editorSpec?.slashCommand;
-    if (!cmd) return [];
+// MDX component slash commands are read from the same categorized definitions
+// as dashboard widgets.
+export const MDX_SLASH_COMMANDS: SlashCommandItem[] = getWidgetDefinitions('mdx').flatMap(
+  definition => {
+    const cmd = definition.mdx.editorSpec?.slashCommand;
+    const Icon = definition.icon;
+    if (!cmd || !Icon) return [];
     return [
       {
-        key: cmd.key,
-        label: cmd.label,
-        description: cmd.description,
-        icon: <span className={styles.slashIcon}>{cmd.icon}</span>,
-        keywords: cmd.keywords,
+        key: definition.type,
+        label: definition.name,
+        description: definition.description,
+        icon: (
+          <span className={styles.slashIcon}>
+            <Icon size={14} />
+          </span>
+        ),
+        keywords: definition.keywords,
+        category: definition.category,
         onSelect: (editor: PlateEditor) =>
           cmd.onSelect(editor, { insertOrReplaceBlock, insertOrReplaceInline })
       }
@@ -240,10 +265,10 @@ export const MDX_SLASH_COMMANDS: SlashCommandItem[] = Object.entries(MDX_COMPONE
   }
 );
 
-export const SLASH_COMMANDS: SlashCommandItem[] = [
-  ...BUILTIN_SLASH_COMMANDS,
-  ...MDX_SLASH_COMMANDS
-];
+export const SLASH_COMMANDS: SlashCommandItem[] = WIDGET_CATEGORIES.flatMap(category => [
+  ...BUILTIN_SLASH_COMMANDS.filter(command => command.category === category.id),
+  ...MDX_SLASH_COMMANDS.filter(command => command.category === category.id)
+]);
 
 // ─── Slash input element ────────────────────────────────────────────────────
 
@@ -255,19 +280,14 @@ export const SlashInputElement = ({ element, children, ...props }: PlateElementP
   const [searchText, setSearchText] = useState('');
 
   const filteredCommands = useMemo(
-    () =>
-      SLASH_COMMANDS.filter(cmd => {
-        if (!searchText) return true;
-        const q = searchText.toLowerCase();
-        return (
-          cmd.label.toLowerCase().includes(q) ?? cmd.keywords?.some(k => k.includes(q)) ?? false
-        );
-      }),
+    () => SLASH_COMMANDS.filter(cmd => matchesCatalogSearch(searchText, cmd)),
     [searchText]
   );
 
   useEffect(() => {
-    const item = dropdownRef.current?.children[selectedIndex] as HTMLElement | undefined;
+    const item = dropdownRef.current?.querySelector<HTMLElement>(
+      `[data-slash-index="${selectedIndex}"]`
+    );
     item?.scrollIntoView({ block: 'nearest' });
   }, [selectedIndex]);
 
@@ -396,21 +416,28 @@ export const SlashInputElement = ({ element, children, ...props }: PlateElementP
             onMouseDown={event => event.preventDefault()}
           >
             {filteredCommands.map((cmd, i) => (
-              <button
-                type="button"
-                key={cmd.key}
-                className={`${styles.slashItem} ${
-                  i === selectedIndex ? styles.slashItemActive : ''
-                }`}
-                onClick={() => executeCommand(cmd)}
-                onMouseEnter={() => setSelectedIndex(i)}
-              >
-                {cmd.icon}
-                <div className={styles.slashItemText}>
-                  <div className={styles.slashItemLabel}>{cmd.label}</div>
-                  <div className={styles.slashItemDesc}>{cmd.description}</div>
-                </div>
-              </button>
+              <Fragment key={cmd.key}>
+                {cmd.category !== filteredCommands[i - 1]?.category && (
+                  <div className={styles.slashGroupHeading}>
+                    {WIDGET_CATEGORIES.find(category => category.id === cmd.category)?.label}
+                  </div>
+                )}
+                <button
+                  type="button"
+                  data-slash-index={i}
+                  className={`${styles.slashItem} ${
+                    i === selectedIndex ? styles.slashItemActive : ''
+                  }`}
+                  onClick={() => executeCommand(cmd)}
+                  onMouseEnter={() => setSelectedIndex(i)}
+                >
+                  {cmd.icon}
+                  <div className={styles.slashItemText}>
+                    <div className={styles.slashItemLabel}>{cmd.label}</div>
+                    <div className={styles.slashItemDesc}>{cmd.description}</div>
+                  </div>
+                </button>
+              </Fragment>
             ))}
           </div>,
           document.body

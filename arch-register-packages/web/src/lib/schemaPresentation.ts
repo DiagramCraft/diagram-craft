@@ -11,6 +11,7 @@ export const FIELD_TYPES: { value: FieldType; label: string }[] = [
   { value: 'boolean', label: 'Boolean' },
   { value: 'date', label: 'Date' },
   { value: 'currency', label: 'Currency' },
+  { value: 'duration', label: 'Duration' },
   { value: 'number', label: 'Number' },
   { value: 'select', label: 'Select' },
   { value: 'principal', label: 'Person or team' },
@@ -39,6 +40,19 @@ export const schemaColor = (index: number): string => SCHEMA_COLORS[index % SCHE
 
 export const resolveSchemaColor = (schema: { color: string | null }, index: number): string =>
   schema.color ?? schemaColor(index);
+
+/**
+ * Looks a schema up by id and resolves its display colour (its own, else a palette colour by
+ * position, else the accent colour when the schema is unknown).
+ */
+export const resolveSchemaPresentation = <T extends { id: string; color: string | null }>(
+  schemas: readonly T[],
+  schemaId: string | null | undefined
+): { schema: T | null; color: string } => {
+  const index = schemaId == null ? -1 : schemas.findIndex(schema => schema.id === schemaId);
+  const schema = index >= 0 ? schemas[index]! : null;
+  return { schema, color: schema ? resolveSchemaColor(schema, index) : 'var(--accent-fg)' };
+};
 
 export const UNCATEGORIZED_SCHEMA_CATEGORY = 'Uncategorized';
 

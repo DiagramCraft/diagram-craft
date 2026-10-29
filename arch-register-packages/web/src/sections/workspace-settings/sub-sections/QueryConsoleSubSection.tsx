@@ -3,6 +3,7 @@ import type { EntityQueryParseError } from '@arch-register/api-types/entityContr
 import { Button } from '@diagram-craft/app-components/Button';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { useParseEntityQueryText, useRunEntityQuery } from '../../../hooks/useEntityQueryText';
+import { SettingsBlock, SettingsBlockField, SettingsBlockList } from '../SettingsBlock';
 import styles from './QueryConsoleSubSection.module.css';
 
 const errorMessage = (error: unknown) =>
@@ -48,27 +49,11 @@ export const QueryConsoleSubSection = ({ workspaceId }: { workspaceId: string })
   };
 
   return (
-    <div className={styles.root}>
-      <section className={styles.panel}>
-        <div className={styles.panelHead}>
-          <div className={styles.panelTitle}>Entity query</div>
-          <div className={styles.panelSub}>
-            Enter the entity query text DSL used by advanced entity views and saved views.
-          </div>
-        </div>
-        <div className={styles.panelBody}>
-          <label className={styles.inputLabel}>
-            <span>Query text</span>
-            <TextArea
-              aria-label="Query text"
-              className={styles.input}
-              value={queryText}
-              rows={8}
-              allowMaximize
-              placeholder={'schema:Component AND lifecycle = "active"'}
-              onChange={handleQueryChange}
-            />
-          </label>
+    <SettingsBlockList>
+      <SettingsBlock
+        title="Entity query"
+        description="Enter the entity query text DSL used by advanced entity views and saved views."
+        footer={
           <div className={styles.actions}>
             <Button variant="primary" disabled={!canRun} onClick={() => void run()}>
               {isPending ? 'Running…' : 'Run query'}
@@ -77,32 +62,48 @@ export const QueryConsoleSubSection = ({ workspaceId }: { workspaceId: string })
               Results are evaluated with your current permissions.
             </span>
           </div>
-          {parseErrors.length > 0 && (
-            <div className={styles.error} role="alert">
-              {parseErrors.map((error, index) => (
-                <div key={`${error.offset}-${index}`}>
-                  Query error at offset {error.offset}: {error.message}
-                </div>
-              ))}
-            </div>
-          )}
-          {executionError && (
-            <div className={styles.error} role="alert">
-              {executionError}
-            </div>
-          )}
-        </div>
-      </section>
+        }
+      >
+        <SettingsBlockField
+          label="Query text"
+          hint="Evaluated against the entities you can access."
+          align="top"
+        >
+          <TextArea
+            aria-label="Query text"
+            className={styles.input}
+            value={queryText}
+            rows={8}
+            allowMaximize
+            placeholder={'schema:Component AND lifecycle = "active"'}
+            onChange={handleQueryChange}
+          />
+        </SettingsBlockField>
+        {(parseErrors.length > 0 || executionError) && (
+          <div className={styles.errors}>
+            {parseErrors.length > 0 && (
+              <div className={styles.error} role="alert">
+                {parseErrors.map((error, index) => (
+                  <div key={`${error.offset}-${index}`}>
+                    Query error at offset {error.offset}: {error.message}
+                  </div>
+                ))}
+              </div>
+            )}
+            {executionError && (
+              <div className={styles.error} role="alert">
+                {executionError}
+              </div>
+            )}
+          </div>
+        )}
+      </SettingsBlock>
 
       {result && (
-        <section className={styles.panel}>
-          <div className={styles.panelHead}>
-            <div className={styles.panelTitle}>Raw result</div>
-            <div className={styles.panelSub}>{result.total} record(s) returned</div>
-          </div>
+        <SettingsBlock title="Raw result" description={`${result.total} record(s) returned`}>
           <pre className={styles.output}>{result.raw}</pre>
-        </section>
+        </SettingsBlock>
       )}
-    </div>
+    </SettingsBlockList>
   );
 };

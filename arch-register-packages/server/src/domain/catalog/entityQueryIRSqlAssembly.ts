@@ -106,7 +106,9 @@ export const renderEntityQueryRows = (fragments: EntityQueryFragments): Compiled
       ${ROOT_ALIAS}.out_record_id AS out_entity_id,
       rs.name    AS schema_name,
       in_e.name  AS in_entity_name,
+      in_e.schema_id AS in_entity_schema_id,
       out_e.name AS out_entity_name,
+      out_e.schema_id AS out_entity_schema_id,
       wo.name    AS owner_name,
       ls.label   AS lifecycle_label,
       ${projectionObject} AS projections

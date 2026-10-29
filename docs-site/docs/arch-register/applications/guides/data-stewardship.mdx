@@ -26,29 +26,36 @@ for Data Entity records. Its **My work** section is the application landing scre
 
 ## Enable and configure the application
 
-In **Workspace Settings → Applications & Capabilities**, configure **Data Stewardship** and bind its required **Data
-Entity** schema. The default Information Governance catalog binds its Data Entity schema automatically. Application
-access is a separate setting in the capability's **Access** tab; users also need workspace access. See [Workspace
+Data Stewardship needs no binding; its dashboards use the **Data Entity** schema provided by the Information
+Governance catalog. Application access is set in the application's **Access** tab in **Workspace Settings →
+Applications & Capabilities**; users also need workspace access. See [Workspace
 Templates and Capabilities](../../admin/workspace-templates-capabilities) and [Roles and
 Permissions](../../admin/roles-permissions).
 
 The **Classification** section's flow views require a **Data Flow** relation schema in the workspace. This relation is
-discovered from the workspace model; there is no separate Data Flow binding in the Data Stewardship capability.
+discovered from the workspace model; there is no separate Data Flow configuration.
 
 ## Review stewardship and classification
 
-Use **My work** to review open governance cases and reminders related to Data Entities. Its filters narrow the queue by
-assignment, status, kind, and derived priority. Decision actions appear only when you hold an actionable assignment on a
+Use **My work** to review open governance cases and reminders related to Data Entities. It is a configurable dashboard
+with stat tiles, a six-week calendar, and a queue sorted by due date; each case widget can be set to show cases assigned
+to you, all open cases, or past-due cases. Priority is derived from the due date. Decision actions appear only when you hold an actionable assignment on a
 case; otherwise, the case drawer is read-only.
 
-In **Stewardship**, review ownership and steward coverage, upcoming review dates, and the datasets with completeness
-gaps. Select a dataset to open its shared entity drawer. **Classification** has three views: classified data, restricted
-flows, and cross-boundary transfers. The flow views summarize Data Flow relations and the datasets they carry; when no
-Data Flow schema is configured, they show a notice.
+**Stewardship** is a dashboard of coverage tiles (fully covered, missing an owner, reviews overdue, missing a steward)
+and a "Gaps to close" list of datasets with active conformance violations. The gaps come from four conformance checks
+on Data Entity (no owner, no steward, unconfirmed classification, review not current), which are seeded in the demo
+workspace and can be edited under **Workspace Settings → Conformance**. To browse violations across all entities, switch the entity browser to the **Conformance** view. Coverage figures reflect the latest conformance
+evaluation. You can edit the dashboard's widgets. Select a dataset to open its shared entity drawer. **Classification** is an editable dashboard with three tabs: classified data, restricted
+flows, and cross-boundary transfers, each with summary tiles. Use the Classification facet in the sidebar to narrow the
+dataset table. The flow tabs summarize Data Flow relations and the datasets they carry; when no Data Flow schema is
+configured, they show a notice.
 
-**Change cases & exceptions** lists governance cases for Data Entities. Despite the section label, it has no exception
-or waiver register. The section is available only when the bound Data Entity schema requires approval for entity
-changes. **Assessments** lists project assessments that target the Data Entity schema; it is read-only here. Open an
+**Change cases & exceptions** is a dashboard around a table of governance cases for Data Entities, in every
+status; filter by status in the sidebar, and open a row to see and act on the case. Despite the section label,
+it has no exception or waiver register. Cases are only created for the Data Entity schema once it requires approval for
+entity changes. The table is a general "Change case table" widget you can also add to other workspace dashboards.
+**Assessments** is a dashboard of status tiles (overdue, in progress, not started, complete) and a progress table of the project assessments that target the Data Entity schema. You can edit the dashboard's widgets; the assessments themselves are read-only here. Open an
 assessment in its project to edit its definition or responses.
 
 ## Shared catalog and governance workflows

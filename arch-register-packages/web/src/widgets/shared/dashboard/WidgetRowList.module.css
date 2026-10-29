@@ -1,0 +1,81 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+  border-radius: var(--r);
+  font-size: 12px;
+  text-align: left;
+
+  &:first-of-type {
+    padding-top: 0;
+  }
+}
+
+.row:hover {
+  background: var(--cmp-bg);
+}
+
+.rowLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--base-fg);
+}
+
+.rowMeta {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--cmp-fg-disabled);
+  white-space: nowrap;
+}
+
+.footer {
+  margin-top: auto;
+  padding: 3px 8px;
+  font-size: 11px;
+}
+
+.emptyInline {
+  padding: 0;
+  font-size: 12px;
+}
+
+.rowSub {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+}
+
+/* Fixed columns (name | bar | value) so bars line up and share one width across rows. */
+.rowShare {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr) 6.5em;
+  gap: 8px;
+}
+
+.rowShare .rowMeta {
+  margin-left: 0;
+  text-align: right;
+}
+
+.shareTrack {
+  min-width: 24px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--cmp-bg);
+  overflow: hidden;
+}
+
+.shareFill {
+  display: block;
+  height: 100%;
+  background: var(--accent-fg);
+}

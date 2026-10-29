@@ -12,10 +12,25 @@ import {
   evaluateDerivedFields,
   validateDerivedFieldGroupAccess
 } from '../derived/derivedFields';
+import { buildValidationPlan } from './entityValidationRules';
 import { compileRelationSchemaWithSharedGroups } from './relationSchemaHelpers';
 import { VENDOR_CAPABILITIES_FUNDED_PLACEHOLDER_MESSAGE } from '@arch-register/api-types/entityDrawerConfiguration';
 
 describe('instantiateTemplate', () => {
+  it('checks every shipped schema and relation expression with Bonsai 1.x', () => {
+    for (const template of SCHEMA_TEMPLATES) {
+      const definitions = instantiateTemplateDefinitions('ws-expression-compat', template.id);
+      for (const schema of definitions.schemas) {
+        expect(() => buildDerivedPlan(schema.fields, 'entity')).not.toThrow();
+        expect(() => buildValidationPlan(schema.validation_rules ?? [], 'entity')).not.toThrow();
+      }
+      for (const schema of definitions.relationSchemas) {
+        expect(() => buildDerivedPlan(schema.fields, 'relation')).not.toThrow();
+        expect(() => buildValidationPlan(schema.validation_rules ?? [], 'relation')).not.toThrow();
+      }
+    }
+  });
+
   it('assigns a presentation category to every built-in entity and relation schema', () => {
     for (const template of SCHEMA_TEMPLATES) {
       expect(template.schemas.every(schema => schema.category.trim().length > 0)).toBe(true);
@@ -27,6 +42,33 @@ describe('instantiateTemplate', () => {
       expect(definitions.schemas.every(schema => !!schema.category_id)).toBe(true);
       expect(definitions.relationSchemas.every(schema => !!schema.category_id)).toBe(true);
     }
+  });
+
+  it('describes every field in every built-in template', () => {
+    const missing: string[] = [];
+    const check = (owner: string, fields: Array<{ id: string; description?: string }>) => {
+      for (const field of fields) {
+        if (!field.description?.trim()) missing.push(`${owner}.${field.id}`);
+      }
+    };
+
+    for (const template of SCHEMA_TEMPLATES) {
+      const definitions = instantiateTemplateDefinitions('ws-1', template.id);
+      for (const schema of definitions.schemas) {
+        check(`${template.id}/${schema.name}`, schema.fields);
+      }
+      for (const schema of definitions.relationSchemas) {
+        check(`${template.id}/${schema.name}`, schema.fields);
+      }
+      for (const group of definitions.fieldGroups) {
+        check(`${template.id}/${group.name}`, group.fields);
+      }
+      for (const documentType of template.documentTypes) {
+        check(`${template.id}/${documentType.name}`, documentType.fields);
+      }
+    }
+
+    expect(missing).toEqual([]);
   });
 
   it('classifies built-ins and composes one full model with multiple concerns', () => {
@@ -85,15 +127,7 @@ describe('instantiateTemplate', () => {
       minCount: 0,
       maxCount: -1
     });
-    expect(definitions.capabilityConfigurations).toEqual([
-      expect.objectContaining({
-        type: 'business-glossary',
-        bindings: expect.objectContaining({
-          term: { target: { kind: 'entity_schema', id: term?.id } },
-          category: { target: { kind: 'entity_schema', id: category?.id } }
-        })
-      })
-    ]);
+    expect(definitions.capabilityConfigurations).toEqual([]);
     expect(definitions.entityDrawerProfiles[term!.id]).toMatchObject({
       header: {
         badges: [
@@ -165,7 +199,7 @@ describe('instantiateTemplate', () => {
           name: 'Capability Level',
           type: 'derived',
           expression:
-            "entity.parent == null ? 'L1' : 'L' + ((entity.parent.capability_level |> replace('L', '') |> toNumber) + 1)",
+            "entity.parent == null ? 'L1' : `L${toNumber(entity.parent.capability_level.replace('L', '')) + 1}`",
           resultType: 'text'
         }),
         expect.objectContaining({
@@ -311,35 +345,7 @@ describe('instantiateTemplate', () => {
     expect(affectsRelation?.in_schema_ids).toEqual([objective?.id]);
     expect(affectsRelation?.out_schema_ids).toBe('any');
 
-    const objectiveSupportsCapability = definitions.relationSchemas.find(
-      schema => schema.name === 'Objective Supports Business Capability'
-    );
-    const capabilitySupportsEntity = definitions.relationSchemas.find(
-      schema => schema.name === 'Business Capability Supports Entity'
-    );
-    expect(definitions.capabilityConfigurations).toEqual([
-      expect.objectContaining({
-        type: 'strategy-model',
-        bindings: expect.objectContaining({
-          objective: { target: { kind: 'entity_schema', id: objective?.id } },
-          outcome: { target: { kind: 'entity_schema', id: outcome?.id } },
-          initiative: { target: { kind: 'entity_schema', id: initiative?.id } },
-          measure: { target: { kind: 'entity_schema', id: measure?.id } },
-          business_capability: {
-            target: { kind: 'entity_schema', id: businessCapability?.id }
-          },
-          // Real relation schema ids, not the template's own `symId` strings - see the roll-up
-          // hooks and `CapabilityDrawer` that query typed relations by this id (#3191 apps count,
-          // "Realized by"/"Linked objectives").
-          objective_supports_business_capability: {
-            target: { kind: 'relation_schema', id: objectiveSupportsCapability?.id }
-          },
-          business_capability_supports_entity: {
-            target: { kind: 'relation_schema', id: capabilitySupportsEntity?.id }
-          }
-        })
-      })
-    ]);
+    expect(definitions.capabilityConfigurations).toEqual([]);
   });
 
   it('materializes the Data Entity drawer profile with stewardship content slots', () => {
@@ -377,21 +383,27 @@ describe('instantiateTemplate', () => {
     const control = schemas.find(schema => schema.name === 'Control');
     const risk = schemas.find(schema => schema.name === 'Risk');
 
-    expect(threat?.fields).toContainEqual({
-      id: 'discovered_on',
-      name: 'Discovered On',
-      type: 'date'
-    });
-    expect(control?.fields).toContainEqual({
-      id: 'last_verified',
-      name: 'Last Verified',
-      type: 'date'
-    });
-    expect(risk?.fields).toContainEqual({
-      id: 'review_due',
-      name: 'Review Due',
-      type: 'date'
-    });
+    expect(threat?.fields).toContainEqual(
+      expect.objectContaining({
+        id: 'discovered_on',
+        name: 'Discovered On',
+        type: 'date'
+      })
+    );
+    expect(control?.fields).toContainEqual(
+      expect.objectContaining({
+        id: 'last_verified',
+        name: 'Last Verified',
+        type: 'date'
+      })
+    );
+    expect(risk?.fields).toContainEqual(
+      expect.objectContaining({
+        id: 'review_due',
+        name: 'Review Due',
+        type: 'date'
+      })
+    );
   });
 
   it('keeps reference field resolution working alongside date fields', () => {
@@ -399,11 +411,13 @@ describe('instantiateTemplate', () => {
     const dataProduct = schemas.find(schema => schema.name === 'Data Product');
     const sourceSystem = schemas.find(schema => schema.name === 'Source System');
 
-    expect(dataProduct?.fields).toContainEqual({
-      id: 'review_date',
-      name: 'Review Date',
-      type: 'date'
-    });
+    expect(dataProduct?.fields).toContainEqual(
+      expect.objectContaining({
+        id: 'review_date',
+        name: 'Review Date',
+        type: 'date'
+      })
+    );
 
     const sourceSystemsField = dataProduct?.fields.find(field => field.id === 'source_systems');
     expect(sourceSystemsField).toMatchObject({
@@ -469,7 +483,6 @@ describe('instantiateTemplate', () => {
       'Regulatory Tags',
       'Processing Purposes',
       'Residency Regions',
-      'Retention Time Unit',
       'Communication Protocol',
       'PII Classification'
     ]);
@@ -514,6 +527,7 @@ describe('instantiateTemplate', () => {
     ]);
 
     const [retentionPolicySchema, dataEntitySchema] = definitions.schemas;
+    expect(retentionPolicySchema!.fields[0]).toMatchObject({ id: 'period', type: 'duration' });
     expect(dataEntitySchema!.shared_field_group_links?.map(link => link.groupId)).toEqual([
       definitions.fieldGroups[0]!.id
     ]);
@@ -537,23 +551,7 @@ describe('instantiateTemplate', () => {
       expect.objectContaining({ id: 'activated_from', type: 'date' })
     ]);
 
-    expect(definitions.capabilityConfigurations).toEqual([
-      {
-        type: 'retention',
-        bindings: {
-          policy: { target: { kind: 'entity_schema', id: retentionPolicySchema!.id } },
-          assignment: {
-            target: { kind: 'relation_schema', id: assignmentRelationSchema!.id }
-          }
-        }
-      },
-      {
-        type: 'data-stewardship',
-        bindings: {
-          dataEntity: { target: { kind: 'entity_schema', id: dataEntitySchema!.id } }
-        }
-      }
-    ]);
+    expect(definitions.capabilityConfigurations).toEqual([]);
   });
 
   it('materializes the Data Flow composition extension with shared governance fields', () => {
@@ -750,18 +748,22 @@ describe('instantiateTemplate', () => {
       'financial_risk',
       'compliance_risk',
       'criticality',
-      'risk'
+      'risk',
+      'spend',
+      'next_renewal'
     ]);
-    expect(contract?.fields).toContainEqual({
-      id: 'vendor',
-      name: 'Vendor',
-      predicate: 'provided by',
-      type: 'containment',
-      schemaId: vendor?.id,
-      minCount: 1,
-      maxCount: 1,
-      requirementLevel: 'required'
-    });
+    expect(contract?.fields).toContainEqual(
+      expect.objectContaining({
+        id: 'vendor',
+        name: 'Vendor',
+        predicate: 'provided by',
+        type: 'containment',
+        schemaId: vendor?.id,
+        minCount: 1,
+        maxCount: 1,
+        requirementLevel: 'required'
+      })
+    );
     expect(contract?.fields).not.toContainEqual(expect.objectContaining({ id: 'vendor_name' }));
     expect(relation?.in_schema_ids).toEqual([system?.id]);
     expect(relation?.out_schema_ids).toEqual([contract?.id]);
@@ -899,28 +901,17 @@ describe('instantiateTemplate', () => {
     );
   });
 
-  it('materializes the API and vendor-management capabilities as workspace configurations', () => {
+  it('materializes the API capability as a workspace configuration', () => {
     const definitions = instantiateTemplateDefinitions('ws-1', 'default');
     const api = definitions.schemas.find(schema => schema.name === 'API');
     const vendor = definitions.schemas.find(schema => schema.name === 'Vendor');
     const contract = definitions.schemas.find(schema => schema.name === 'Contract');
-    const technologyRelease = definitions.schemas.find(
-      schema => schema.name === 'Technology Release'
-    );
 
     expect(definitions.capabilityConfigurations).toEqual([
       {
         type: 'api-specification',
         bindings: {
           api: { target: { kind: 'entity_schema', id: api?.id } }
-        }
-      },
-      {
-        type: 'vendor-management',
-        bindings: {
-          vendor: { target: { kind: 'entity_schema', id: vendor?.id } },
-          contract: { target: { kind: 'entity_schema', id: contract?.id } },
-          technologyRelease: { target: { kind: 'entity_schema', id: technologyRelease?.id } }
         }
       }
     ]);
@@ -1047,7 +1038,7 @@ describe('instantiateTemplate', () => {
         type: 'select',
         enumId: expect.any(String)
       }),
-      { id: 'pii_scope', name: 'PII Scope', type: 'text' }
+      expect.objectContaining({ id: 'pii_scope', name: 'PII Scope', type: 'text' })
     ]);
     const classificationField = fieldGroup?.fields.find(field => field.id === 'pii_classification');
     expect(classificationField?.type === 'select' && enumIds.has(classificationField.enumId)).toBe(
@@ -1074,20 +1065,24 @@ describe('instantiateTemplate', () => {
     expect(framework).toBeDefined();
     expect(complianceRequirement).toBeDefined();
 
-    expect(risk?.fields).toContainEqual({
-      id: 'likelihood',
-      name: 'Likelihood',
-      type: 'number',
-      min: 1,
-      max: 5
-    });
-    expect(risk?.fields).toContainEqual({
-      id: 'impact',
-      name: 'Impact',
-      type: 'number',
-      min: 1,
-      max: 5
-    });
+    expect(risk?.fields).toContainEqual(
+      expect.objectContaining({
+        id: 'likelihood',
+        name: 'Likelihood',
+        type: 'number',
+        min: 1,
+        max: 5
+      })
+    );
+    expect(risk?.fields).toContainEqual(
+      expect.objectContaining({
+        id: 'impact',
+        name: 'Impact',
+        type: 'number',
+        min: 1,
+        max: 5
+      })
+    );
     expect(risk?.fields).toContainEqual(
       expect.objectContaining({ id: 'category', type: 'select', enumId: expect.any(String) })
     );
@@ -1125,16 +1120,19 @@ describe('instantiateTemplate', () => {
       })
     );
 
-    expect(complianceRequirement?.fields).toContainEqual({
-      id: 'framework',
-      name: 'Framework',
-      predicate: 'belongs to',
-      type: 'containment',
-      schemaId: framework?.id,
-      minCount: 1,
-      maxCount: 1,
-      requirementLevel: 'required'
-    });
+    expect(complianceRequirement?.fields).toContainEqual(
+      expect.objectContaining({
+        id: 'framework',
+        name: 'Framework',
+        predicate: 'belongs to',
+        type: 'containment',
+        schemaId: framework?.id,
+        minCount: 1,
+        maxCount: 1,
+        requirementLevel: 'required'
+      })
+    );
+    expect(complianceRequirement?.fields.map(field => field.id)).not.toContain('description');
 
     expect(definitions.dashboardWidgets).toHaveLength(10);
     expect(
@@ -1252,30 +1250,6 @@ describe('instantiateTemplate', () => {
         }
       ]
     });
-  });
-
-  it('materializes the Risk & Compliance capability bindings', () => {
-    const definitions = instantiateTemplateDefinitions('ws-1', 'risk-compliance');
-    const risk = definitions.schemas.find(schema => schema.name === 'Risk');
-    const control = definitions.schemas.find(schema => schema.name === 'Control');
-    const framework = definitions.schemas.find(schema => schema.name === 'Framework');
-    const complianceRequirement = definitions.schemas.find(
-      schema => schema.name === 'Compliance Requirement'
-    );
-
-    expect(definitions.capabilityConfigurations).toEqual([
-      {
-        type: 'risk-compliance',
-        bindings: {
-          risk: { target: { kind: 'entity_schema', id: risk?.id } },
-          control: { target: { kind: 'entity_schema', id: control?.id } },
-          framework: { target: { kind: 'entity_schema', id: framework?.id } },
-          complianceRequirement: {
-            target: { kind: 'entity_schema', id: complianceRequirement?.id }
-          }
-        }
-      }
-    ]);
   });
 
   it('materializes the risk-compliance typed relations with correctly remapped endpoints', () => {
@@ -1657,6 +1631,16 @@ describe('instantiateTemplate', () => {
           }
         }
       }
+    });
+  });
+
+  it('models team-topologies Expected Duration as a duration field', () => {
+    const template = SCHEMA_TEMPLATES.find(t => t.id === 'team-topologies')!;
+    const interaction = [...template.schemas, ...(template.relationSchemas ?? [])].find(
+      schema => schema.symId === 'interaction'
+    )!;
+    expect(interaction.fields.find(field => field.id === 'expected_duration')).toMatchObject({
+      type: 'duration'
     });
   });
 });

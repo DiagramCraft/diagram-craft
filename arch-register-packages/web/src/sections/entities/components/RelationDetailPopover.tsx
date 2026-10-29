@@ -95,6 +95,7 @@ export const RelationDetailPopover = ({ workspaceId, relationId, x, y, onClose }
         onClose={() => setShowHistory(false)}
         workspaceId={workspaceId}
         relation={record ?? null}
+        relationSchema={relationSchema}
       />
       <RelationBlastRadiusDialog
         open={showBlastRadius}

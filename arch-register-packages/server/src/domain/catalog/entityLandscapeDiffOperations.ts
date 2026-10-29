@@ -133,6 +133,37 @@ const matchesVisibleFilterCondition = (
   return matchesFilterCondition(entity, condition, completeness);
 };
 
+const FACET_FIELD_IDS = new Set(['_schemaId', '_lifecycle', '_owner']);
+
+type StateCondition = Parameters<typeof matchesFilterCondition>[1];
+
+// Mirrors the entity browser's facets (type, lifecycle, owner): several conditions on the same
+// facet are alternatives (an entity may be any of the selected types), while conditions on
+// different fields, and non-facet conditions, must all hold.
+const isFacetCondition = (condition: StateCondition): boolean =>
+  FACET_FIELD_IDS.has(condition.fieldId) &&
+  (condition.fieldId === '_schemaId'
+    ? condition.op === 'equals'
+    : condition.op === 'equals' || condition.op === 'empty');
+
+export const matchesStateConditions = (
+  conditions: StateCondition[],
+  matches: (condition: StateCondition) => boolean
+): boolean => {
+  const facetGroups = new Map<string, StateCondition[]>();
+  for (const condition of conditions) {
+    if (isFacetCondition(condition)) {
+      facetGroups.set(condition.fieldId, [
+        ...(facetGroups.get(condition.fieldId) ?? []),
+        condition
+      ]);
+    } else if (!matches(condition)) {
+      return false;
+    }
+  }
+  return [...facetGroups.values()].every(group => group.some(matches));
+};
+
 // Applies the same filtering rules the entity browser uses for its live/point-in-time entity
 // list (schema/owner/lifecycle/q via `filterEntities`, conditions, joined-assessment conditions,
 // and collection membership), evaluated against one side's reconstructed entity list. Run
@@ -174,7 +205,7 @@ const applyStateFilters = async (
     if (collectionEntityIdSet && !collectionEntityIdSet.has(entity.id)) return false;
     if (
       otherConditions.length > 0 &&
-      !otherConditions.every(c =>
+      !matchesStateConditions(otherConditions, c =>
         matchesVisibleFilterCondition(entity, c, entity.completeness, schemas, authCtx)
       )
     )
@@ -426,10 +457,9 @@ export const diffEntityLandscapes = async (
       return { entity: toApi(entry.entity, authCtx, toSchemas, true), diff };
     });
 
-  // Relations aren't project-scoped themselves (only their planned changes are), so the
-  // "current" scenario-comparison enrichment entities get above isn't attempted here — that's a
-  // deliberately narrower relation feature set than entities have, not an omission: relations
-  // only diff added/removed/changed between the two states directly.
+  // Relations aren't project-scoped themselves (only their planned changes are). In a scenario
+  // comparison, changed relations are enriched with the live value the same way entities are, so
+  // callers can tell which side actually changed a field.
   const relationSchemas = await db.relation.listRelationSchemas(workspace);
   const [fromRelationSchemas, toRelationSchemas] = await Promise.all([
     resolveRelationSchemaCatalogAt(db, workspace, relationSchemas, parseStateDate(from)),
@@ -439,6 +469,22 @@ export const diffEntityLandscapes = async (
     reconstructRelationState(db, workspace, authCtx, from, scopes[0]?.projectId, now, fromSchemas),
     reconstructRelationState(db, workspace, authCtx, to, scopes[1]?.projectId, now, toSchemas)
   ]);
+  const currentRelationSchemas = isScenarioComparison
+    ? await resolveRelationSchemaCatalogAt(db, workspace, relationSchemas, now)
+    : null;
+  const currentRelations =
+    isScenarioComparison && currentRelationSchemas
+      ? await reconstructRelationState(
+          db,
+          workspace,
+          authCtx,
+          { asOf: now.toISOString(), includePlannedChanges: false, includeOverdueChanges: false },
+          undefined,
+          now,
+          availableSchemaCatalog(currentSchemas)
+        )
+      : [];
+  const currentRelationById = new Map(currentRelations.map(relation => [relation.id, relation]));
   const fromRelationById = new Map(fromRelations.map(relation => [relation.id, relation]));
   const toRelationById = new Map(toRelations.map(relation => [relation.id, relation]));
 
@@ -469,12 +515,31 @@ export const diffEntityLandscapes = async (
     .sort((a, b) => a.relation.id.localeCompare(b.relation.id))
     .map(entry => {
       const fromRelation = fromRelationById.get(entry.relation.id)!;
-      const diff = redactKnownDataDiff(
+      const redactedDiff = redactKnownDataDiff(
         entry.diff,
         authCtx,
         relationSchemaFor(fromRelation, fromRelationSchemas),
         relationSchemaFor(entry.relation, toRelationSchemas)
       );
+      const currentRelation = currentRelationById.get(entry.relation.id) ?? entry.relation;
+      const diff = isScenarioComparison
+        ? Object.fromEntries(
+            Object.entries(redactedDiff).map(([key, fieldDiff]) => {
+              if (key !== 'data') {
+                return [
+                  key,
+                  { ...fieldDiff, current: relationState(currentRelation)[key] ?? null }
+                ];
+              }
+              const current = filterKnownRestrictedFieldGroups(
+                authCtx,
+                relationSchemaFor(currentRelation, currentRelationSchemas ?? new Map()),
+                (relationState(currentRelation)[key] ?? {}) as Record<string, unknown>
+              );
+              return [key, { ...fieldDiff, current }];
+            })
+          )
+        : redactedDiff;
       return {
         relation: toRedactedApiRelation(
           entry.relation,

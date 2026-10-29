@@ -1,3 +1,4 @@
+import { BODY_LINK_FIELD_ID } from '../documentValidation';
 import type { DatabaseRow } from '../../../db/rowMappers';
 import { databaseBoolean, databaseDate, parseDatabaseJson } from '../../../db/rowMappers';
 import { SqliteDatabaseBase } from '../../../db/sqliteBase';
@@ -54,15 +55,13 @@ const typeVersionMapper = (row: DatabaseRow): DocumentTypeVersionDbResult => ({
 });
 
 const templateMapper = (row: DatabaseRow): DocumentTemplateDbResult => {
-  if (row['document_type_id'] == null)
-    throw new Error('Document template is missing a document type');
   return {
     id: String(row['id']),
     workspace: String(row['workspace']),
     project_id: row['project_id'] == null ? null : String(row['project_id']),
     name: String(row['name']),
     body: String(row['body']),
-    document_type_id: String(row['document_type_id']),
+    document_type_id: row['document_type_id'] == null ? null : String(row['document_type_id']),
     metadata_defaults: parseDatabaseJson(
       row['metadata_defaults'],
       {},
@@ -540,8 +539,8 @@ export class SqliteDocumentDatabase extends SqliteDatabaseBase implements Docume
 
   async listDocumentLinks(workspace: string, nodeId: string) {
     return this.all(
-      'SELECT * FROM document_link_index WHERE workspace = ? AND node_id = ? ORDER BY field_id, position',
-      [workspace, nodeId],
+      'SELECT * FROM document_link_index WHERE workspace = ? AND node_id = ? AND field_id <> ? ORDER BY field_id, position',
+      [workspace, nodeId, BODY_LINK_FIELD_ID],
       linkMapper
     );
   }
@@ -557,15 +556,32 @@ export class SqliteDocumentDatabase extends SqliteDatabaseBase implements Docume
     }>
   ) {
     const replace = () => {
-      this.run('DELETE FROM document_link_index WHERE workspace = ? AND node_id = ?', [
-        workspace,
-        nodeId
-      ]);
+      this.run(
+        'DELETE FROM document_link_index WHERE workspace = ? AND node_id = ? AND field_id <> ?',
+        [workspace, nodeId, BODY_LINK_FIELD_ID]
+      );
       for (const link of links)
         this.run(
           'INSERT INTO document_link_index (workspace, node_id, field_id, target_type, target_id, position) VALUES (?, ?, ?, ?, ?, ?)',
           [workspace, nodeId, link.field_id, link.target_type, link.target_id, link.position]
         );
+    };
+    if ((this.db as typeof this.db & { inTransaction: boolean }).inTransaction) replace();
+    else this.db.transaction(replace)();
+  }
+
+  async replaceBodyDocumentLinks(workspace: string, nodeId: string, targetDocumentIds: string[]) {
+    const replace = () => {
+      this.run(
+        'DELETE FROM document_link_index WHERE workspace = ? AND node_id = ? AND field_id = ?',
+        [workspace, nodeId, BODY_LINK_FIELD_ID]
+      );
+      targetDocumentIds.forEach((targetId, position) =>
+        this.run(
+          'INSERT INTO document_link_index (workspace, node_id, field_id, target_type, target_id, position) VALUES (?, ?, ?, ?, ?, ?)',
+          [workspace, nodeId, BODY_LINK_FIELD_ID, 'document', targetId, position]
+        )
+      );
     };
     if ((this.db as typeof this.db & { inTransaction: boolean }).inTransaction) replace();
     else this.db.transaction(replace)();

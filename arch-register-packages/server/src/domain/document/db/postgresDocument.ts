@@ -1,3 +1,4 @@
+import { BODY_LINK_FIELD_ID } from '../documentValidation';
 import type { DatabaseRow } from '../../../db/rowMappers';
 import {
   databaseBoolean,
@@ -58,15 +59,13 @@ const typeVersionMapper = (row: DatabaseRow): DocumentTypeVersionDbResult => ({
   created_at: databaseDate(row['created_at'])
 });
 const templateMapper = (row: DatabaseRow): DocumentTemplateDbResult => {
-  if (row['document_type_id'] == null)
-    throw new Error('Document template is missing a document type');
   return {
     id: String(row['id']),
     workspace: String(row['workspace']),
     project_id: row['project_id'] == null ? null : String(row['project_id']),
     name: String(row['name']),
     body: String(row['body']),
-    document_type_id: String(row['document_type_id']),
+    document_type_id: row['document_type_id'] == null ? null : String(row['document_type_id']),
     metadata_defaults: parseDatabaseJson(
       row['metadata_defaults'],
       {},
@@ -436,8 +435,8 @@ export class PostgresDocumentDatabase extends PostgresDatabaseBase implements Do
   }
   async listDocumentLinks(workspace: string, nodeId: string) {
     const rows = await this.sql.unsafe<DatabaseRow[]>(
-      'SELECT * FROM document_link_index WHERE workspace = $1 AND node_id = $2 ORDER BY field_id, position',
-      [workspace, nodeId]
+      'SELECT * FROM document_link_index WHERE workspace = $1 AND node_id = $2 AND field_id <> $3 ORDER BY field_id, position',
+      [workspace, nodeId, BODY_LINK_FIELD_ID]
     );
     return mapDatabaseRows(rows, linkMapper);
   }
@@ -452,10 +451,17 @@ export class PostgresDocumentDatabase extends PostgresDatabaseBase implements Do
     }>
   ) {
     await this
-      .sql`DELETE FROM document_link_index WHERE workspace = ${workspace} AND node_id = ${nodeId}`;
+      .sql`DELETE FROM document_link_index WHERE workspace = ${workspace} AND node_id = ${nodeId} AND field_id <> ${BODY_LINK_FIELD_ID}`;
     for (const link of links)
       await this
         .sql`INSERT INTO document_link_index (workspace, node_id, field_id, target_type, target_id, position) VALUES (${workspace}, ${nodeId}, ${link.field_id}, ${link.target_type}, ${link.target_id}, ${link.position})`;
+  }
+  async replaceBodyDocumentLinks(workspace: string, nodeId: string, targetDocumentIds: string[]) {
+    await this
+      .sql`DELETE FROM document_link_index WHERE workspace = ${workspace} AND node_id = ${nodeId} AND field_id = ${BODY_LINK_FIELD_ID}`;
+    for (const [position, targetId] of targetDocumentIds.entries())
+      await this
+        .sql`INSERT INTO document_link_index (workspace, node_id, field_id, target_type, target_id, position) VALUES (${workspace}, ${nodeId}, ${BODY_LINK_FIELD_ID}, 'document', ${targetId}, ${position})`;
   }
   async listDocumentsLinkingEntity(workspace: string, entityId: string) {
     const rows = await this.sql.unsafe<DatabaseRow[]>(

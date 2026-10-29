@@ -38,7 +38,7 @@ const test = createPermissionApiTest().extend<{ deprecationSeed: true }>({
       await server.db.governanceCaseConfig.upsertCaseConfig({
         workspace: resources.workspaceId,
         case_kind: ENTITY_DEPRECATION_POLICY_CASE_KIND,
-        case_subkind: encodeCaseSubkind(schema.id),
+        case_subkinds: [encodeCaseSubkind(schema.id)],
         name: 'Component deprecation policy',
         enabled: true,
         config: {},

@@ -1,25 +1,20 @@
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { DependencyGraph } from '../../../components/DependencyGraph';
-import type { DependencyGraphNode, DependencyGraphEdge } from '../../../components/DependencyGraph';
+import type {
+  DependencyGraphNode,
+  DependencyGraphEdge,
+  LayoutAlgorithm
+} from '../../../components/DependencyGraph';
 import { TypeBadge } from '../../../components/TypeBadge';
-import { Button } from '@diagram-craft/app-components/Button';
-import { Select } from '@diagram-craft/app-components/Select';
-import { NumberInput } from '@diagram-craft/app-components/NumberInput';
-import { MultiSelect, type MultiSelectItem } from '@diagram-craft/app-components/MultiSelect';
-import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
-import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { resolveSchemaColor } from '../../../lib/schemaPresentation';
-import { TbEyeOff, TbFileExport, TbPlus, TbVectorTriangle } from 'react-icons/tb';
+import { TbVectorTriangle } from 'react-icons/tb';
+import { EntityGraphOverlays } from './EntityGraphOverlays';
+import { EntityGraphToolbar } from './EntityGraphToolbar';
 import styles from './EntityGraphView.module.css';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
-import { SaveDiagramFromGraphDialog } from './SaveDiagramFromGraphDialog';
-import { RelationDetailPopover } from './RelationDetailPopover';
-import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 import { type EntityGraphDirection, type EntityNodeData } from './entityGraphState';
 import { useEntityGraphController } from './useEntityGraphController';
-import { useRelationSchemas } from '../../../hooks/useRelationSchemas';
 import { LoadingState } from '../../../components/LoadingState';
-import { GraphLayoutToolbar } from './GraphLayoutToolbar';
 
 type Props = {
   workspaceId: string;
@@ -30,6 +25,7 @@ type Props = {
   onEntityClick: (id: string) => void;
   readOnly?: boolean;
   maxDepth?: number;
+  layout?: LayoutAlgorithm;
   direction?: EntityGraphDirection;
   fullGraphLink?: ReactNode;
 };
@@ -43,6 +39,7 @@ export const EntityGraphView = ({
   onEntityClick,
   readOnly = false,
   maxDepth: configuredMaxDepth,
+  layout: configuredLayout,
   direction,
   fullGraphLink
 }: Props) => {
@@ -52,41 +49,11 @@ export const EntityGraphView = ({
     rootEntityName,
     rootEntitySchemaId,
     maxDepth: configuredMaxDepth,
+    layout: configuredLayout,
     direction
   });
-  const {
-    layout,
-    setLayout,
-    layoutOptions,
-    setLayoutOptions,
-    maxDepth,
-    setMaxDepth,
-    excludedIds,
-    manuallyExpanded,
-    direction: currentDirection,
-    setDirection,
-    relationSchemaFilter,
-    setRelationSchemaFilter,
-    contextMenu,
-    setContextMenu,
-    saveDiagramOpen,
-    setSaveDiagramOpen,
-    pendingDiagramContent,
-    nodes,
-    edges,
-    hiddenCountMap,
-    isAnyLoading,
-    resetGraph,
-    excludeEntity,
-    expandEntity,
-    createDiagram
-  } = controller;
-
-  const { data: relationSchemas } = useRelationSchemas(workspaceId);
-  const relationSchemaItems: MultiSelectItem[] = useMemo(
-    () => (relationSchemas ?? []).map(schema => ({ value: schema.id, label: schema.name })),
-    [relationSchemas]
-  );
+  const { layout, layoutOptions, setContextMenu, nodes, edges, hiddenCountMap, isAnyLoading } =
+    controller;
 
   const graphLayout = readOnly ? 'hierarchy' : layout;
   const graphLayoutOptions = layoutOptions;
@@ -141,64 +108,7 @@ export const EntityGraphView = ({
 
   return (
     <div className={`${styles.icEntityGraphView} ${readOnly ? styles.readOnly : ''}`}>
-      <div className={styles.eToolbar}>
-        <GraphLayoutToolbar
-          layout={layout}
-          setLayout={value => setLayout(value)}
-          layoutOptions={layoutOptions}
-          setLayoutOptions={setLayoutOptions}
-        />
-
-        <span className={styles.eToolbarLabel}>Depth</span>
-        <NumberInput
-          value={maxDepth}
-          onChange={v => {
-            if (v !== undefined) setMaxDepth(v);
-          }}
-          min={1}
-          max={5}
-          step={1}
-          style={{ width: '50px' }}
-        />
-
-        <span className={styles.eToolbarLabel}>Direction</span>
-        <Select.Root
-          value={currentDirection}
-          onChange={v => {
-            if (v) setDirection(v as EntityGraphDirection);
-          }}
-          style={{ width: '70px' }}
-        >
-          <Select.Item value="both">Both</Select.Item>
-          <Select.Item value="upstream">In</Select.Item>
-          <Select.Item value="downstream">Out</Select.Item>
-        </Select.Root>
-
-        <span className={styles.eToolbarLabel}>Relation</span>
-        <MultiSelect
-          selectedValues={Array.from(relationSchemaFilter)}
-          availableItems={relationSchemaItems}
-          onSelectionChange={values => setRelationSchemaFilter(new Set(values))}
-          placeholder="All relation types"
-          style={{ width: '120px' }}
-        />
-
-        {isAnyLoading && <span className={styles.eLoadingText}>Loading…</span>}
-
-        <Button
-          className={styles.eResetButton}
-          disabled={excludedIds.size === 0 && manuallyExpanded.size === 0}
-          size={'sm'}
-          onClick={resetGraph}
-        >
-          Reset
-        </Button>
-
-        <Button size={'sm'} onClick={createDiagram}>
-          <TbFileExport size={14} />
-          Create diagram
-        </Button>
-      </div>
+      <EntityGraphToolbar workspaceId={workspaceId} controller={controller} />
 
       <div className={styles.eCanvas}>
         {isAnyLoading && nodes.length <= 1 ? (
@@ -231,50 +141,21 @@ export const EntityGraphView = ({
         )}
       </div>
 
-      {!readOnly && contextMenu && (
-        <ContextMenu.Imperative
-          x={contextMenu.x}
-          y={contextMenu.y}
-          onClose={() => setContextMenu(null)}
-        >
-          <Menu.Item
-            leftSlot={<TbEyeOff size={13} />}
-            disabled={contextMenu.id === rootEntityId}
-            onClick={() => excludeEntity(contextMenu.id)}
-          >
-            Exclude from graph
-          </Menu.Item>
-          <Menu.Item leftSlot={<TbPlus size={13} />} onClick={() => expandEntity(contextMenu.id)}>
-            Expand one level deeper
-          </Menu.Item>
-        </ContextMenu.Imperative>
-      )}
-
-      {relationPopover && (
-        <RelationDetailPopover
-          workspaceId={workspaceId}
-          relationId={relationPopover.relationId}
-          x={relationPopover.x}
-          y={relationPopover.y}
-          onClose={() => setRelationPopover(null)}
-        />
-      )}
-
-      {!readOnly && saveDiagramOpen && pendingDiagramContent && (
-        <SaveDiagramFromGraphDialog
-          open={saveDiagramOpen}
-          onClose={() => setSaveDiagramOpen(false)}
-          onCreated={(_file: ProjectFile) => setSaveDiagramOpen(false)}
-          workspaceId={workspaceId}
-          diagramContent={pendingDiagramContent}
-          defaultName={rootEntityName}
-          initialDestination={{
+      <EntityGraphOverlays
+        workspaceId={workspaceId}
+        controller={controller}
+        allowActions={!readOnly}
+        relationPopover={relationPopover}
+        onCloseRelationPopover={() => setRelationPopover(null)}
+        diagramDefaults={{
+          defaultName: rootEntityName,
+          initialDestination: {
             type: 'entity',
             entityId: rootEntityId,
             entityName: rootEntityName
-          }}
-        />
-      )}
+          }
+        }}
+      />
 
       {readOnly && hasHiddenRelations && !isAnyLoading && fullGraphLink && (
         <div className={styles.eReadOnlyFooter}>{fullGraphLink}</div>

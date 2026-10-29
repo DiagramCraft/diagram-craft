@@ -208,6 +208,12 @@ export const workspaceManagementORPCRouter = wsRouter.router({
         checksums['documents.json'] = calculateChecksum(content);
       }
 
+      if (data.applications) {
+        const content = JSON.stringify(data.applications, null, 2);
+        zipBuilder.addText('applications.json', content);
+        checksums['applications.json'] = calculateChecksum(content);
+      }
+
       // Update manifest with checksums
       manifest.checksums = checksums;
       zipBuilder.addJson('manifest.json', manifest);

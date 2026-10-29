@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type {
+  ExportApplicationData,
   ExportConfig,
   ExportContentNode,
   ExportDocumentData,
@@ -11,6 +12,10 @@ import type {
   ExportSchema
 } from './exportTypes';
 import { workspaceCapabilityBindingsSchema } from '@arch-register/api-types/workspaceCapabilityContract';
+import {
+  dashboardSidebarConfigSchema,
+  dashboardWidgetSchema
+} from '@arch-register/api-types/dashboardContract';
 import { entityDrawerConfigurationSchema } from '@arch-register/api-types/entityDrawerConfiguration';
 
 const exportDataTypeSchema = z.enum([
@@ -21,7 +26,8 @@ const exportDataTypeSchema = z.enum([
   'relations',
   'projects',
   'content_nodes',
-  'documents'
+  'documents',
+  'applications'
 ]);
 
 const exportDiagnosticSchema = z
@@ -55,6 +61,7 @@ export const exportManifestSchema = z
         projects: z.string().optional(),
         content_nodes: z.string().optional(),
         documents: z.string().optional(),
+        applications: z.string().optional(),
         content_directory: z.string().optional()
       })
       .passthrough(),
@@ -69,7 +76,8 @@ export const exportManifestSchema = z
         total_content_size_bytes: z.number().int().nonnegative(),
         document_type_count: z.number().int().nonnegative().optional(),
         document_template_count: z.number().int().nonnegative().optional(),
-        document_revision_count: z.number().int().nonnegative().optional()
+        document_revision_count: z.number().int().nonnegative().optional(),
+        application_count: z.number().int().nonnegative().optional()
       })
       .passthrough(),
     checksums: z.record(z.string(), z.string()),
@@ -112,8 +120,7 @@ const exportConfigSchema = z.object({
       z.object({
         id: z.string(),
         type: z.string(),
-        bindings: workspaceCapabilityBindingsSchema,
-        view_config: z.unknown().nullish()
+        bindings: workspaceCapabilityBindingsSchema
       })
     )
     .optional(),
@@ -129,6 +136,15 @@ const sharedFieldGroupSchema = z
     sort_order: z.number().int()
   })
   .passthrough();
+
+const exportGovernanceConfigSchema = z.object({
+  case_kind: z.string(),
+  name: z.string().trim().min(1).max(200),
+  description: z.string().nullable().optional(),
+  enabled: z.boolean(),
+  config: z.unknown(),
+  shared_with: z.array(z.string()).optional()
+});
 
 const exportSchemaSchema = z
   .object({
@@ -146,17 +162,7 @@ const exportSchemaSchema = z
     key_prefix: z.string().nullable(),
     entity_approval_policy: z.enum(['required', 'disabled']).optional(),
     deprecation_policy: z.enum(['required', 'disabled']).optional(),
-    governance_configs: z
-      .array(
-        z.object({
-          case_kind: z.string(),
-          name: z.string().trim().min(1).max(200),
-          description: z.string().nullable().optional(),
-          enabled: z.boolean(),
-          config: z.unknown()
-        })
-      )
-      .optional()
+    governance_configs: z.array(exportGovernanceConfigSchema).optional()
   })
   .passthrough();
 
@@ -177,6 +183,7 @@ const exportRelationSchemaSchema = z
     color: z.string().nullable(),
     icon: z.string().nullable(),
     relation_approval_policy: z.enum(['required', 'disabled']).optional(),
+    governance_configs: z.array(exportGovernanceConfigSchema).optional(),
     unique_endpoint_pair: z.boolean().optional(),
     version: z.number().int().optional()
   })
@@ -276,6 +283,44 @@ const exportDocumentDataSchema = z
   })
   .passthrough();
 
+const exportDashboardSchema = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+    key: z.string().optional(),
+    description: z.string(),
+    icon: z.string().nullable(),
+    rail_label: z.string().nullable(),
+    app_key: z.string().nullable(),
+    widgets: z.array(dashboardWidgetSchema),
+    sidebar: dashboardSidebarConfigSchema.nullable()
+  })
+  .passthrough();
+
+const exportApplicationDataSchema = z
+  .object({
+    applications: z.array(
+      z
+        .object({
+          id: z.string(),
+          key: z.string(),
+          name: z.string(),
+          description: z.string(),
+          accent_color: z.string().nullable(),
+          dashboards: z.array(exportDashboardSchema),
+          access_policy: z
+            .object({
+              mode: z.enum(['all_members', 'selected']),
+              team_ids: z.array(z.string())
+            })
+            .nullable()
+        })
+        .passthrough()
+    ),
+    home_dashboards: z.array(exportDashboardSchema)
+  })
+  .passthrough();
+
 export const exportPackageSchema = z
   .object({
     config: exportConfigSchema.optional(),
@@ -285,7 +330,8 @@ export const exportPackageSchema = z
     relations: z.array(exportRelationSchema).optional(),
     projects: z.array(exportProjectSchema).optional(),
     content_nodes: z.array(exportContentNodeSchema).optional(),
-    documents: exportDocumentDataSchema.optional()
+    documents: exportDocumentDataSchema.optional(),
+    applications: exportApplicationDataSchema.optional()
   })
   .passthrough();
 
@@ -298,6 +344,7 @@ export type ParsedExportPackage = {
   projects?: ExportProject[];
   content_nodes?: ExportContentNode[];
   documents?: ExportDocumentData;
+  applications?: ExportApplicationData;
 };
 
 export const parseExportManifest = (value: unknown): ExportManifest =>

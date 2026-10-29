@@ -54,6 +54,24 @@ export class FilesystemStorage implements StorageAdapter {
     );
   }
 
+  async exists(workspace: string, projectId: string, fileId: string): Promise<boolean> {
+    const paths = [
+      this.resolvePath(workspace, projectId, fileId),
+      ...this.resolvedFallbackBaseDirs.map(fallbackBaseDir =>
+        this.resolvePathFromBase(fallbackBaseDir, fallbackBaseDir, workspace, projectId, fileId)
+      )
+    ];
+    for (const path of paths) {
+      try {
+        await access(path);
+        return true;
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+      }
+    }
+    return false;
+  }
+
   async read(workspace: string, projectId: string, fileId: string): Promise<Buffer> {
     const primaryPath = this.resolvePath(workspace, projectId, fileId);
     try {

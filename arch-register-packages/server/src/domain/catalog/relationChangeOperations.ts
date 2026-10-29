@@ -23,7 +23,12 @@ import {
   requireNoRestrictedFieldWrites,
   type FieldGroupSchemaShape
 } from '../auth/fieldGroupAccessControl';
+import { encodeCaseSubkind } from '../governance/governanceCaseSubkind';
 import { getRelationSchemaAt } from './schemaHistory';
+import {
+  getRelationApprovalPolicy,
+  relationSchemaWorkflowConfig
+} from '../governance/schemaGovernancePolicy';
 import {
   relationToBaseState,
   requireRelationCaseMemberEditAccess,
@@ -56,17 +61,19 @@ type ResolvedRelationApprovalPolicy = {
  * because policyVersion is namespaced per record kind to avoid colliding with an entity schema
  * of the same id (schema ids are workspace-unique per kind, not globally, so this is defensive).
  */
-const policyFor = (
-  schema: { id: string; version?: number; relation_approval_policy?: 'required' | 'disabled' },
+const policyFor = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  schema: { id: string; version?: number },
   relation: RelationDbResult
-): ResolvedRelationApprovalPolicy => {
+): Promise<ResolvedRelationApprovalPolicy> => {
   const override = relation.approval_policy_override ?? 'inherit';
   const required =
     relation.approval_policy_override === 'required'
       ? true
       : relation.approval_policy_override === 'disabled'
         ? false
-        : (schema.relation_approval_policy ?? 'disabled') === 'required';
+        : (await getRelationApprovalPolicy(db, workspace, schema.id)) === 'required';
   return {
     required,
     selfApprovalAllowed: false,
@@ -245,7 +252,7 @@ const relationApprovalAdapter: ApprovalSubjectAdapter<RelationDbResult, Relation
   resolvePolicy: async (db, workspace, relation) => {
     const schema = await db.relation.getRelationSchema(workspace, relation.schema_id);
     httpAssert.present(schema, { status: 404, message: 'Relation schema not found' });
-    const policy = policyFor(schema, relation);
+    const policy = await policyFor(db, workspace, schema, relation);
     return { required: policy.required, policyVersion: policy.policyVersion };
   },
   resolveSubmission: async (db, workspace, relation, userId, policy) => {
@@ -264,6 +271,7 @@ const relationApprovalAdapter: ApprovalSubjectAdapter<RelationDbResult, Relation
       assignments,
       selfApprovalAllowed,
       requiredApprovals: 1,
+      caseSubkind: encodeCaseSubkind(relation.schema_id),
       casePayload: { relationId: relation.id }
     };
   },
@@ -320,6 +328,7 @@ const relationApprovalAdapter: ApprovalSubjectAdapter<RelationDbResult, Relation
   governance: {
     subjectName: 'Relation',
     workflowConfig: {
+      ...relationSchemaWorkflowConfig,
       supportsApprovals: false,
       supportsReminders: true,
       supportsEscalation: false

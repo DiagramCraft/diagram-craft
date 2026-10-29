@@ -1,8 +1,12 @@
-import { useState, useRef, type ReactNode, type ReactElement } from 'react';
+import { Fragment, useState, useRef, type ReactNode, type ReactElement } from 'react';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { Menu } from '@diagram-craft/app-components/Menu';
 
 export type MenuItem = {
+  /** Stable key; falls back to `label` when omitted. */
+  id?: string;
+  /** Render a separator above this item. */
+  separatorBefore?: boolean;
   label: string;
   icon?: ReactNode;
   danger?: boolean;
@@ -40,18 +44,20 @@ export const DropdownMenu = ({ trigger, header, items }: DropdownMenuProps) => {
           </>
         )}
         {items.map(item => (
-          <Menu.Item
-            key={item.label}
-            leftSlot={item.icon as ReactElement | undefined}
-            type={item.danger ? 'danger' : 'regular'}
-            disabled={item.disabled}
-            onClick={() => {
-              if (item.keepOpen) keepOpenRef.current = true;
-              item.onClick();
-            }}
-          >
-            {item.label}
-          </Menu.Item>
+          <Fragment key={item.id ?? item.label}>
+            {item.separatorBefore && <Menu.Separator />}
+            <Menu.Item
+              leftSlot={item.icon as ReactElement | undefined}
+              type={item.danger ? 'danger' : 'regular'}
+              disabled={item.disabled}
+              onClick={() => {
+                if (item.keepOpen) keepOpenRef.current = true;
+                item.onClick();
+              }}
+            >
+              {item.label}
+            </Menu.Item>
+          </Fragment>
         ))}
       </MenuButton.Menu>
     </MenuButton.Root>

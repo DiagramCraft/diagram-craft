@@ -1,6 +1,6 @@
 /**
- * Day-count due-date idiom shared by Risk & Compliance's `RiskComplianceAssessmentsScreen.tsx`
- * register and `AssessmentDuePanel.tsx`, and Data Stewardship's `DataStewardshipAssessmentsScreen.tsx`
+ * Day-count due-date idiom shared by the Risk & Compliance and Data Stewardship
+ * assessment dashboard widgets
  * — mirrors the design reference's `rcDueTone`/`dsDueTone` day-count labels (`rc-data.jsx`/`rc-views.jsx`,
  * `ds-data.jsx`/`ds-views.jsx`): "18d" / "6d late" rather than a plain formatted date, coloured
  * danger/warning/ok by how close (or past) the due date is. Promoted out of `app/risk-compliance/`

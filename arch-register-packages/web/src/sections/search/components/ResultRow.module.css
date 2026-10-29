@@ -1,6 +1,6 @@
 .row {
   display: grid;
-  grid-template-columns: 28px 1fr auto;
+  grid-template-columns: 28px 1fr;
   gap: 10px;
   align-items: flex-start;
   padding: 9px 10px;
@@ -12,8 +12,7 @@
     border-color 60ms;
 }
 
-.row:hover,
-.rowSelected {
+.row:hover {
   background: color-mix(in oklch, var(--accent-fg) 9%, var(--cmp-bg));
   border-color: color-mix(in oklch, var(--accent-fg) 50%, var(--cmp-border));
 }
@@ -61,7 +60,7 @@
   cursor: pointer;
 }
 
-.rowName:hover {
+.row:hover .rowName {
   color: var(--accent-fg);
 }
 
@@ -96,35 +95,15 @@
   color: var(--cmp-fg-disabled);
 }
 
-.rowGo {
-  align-self: center;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  border-radius: var(--r);
-  color: var(--cmp-fg-disabled);
-  background: transparent;
-  opacity: 0;
-  transition: opacity 80ms;
-}
-
-.row:hover .rowGo,
-.rowSelected .rowGo {
-  opacity: 1;
-}
-
-.rowGo:hover {
-  background: var(--cmp-bg-hover);
-  color: var(--base-fg);
-}
-
 /* Match highlights */
 .row mark {
-  background: color-mix(in oklch, var(--warning-fg) 30%, transparent);
-  color: var(--base-fg);
+  background: color-mix(in oklch, var(--warning-fg) 16%, transparent);
+  color: inherit;
   border-radius: 2px;
   padding: 0 1px;
-  font-weight: 600;
+  font-weight: inherit;
+}
+
+.dim {
+  color: var(--cmp-fg-disabled);
 }

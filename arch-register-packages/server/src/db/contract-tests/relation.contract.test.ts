@@ -46,7 +46,6 @@ const createFixtureRelationSchema = async (
     shared_field_group_links: [],
     color: null,
     icon: null,
-    relation_approval_policy: 'disabled',
     unique_endpoint_pair: uniqueEndpointPair,
     created_at: now,
     updated_at: now

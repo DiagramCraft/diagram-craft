@@ -1,13 +1,12 @@
+import { BROWSER_VIEWS } from '@arch-register/api-types/viewContract';
 import {
   defineSearchParamSchema,
   enumCodec,
-  mapCodec,
   numberInRangeCodec,
   omitDefaultCodec,
   parseSearchParams,
   positivePageCodec,
   stringCodec,
-  type SearchParamCodecOutput,
   type SearchParamsFromSchema
 } from './searchParamCodecs';
 
@@ -23,55 +22,18 @@ export const validateEntityDrawerSearch = (
   raw: Record<string, unknown>
 ): EntityDrawerSearchParams => parseSearchParams(entityDrawerSearchParamSchema, raw);
 
-const entityBrowserSidebarValues = enumCodec(['home', 'views', 'bookmarks', 'baselines'] as const);
-
-export type EntityBrowserSidebarTab = SearchParamCodecOutput<typeof entityBrowserSidebarValues>;
-
-const entityBrowserSidebarCodec = mapCodec(
-  enumCodec([
-    'home',
-    'views',
-    'bookmarks',
-    'baselines',
-    'filters',
-    'pinned',
-    'collections'
-  ] as const),
-  (value): EntityBrowserSidebarTab => {
-    if (value === 'filters') return 'home';
-    if (value === 'pinned' || value === 'collections') return 'bookmarks';
-    return value;
-  }
-);
-
 const sharedEntityBrowserSearchSchema = defineSearchParamSchema({
   type: stringCodec,
   status: stringCodec,
   owner: stringCodec,
   q: stringCodec,
   viewId: stringCodec,
-  viewMode: enumCodec([
-    'table',
-    'cards',
-    'tree',
-    'radar',
-    'timeline',
-    'matrix',
-    'explore',
-    'bubble',
-    'heatmap',
-    'map',
-    'diff',
-    'graph',
-    'traceability',
-    'path-walker'
-  ] as const),
+  viewMode: enumCodec(BROWSER_VIEWS),
   sort: stringCodec,
   projectScope: enumCodec(['project', 'all'] as const),
   viewConfigs: stringCodec,
-  // Comma-separated entity ids, one per path-walker column, tracking the currently walked chain.
+  // Comma-separated entity ids, one per trail column, tracking the currently walked chain.
   pathWalk: stringCodec,
-  sidebarTab: entityBrowserSidebarCodec,
   baselineId: stringCodec,
   collectionId: stringCodec,
   filters: stringCodec,
@@ -130,7 +92,6 @@ export const validateWorkspaceContentSearch = (
 // Entity detail params
 const entityDetailSearchSchema = defineSearchParamSchema({
   ...sharedContentBrowserSearchSchema,
-  sidebarTab: entityBrowserSidebarCodec,
   collectionId: stringCodec,
   apiQ: stringCodec,
   apiResource: stringCodec,
@@ -175,7 +136,8 @@ const projectSearchSchema = defineSearchParamSchema({
   ...sharedEntityBrowserSearchSchema,
   ...sharedContentBrowserSearchSchema,
   tab: enumCodec(['projects', 'archive'] as const),
-  section: enumCodec(['home', 'entities', 'assessments', 'milestones'] as const),
+  section: enumCodec(['home', 'entities', 'plan', 'assessments'] as const),
+  planTab: enumCodec(['timeline', 'planned-changes', 'project-diff', 'milestones'] as const),
   assessmentId: stringCodec,
   assessmentTab: enumCodec(['details', 'summary', 'discussion'] as const),
   dialog: enumCodec(['add-entity'] as const)
@@ -235,6 +197,16 @@ export type SearchRouteSearchParams = SearchParamsFromSchema<typeof searchRouteS
 
 export const validateSearchSearch = (raw: Record<string, unknown>): SearchRouteSearchParams =>
   parseSearchParams(searchRouteSearchSchema, raw);
+
+// Governance (My work) params
+const governanceSearchSchema = defineSearchParamSchema({
+  scope: enumCodec(['assigned', 'submitted'] as const)
+});
+
+export type GovernanceSearchParams = SearchParamsFromSchema<typeof governanceSearchSchema>;
+
+export const validateGovernanceSearch = (raw: Record<string, unknown>): GovernanceSearchParams =>
+  parseSearchParams(governanceSearchSchema, raw);
 
 // Diagram params
 const diagramSearchSchema = defineSearchParamSchema({
@@ -344,234 +316,6 @@ export type AssistantSearchParams = SearchParamsFromSchema<typeof assistantSearc
 export const validateAssistantSearch = (raw: Record<string, unknown>): AssistantSearchParams =>
   parseSearchParams(assistantSearchSchema, raw);
 
-// Glossary params
-const glossarySearchSchema = defineSearchParamSchema({
-  q: stringCodec,
-  categoryIds: stringCodec, // comma-joined TermCategory entity ids
-  quality: enumCodec(['unused', 'conflicting', 'deprecated', 'ownerless'] as const),
-  owner: stringCodec,
-  lifecycle: stringCodec
-});
-
-export type GlossarySearchParams = SearchParamsFromSchema<typeof glossarySearchSchema>;
-
-export const validateGlossarySearch = (raw: Record<string, unknown>): GlossarySearchParams =>
-  parseSearchParams(glossarySearchSchema, raw);
-
-// Strategy capabilities params
-const capabilitiesSearchSchema = defineSearchParamSchema({
-  level: stringCodec, // e.g. 'L1', 'L2'
-  owner: stringCodec,
-  // Set by clicking a node in the sidebar's capability tree; filters the table to that
-  // capability's id plus its descendants.
-  subtreeOf: stringCodec
-});
-
-export type CapabilitiesSearchParams = SearchParamsFromSchema<typeof capabilitiesSearchSchema>;
-
-export const validateCapabilitiesSearch = (
-  raw: Record<string, unknown>
-): CapabilitiesSearchParams => parseSearchParams(capabilitiesSearchSchema, raw);
-
-// Vendor Management vendors params
-const vendorsSearchSchema = defineSearchParamSchema({
-  q: stringCodec,
-  // Vendor Tier / Category select-field values, and a Relationship Owner free-text value — set by
-  // the sidebar's facets (`VendorsSidebarContent`).
-  tier: stringCodec,
-  category: stringCodec,
-  owner: stringCodec
-});
-
-export type VendorsSearchParams = SearchParamsFromSchema<typeof vendorsSearchSchema>;
-
-export const validateVendorsSearch = (raw: Record<string, unknown>): VendorsSearchParams =>
-  parseSearchParams(vendorsSearchSchema, raw);
-
-// Vendor Management contracts params
-const contractsSearchSchema = defineSearchParamSchema({
-  q: stringCodec,
-  // Contract Type select-field value, a Vendor uid, and a RenewalWindow id — set by the sidebar's
-  // facets (`ContractsSidebarContent` in `VendorManagementSidebar.tsx`).
-  type: stringCodec,
-  vendor: stringCodec,
-  renewalWindow: stringCodec,
-  // Toggles the section between its list, 12-month renewal calendar, and Gantt-style contract
-  // timeline; defaults to 'list'.
-  view: enumCodec(['list', 'calendar', 'timeline'] as const)
-});
-
-export type ContractsSearchParams = SearchParamsFromSchema<typeof contractsSearchSchema>;
-
-export const validateContractsSearch = (raw: Record<string, unknown>): ContractsSearchParams =>
-  parseSearchParams(contractsSearchSchema, raw);
-
-// Vendor Management spend params
-const spendSearchSchema = defineSearchParamSchema({
-  // Toggles the roll-up table's grouping dimension; defaults to 'vendor'. 'capability' is
-  // selectable (matching the design reference's three-way toggle) but shows an explanatory empty
-  // state instead of data — no Contract-to-capability schema link exists yet, see
-  // `VendorSpendScreen.tsx`.
-  group: enumCodec(['vendor', 'costCentre', 'capability'] as const),
-  // Vendor Cost Centre select-field value and a Relationship Owner free-text value — set by the
-  // sidebar's facets (`SpendSidebarContent` in `VendorManagementSidebar.tsx`), narrowing the
-  // vendor/capability roll-ups to a single cost centre or owner (ignored when already grouped by
-  // cost centre, matching the design reference).
-  cc: stringCodec,
-  owner: stringCodec
-});
-
-export type SpendSearchParams = SearchParamsFromSchema<typeof spendSearchSchema>;
-
-export const validateSpendSearch = (raw: Record<string, unknown>): SpendSearchParams =>
-  parseSearchParams(spendSearchSchema, raw);
-
-// Vendor Management risk params
-const riskSearchSchema = defineSearchParamSchema({
-  // Vendor risk band, narrowing the matrix, risk register, and EOL table to vendors in that band
-  // — set by the sidebar's Band facet (`RiskSidebarContent` in `VendorManagementSidebar.tsx`).
-  band: stringCodec,
-  // A `GroupedVendorTechnologyExposure.key` (`<vendorUid>:<technologyReleaseUid>`), narrowing the
-  // matrix, risk register, and EOL table down to that one vendor — set by the sidebar's
-  // Technology EOL facet. Combines (AND) with `band` rather than replacing it.
-  technology: stringCodec
-});
-
-export type RiskSearchParams = SearchParamsFromSchema<typeof riskSearchSchema>;
-
-export const validateRiskSearch = (raw: Record<string, unknown>): RiskSearchParams =>
-  parseSearchParams(riskSearchSchema, raw);
-
-// Risk & Compliance risks params
-const risksSearchSchema = defineSearchParamSchema({
-  q: stringCodec,
-  // Risk Category / Status select-field values, and a Risk Owner free-text value — set by the
-  // sidebar's facets (`RisksSidebarContent`), mirroring `vendorsSearchSchema` above.
-  category: stringCodec,
-  status: stringCodec,
-  owner: stringCodec,
-  // Narrows to risks whose residual score bands as high/critical (no schema "risk appetite"
-  // field exists — see `residualRiskBand.ts`); '1' when set, absent otherwise.
-  outsideAppetite: enumCodec(['1'] as const),
-  // Toggles the matrix's likelihood/impact bucketing between the raw inherent score and the
-  // effectiveness-adjusted residual score; defaults to 'inherent'.
-  axis: enumCodec(['inherent', 'residual'] as const),
-  // Toggles the section between its sortable table and the 5×5 matrix (mutually exclusive, not
-  // shown side by side — mirrors the design reference's `RCRiskList` register/matrix toggle);
-  // defaults to 'register'.
-  view: enumCodec(['register', 'matrix'] as const)
-});
-
-export type RisksSearchParams = SearchParamsFromSchema<typeof risksSearchSchema>;
-
-export const validateRisksSearch = (raw: Record<string, unknown>): RisksSearchParams =>
-  parseSearchParams(risksSearchSchema, raw);
-
-// Risk & Compliance controls params
-const controlsSearchSchema = defineSearchParamSchema({
-  q: stringCodec,
-  // Control Type (`control_type`) / Operating Effectiveness select-field values, and a Framework
-  // name derived from `satisfied_requirements` → `compliance_requirement` → Framework — set by the
-  // sidebar's facets (`ControlsSidebarContent` in `RiskComplianceSidebar.tsx`), mirroring
-  // `risksSearchSchema` above.
-  type: stringCodec,
-  effectiveness: stringCodec,
-  framework: stringCodec,
-  // Toggles the section between its sortable library table, the coverage roll-up view
-  // (weakest-covered risks, coverage by information asset), and the control × risk/asset
-  // traceability matrix (#3282); defaults to 'library'.
-  view: enumCodec(['library', 'coverage', 'traceability'] as const),
-  // Toggles the traceability matrix's columns between risks and information assets — set by its
-  // own Risks/Assets toggle, independent of `view`; defaults to 'risks'.
-  dim: enumCodec(['risks', 'assets'] as const)
-});
-
-export type ControlsSearchParams = SearchParamsFromSchema<typeof controlsSearchSchema>;
-
-export const validateControlsSearch = (raw: Record<string, unknown>): ControlsSearchParams =>
-  parseSearchParams(controlsSearchSchema, raw);
-
-// Risk & Compliance assessments params
-const assessmentsSearchSchema = defineSearchParamSchema({
-  q: stringCodec,
-  // Narrows the register to assessments scoped to the Risk schema or the Control schema; unset
-  // shows both — set by the section's own Risk/Control/All toggle.
-  type: enumCodec(['risk', 'control'] as const)
-});
-
-export type AssessmentsSearchParams = SearchParamsFromSchema<typeof assessmentsSearchSchema>;
-
-export const validateAssessmentsSearch = (raw: Record<string, unknown>): AssessmentsSearchParams =>
-  parseSearchParams(assessmentsSearchSchema, raw);
-
-// Risk & Compliance retention params. The section is a single Assignments register (no view
-// toggle, no expiry dashboard) — a per-assignment "expiry" computed from a category-level
-// `activated_from` plus a policy's duration can't actually tell you which individual records are
-// due, since retention policies are assigned to Data Entity *categories*, not to records with
-// their own creation dates (see the Retention section's own doc comment in
-// `RiskComplianceRetentionScreen.tsx`), so that framing was deliberately removed. What's left is
-// a plain register, filtered by a sidebar Policy facet or an "incomplete" data-quality facet.
-const retentionSearchSchema = defineSearchParamSchema({
-  // Narrows to one Retention Policy's assignments — set by a sidebar facet, mirroring
-  // `risksSearchSchema`'s facet params above.
-  policy: stringCodec,
-  // Narrows to assignments missing required data (no policy, duration, time unit, or activation
-  // date — see `useRetentionAssignments.ts`'s `missing`) — a data-completeness facet, not a
-  // disposal-urgency one. '1' when set, absent otherwise, mirrors `risksSearchSchema`'s
-  // `outsideAppetite`.
-  incomplete: enumCodec(['1'] as const)
-});
-
-export type RetentionSearchParams = SearchParamsFromSchema<typeof retentionSearchSchema>;
-
-export const validateRetentionSearch = (raw: Record<string, unknown>): RetentionSearchParams =>
-  parseSearchParams(retentionSearchSchema, raw);
-
-// Strategy capability map params
-const capabilityMapSearchSchema = defineSearchParamSchema({
-  // Set by clicking a node in the map sidebar's capability tree (or an L1 domain header in the
-  // grid); collapses the grid to that capability's subtree, with an "All domains" affordance to
-  // clear it.
-  focus: stringCodec,
-  // Team id; dims map tiles whose capability is not owned by that team (same "dim, don't remove"
-  // semantics as the grid's free-text search box).
-  owner: stringCodec
-});
-
-export type CapabilityMapSearchParams = SearchParamsFromSchema<typeof capabilityMapSearchSchema>;
-
-export const validateCapabilityMapSearch = (
-  raw: Record<string, unknown>
-): CapabilityMapSearchParams => parseSearchParams(capabilityMapSearchSchema, raw);
-
-// Strategy traceability params — the hop walker's column selection lives in the URL so a walked
-// Objective → Capability → Application path is deep-linkable, mirroring `focus` on the capability
-// map.
-const traceabilitySearchSchema = defineSearchParamSchema({
-  // 'chain' (the hop walker, default) | 'orphans' (the "no strategy link" list).
-  tab: stringCodec,
-  objective: stringCodec,
-  capability: stringCodec
-});
-
-export type TraceabilitySearchParams = SearchParamsFromSchema<typeof traceabilitySearchSchema>;
-
-export const validateTraceabilitySearch = (
-  raw: Record<string, unknown>
-): TraceabilitySearchParams => parseSearchParams(traceabilitySearchSchema, raw);
-
-// Strategy section params — the selected objective card lives in the URL so an objective's
-// outcomes / initiatives / measures view is deep-linkable, and the sidebar's objective list can
-// drive the same selection.
-const strategySearchSchema = defineSearchParamSchema({
-  objective: stringCodec
-});
-
-export type StrategySearchParams = SearchParamsFromSchema<typeof strategySearchSchema>;
-
-export const validateStrategySearch = (raw: Record<string, unknown>): StrategySearchParams =>
-  parseSearchParams(strategySearchSchema, raw);
-
 // Home params
 const homeSearchSchema = defineSearchParamSchema({
   dashboard: stringCodec
@@ -581,186 +325,3 @@ export type HomeSearchParams = SearchParamsFromSchema<typeof homeSearchSchema>;
 
 export const validateHomeSearch = (raw: Record<string, unknown>): HomeSearchParams =>
   parseSearchParams(homeSearchSchema, raw);
-
-// Data Stewardship stewardship-section params — mirrors `risksSearchSchema` above.
-const dataStewardshipStewardshipSearchSchema = defineSearchParamSchema({
-  q: stringCodec,
-  // Sorts the dataset table by gap count, next review date (`review_date`), or name; defaults to
-  // 'gaps'. The design reference (`ds.jsx`'s `DSStewardship`) also sorts by "quality" and
-  // "domain", but Data Entity has neither field (see `../app/data-stewardship/datasetCoverage.ts`)
-  // so those options aren't offered.
-  sort: enumCodec(['gaps', 'review', 'name'] as const),
-  // Classification select-field value — set by the sidebar's Classification facet
-  // (`StewardshipSidebarContent` in `DataStewardshipSidebar.tsx`).
-  classification: stringCodec,
-  // Narrows to datasets with a coverage gap (`computeDatasetCoverage`); '1' when set, absent
-  // otherwise — mirrors `outsideAppetite` above.
-  gapsOnly: enumCodec(['1'] as const)
-});
-
-export type DataStewardshipStewardshipSearchParams = SearchParamsFromSchema<
-  typeof dataStewardshipStewardshipSearchSchema
->;
-
-export const validateDataStewardshipStewardshipSearch = (
-  raw: Record<string, unknown>
-): DataStewardshipStewardshipSearchParams =>
-  parseSearchParams(dataStewardshipStewardshipSearchSchema, raw);
-
-// Data Stewardship classification-section params. Three views (classified data / restricted flows
-// / cross-boundary transfers) live in one screen, switched via the sidebar's own TreeRows
-// (`ClassificationSidebarContent` in `../app/data-stewardship/sections/DataStewardshipSidebar.tsx`)
-// rather than a separate route per view — see `DataStewardshipClassificationScreen.tsx`'s doc
-// comment for why.
-const dataStewardshipClassificationSearchSchema = defineSearchParamSchema({
-  q: stringCodec,
-  view: enumCodec(['classified', 'restricted-flows', 'cross-boundary'] as const),
-  // Classification select-field value — narrows the classified-data view; mirrors
-  // `dataStewardshipStewardshipSearchSchema`'s own `classification`.
-  classification: stringCodec,
-  // Narrows the classified-data view to entities flagged as carrying personal data
-  // (`isPersonalData` in `../app/data-stewardship/dataFlowClassification.ts`); '1' when set,
-  // absent otherwise.
-  personalDataOnly: enumCodec(['1'] as const),
-  // Narrows the classified-data view to datasets with a coverage gap (`computeDatasetCoverage`);
-  // '1' when set, absent otherwise — mirrors `dataStewardshipStewardshipSearchSchema`'s own
-  // `gapsOnly`.
-  gapsOnly: enumCodec(['1'] as const),
-  // Sort keys differ per view ('classification' | 'name' for classified data, 'severity' | 'name'
-  // for the flow views), so this is a loose string rather than a per-view enum union.
-  sort: stringCodec
-});
-
-export type DataStewardshipClassificationSearchParams = SearchParamsFromSchema<
-  typeof dataStewardshipClassificationSearchSchema
->;
-
-export const validateDataStewardshipClassificationSearch = (
-  raw: Record<string, unknown>
-): DataStewardshipClassificationSearchParams =>
-  parseSearchParams(dataStewardshipClassificationSearchSchema, raw);
-
-// Data Stewardship assessments-section params — one register, no sidebar facets (the section is
-// registered full-width, like Risk & Compliance's own Assessments screen), so its filters live in
-// its own in-page toolbar instead.
-const dataStewardshipAssessmentsSearchSchema = defineSearchParamSchema({
-  q: stringCodec,
-  // Narrows the register to one of the stat strip's four buckets — set by the toolbar's status
-  // toggle; unset shows all rows.
-  status: enumCodec(['overdue', 'in_progress', 'not_started', 'complete'] as const)
-  // No `datasetId` param here — a row is a whole assessment, not one dataset, so a click navigates
-  // out to the owning Project instead of opening an entity drawer.
-});
-
-export type DataStewardshipAssessmentsSearchParams = SearchParamsFromSchema<
-  typeof dataStewardshipAssessmentsSearchSchema
->;
-
-export const validateDataStewardshipAssessmentsSearch = (
-  raw: Record<string, unknown>
-): DataStewardshipAssessmentsSearchParams =>
-  parseSearchParams(dataStewardshipAssessmentsSearchSchema, raw);
-
-// Data Stewardship My work-section params — the review queue that's also the app's landing screen
-// (`DataStewardshipMyWorkScreen.tsx`, #3298).
-const dataStewardshipMyWorkSearchSchema = defineSearchParamSchema({
-  // Scope tab: assigned to the current user, every open item visible in the workspace, or just
-  // the overdue subset of "all". Defaults to 'mine' when absent.
-  scope: enumCodec(['mine', 'all', 'late'] as const),
-  // Governance case-kind value — set by the sidebar's Kind facet
-  // (`MyWorkSidebarContent` in `DataStewardshipSidebar.tsx`).
-  kind: stringCodec,
-  // Derived priority bucket (`queueItemPriority` in `../app/data-stewardship/dataStewardshipQueue.ts`)
-  // — there is no real priority field on a governance case, see that module's doc comment.
-  priority: enumCodec(['high', 'medium', 'low'] as const),
-  // Opens the new minimal case drawer (`DataStewardshipCaseDrawer.tsx`) for this governance case id
-  // — for entity.change-case / entity.deprecation queue rows.
-  caseId: stringCodec,
-  // Opens the shared entity drawer for this dataset id (paired with `caseId` above, so a click
-  // between the two swaps rather than stacks) — for field-date-reminder queue rows.
-  datasetId: stringCodec
-});
-
-export type DataStewardshipMyWorkSearchParams = SearchParamsFromSchema<
-  typeof dataStewardshipMyWorkSearchSchema
->;
-
-export const validateDataStewardshipMyWorkSearch = (
-  raw: Record<string, unknown>
-): DataStewardshipMyWorkSearchParams => parseSearchParams(dataStewardshipMyWorkSearchSchema, raw);
-
-// Data Stewardship change-cases-section params (#3301) — a read list over `entity.change-case`
-// governance cases against Data Entities; no exceptions/waiver register (removed after review).
-const dataStewardshipChangeCasesSearchSchema = defineSearchParamSchema({
-  q: stringCodec,
-  // Case status facet — `governanceCaseSchema`'s own status values.
-  status: enumCodec(['open', 'completed', 'cancelled'] as const),
-  // Opens the shared `DataStewardshipCaseDrawer.tsx` for this governance case id — same drawer
-  // `dataStewardshipMyWorkSearchSchema`'s own `caseId` opens (#3298).
-  caseId: stringCodec,
-  // Opens the shared entity drawer for this dataset id — from a case row's linked dataset,
-  // paired with `caseId` above so a click between the two swaps rather than stacks.
-  datasetId: stringCodec
-});
-
-export type DataStewardshipChangeCasesSearchParams = SearchParamsFromSchema<
-  typeof dataStewardshipChangeCasesSearchSchema
->;
-
-export const validateDataStewardshipChangeCasesSearch = (
-  raw: Record<string, unknown>
-): DataStewardshipChangeCasesSearchParams =>
-  parseSearchParams(dataStewardshipChangeCasesSearchSchema, raw);
-
-// API & Integration Catalog integrations-section params — facets set by the sidebar's
-// `IntegrationsSidebarContent` (`ApiIntegrationCatalogSidebar.tsx`), mirrors `risksSearchSchema`'s
-// facet params above.
-const apiIntegrationCatalogIntegrationsSearchSchema = defineSearchParamSchema({
-  q: stringCodec,
-  // `protocol` / `data_classification` select-field values on the Data Flow relation schema.
-  protocol: stringCodec,
-  classification: stringCodec,
-  // Narrows to relations whose derived `cross_boundary` field is `'cross-boundary'`. '1' when set,
-  // absent otherwise, mirrors `risksSearchSchema`'s `outsideAppetite`.
-  boundary: enumCodec(['1'] as const),
-  // Toggles the table between the Data Flow relation list ('flows', the default — undefined) and
-  // the lighter Provider/Consumer Pairs table (#3340).
-  view: enumCodec(['flows', 'pairs'] as const)
-});
-
-export type ApiIntegrationCatalogIntegrationsSearchParams = SearchParamsFromSchema<
-  typeof apiIntegrationCatalogIntegrationsSearchSchema
->;
-
-export const validateApiIntegrationCatalogIntegrationsSearch = (
-  raw: Record<string, unknown>
-): ApiIntegrationCatalogIntegrationsSearchParams =>
-  parseSearchParams(apiIntegrationCatalogIntegrationsSearchSchema, raw);
-
-// API & Integration Catalog apis-section params — facets set by the sidebar's
-// `ApisSidebarContent` (`ApiIntegrationCatalogSidebar.tsx`), mirrors
-// `apiIntegrationCatalogIntegrationsSearchSchema` above (#3345).
-const apiIntegrationCatalogApisSearchSchema = defineSearchParamSchema({
-  q: stringCodec,
-  // `protocols` select-field value on the `api` entity schema (multi-value field; an API matches
-  // when this value is one of its `protocols`).
-  protocol: stringCodec,
-  // `entity._lifecycle.id` — workspace lifecycle-state id.
-  lifecycle: stringCodec,
-  // `entity._owner.id` — owning team/user id. No schema lookup; values come from observed owners.
-  owner: stringCodec,
-  // Switches between the APIs catalog table (the default, undefined) and two flat cross-API
-  // tables: every operation ('operations', #3345) or just the deprecated ones ('deprecated',
-  // #3347 — deferred from #3345 after the projection fan-out surfaced a 409 from the artifacts
-  // revisions endpoint, now fixed server-side).
-  view: enumCodec(['catalog', 'operations', 'deprecated'] as const)
-});
-
-export type ApiIntegrationCatalogApisSearchParams = SearchParamsFromSchema<
-  typeof apiIntegrationCatalogApisSearchSchema
->;
-
-export const validateApiIntegrationCatalogApisSearch = (
-  raw: Record<string, unknown>
-): ApiIntegrationCatalogApisSearchParams =>
-  parseSearchParams(apiIntegrationCatalogApisSearchSchema, raw);

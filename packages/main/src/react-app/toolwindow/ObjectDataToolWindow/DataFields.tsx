@@ -19,7 +19,7 @@ const DataField = (props: {
     <KeyValueTable.Label valign={'top'}>{props.field.name}:</KeyValueTable.Label>
     <KeyValueTable.Value data-type={props.field.type} data-label={props.field.name}>
       <div style={{ display: 'inline-block' }}>
-        {props.field.type === 'text' && (
+        {(props.field.type === 'text' || props.field.type === 'number') && (
           <TextInput
             value={props.value.length > 1 ? '***' : (props.value[0]?.toString() ?? '')}
             disabled={props.disabled}

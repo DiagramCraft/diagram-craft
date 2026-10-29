@@ -24,6 +24,7 @@ afterAll(() => vi.useRealTimers());
 
 const noopStorage: StorageAdapter = {
   read: async () => Buffer.alloc(0),
+  exists: async () => false,
   write: async () => {},
   delete: async () => {},
   deleteAll: async () => {},

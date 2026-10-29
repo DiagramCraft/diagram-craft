@@ -1,6 +1,6 @@
 import { TbChevronLeft, TbChevronRight } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
-import { FilterDropdown } from './FilterDropdown';
+import { LabeledSelect } from './LabeledSelect';
 import styles from './Pagination.module.css';
 
 const DEFAULT_PAGE_SIZE_OPTIONS = [25, 50, 100, 200];
@@ -23,7 +23,7 @@ export const Pagination = ({
   onNext: () => void;
 }) => (
   <div className={styles.pagination}>
-    <FilterDropdown
+    <LabeledSelect
       label="Page Size"
       variant="secondary"
       value={String(pageSize)}

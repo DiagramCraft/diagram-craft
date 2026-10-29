@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQueries } from '@tanstack/react-query';
-import { TbChevronDown, TbPlus, TbTrash, TbX } from 'react-icons/tb';
+import { TbPlus, TbTrash, TbX } from 'react-icons/tb';
+import { LabeledSelect } from '../../../components/LabeledSelect';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import {
   MAX_PATH_HOPS,
@@ -29,11 +30,13 @@ import {
   collectTargetSchemaIds,
   entityIsOrphan,
   hasAnyTargetSchema,
+  nextTraceabilityPathId,
   parseTraceabilityConfig,
   pruneInvalidTraceabilityPaths,
   traceabilityPathOptions,
   traceabilityPathStepContext
 } from './traceabilityViewState';
+import { CollapsibleSection } from '../../../components/CollapsibleSection';
 
 type TraceabilityViewProps = {
   rows: BrowserEntityRecord[];
@@ -263,7 +266,7 @@ export const TraceabilityView = ({
       paths: [
         ...editorConfig.paths,
         {
-          id: `path-${editorConfig.paths.length + 1}`,
+          id: nextTraceabilityPathId(editorConfig.paths),
           label: 'Trace',
           path: [option.step],
           targetSchemaIds: 'any'
@@ -354,20 +357,11 @@ export const TraceabilityView = ({
   return (
     <div className={styles.wrap}>
       {!hideToolbar && (
-        <div className={styles.config}>
-          <div className={styles.configHeader}>
-            <button
-              type="button"
-              className={styles.configToggle}
-              onClick={() => setConfigOpen(open => !open)}
-            >
-              <TbChevronDown
-                size={12}
-                className={styles.configToggleIcon}
-                data-open={configOpen ? 'true' : 'false'}
-              />
-              <span className={styles.configTitle}>Traceability configuration</span>
-            </button>
+        <CollapsibleSection
+          title="Traceability configuration"
+          open={configOpen}
+          onOpenChange={setConfigOpen}
+          actions={
             <button
               type="button"
               className={styles.addPath}
@@ -376,154 +370,137 @@ export const TraceabilityView = ({
             >
               <TbPlus size={11} /> Add path
             </button>
-          </div>
-          {configOpen && (
-            <div className={styles.configBody}>
-              {editorConfig.paths.map(path => {
-                const hopEntries = path.path.map((_step, depth) => {
-                  const stepContext = traceabilityPathStepContext({
-                    rootSchemaScope,
-                    path,
-                    depth,
-                    schemas,
-                    relationSchemas,
-                    getFieldGroupAccess
-                  });
-                  const errorMessage = !stepContext.invalid
-                    ? null
-                    : 'This hop is no longer available for the current schema.';
-
-                  return { depth, errorMessage, stepContext };
+          }
+        >
+          <div className={styles.configBody}>
+            {editorConfig.paths.map(path => {
+              const hopEntries = path.path.map((_step, depth) => {
+                const stepContext = traceabilityPathStepContext({
+                  rootSchemaScope,
+                  path,
+                  depth,
+                  schemas,
+                  relationSchemas,
+                  getFieldGroupAccess
                 });
+                const errorMessage = !stepContext.invalid
+                  ? null
+                  : 'This hop is no longer available for the current schema.';
 
-                return (
-                  <div key={path.id} className={styles.path}>
-                    <button
-                      type="button"
-                      className={styles.pathRm}
-                      title="Remove path"
-                      onClick={() => removePath(path.id)}
-                    >
-                      <TbX size={11} />
-                    </button>
+                return { depth, errorMessage, stepContext };
+              });
 
-                    <span className={styles.pathTargetLabel} id={`trace-label-label-${path.id}`}>
-                      Path label
-                    </span>
-                    <div className={styles.pathLabelInput}>
-                      <TextInput
-                        value={path.label}
-                        aria-labelledby={`trace-label-label-${path.id}`}
-                        style={{ width: 150, height: 24 }}
-                        onChange={value =>
-                          updateConfig({
-                            ...editorConfig,
-                            paths: editorConfig.paths.map(candidate =>
-                              candidate.id === path.id
-                                ? { ...candidate, label: value ?? '' }
-                                : candidate
-                            )
-                          })
-                        }
-                      />
-                    </div>
+              return (
+                <div key={path.id} className={styles.path}>
+                  <button
+                    type="button"
+                    className={styles.pathRm}
+                    title="Remove path"
+                    onClick={() => removePath(path.id)}
+                  >
+                    <TbX size={11} />
+                  </button>
 
-                    <span className={styles.pathTargetLabel}>Path</span>
-
-                    <div className={styles.hopsCell}>
-                      <HopSequence
-                        items={path.path}
-                        getItemKey={(_step, depth) => `${path.id}-${depth}`}
-                        renderItem={(step, depth) => {
-                          const { stepContext } = hopEntries[depth]!;
-                          return (
-                            <div className={styles.hop}>
-                              <HopPicker
-                                step={step}
-                                stepContext={stepContext}
-                                ariaLabelDirection={`Direction for ${path.id} hop ${depth + 1}`}
-                                ariaLabelHop={`Hop for ${path.id} hop ${depth + 1}`}
-                                onChangeStep={nextStep => updatePathStep(path.id, depth, nextStep)}
-                                onToggleDirection={direction =>
-                                  updatePathDirection(path, depth, direction)
-                                }
-                              />
-                              {path.path.length > 1 && depth === path.path.length - 1 && (
-                                <button
-                                  type="button"
-                                  className={styles.hopRm}
-                                  title="Remove hop"
-                                  onClick={() => removeLastPathStep(path.id)}
-                                >
-                                  <TbTrash size={13} />
-                                </button>
-                              )}
-                            </div>
-                          );
-                        }}
-                        onAdd={() => addPathStep(path.id)}
-                        addLabel="Add hop"
-                        addDisabled={!canAddHop(path)}
-                      />
-
-                      {hopEntries.some(entry => entry.errorMessage) && (
-                        <div className={styles.hopErrors}>
-                          {hopEntries
-                            .filter(entry => entry.errorMessage)
-                            .map(entry => (
-                              <div
-                                key={`${path.id}-error-${entry.depth}`}
-                                className={styles.hopError}
-                              >
-                                Hop {entry.depth + 1}: {entry.errorMessage}
-                              </div>
-                            ))}
-                        </div>
-                      )}
-                    </div>
-
-                    <span className={styles.pathTargetLabel} id={`trace-target-label-${path.id}`}>
-                      Target
-                    </span>
-                    <div className={styles.selectWrap}>
-                      <select
-                        className={styles.select}
-                        value={
-                          path.targetSchemaIds === 'any'
-                            ? 'any'
-                            : (path.targetSchemaIds[0] ?? 'any')
-                        }
-                        aria-labelledby={`trace-target-label-${path.id}`}
-                        onChange={event =>
-                          updateConfig({
-                            ...editorConfig,
-                            paths: editorConfig.paths.map(candidate =>
-                              candidate.id === path.id
-                                ? {
-                                    ...candidate,
-                                    targetSchemaIds:
-                                      event.target.value === 'any' ? 'any' : [event.target.value]
-                                  }
-                                : candidate
-                            )
-                          })
-                        }
-                      >
-                        <option value="any">Any</option>
-                        {schemas.map(schema => (
-                          <option key={schema.id} value={schema.id}>
-                            {schema.name}
-                          </option>
-                        ))}
-                      </select>
-                      <TbChevronDown size={11} />
-                    </div>
+                  <span className={styles.pathTargetLabel} id={`trace-label-label-${path.id}`}>
+                    Path label
+                  </span>
+                  <div className={styles.pathLabelInput}>
+                    <TextInput
+                      value={path.label}
+                      aria-labelledby={`trace-label-label-${path.id}`}
+                      style={{ width: 150, height: 24 }}
+                      onChange={value =>
+                        updateConfig({
+                          ...editorConfig,
+                          paths: editorConfig.paths.map(candidate =>
+                            candidate.id === path.id
+                              ? { ...candidate, label: value ?? '' }
+                              : candidate
+                          )
+                        })
+                      }
+                    />
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+
+                  <span className={styles.pathTargetLabel}>Path</span>
+
+                  <div className={styles.hopsCell}>
+                    <HopSequence
+                      items={path.path}
+                      getItemKey={(_step, depth) => `${path.id}-${depth}`}
+                      renderItem={(step, depth) => {
+                        const { stepContext } = hopEntries[depth]!;
+                        return (
+                          <div className={styles.hop}>
+                            <HopPicker
+                              step={step}
+                              stepContext={stepContext}
+                              ariaLabelDirection={`Direction for ${path.id} hop ${depth + 1}`}
+                              ariaLabelHop={`Hop for ${path.id} hop ${depth + 1}`}
+                              onChangeStep={nextStep => updatePathStep(path.id, depth, nextStep)}
+                              onToggleDirection={direction =>
+                                updatePathDirection(path, depth, direction)
+                              }
+                            />
+                            {path.path.length > 1 && depth === path.path.length - 1 && (
+                              <button
+                                type="button"
+                                className={styles.hopRm}
+                                title="Remove hop"
+                                onClick={() => removeLastPathStep(path.id)}
+                              >
+                                <TbTrash size={13} />
+                              </button>
+                            )}
+                          </div>
+                        );
+                      }}
+                      onAdd={() => addPathStep(path.id)}
+                      addLabel="Add hop"
+                      addDisabled={!canAddHop(path)}
+                    />
+
+                    {hopEntries.some(entry => entry.errorMessage) && (
+                      <div className={styles.hopErrors}>
+                        {hopEntries
+                          .filter(entry => entry.errorMessage)
+                          .map(entry => (
+                            <div
+                              key={`${path.id}-error-${entry.depth}`}
+                              className={styles.hopError}
+                            >
+                              Hop {entry.depth + 1}: {entry.errorMessage}
+                            </div>
+                          ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <LabeledSelect
+                    label="Target"
+                    value={
+                      path.targetSchemaIds === 'any' ? 'any' : (path.targetSchemaIds[0] ?? 'any')
+                    }
+                    onChange={value =>
+                      updateConfig({
+                        ...editorConfig,
+                        paths: editorConfig.paths.map(candidate =>
+                          candidate.id === path.id
+                            ? { ...candidate, targetSchemaIds: value === 'any' ? 'any' : [value] }
+                            : candidate
+                        )
+                      })
+                    }
+                    options={[
+                      { value: 'any', label: 'Any' },
+                      ...schemas.map(schema => ({ value: schema.id, label: schema.name }))
+                    ]}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </CollapsibleSection>
       )}
 
       {parsedConfig && !dataLoading && !dataError && (

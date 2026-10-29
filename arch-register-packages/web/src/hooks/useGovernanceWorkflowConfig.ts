@@ -33,7 +33,7 @@ export const useUpsertGovernanceWorkflowConfig = (workspaceSlug: string) => {
 export const useResetGovernanceWorkflowConfig = (workspaceSlug: string) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (body: { case_kind: string; case_subkind: string | null }) =>
+    mutationFn: (body: { id: string }) =>
       orpcClient.governanceWorkflowConfig.reset({
         params: { workspace: workspaceSlug },
         body

@@ -19,6 +19,10 @@ const requirementLevelSchema = z
 const baseRelationFieldSchema = z.object({
   id: z.string().describe('Unique field identifier'),
   name: z.string().describe('Field name'),
+  description: z
+    .string()
+    .optional()
+    .describe('User-facing description of what the field holds, shown alongside the field label'),
   requirementLevel: requirementLevelSchema.describe(
     'Whether the field is required, expected, or optional'
   ),
@@ -99,7 +103,8 @@ const derivedRelationResultTypeSchema = z.enum([
   'currency',
   'select',
   'boolean',
-  'rating'
+  'rating',
+  'duration'
 ]);
 
 const derivedRelationFieldBaseSchema = baseRelationFieldSchema
@@ -300,7 +305,7 @@ export const relationSchemaSchema = z.object({
     .enum(['required', 'disabled'])
     .optional()
     .describe(
-      'Approval policy for relation instance changes. "required" is not yet supported — see #2574.'
+      'Approval policy for relation instance changes. "required" means edits to existing relations go through a change proposal. Stored as the schema-scoped "Relation change proposals" workflow in Workspace settings > Workflows.'
     ),
   created_at: z.string().describe('ISO 8601 creation timestamp'),
   updated_at: z.string().describe('ISO 8601 last update timestamp')
@@ -382,7 +387,7 @@ const createRelationSchemaBodySchema = z.object({
     .enum(['required', 'disabled'])
     .optional()
     .describe(
-      'Approval policy for relation instance changes. "required" is not yet supported — see #2574.'
+      'Approval policy for relation instance changes. "required" means edits to existing relations go through a change proposal. Stored as the schema-scoped "Relation change proposals" workflow in Workspace settings > Workflows.'
     )
 });
 

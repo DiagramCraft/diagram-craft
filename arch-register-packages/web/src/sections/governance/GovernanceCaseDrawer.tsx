@@ -1,0 +1,275 @@
+import { useState } from 'react';
+import { Button } from '@diagram-craft/app-components/Button';
+import { Dialog } from '@diagram-craft/app-components/Dialog';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { Chip } from '../../components/Chip';
+import { Drawer } from '../../components/Drawer';
+import {
+  useDecideGovernanceAssignment,
+  useGovernanceCase,
+  useGovernanceTasks
+} from '../../hooks/useGovernance';
+import { useEntity } from '../../hooks/useEntities';
+import { useEntityDrawer } from '../../sections/entities/entityDrawer/useEntityDrawer';
+import { REQUEST_CHANGES_CASE_KINDS } from '../../utils/governanceCaseKinds';
+import { caseKindLabel, humanizeCaseKind } from '../../utils/governanceCaseLabels';
+import { dueLabel, dueTone } from '../../utils/assessmentDueTone';
+import { formatDateTime } from '../../utils/dateFormat';
+import { useDateTimeFormatPreference } from '../../hooks/useDateTimeFormatPreference';
+import {
+  deriveDueDatePriority,
+  type NeedsAttentionPriority
+} from '../../widgets/data-views/needs-attention/needsAttentionQueue';
+import styles from './GovernanceCaseDrawer.module.css';
+
+const PRIORITY_LABEL: Record<NeedsAttentionPriority, string> = {
+  high: 'High',
+  medium: 'Medium',
+  low: 'Low'
+};
+
+const PRIORITY_TONE: Record<NeedsAttentionPriority, string> = {
+  high: 'var(--cmp-fg-danger, #ef4444)',
+  medium: 'var(--cmp-fg-warning, #eab308)',
+  low: 'var(--cmp-fg-dim, #9ca3af)'
+};
+
+const capitalize = (value: string): string => value.charAt(0).toUpperCase() + value.slice(1);
+
+/**
+ * Drawer for a single governance case, opened from Data Stewardship's "My work" queue (#3298) and
+ * from the Change case table dashboard widget — not just change-case/deprecation rows, since a
+ * review-date reminder is just as much a governance case the user may need to act on (typically by
+ * acknowledging it). Shows case identity, dates, the entity it concerns, and — when the current user holds an open, actionable assignment
+ * on this case — the same decision actions `GovernanceInboxScreen.tsx` offers (Approve/Acknowledge,
+ * plus Request changes on the same case kinds that screen allows it for), reusing that screen's own
+ * `useDecideGovernanceAssignment` mutation so a decision made here is identical in effect to one
+ * made from the workspace-wide governance inbox.
+ *
+ * Finding "my assignment" for this case reuses `useGovernanceTasks(workspace, { state: 'open' })` —
+ * the same query (and cache entry) the "Assigned to me" queue scope already fetches — rather than a
+ * dedicated per-case lookup endpoint, which doesn't exist. A case opened from the "All open items"/
+ * "Past due" scopes therefore only shows actions when the current user also happens to hold the
+ * open assignment; otherwise it's a read-only view of the case (still useful — dates, status,
+ * dataset), consistent with this queue having no way to know an arbitrary case's assignee (see
+ * `dataStewardshipQueue.ts`'s doc comment on the dropped Assignee facet).
+ *
+ * Deliberately doesn't add Withdraw/Send reminder — both are initiator-only conveniences already
+ * available on the workspace-wide governance inbox; adding them here without a "is this user the
+ * initiator" check client-side would show a button that fails server-side for most viewers.
+ */
+export const GovernanceCaseDrawer = ({
+  workspaceSlug,
+  caseId,
+  onClose,
+  onOpenDataset,
+  entityNoun = 'entity',
+  active,
+  stacked,
+  stackOffset
+}: {
+  workspaceSlug: string;
+  caseId: string;
+  onClose: () => void;
+  /** Switches to the shared entity drawer for this case's subject, staying within My work rather
+   *  than navigating away; when omitted, falls back to the app-wide `useEntityDrawer()` stack. */
+  onOpenDataset?: (datasetPublicId: string) => void;
+  /** Lower-case noun for the case's subject in labels (e.g. 'dataset'). */
+  entityNoun?: string;
+  /** Stack positioning, forwarded to `Drawer` when hosted in the workspace drawer stack. */
+  active?: boolean;
+  stacked?: boolean;
+  stackOffset?: number;
+}) => {
+  const { openEntityDrawer } = useEntityDrawer();
+  const stackProps = { active, stacked, stackOffset };
+  const dateTimeFormatPreference = useDateTimeFormatPreference();
+  const formatTimestamp = (value: string | null): string =>
+    value == null ? '—' : formatDateTime(value, '—', dateTimeFormatPreference);
+  const governanceCase = useGovernanceCase(workspaceSlug, caseId);
+  const dataset = useEntity(workspaceSlug, governanceCase.data?.subjectId ?? '');
+  const myTasks = useGovernanceTasks(workspaceSlug, { state: 'open' });
+  const decide = useDecideGovernanceAssignment(workspaceSlug);
+  const [requestChangesOpen, setRequestChangesOpen] = useState(false);
+  const [requestChangesReason, setRequestChangesReason] = useState('');
+
+  if (governanceCase.isLoading) {
+    return (
+      <Drawer onClose={onClose} title="Loading…" {...stackProps}>
+        <div className={styles.empty}>Loading case…</div>
+      </Drawer>
+    );
+  }
+  if (governanceCase.isError || !governanceCase.data) {
+    return (
+      <Drawer onClose={onClose} title="Unavailable" {...stackProps}>
+        <div className={styles.empty}>This case is unavailable.</div>
+      </Drawer>
+    );
+  }
+
+  const kase = governanceCase.data;
+  const priority = deriveDueDatePriority(kase);
+  const datasetEntity = kase.subjectType === 'entity' ? dataset.data : undefined;
+
+  const myTask = (myTasks.data ?? []).find(task => task.case.id === caseId);
+  const decision =
+    myTask?.assignment.action === 'approve'
+      ? 'approve'
+      : myTask?.assignment.action === 'acknowledge'
+        ? 'acknowledge'
+        : null;
+  const canDecide = !!myTask?.requiresAction && decision != null;
+  const canRequestChanges =
+    canDecide && decision === 'approve' && REQUEST_CHANGES_CASE_KINDS.has(kase.caseKind);
+
+  const submitDecision = (chosenDecision: 'approve' | 'acknowledge', reason?: string) => {
+    if (!myTask) return;
+    decide.mutate(
+      { assignmentId: myTask.assignment.id, decision: chosenDecision, reason },
+      { onSuccess: onClose }
+    );
+  };
+
+  const submitRequestChanges = () => {
+    if (!myTask) return;
+    const reason = requestChangesReason.trim();
+    if (reason === '') return;
+    decide.mutate(
+      { assignmentId: myTask.assignment.id, decision: 'request_changes', reason },
+      {
+        onSuccess: () => {
+          setRequestChangesOpen(false);
+          setRequestChangesReason('');
+          onClose();
+        }
+      }
+    );
+  };
+
+  const openDataset = () => {
+    if (!datasetEntity) return;
+    if (onOpenDataset) onOpenDataset(datasetEntity._publicId);
+    else openEntityDrawer(datasetEntity._publicId);
+  };
+
+  return (
+    <Drawer
+      onClose={onClose}
+      {...stackProps}
+      eyebrow={<span className="dim mono">{humanizeCaseKind(kase.status)}</span>}
+      title={caseKindLabel(kase.caseKind, kase.payload)}
+      badges={
+        <Chip tone="ghost" color={PRIORITY_TONE[priority]}>
+          {PRIORITY_LABEL[priority]}
+        </Chip>
+      }
+      footer={
+        <div className={styles.footerActions}>
+          {canDecide && (
+            <Button
+              variant="primary"
+              disabled={decide.isPending}
+              onClick={() => submitDecision(decision!)}
+            >
+              {decision === 'approve' ? 'Approve' : 'Acknowledge'}
+            </Button>
+          )}
+          {canRequestChanges && (
+            <Button
+              disabled={decide.isPending}
+              onClick={() => {
+                setRequestChangesReason('');
+                setRequestChangesOpen(true);
+              }}
+            >
+              Request changes
+            </Button>
+          )}
+          {datasetEntity && (
+            <Button variant={canDecide ? 'secondary' : 'primary'} onClick={openDataset}>
+              {onOpenDataset ? `Open ${entityNoun}` : 'Open record in Entities'}
+            </Button>
+          )}
+        </div>
+      }
+    >
+      <div className={styles.sectionLabel}>Case</div>
+      <div className={styles.attributeRow}>
+        <span className={styles.attributeLabel}>Status</span>
+        <span>{humanizeCaseKind(kase.status)}</span>
+      </div>
+      <div className={styles.attributeRow}>
+        <span className={styles.attributeLabel}>Created</span>
+        <span>{formatTimestamp(kase.createdAt)}</span>
+      </div>
+      <div className={styles.attributeRow}>
+        <span className={styles.attributeLabel}>Due</span>
+        <span style={{ color: dueTone(kase.dueAt) }}>{dueLabel(kase.dueAt)}</span>
+      </div>
+      {kase.escalatedAt && (
+        <div className={styles.attributeRow}>
+          <span className={styles.attributeLabel}>Escalated</span>
+          <span style={{ color: PRIORITY_TONE.high }}>{formatTimestamp(kase.escalatedAt)}</span>
+        </div>
+      )}
+      {kase.outcome && (
+        <div className={styles.attributeRow}>
+          <span className={styles.attributeLabel}>Outcome</span>
+          <span>{humanizeCaseKind(kase.outcome)}</span>
+        </div>
+      )}
+      {myTask && (
+        <div className={styles.attributeRow}>
+          <span className={styles.attributeLabel}>Waiting on you</span>
+          <span>{canDecide ? humanizeCaseKind(myTask.assignment.action) : 'No action needed'}</span>
+        </div>
+      )}
+
+      <div className={styles.sectionLabel}>{`${capitalize(entityNoun)} in scope`}</div>
+      {kase.subjectType !== 'entity' ? (
+        <span className="dim">{`This case doesn't reference a single ${entityNoun}.`}</span>
+      ) : dataset.isLoading ? (
+        <span className="dim">Loading…</span>
+      ) : datasetEntity ? (
+        <button
+          type="button"
+          className={styles.attributeRow}
+          style={{ width: '100%', cursor: 'pointer', background: 'none', border: 'none' }}
+          onClick={openDataset}
+        >
+          <span>{datasetEntity._name}</span>
+          <span className="dim mono">{datasetEntity._publicId}</span>
+        </button>
+      ) : (
+        <span className="dim">{`${capitalize(entityNoun)} unavailable.`}</span>
+      )}
+
+      <Dialog
+        open={requestChangesOpen}
+        onClose={() => setRequestChangesOpen(false)}
+        title="Request changes?"
+        buttons={[
+          { label: 'Cancel', type: 'cancel', onClick: () => setRequestChangesOpen(false) },
+          {
+            label: decide.isPending ? 'Submitting…' : 'Request changes',
+            type: 'default',
+            disabled: decide.isPending || requestChangesReason.trim() === '',
+            onClick: submitRequestChanges
+          }
+        ]}
+      >
+        <p>The proposer will be notified and can revise and resubmit this proposal.</p>
+        <FormElement label="Reason" required>
+          <TextInput
+            value={requestChangesReason}
+            onChange={value => setRequestChangesReason(value ?? '')}
+            placeholder="Explain what needs to change"
+            style={{ width: '100%' }}
+          />
+        </FormElement>
+      </Dialog>
+    </Drawer>
+  );
+};

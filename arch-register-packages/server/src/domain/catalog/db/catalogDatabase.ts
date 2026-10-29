@@ -1,16 +1,7 @@
 import {
   BrowserView,
-  BubbleViewConfig,
-  CardsViewConfig,
-  ExploreViewConfig,
   FilterCondition,
-  GraphViewConfig,
-  MapViewConfig,
-  MatrixViewConfig,
-  RadarViewConfig,
-  TableViewConfig,
-  TimelineViewConfig,
-  TreeViewConfig
+  SavedViewConfig
 } from '@arch-register/api-types/viewContract';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import {
@@ -55,7 +46,10 @@ export type EntityListDbFilters = {
   q?: string | null;
   conditions?: FilterCondition[];
   /** Schema-aware custom scalar field shapes used by SQL filtering and free-text search. */
-  customFieldKinds?: ReadonlyMap<string, 'scalar' | 'currency' | 'array' | 'currency-array'>;
+  customFieldKinds?: ReadonlyMap<
+    string,
+    'scalar' | 'currency' | 'duration' | 'array' | 'currency-array' | 'duration-array'
+  >;
   // With a projectId, 'project' returns project-owned or project_entity-linked entities, while
   // 'all' returns global entities plus entities owned by the selected project. Without a projectId,
   // both modes retain global-listing semantics and return only project_id IS NULL rows.
@@ -718,6 +712,8 @@ export type CatalogDatabase = {
   // Runs a SELECT COUNT(*) compiled by entityQueryIRCompiler.ts for entity-query totals.
   runCompiledEntityCountQuery(sql: string, params: unknown[]): Promise<number>;
   listEntities(ws: string): Promise<EntityDbResult[]>;
+  // Includes soft-deleted records, which still occupy their slug.
+  listEntitySlugs(ws: string, schemaId: string, namespace: string): Promise<string[]>;
   getEntity(ws: string, identifier: string): Promise<EntityDbResult | null>;
   createCatalogRecordMerge(input: CatalogRecordMergeDbCreate): Promise<CatalogRecordMergeDbResult>;
   resolveCatalogRecordMerge(
@@ -839,19 +835,7 @@ export type SavedViewDbResult = {
   is_admin_view: boolean;
   view_mode: BrowserView;
   filters: EntityQuery;
-  config: {
-    sort?: string;
-    table?: TableViewConfig;
-    cards?: CardsViewConfig;
-    tree?: TreeViewConfig;
-    radar?: RadarViewConfig;
-    timeline?: TimelineViewConfig;
-    matrix?: MatrixViewConfig;
-    explore?: ExploreViewConfig;
-    bubble?: BubbleViewConfig;
-    map?: MapViewConfig;
-    graph?: GraphViewConfig;
-  } | null;
+  config: SavedViewConfig | null;
   created_at: Date;
   updated_at: Date;
 };

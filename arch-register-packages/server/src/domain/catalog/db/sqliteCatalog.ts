@@ -34,6 +34,7 @@ import {
   escapeLike,
   buildConditionClause
 } from './filterBuilder';
+import { createEntityQueryDialectAdapter } from '../entityQueryIRDialect';
 
 const ENTITY_JOINS_SQL = ENTITY_SELECT_SQL;
 const ENTITY_JOIN_SQL = `${ENTITY_SELECT_SQL}  WHERE e.deleted_at IS NULL\n`;
@@ -371,6 +372,14 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     return Number(row?.count ?? 0);
   }
 
+  async listEntitySlugs(workspace: string, schemaId: string, namespace: string) {
+    return this.all<string>(
+      `SELECT slug FROM catalog_record WHERE workspace = ? AND schema_id = ? AND namespace = ?`,
+      [workspace, schemaId, namespace],
+      row => String(row['slug'])
+    );
+  }
+
   async listEntities(workspace: string) {
     return this.all(
       `${ENTITY_JOINS_SQL} WHERE e.workspace = ? AND e.deleted_at IS NULL ORDER BY e.name, e.id`,
@@ -424,6 +433,8 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
         `LOWER(e.description) LIKE LOWER(${addParam(pat)})`
       ];
       for (const [fieldId, kind] of filters.customFieldKinds ?? []) {
+        // Durations are not free-text searchable (the stored value is an amount and a unit).
+        if (kind === 'duration' || kind === 'duration-array') continue;
         const col =
           kind === 'currency'
             ? `json_extract(e.data, '$.${fieldId}.amount')`
@@ -443,7 +454,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
       // Guard against prototype pollution: only accept own properties from ENTITY_BUILTIN_COLUMNS
       // For custom fields, also verify they don't match Object.prototype property names
       let col: string | null = null;
-      let kind: 'scalar' | 'currency' | 'array' | 'currency-array' =
+      let kind: 'scalar' | 'currency' | 'duration' | 'array' | 'currency-array' | 'duration-array' =
         filters?.customFieldKinds?.get(cond.fieldId) ?? 'scalar';
       if (Object.hasOwn(ENTITY_BUILTIN_COLUMNS, cond.fieldId)) {
         col = ENTITY_BUILTIN_COLUMNS[cond.fieldId] ?? null;
@@ -456,7 +467,9 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
         col =
           kind === 'currency'
             ? `json_extract(e.data, '$.${cond.fieldId}.amount')`
-            : `json_extract(e.data, '$.${cond.fieldId}')`;
+            : kind === 'duration'
+              ? createEntityQueryDialectAdapter('sqlite').durationDays('e.data', cond.fieldId)
+              : `json_extract(e.data, '$.${cond.fieldId}')`;
       }
       if (!col) continue;
       const clause = buildConditionClause(col, cond, addParam, 'sqlite', kind);

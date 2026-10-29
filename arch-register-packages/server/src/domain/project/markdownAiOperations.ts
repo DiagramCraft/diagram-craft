@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
 import type { AuthenticatedEvent } from '../../middleware/auth';
@@ -92,6 +93,7 @@ export const runDocumentAiAction = async (
       });
 
       const adapter = createAiTextAdapter(aiConfig);
+      const threadId = randomUUID();
       const tools = createAiChatTools(
         db,
         ws,
@@ -103,6 +105,7 @@ export const runDocumentAiAction = async (
       const stream = chat({
         adapter,
         messages: [{ role: 'user', content: prompt }],
+        threadId,
         tools,
         modelOptions: { temperature: aiConfig.temperature },
         stream: true
@@ -219,12 +222,14 @@ export const testDocumentAiAction = async (
       );
 
       const adapter = createAiTextAdapter(aiConfig);
+      const threadId = randomUUID();
       const isMetadataGenerator = action.kind === 'metadata_generator' && outputField !== null;
       const stream = isMetadataGenerator
         ? null
         : chat({
             adapter,
             messages: [{ role: 'user', content: prompt }],
+            threadId,
             tools,
             modelOptions: { temperature: aiConfig.temperature },
             stream: true
@@ -257,9 +262,11 @@ export const testDocumentAiAction = async (
               const structured = await chat({
                 adapter,
                 messages: [{ role: 'user', content: prompt }],
+                threadId,
                 tools,
                 modelOptions: { temperature: aiConfig.temperature },
-                outputSchema: documentMetadataGenerationOutputSchema(outputField)
+                outputSchema: documentMetadataGenerationOutputSchema(outputField),
+                stream: false
               });
               rawOutput = JSON.stringify(structured);
               generatedResponse = parseGeneratedResponse(outputField, rawOutput);
@@ -268,12 +275,12 @@ export const testDocumentAiAction = async (
               const legacyAnswer = await chat({
                 adapter,
                 messages: [{ role: 'user', content: prompt }],
+                threadId,
                 tools,
                 modelOptions: { temperature: aiConfig.temperature },
                 stream: false
               });
-              rawOutput =
-                typeof legacyAnswer === 'string' ? legacyAnswer : JSON.stringify(legacyAnswer);
+              rawOutput = legacyAnswer.text;
               generatedResponse = parseGeneratedResponse(outputField, rawOutput);
               if (!generatedResponse.ok) throw new Error(generatedResponse.error);
             }

@@ -49,7 +49,7 @@ const chatAnswer = (
 ) =>
   vi.fn(async (options: { outputSchema?: unknown; stream?: boolean }) => {
     if (options.outputSchema) return { value: text, reason, findings };
-    return text;
+    return { text, chunks: [] };
   });
 
 const documentType = {
@@ -430,7 +430,7 @@ describe('createDocumentMetadataGenerationScanJobHandler', () => {
     chat.mockImplementation(
       vi.fn(async (options: { outputSchema?: unknown; stream?: boolean }) => {
         if (options.outputSchema) throw new Error('structured output is unsupported');
-        return 'Legacy summary';
+        return { text: 'Legacy summary', chunks: [] };
       })
     );
     const upsertDocumentMetadata = vi.fn();

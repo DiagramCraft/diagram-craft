@@ -1,4 +1,5 @@
-import { useState, useMemo, type ReactNode } from 'react';
+import { savedViewIcon } from '../../lib/savedViewIcon';
+import { useEffect, useState, useMemo, type ReactNode } from 'react';
 import { useNavigate, useParams, useSearch, useLocation } from '@tanstack/react-router';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
@@ -9,25 +10,24 @@ import {
   TbUsers,
   TbPencil,
   TbTrash,
-  TbList,
-  TbLayoutGrid,
-  TbBinaryTree2,
-  TbChartRadar,
-  TbCalendarWeek,
-  TbTable,
-  TbColumns3,
-  TbMap,
-  TbVectorTriangle,
   TbPinned,
   TbBookmark,
   TbLayoutSidebarLeftCollapse,
   TbLayoutSidebarLeftExpand,
   TbArrowsRightLeft
 } from 'react-icons/tb';
-import { groupSchemasByCategory, resolveSchemaColor } from '../../lib/schemaPresentation';
+import {
+  groupSchemasByCategory,
+  resolveSchemaColor,
+  resolveSchemaPresentation
+} from '../../lib/schemaPresentation';
 import type { SavedView } from '@arch-register/api-types/viewContract';
 import { useSavedViews, useDeleteSavedView, useUpdateSavedView } from '../../hooks/useSavedViews';
 import { usePinnedEntities } from '../../hooks/useNotifications';
+import type { PinnedEntity } from '@arch-register/api-types/watchContract';
+import { useEntityContextMenu } from '../../components/EntityContextMenu';
+import { buildEntityMenuItems, type EntityRef } from './components/entityMenu';
+import { useEntityCommonActions } from './components/useEntityCommonActions';
 import { useEntityFacets } from '../../hooks/useEntities';
 import {
   useCollections,
@@ -43,7 +43,7 @@ import { TypeBadge } from '../../components/TypeBadge';
 import styles from '../../shell/SidePanel.module.css';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
-import { useEntityDrawer } from './entityDrawer/useEntityDrawer';
+import { asEntityPublicId, entityDetailRoute } from '../../routes/publicObjectRoutes';
 import {
   hasFacetSelection,
   parseConditionsFromSearch,
@@ -59,7 +59,7 @@ import {
 import { toSavedRelationViewSearch } from '../relations/relationBrowserState';
 import type { Collection } from '@arch-register/api-types/collectionContract';
 import { BaselineSidebarSection } from '../baselines/BaselineSidebarSection';
-import type { EntityBrowserSidebarTab } from '../../routes/searchParams';
+import { useSidebarTab, type EntityBrowserSidebarTab } from './useSidebarTab';
 
 const FacetRow = ({
   icon,
@@ -103,6 +103,14 @@ const FacetRow = ({
   />
 );
 
+const pinnedEntityRef = (entity: PinnedEntity): EntityRef => ({
+  _uid: entity.entity_id,
+  _publicId: entity.entity_public_id,
+  _name: entity.entity_name,
+  _slug: entity.entity_slug,
+  _schema: { id: entity.schema_id }
+});
+
 export const EntitiesSidebar = ({
   schemas,
   lifecycleStates,
@@ -117,14 +125,23 @@ export const EntitiesSidebar = ({
   onExpand?: () => void;
 }) => {
   const navigate = useNavigate();
-  const { openEntityDrawer } = useEntityDrawer();
   const { entityId: routeEntityId } = useParams({ strict: false });
   const { pathname } = useLocation();
   const onRelationsRoute = pathname.includes('/entities/relations');
   const { permissions } = useWorkspaceContext();
   const schemaGroups = useMemo(() => groupSchemasByCategory(schemas), [schemas]);
   const search = useSearch({ strict: false });
-  const sidebarTab = search.sidebarTab ?? 'home';
+  const [sidebarTab, setSidebarTab] = useSidebarTab();
+  const contextTab: EntityBrowserSidebarTab | undefined = search.baselineId
+    ? 'baselines'
+    : search.collectionId
+      ? 'bookmarks'
+      : search.viewId
+        ? 'views'
+        : undefined;
+  useEffect(() => {
+    if (contextTab) setSidebarTab(contextTab);
+  }, [contextTab, setSidebarTab]);
 
   const activeFacets = useMemo(
     () => parseFacetSelectionFromSearch(search as BrowserSearch),
@@ -143,6 +160,11 @@ export const EntitiesSidebar = ({
     workspaceSlug,
     undefined,
     { enabled: sidebarTab === 'bookmarks' }
+  );
+  const commonActions = useEntityCommonActions();
+  const { onContextMenu: onPinnedContextMenu, menu: pinnedContextMenu } = useEntityContextMenu(
+    (entity: PinnedEntity) =>
+      buildEntityMenuItems(pinnedEntityRef(entity), { actions: commonActions })
   );
   const deleteViewMutation = useDeleteSavedView(workspaceSlug);
   const updateViewMutation = useUpdateSavedView(workspaceSlug);
@@ -201,7 +223,6 @@ export const EntitiesSidebar = ({
       params: { workspaceSlug },
       search: (previous: Record<string, unknown>) => ({
         ...previous,
-        sidebarTab,
         filters: conditions.length > 0 ? JSON.stringify(conditions) : undefined,
         entityQuery: undefined,
         type: undefined,
@@ -252,8 +273,7 @@ export const EntitiesSidebar = ({
       to: isRelationView ? '/$workspaceSlug/entities/relations' : '/$workspaceSlug/entities',
       params: { workspaceSlug },
       search: {
-        ...(isRelationView ? toSavedRelationViewSearch(view) : toSavedViewSearch(view)),
-        sidebarTab: 'views'
+        ...(isRelationView ? toSavedRelationViewSearch(view) : toSavedViewSearch(view))
         // biome-ignore lint/suspicious/noExplicitAny: bypass
       } as any
     });
@@ -264,36 +284,10 @@ export const EntitiesSidebar = ({
       to: '/$workspaceSlug/entities',
       params: { workspaceSlug },
       search: {
-        sidebarTab: 'bookmarks',
         collectionId: collection.id,
         viewMode: 'table'
       }
     });
-  };
-
-  const getViewIcon = (mode: string) => {
-    switch (mode) {
-      case 'table':
-        return <TbList size={12} />;
-      case 'cards':
-        return <TbLayoutGrid size={12} />;
-      case 'tree':
-        return <TbBinaryTree2 size={12} />;
-      case 'radar':
-        return <TbChartRadar size={12} />;
-      case 'timeline':
-        return <TbCalendarWeek size={12} />;
-      case 'explore':
-        return <TbColumns3 size={12} />;
-      case 'map':
-        return <TbMap size={12} />;
-      case 'graph':
-        return <TbVectorTriangle size={12} />;
-      case 'traceability':
-        return <TbArrowsRightLeft size={12} />;
-      default:
-        return <TbTable size={12} />;
-    }
   };
 
   return (
@@ -301,21 +295,7 @@ export const EntitiesSidebar = ({
       <div className={`${styles.header} ${styles.tabHeader}`}>
         <Tabs.Root
           value={sidebarTab}
-          onValueChange={v =>
-            navigate({
-              to: '/$workspaceSlug/entities',
-              params: { workspaceSlug },
-              search: (prev: Record<string, unknown>) => {
-                const collectionId =
-                  typeof prev.collectionId === 'string' ? prev.collectionId : undefined;
-                return {
-                  ...prev,
-                  sidebarTab: v as EntityBrowserSidebarTab,
-                  collectionId: v === 'bookmarks' ? collectionId : undefined
-                };
-              }
-            })
-          }
+          onValueChange={v => setSidebarTab(v as EntityBrowserSidebarTab)}
         >
           <Tabs.List>
             <Tabs.Trigger value="home">Home</Tabs.Trigger>
@@ -444,13 +424,13 @@ export const EntitiesSidebar = ({
           <>
             {savedViews.filter(v => v.isAdminView).length > 0 && (
               <>
-                <SidebarGroupLabel>Workspace views</SidebarGroupLabel>
+                <SidebarGroupLabel>Pinned views</SidebarGroupLabel>
                 {savedViews
                   .filter(v => v.isAdminView)
                   .map(view => (
                     <TreeRow
                       key={view.id}
-                      icon={getViewIcon(view.viewMode)}
+                      icon={savedViewIcon(view.viewMode)}
                       label={view.name}
                       active={search.viewId === view.id}
                       onClick={() => applySavedView(view)}
@@ -464,7 +444,7 @@ export const EntitiesSidebar = ({
                   ))}
               </>
             )}
-            <SidebarGroupLabel>Saved views</SidebarGroupLabel>
+            <SidebarGroupLabel>Views</SidebarGroupLabel>
             {savedViews.filter(v => !v.isAdminView).length === 0 && (
               <div className={`${styles.emptyState} dim`}>No saved views yet.</div>
             )}
@@ -473,7 +453,7 @@ export const EntitiesSidebar = ({
               .map(view => (
                 <TreeRow
                   key={view.id}
-                  icon={getViewIcon(view.viewMode)}
+                  icon={savedViewIcon(view.viewMode)}
                   label={view.name}
                   active={search.viewId === view.id}
                   onClick={() => applySavedView(view)}
@@ -496,11 +476,7 @@ export const EntitiesSidebar = ({
               <div className={`${styles.emptyState} dim`}>No pinned entities yet.</div>
             )}
             {pinnedEntities.map(entity => {
-              const schemaIndex = schemas.findIndex(schema => schema.id === entity.schema_id);
-              const schema = schemas.find(item => item.id === entity.schema_id);
-              const color = schema
-                ? resolveSchemaColor(schema, Math.max(schemaIndex, 0))
-                : 'var(--accent-fg)';
+              const { schema, color } = resolveSchemaPresentation(schemas, entity.schema_id);
               return (
                 <TreeRow
                   key={entity.entity_id}
@@ -514,7 +490,12 @@ export const EntitiesSidebar = ({
                   }
                   label={entity.entity_name}
                   active={routeEntityId === entity.entity_public_id}
-                  onClick={() => openEntityDrawer(entity.entity_public_id)}
+                  onClick={() =>
+                    navigate(
+                      entityDetailRoute(workspaceSlug, asEntityPublicId(entity.entity_public_id))
+                    )
+                  }
+                  onContextMenu={event => onPinnedContextMenu(event, entity)}
                   trailing={<TbPinned size={12} className="dim" />}
                   tagColor={color}
                 />
@@ -567,6 +548,8 @@ export const EntitiesSidebar = ({
         }}
         onCancel={() => setDeleteViewTarget(null)}
       />
+
+      {pinnedContextMenu}
 
       {viewMenu && (
         <ContextMenu.Imperative x={viewMenu.x} y={viewMenu.y} onClose={() => setViewMenu(null)}>
@@ -653,7 +636,7 @@ export const EntitiesSidebar = ({
               navigate({
                 to: '/$workspaceSlug/entities',
                 params: { workspaceSlug },
-                search: { sidebarTab: 'bookmarks', viewMode: 'table' }
+                search: { viewMode: 'table' }
               });
             }
             setDeleteCollectionTarget(null);

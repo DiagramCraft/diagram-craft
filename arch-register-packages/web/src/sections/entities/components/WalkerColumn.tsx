@@ -3,14 +3,14 @@ import type { PathStep } from '@arch-register/api-types/entityQueryIR';
 import { useEntities, useEntitiesByIdSetQuery } from '../../../hooks/useEntities';
 import { useDelayedFlag } from '../../../hooks/useDelayedFlag';
 import { EntityHoverCard } from '../../../components/EntityHoverCard';
-import styles from './PathWalkerView.module.css';
+import styles from './TrailView.module.css';
 import {
   PATH_WALKER_PROJECTION_ALIAS,
   buildHopColumnQuery,
   decodeHopColumnNodes,
   pathStepKey,
   type HopColumnNode
-} from './pathWalkerViewState';
+} from './trailViewState';
 import { useHopFanoutCounts } from './useHopFanoutCounts';
 
 type WalkerColumnProps = {

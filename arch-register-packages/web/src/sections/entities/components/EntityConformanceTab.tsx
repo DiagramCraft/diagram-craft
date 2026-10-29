@@ -1,12 +1,11 @@
-import { useNavigate } from '@tanstack/react-router';
-import { TbArrowRight, TbShieldCheck } from 'react-icons/tb';
+import { TbLock, TbShieldCheck } from 'react-icons/tb';
 import { useConformanceViolations } from '../../../hooks/useConformance';
 import { SeverityBadge, ViolationStatusChip } from '../../../components/ConformanceBadges';
 import { EmptyState } from '../../../components/EmptyState';
 import { LoadingState } from '../../../components/LoadingState';
 import { Table } from '../../../components/table/Table';
 import { formatDateTime } from '../../../utils/dateFormat';
-import styles from './EntityConformanceTab.module.css';
+import { EntityTabPage } from './EntityTabPage';
 
 type Props = {
   workspaceId: string;
@@ -15,25 +14,22 @@ type Props = {
 };
 
 export const EntityConformanceTab = ({ workspaceId, entityId, canViewConformance }: Props) => {
-  const navigate = useNavigate();
   const { data, isLoading } = useConformanceViolations(
     workspaceId,
     { entityId, limit: 200, offset: 0 },
     canViewConformance
   );
 
-  const goToConformance = () =>
-    navigate({
-      to: '/$workspaceSlug/settings/$section',
-      params: { workspaceSlug: workspaceId, section: 'conformance' }
-    });
-
   if (!canViewConformance) {
     return (
-      <EmptyState
-        title="No access to conformance"
-        subtitle="You do not have permission to view conformance results for this entity."
-      />
+      <EntityTabPage>
+        <EmptyState
+          framed
+          icon={<TbLock size={20} />}
+          title="No access to conformance"
+          subtitle="You do not have permission to view conformance results for this entity."
+        />
+      </EntityTabPage>
     );
   }
 
@@ -45,21 +41,20 @@ export const EntityConformanceTab = ({ workspaceId, entityId, canViewConformance
 
   if (violations.length === 0) {
     return (
-      <EmptyState
-        icon={<TbShieldCheck size={20} />}
-        title="Conformant"
-        subtitle="No active, acknowledged, or exempt violations were found for this entity."
-        action={
-          <button type="button" className={styles.link} onClick={goToConformance}>
-            View in Conformance <TbArrowRight size={12} />
-          </button>
-        }
-      />
+      <EntityTabPage>
+        <EmptyState
+          framed
+          icon={<TbShieldCheck size={20} />}
+          tone="good"
+          title="Conformant"
+          subtitle="No active, acknowledged, or exempt violations were found for this entity."
+        />
+      </EntityTabPage>
     );
   }
 
   return (
-    <div className={styles.page}>
+    <EntityTabPage>
       <Table.Root>
         <Table.Head>
           <Table.Row>
@@ -86,9 +81,6 @@ export const EntityConformanceTab = ({ workspaceId, entityId, canViewConformance
           ))}
         </Table.Body>
       </Table.Root>
-      <button type="button" className={styles.link} onClick={goToConformance}>
-        View in Conformance <TbArrowRight size={12} />
-      </button>
-    </div>
+    </EntityTabPage>
   );
 };

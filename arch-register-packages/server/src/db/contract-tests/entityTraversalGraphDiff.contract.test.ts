@@ -81,7 +81,6 @@ const createRelationSchema = async (
     shared_field_group_links: [],
     color: null,
     icon: null,
-    relation_approval_policy: 'disabled',
     unique_endpoint_pair: false,
     created_at: new Date(),
     updated_at: new Date()

@@ -1,0 +1,87 @@
+.container {
+  padding: 8px 0;
+}
+
+div[data-frame="true"] {
+  .tableWrapper {
+    margin: calc(-1 * var(--_frame-top-padding)) calc(-1 * var(--_frame-left-padding));
+    overflow: visible;
+  }
+}
+
+/* Only the visible widget frame supplies a border; without it the table keeps its own. */
+div[data-frame="true"][data-framed="true"] {
+  .tableWrapper > div {
+    border-width: 0;
+  }
+}
+
+.skeleton {
+  height: 36px;
+  border-radius: var(--r);
+  background: var(--panel-bg);
+  margin-bottom: 4px;
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+/* The .article container this renders into composes articleTypography.module.css, whose
+   `:global(table)` rule (specificity 0,1,1) would otherwise double up borders/margin against
+   Table.Root's own wrapper div. `.tableWrapper .tableSurface` at (0,2,0) beats it and resets
+   the <table> itself, while .tableWrapper supplies the block-gap margin that rule used to give. */
+.tableWrapper {
+  margin: 0 0 var(--article-block-gap);
+}
+
+.tableWrapper .tableSurface {
+  border: none;
+  border-radius: 0;
+  overflow: visible;
+  margin: 0;
+}
+
+.op {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.op_create {
+  background: color-mix(in srgb, var(--success-bg) 60%, transparent);
+  color: var(--success-fg);
+}
+.op_update {
+  background: color-mix(in srgb, var(--accent-bg) 60%, transparent);
+  color: var(--accent-fg);
+}
+.op_delete {
+  background: color-mix(in srgb, var(--danger-bg) 60%, transparent);
+  color: var(--danger-fg);
+}
+
+.entityLink {
+  color: var(--accent-fg);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-size: inherit;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}

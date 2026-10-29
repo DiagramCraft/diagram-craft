@@ -31,7 +31,7 @@ describe('governance workflow seed data', () => {
     }
 
     expect(sampleRows.find(row => row.case_kind === 'entity.change-case')).toMatchObject({
-      case_subkind: encodeCaseSubkind(SEED_SCHEMA_IDS.contract),
+      case_subkinds: [encodeCaseSubkind(SEED_SCHEMA_IDS.contract)],
       config: {
         approvals: expect.objectContaining({
           requiredApprovals: 1,
@@ -39,8 +39,15 @@ describe('governance workflow seed data', () => {
         })
       }
     });
+    expect(
+      sampleRows.find(
+        row =>
+          row.case_kind === 'entity.change-case' &&
+          row.case_subkinds.includes(encodeCaseSubkind(SEED_SCHEMA_IDS.dataEntity))
+      )
+    ).toMatchObject({ enabled: true });
     expect(sampleRows.find(row => row.case_kind === 'entity.change-case.bulk')).toMatchObject({
-      case_subkind: null,
+      case_subkinds: [],
       config: {
         approvals: expect.objectContaining({
           requiredApprovals: 2,
@@ -49,7 +56,7 @@ describe('governance workflow seed data', () => {
       }
     });
     expect(sampleRows.find(row => row.case_kind === 'entity.deprecation')).toMatchObject({
-      case_subkind: encodeCaseSubkind(SEED_SCHEMA_IDS.technology)
+      case_subkinds: [encodeCaseSubkind(SEED_SCHEMA_IDS.technology)]
     });
     expect(
       sampleRows
@@ -58,7 +65,7 @@ describe('governance workflow seed data', () => {
             row.case_kind
           )
         )
-        .every(row => row.case_subkind === null && row.config.reminders != null)
+        .every(row => row.case_subkinds.length === 0 && row.config.reminders != null)
     ).toBe(true);
   });
 });

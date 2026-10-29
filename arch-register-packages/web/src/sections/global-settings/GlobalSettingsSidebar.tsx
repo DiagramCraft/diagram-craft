@@ -1,12 +1,11 @@
 import { useMemo } from 'react';
-import { useLocation, useNavigate } from '@tanstack/react-router';
+import { useNavigate } from '@tanstack/react-router';
 import styles from '../../shell/SidePanel.module.css';
 import { TreeRow } from '../../components/TreeRow';
 import { TbShieldLock, TbUsers } from 'react-icons/tb';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { SidebarGroupLabel, SidebarTitleHeader } from '../../components/sidebar/SidebarPrimitives';
-import { useAuthConfig } from '../../hooks/useAuthConfig';
-import { useWorkspaceAuthorization } from '../../auth/WorkspaceAuthorizationContext';
+import { useGlobalSettingsSection } from './useGlobalSettingsSection';
 
 type GlobalSettingsNavItem = {
   id: string;
@@ -33,14 +32,9 @@ const USERS_SETTINGS_ITEM: GlobalSettingsNavItem = {
 
 export const GlobalSettingsSidebar = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const ctx = useWorkspaceContext();
   const workspaceSlug = ctx.workspaceSlug;
-  const { data: authConfig } = useAuthConfig();
-  const { hasGlobalPermission } = useWorkspaceAuthorization(ctx.workspace?.id);
-  const canManageUsers =
-    authConfig != null && authConfig.mode !== 'oidc' && hasGlobalPermission('admin_platform');
-  const section = location.pathname.endsWith('/users') ? 'users' : 'global-permissions';
+  const { section, canManageUsers } = useGlobalSettingsSection();
 
   const groups = useMemo(() => {
     const g: Record<string, GlobalSettingsNavItem[]> = {};

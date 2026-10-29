@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { resolveHomeDashboardId } from '../../lib/applicationDashboards';
 import { useSearch } from '@tanstack/react-router';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
@@ -11,7 +12,7 @@ import {
 import { DashboardHeader } from './DashboardHeader';
 import { DashboardGrid } from './DashboardGrid';
 import { MdxContext } from '../markdown/MdxContext';
-import { DEFAULT_SEEDED_WIDGETS } from './dashboardWidgetDefaults';
+import { DEFAULT_SEEDED_WIDGETS } from './dashboardWidgets';
 import styles from './DashboardScreen.module.css';
 
 export const DashboardScreen = () => {
@@ -26,7 +27,7 @@ export const DashboardScreen = () => {
     usePersonalDashboards(workspaceSlug);
   const updatePersonalDashboard = useUpdatePersonalDashboard(workspaceSlug);
 
-  const activeDashboardId = search.dashboard ?? dashboards?.[0]?.id;
+  const activeDashboardId = resolveHomeDashboardId(dashboards, search.dashboard);
   const sharedDashboard = dashboards?.find(d => d.id === activeDashboardId) ?? null;
   const personalDashboard = sharedDashboard
     ? null

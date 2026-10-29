@@ -665,7 +665,7 @@ const seedRiskComplianceEntities: SeedEntityInput[] = [
     slug: 'soc2-cc6-1-logical-access',
     namespace: 'default',
     name: 'CC6.1 Logical Access Controls',
-    description: 'Restricts logical access to authorized users and processes.',
+    description: 'The entity implements logical access security measures.',
     owner: TEAM_IDS.security,
     lifecycle: LIFECYCLE_IDS.production,
     target_lifecycle: null,
@@ -675,7 +675,6 @@ const seedRiskComplianceEntities: SeedEntityInput[] = [
     schema_id: '00000000-0000-0000-0000-000000000016',
     data: {
       requirement_code: 'CC6.1',
-      description: 'The entity implements logical access security measures.',
       status: 'met',
       framework: ['00000000-0000-0000-0017-000000000001']
     },
@@ -690,7 +689,7 @@ const seedRiskComplianceEntities: SeedEntityInput[] = [
     slug: 'soc2-cc7-2-monitoring',
     namespace: 'default',
     name: 'CC7.2 System Monitoring',
-    description: 'Monitors system components for anomalies indicative of security events.',
+    description: 'The entity monitors system components for anomalous behavior.',
     owner: TEAM_IDS.security,
     lifecycle: LIFECYCLE_IDS.production,
     target_lifecycle: null,
@@ -700,7 +699,6 @@ const seedRiskComplianceEntities: SeedEntityInput[] = [
     schema_id: '00000000-0000-0000-0000-000000000016',
     data: {
       requirement_code: 'CC7.2',
-      description: 'The entity monitors system components for anomalous behavior.',
       status: 'in-progress',
       framework: ['00000000-0000-0000-0017-000000000001']
     },
@@ -715,7 +713,7 @@ const seedRiskComplianceEntities: SeedEntityInput[] = [
     slug: 'iso27001-a-8-24-cryptography',
     namespace: 'default',
     name: 'A.8.24 Use of Cryptography',
-    description: 'Rules for effective use of cryptography, including key management.',
+    description: 'The entity defines and implements rules for cryptography.',
     owner: TEAM_IDS.security,
     lifecycle: LIFECYCLE_IDS.production,
     target_lifecycle: null,
@@ -725,7 +723,6 @@ const seedRiskComplianceEntities: SeedEntityInput[] = [
     schema_id: '00000000-0000-0000-0000-000000000016',
     data: {
       requirement_code: 'A.8.24',
-      description: 'The entity defines and implements rules for cryptography.',
       status: 'not-started',
       framework: ['00000000-0000-0000-0017-000000000002']
     },
@@ -1249,7 +1246,7 @@ const seedRetentionPolicyEntities: SeedEntityInput[] = [
     tags: ['governance', 'retention'],
     links: [],
     schema_id: RETENTION_IDS.policySchema,
-    data: { duration: 3, time_unit: 'years' },
+    data: { period: { amount: 3, unit: 'years' } },
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1269,7 +1266,7 @@ const seedRetentionPolicyEntities: SeedEntityInput[] = [
     tags: ['governance', 'retention', 'compliance'],
     links: [],
     schema_id: RETENTION_IDS.policySchema,
-    data: { duration: 7, time_unit: 'years' },
+    data: { period: { amount: 7, unit: 'years' } },
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1428,7 +1425,7 @@ export const seedEntitiesRaw: SeedEntityInput[] = [
       setup_fee: { amount: 15000, currency: 'USD' },
       contract_type: 'licence',
       auto_renew: true,
-      notice_period_days: 90,
+      notice_period: { amount: 90, unit: 'days' },
       contract_owner: 'Head of Platform Engineering'
     },
     project_id: null,
@@ -1458,7 +1455,7 @@ export const seedEntitiesRaw: SeedEntityInput[] = [
       setup_fee: { amount: 0, currency: 'EUR' },
       contract_type: 'support',
       auto_renew: true,
-      notice_period_days: 30,
+      notice_period: { amount: 30, unit: 'days' },
       contract_owner: 'Head of Security'
     },
     project_id: null,
@@ -1488,7 +1485,7 @@ export const seedEntitiesRaw: SeedEntityInput[] = [
       setup_fee: { amount: 0, currency: 'USD' },
       contract_type: 'support',
       auto_renew: false,
-      notice_period_days: 60,
+      notice_period: { amount: 60, unit: 'days' },
       contract_owner: 'Head of Platform Engineering'
     },
     project_id: null,

@@ -1,5 +1,6 @@
 import { Tabs } from '@diagram-craft/app-components/Tabs';
-import { useEffect, useState } from 'react';
+import { isArchivedProject } from '../../lib/projectStatus';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useMatches, useSearch } from '@tanstack/react-router';
 import {
   TbFolders,
@@ -31,11 +32,6 @@ const getSidebarProjectGroups = (projects: Project[]) => {
   ];
 };
 
-const getArchivedProjectGroup = (projects: Project[]) => ({
-  title: 'Archived Projects',
-  projects: projects.filter(p => p.status === 'complete' || p.status === 'cancelled')
-});
-
 export const ProjectsSidebar = ({
   projects,
   workspaceSlug,
@@ -54,22 +50,30 @@ export const ProjectsSidebar = ({
   const allParams = Object.assign({}, ...matches.map(m => m.params)) as Record<string, string>;
   const projectId = allParams.projectId ?? null;
   const projectFolder = allParams._splat ?? null;
-  const projectSidebarTab: ProjectSidebarTab = search.tab === 'archive' ? 'archive' : 'projects';
+  const { archivedProjects, liveProjects } = useMemo(
+    () => ({
+      archivedProjects: projects.filter(isArchivedProject),
+      liveProjects: projects.filter(project => !isArchivedProject(project))
+    }),
+    [projects]
+  );
+  const hasArchivedProjects = archivedProjects.length > 0;
+  const projectSidebarTab: ProjectSidebarTab =
+    search.tab === 'archive' && hasArchivedProjects ? 'archive' : 'projects';
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const selectedProject =
     projects.find(project => project.id === projectId || project.public_id === projectId) ?? null;
 
   const projectGroups =
     projectSidebarTab === 'archive'
-      ? [getArchivedProjectGroup(projects)].filter(group => group.projects.length > 0)
+      ? hasArchivedProjects
+        ? [{ title: 'Archived Projects', projects: archivedProjects }]
+        : []
       : getSidebarProjectGroups(projects);
 
   useEffect(() => {
     if (!selectedProject) return;
-    const nextTab =
-      selectedProject.status === 'complete' || selectedProject.status === 'cancelled'
-        ? 'archive'
-        : 'projects';
+    const nextTab = isArchivedProject(selectedProject) ? 'archive' : 'projects';
     if (nextTab !== projectSidebarTab) {
       const nextSearch = {
         tab: nextTab as 'projects' | 'archive',
@@ -103,43 +107,26 @@ export const ProjectsSidebar = ({
     search.contentView
   ]);
 
-  const navigateToProject = (project: Project) => {
-    navigate(
-      projectDetailRoute(workspaceSlug, asProjectPublicId(project.public_id), {
-        tab:
-          project.status === 'complete' || project.status === 'cancelled' ? 'archive' : 'projects',
-        section: 'home'
-      })
-    );
-  };
+  const goToProject = (project: Project, nextSearch: Parameters<typeof projectDetailRoute>[2]) =>
+    navigate(projectDetailRoute(workspaceSlug, asProjectPublicId(project.public_id), nextSearch));
+
+  const navigateToProject = (project: Project) =>
+    goToProject(project, {
+      tab: isArchivedProject(project) ? 'archive' : 'projects',
+      section: 'home'
+    });
 
   const activateTab = (tab: ProjectSidebarTab) => {
-    const targetProjects =
-      tab === 'archive'
-        ? projects.filter(
-            project => project.status === 'complete' || project.status === 'cancelled'
-          )
-        : projects.filter(
-            project => project.status !== 'complete' && project.status !== 'cancelled'
-          );
+    const targetProjects = tab === 'archive' ? archivedProjects : liveProjects;
 
     if (!selectedProject || !targetProjects.some(project => project.id === selectedProject.id)) {
       const target = targetProjects[0];
-      if (target) {
-        navigate(
-          projectDetailRoute(workspaceSlug, asProjectPublicId(target.public_id), {
-            tab,
-            section: 'home'
-          })
-        );
-      }
+      if (target) goToProject(target, { tab, section: 'home' });
     } else {
-      navigate(
-        projectDetailRoute(workspaceSlug, asProjectPublicId(selectedProject.public_id), {
-          tab,
-          section: search.section === 'entities' ? 'entities' : 'home'
-        })
-      );
+      goToProject(selectedProject, {
+        tab,
+        section: search.section === 'entities' ? 'entities' : 'home'
+      });
     }
   };
 
@@ -189,7 +176,7 @@ export const ProjectsSidebar = ({
         >
           <Tabs.List>
             <Tabs.Trigger value="projects">Projects</Tabs.Trigger>
-            <Tabs.Trigger value="archive">Archive</Tabs.Trigger>
+            {hasArchivedProjects && <Tabs.Trigger value="archive">Archive</Tabs.Trigger>}
           </Tabs.List>
         </Tabs.Root>
       </SidebarHeader>
@@ -203,25 +190,24 @@ export const ProjectsSidebar = ({
                 const isOpen = expanded[project.id] ?? isSelected;
 
                 return (
-                  <div key={project.id}>
-                    <TreeRow
-                      expandable
-                      testId={`project-row-${project.name}`}
-                      expanded={isOpen}
-                      onExpand={() => toggle(project.id)}
-                      icon={
-                        <TbFolders
-                          size={12}
-                          style={project.color ? { color: project.color } : undefined}
-                        />
-                      }
-                      label={`${project.name} (${project.public_id})`}
-                      active={isSelected}
-                      onClick={() => navigateToProject(project)}
-                      trailing={<span className="dim mono">{project.file_count}</span>}
-                      tagColor={project.color ?? undefined}
-                    />
-                  </div>
+                  <TreeRow
+                    key={project.id}
+                    expandable
+                    testId={`project-row-${project.name}`}
+                    expanded={isOpen}
+                    onExpand={() => toggle(project.id)}
+                    icon={
+                      <TbFolders
+                        size={12}
+                        style={project.color ? { color: project.color } : undefined}
+                      />
+                    }
+                    label={`${project.name} (${project.public_id})`}
+                    active={isSelected}
+                    onClick={() => navigateToProject(project)}
+                    trailing={<span className="dim mono">{project.file_count}</span>}
+                    tagColor={project.color ?? undefined}
+                  />
                 );
               })}
             </div>

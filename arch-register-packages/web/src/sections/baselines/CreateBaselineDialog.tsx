@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { Baseline, CreateBaselineRequest } from '@arch-register/api-types/baselineContract';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
+import { DateInput } from '@diagram-craft/app-components/DateInput';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { Select } from '@diagram-craft/app-components/Select';
@@ -10,20 +11,17 @@ import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useCreateBaseline } from '../../hooks/useBaselines';
 import { ApiError } from '../../lib/http';
+import { toEffectiveAt, toLocalDate } from './baselineEffectiveDate';
 import styles from './CreateBaselineDialog.module.css';
-
-const localDateTime = (date = new Date()) => {
-  const offset = date.getTimezoneOffset() * 60_000;
-  return new Date(date.getTime() - offset).toISOString().slice(0, 16);
-};
 
 type Props = {
   open: boolean;
   workspaceSlug: string;
   scope: CreateBaselineRequest['scope'];
   query?: EntityQuery | null;
-  scopeLabel: string;
-  scopeDetail: string;
+  /** Optional description of what the baseline captures; omitted when the context makes it obvious. */
+  scopeLabel?: string;
+  scopeDetail?: string;
   defaultOwnerTeamId?: string | null;
   onClose: () => void;
   onCreated?: (baseline: Baseline) => void;
@@ -44,7 +42,7 @@ export const CreateBaselineDialog = ({
   const createBaseline = useCreateBaseline(workspaceSlug);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [effectiveAt, setEffectiveAt] = useState(localDateTime);
+  const [effectiveDate, setEffectiveDate] = useState(toLocalDate);
   const [ownerTeamId, setOwnerTeamId] = useState('none');
   const [includePlannedChanges, setIncludePlannedChanges] = useState(true);
   const [includeOverdueChanges, setIncludeOverdueChanges] = useState(false);
@@ -58,7 +56,7 @@ export const CreateBaselineDialog = ({
     if (!open) return;
     setName('');
     setDescription('');
-    setEffectiveAt(localDateTime());
+    setEffectiveDate(toLocalDate());
     setOwnerTeamId(defaultOwnerTeamId ?? 'none');
     setIncludePlannedChanges(true);
     setIncludeOverdueChanges(false);
@@ -66,7 +64,8 @@ export const CreateBaselineDialog = ({
 
   const submit = async () => {
     const trimmedName = name.trim();
-    if (!trimmedName || createBaseline.isPending) return;
+    const effectiveAt = toEffectiveAt(effectiveDate);
+    if (!trimmedName || !effectiveAt || createBaseline.isPending) return;
     const trimmedDescription = description.trim();
 
     try {
@@ -74,7 +73,7 @@ export const CreateBaselineDialog = ({
         name: trimmedName,
         description: trimmedDescription.length > 0 ? trimmedDescription : null,
         ownerTeamId: ownerTeamId === 'none' ? null : ownerTeamId,
-        effectiveAt: new Date(effectiveAt).toISOString(),
+        effectiveAt,
         scope,
         query: query ?? null,
         includePlannedChanges,
@@ -107,15 +106,17 @@ export const CreateBaselineDialog = ({
           label: createBaseline.isPending ? 'Capturing…' : 'Create baseline',
           type: 'default',
           onClick: () => void submit(),
-          disabled: createBaseline.isPending || !name.trim()
+          disabled: createBaseline.isPending || !name.trim() || !effectiveDate
         }
       ]}
     >
       <div className={styles.fields}>
-        <div className={styles.scope}>
-          <span className={styles.scopeLabel}>{scopeLabel}</span>
-          <span className={styles.scopeDetail}>{scopeDetail}</span>
-        </div>
+        {scopeLabel && scopeDetail && (
+          <div className={styles.scope}>
+            <span className={styles.scopeLabel}>{scopeLabel}</span>
+            <span className={styles.scopeDetail}>{scopeDetail}</span>
+          </div>
+        )}
         <FormElement label="Name" required>
           <TextInput
             value={name}
@@ -134,12 +135,12 @@ export const CreateBaselineDialog = ({
             allowMaximize={false}
           />
         </FormElement>
-        <FormElement label="Effective date" required>
-          <TextInput
-            type="datetime-local"
-            value={effectiveAt}
-            onChange={value => setEffectiveAt(value ?? '')}
-          />
+        <FormElement
+          label="Effective date"
+          required
+          hint="Captured as of the end of the selected day; today captures the current moment."
+        >
+          <DateInput value={effectiveDate} onChange={value => setEffectiveDate(value ?? '')} />
         </FormElement>
         <FormElement label="Owner team" required={false}>
           <Select.Root value={ownerTeamId} onChange={value => setOwnerTeamId(value ?? 'none')}>

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useQueries } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { TbChevronRight, TbExternalLink } from 'react-icons/tb';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
@@ -12,11 +13,14 @@ import {
   useAssessmentResponses,
   useUpsertAssessmentResponse
 } from '../../../hooks/useAssessmentResponses';
-import { AssessmentFieldCell } from '../../projects/components/AssessmentFieldCells';
+import { assessmentResponsesQuery } from '../../../queries/assessments';
+import { AssessmentFieldCell } from '../../projects/assessments/AssessmentFieldCells';
 import { asProjectPublicId, projectDetailRoute } from '../../../routes/publicObjectRoutes';
 import { MemberAvatar } from '../../../components/MemberAvatar';
 import { EmptyState } from '../../../components/EmptyState';
 import styles from './EntityAssessmentsTab.module.css';
+import { EntityTabPage } from './EntityTabPage';
+import { TbClipboardList } from 'react-icons/tb';
 
 const STATUS_LABEL = {
   not_started: 'Not started',
@@ -30,22 +34,14 @@ const CONFIRM_STATUS_LABEL = {
   complete: 'Confirmed'
 } as const;
 
-export const EntityAssessmentsTab = ({
-  workspaceId,
-  entity,
-  schema
-}: {
-  workspaceId: string;
-  entity: EntityRecord;
-  schema: EntitySchema | null;
-}) => {
-  // Assessment scope is defined by entity schema/type, not by explicit project membership
-  // (matches how the bulk fill grid resolves in-scope entities) — so candidate assessments
-  // come from every project the user can access, not just projects this entity is linked to.
+// Assessment scope is defined by entity schema/type, not by explicit project membership
+// (matches how the bulk fill grid resolves in-scope entities) — so candidate assessments
+// come from every project the user can access, not just projects this entity is linked to.
+const useRelevantAssessments = (workspaceId: string, schema: EntitySchema | null) => {
   const { data: projects = [] } = useProjects(workspaceId);
   const { data: assessments = [] } = useAssessments(workspaceId);
 
-  const relevant = useMemo(() => {
+  return useMemo(() => {
     if (!schema) return [];
     const result: {
       assessment: Assessment;
@@ -71,13 +67,50 @@ export const EntityAssessmentsTab = ({
     });
     return result;
   }, [assessments, projects, schema]);
+};
+
+/** Open assessments in scope for the entity that it hasn't completed (or confirmed) yet. */
+export const useUnansweredAssessmentCount = (
+  workspaceId: string,
+  entityId: string,
+  schema: EntitySchema | null
+) => {
+  const open = useRelevantAssessments(workspaceId, schema).filter(
+    ({ assessment }) => assessment.status === 'open'
+  );
+  const responses = useQueries({
+    queries: open.map(({ assessment }) => assessmentResponsesQuery(workspaceId, assessment.id))
+  });
+
+  return open.filter(({ assessment }, index) => {
+    const response = responses[index]?.data?.find(r => r.entity_id === entityId);
+    const status =
+      response?.status ?? computeAssessmentStatus(assessment.fields, undefined, assessment.mode);
+    return status !== 'complete';
+  }).length;
+};
+
+export const EntityAssessmentsTab = ({
+  workspaceId,
+  entity,
+  schema
+}: {
+  workspaceId: string;
+  entity: EntityRecord;
+  schema: EntitySchema | null;
+}) => {
+  const relevant = useRelevantAssessments(workspaceId, schema);
 
   if (relevant.length === 0) {
     return (
-      <EmptyState
-        title="No open assessments"
-        subtitle={`${schema?.name ?? 'This entity type'} isn't in scope for any open or closed assessment.`}
-      />
+      <EntityTabPage>
+        <EmptyState
+          framed
+          icon={<TbClipboardList size={20} />}
+          title="No open assessments"
+          subtitle={`${schema?.name ?? 'This entity type'} isn't in scope for any open or closed assessment.`}
+        />
+      </EntityTabPage>
     );
   }
 

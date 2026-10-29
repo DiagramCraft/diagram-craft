@@ -310,7 +310,6 @@ runContractSuiteAgainstBothDrivers('entityTraversal', (getDb, _driver: DbDriver)
       shared_field_group_links: [],
       color: null,
       icon: null,
-      relation_approval_policy: 'disabled',
       unique_endpoint_pair: false,
       created_at: new Date(),
       updated_at: new Date()
@@ -460,7 +459,6 @@ runContractSuiteAgainstBothDrivers('entityTraversal', (getDb, _driver: DbDriver)
       shared_field_group_links: [],
       color: null,
       icon: null,
-      relation_approval_policy: 'disabled',
       unique_endpoint_pair: false,
       created_at: new Date(),
       updated_at: new Date()
@@ -477,7 +475,6 @@ runContractSuiteAgainstBothDrivers('entityTraversal', (getDb, _driver: DbDriver)
       shared_field_group_links: [],
       color: null,
       icon: null,
-      relation_approval_policy: 'disabled',
       unique_endpoint_pair: false,
       created_at: new Date(),
       updated_at: new Date()
@@ -760,7 +757,6 @@ runContractSuiteAgainstBothDrivers('entityTraversal', (getDb, _driver: DbDriver)
       shared_field_group_links: [],
       color: null,
       icon: null,
-      relation_approval_policy: 'disabled',
       unique_endpoint_pair: false,
       created_at: new Date(),
       updated_at: new Date()
@@ -989,7 +985,6 @@ runContractSuiteAgainstBothDrivers('entityTraversal', (getDb, _driver: DbDriver)
       shared_field_group_links: [],
       color: null,
       icon: null,
-      relation_approval_policy: 'disabled',
       unique_endpoint_pair: false,
       created_at: new Date(),
       updated_at: new Date()
@@ -1025,6 +1020,62 @@ runContractSuiteAgainstBothDrivers('entityTraversal', (getDb, _driver: DbDriver)
     expect(path.distinctTerminals.map(terminal => terminal.id).sort()).toEqual(
       [source.id, target.id, otherTarget.id].sort()
     );
+  });
+
+  it('relationSubtree forward/backward follow typed relations like reference fields', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const sourceSchemaId = randomUUID();
+    const targetSchemaId = randomUUID();
+    const relationSchemaId = randomUUID();
+    await createFixtureSchema(db, workspace, { id: sourceSchemaId, name: 'Source' });
+    await createFixtureSchema(db, workspace, { id: targetSchemaId, name: 'Target' });
+    await db.relation.createRelationSchema({
+      id: relationSchemaId,
+      workspace,
+      name: 'Source to target',
+      description: '',
+      in_schema_ids: [sourceSchemaId],
+      out_schema_ids: [targetSchemaId],
+      fields: [],
+      groups: [],
+      shared_field_group_links: [],
+      color: null,
+      icon: null,
+      unique_endpoint_pair: false,
+      created_at: new Date(),
+      updated_at: new Date()
+    });
+    const source = await createFixtureEntity(db, workspace, sourceSchemaId, { name: 'Source' });
+    const target = await createFixtureEntity(db, workspace, targetSchemaId, { name: 'Target' });
+    await db.relation.createRelation({
+      id: randomUUID(),
+      workspace,
+      schema_id: relationSchemaId,
+      in_entity_id: source.id,
+      out_entity_id: target.id,
+      data: {},
+      owner: null,
+      lifecycle: null,
+      version: 1,
+      approval_policy_override: null,
+      created_at: new Date(),
+      updated_at: new Date()
+    });
+
+    const reachable = async (rootId: string, direction: 'forward' | 'backward') => {
+      const result = await executeEntityTraversal(db, workspace, null, {
+        root: { kind: 'ids', entityIds: [rootId] },
+        paths: [{ id: direction, steps: [{ kind: 'relationSubtree', direction }] }]
+      });
+      return result.roots[0]!.paths[0]!.distinctTerminals.map(terminal => terminal.id).sort();
+    };
+
+    // The 'in' endpoint holds the relation (outgoing), the 'out' endpoint is its target (incoming).
+    expect(await reachable(source.id, 'forward')).toEqual([source.id, target.id].sort());
+    expect(await reachable(source.id, 'backward')).toEqual([source.id]);
+    expect(await reachable(target.id, 'backward')).toEqual([source.id, target.id].sort());
+    expect(await reachable(target.id, 'forward')).toEqual([target.id]);
   });
 
   it('respects maxDepth for relationSubtree traversal', async () => {

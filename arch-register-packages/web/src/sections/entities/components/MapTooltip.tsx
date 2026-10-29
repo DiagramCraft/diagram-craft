@@ -1,4 +1,4 @@
-import styles from './MapView.module.css';
+import styles from './NestedMapView.module.css';
 import type { EntityRecord, TreeNode } from '@arch-register/api-types/entityContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';

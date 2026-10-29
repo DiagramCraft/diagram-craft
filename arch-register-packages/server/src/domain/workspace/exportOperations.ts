@@ -12,6 +12,7 @@ import type {
   ExportOptions,
   ExportManifest,
   ExportConfig,
+  ExportGovernanceConfig,
   ExportSchema,
   ExportRelationSchema,
   ExportEntity,
@@ -19,16 +20,21 @@ import type {
   ExportDiagnostic,
   ExportProject,
   ExportContentNode,
+  ExportApplicationData,
   ExportDocumentData,
-  ExportSharedFieldGroup
+  ExportSharedFieldGroup,
+  ExportDashboard
 } from './exportTypes';
+import type { WorkspaceDashboardDbResult } from '../dashboard/db/dashboardDatabase';
 import type { SharedFieldGroupLink } from '@arch-register/api-types/schemaContract';
 import type { SharedFieldGroupDbResult } from '../catalog/db/catalogDatabase';
 import { DOCUMENT_STATUS_CASE_KIND } from '../document/documentWorkflowOperations';
 import { parseGovernanceWorkflowConfig } from '../governance/governanceWorkflowConfig';
 import {
   ENTITY_CHANGE_POLICY_CASE_KIND,
+  RELATION_CHANGE_POLICY_CASE_KIND,
   ENTITY_DEPRECATION_POLICY_CASE_KIND,
+  getRelationApprovalPoliciesBySchema,
   getSchemaGovernancePoliciesBySchema
 } from '../governance/schemaGovernancePolicy';
 import { entityDrawerConfigurationSchema } from '@arch-register/api-types/entityDrawerConfiguration';
@@ -74,6 +80,7 @@ export const exportWorkspace = async (
     projects?: ExportProject[];
     content_nodes?: ExportContentNode[];
     documents?: ExportDocumentData;
+    applications?: ExportApplicationData;
   };
   contentFiles?: Map<string, Buffer>;
 }> => {
@@ -99,6 +106,7 @@ export const exportWorkspace = async (
     projects?: ExportProject[];
     content_nodes?: ExportContentNode[];
     documents?: ExportDocumentData;
+    applications?: ExportApplicationData;
   } = {};
 
   const statistics = {
@@ -111,7 +119,8 @@ export const exportWorkspace = async (
     total_content_size_bytes: 0,
     document_type_count: 0,
     document_template_count: 0,
-    document_revision_count: 0
+    document_revision_count: 0,
+    application_count: 0
   };
 
   // Export configuration
@@ -209,6 +218,11 @@ export const exportWorkspace = async (
     statistics.document_revision_count = data.documents.revisions.length;
   }
 
+  if (options.include.includes('applications')) {
+    data.applications = await exportApplications(db, workspace);
+    statistics.application_count = data.applications.applications.length;
+  }
+
   const manifest: ExportManifest = {
     version: '1.0',
     format: 'zip-multi-file',
@@ -229,6 +243,7 @@ export const exportWorkspace = async (
       ...(data.projects && { projects: 'projects.json' }),
       ...(data.content_nodes && { content_nodes: 'content-nodes.json' }),
       ...(data.documents && { documents: 'documents.json' }),
+      ...(data.applications && { applications: 'applications.json' }),
       ...(data.content_nodes && options.include_content && { content_directory: 'content/' })
     },
     statistics,
@@ -277,14 +292,36 @@ const exportConfig = async (db: DatabaseAdapter, workspace: string): Promise<Exp
       capability_configurations: capabilityConfigurations.map(configuration => ({
         id: configuration.id,
         type: configuration.type,
-        bindings: configuration.bindings,
-        ...(configuration.view_config != null && { view_config: configuration.view_config })
+        bindings: configuration.bindings
       }))
     }),
     ...(parsedEntityDrawerConfiguration.success && {
       entity_drawer_configuration: parsedEntityDrawerConfiguration.data
     })
   };
+};
+
+/** One entry per covered schema; workflows shared by several schemas list the others in `shared_with`. */
+const groupGovernanceConfigsBySchema = (
+  rows: Awaited<ReturnType<DatabaseAdapter['governanceCaseConfig']['listCaseConfig']>>
+) => {
+  const bySchema = new Map<string, ExportGovernanceConfig[]>();
+  for (const row of rows) {
+    for (const schemaId of row.case_subkinds) {
+      const others = row.case_subkinds.filter(other => other !== schemaId);
+      const entries = bySchema.get(schemaId) ?? [];
+      entries.push({
+        case_kind: row.case_kind,
+        name: row.name,
+        description: row.description,
+        enabled: row.enabled,
+        config: parseGovernanceWorkflowConfig(row.config, row.enabled),
+        ...(others.length > 0 && { shared_with: others })
+      });
+      bySchema.set(schemaId, entries);
+    }
+  }
+  return bySchema;
 };
 
 const exportSchemas = async (db: DatabaseAdapter, workspace: string): Promise<ExportSchema[]> => {
@@ -297,25 +334,13 @@ const exportSchemas = async (db: DatabaseAdapter, workspace: string): Promise<Ex
   const categoryNamesById = new Map(categories.map(category => [category.id, category.name]));
   const sharedGroups = await db.catalog.listSharedFieldGroups(workspace);
   const sharedGroupsById = new Map(sharedGroups.map(group => [group.id, group]));
-  const governanceRowsBySchema = new Map<string, ExportSchema['governance_configs']>();
-  for (const row of governanceRows) {
-    if (
-      row.case_subkind == null ||
-      (row.case_kind !== ENTITY_CHANGE_POLICY_CASE_KIND &&
-        row.case_kind !== ENTITY_DEPRECATION_POLICY_CASE_KIND)
-    ) {
-      continue;
-    }
-    const rows = governanceRowsBySchema.get(row.case_subkind) ?? [];
-    rows.push({
-      case_kind: row.case_kind,
-      name: row.name,
-      description: row.description,
-      enabled: row.enabled,
-      config: parseGovernanceWorkflowConfig(row.config, row.enabled)
-    });
-    governanceRowsBySchema.set(row.case_subkind, rows);
-  }
+  const governanceRowsBySchema = groupGovernanceConfigsBySchema(
+    governanceRows.filter(
+      row =>
+        row.case_kind === ENTITY_CHANGE_POLICY_CASE_KIND ||
+        row.case_kind === ENTITY_DEPRECATION_POLICY_CASE_KIND
+    )
+  );
 
   return schemas.map(schema => ({
     id: schema.id,
@@ -343,11 +368,15 @@ const exportRelationSchemas = async (
   db: DatabaseAdapter,
   workspace: string
 ): Promise<ExportRelationSchema[]> => {
-  const [schemas, sharedGroups, categories] = await Promise.all([
+  const [schemas, sharedGroups, categories, policiesBySchema, governanceRows] = await Promise.all([
     db.relation.listRelationSchemas(workspace),
     db.catalog.listSharedFieldGroups(workspace),
-    db.catalog.listCategories(workspace)
+    db.catalog.listCategories(workspace),
+    getRelationApprovalPoliciesBySchema(db, workspace),
+    db.governanceCaseConfig?.listCaseConfigForKind(workspace, RELATION_CHANGE_POLICY_CASE_KIND) ??
+      Promise.resolve([])
   ]);
+  const governanceRowsBySchema = groupGovernanceConfigsBySchema(governanceRows);
   const sharedGroupsById = new Map(sharedGroups.map(group => [group.id, group]));
   const categoryNamesById = new Map(categories.map(category => [category.id, category.name]));
 
@@ -369,7 +398,8 @@ const exportRelationSchemas = async (
     ),
     color: schema.color,
     icon: schema.icon,
-    relation_approval_policy: schema.relation_approval_policy ?? 'disabled',
+    relation_approval_policy: policiesBySchema.get(schema.id) ?? 'disabled',
+    governance_configs: governanceRowsBySchema.get(schema.id) ?? [],
     unique_endpoint_pair: schema.unique_endpoint_pair ?? false,
     version: schema.version ?? 1
   }));
@@ -552,6 +582,65 @@ const exportEntities = async (
   return { entities: exportedEntities, diagnostics };
 };
 
+const toExportDashboard = (row: WorkspaceDashboardDbResult): ExportDashboard => ({
+  id: row.id,
+  name: row.name,
+  key: row.key,
+  description: row.description,
+  icon: row.icon,
+  rail_label: row.rail_label,
+  app_key: row.app_key,
+  widgets: row.layout,
+  sidebar: row.sidebar
+});
+
+const exportApplications = async (
+  db: DatabaseAdapter,
+  workspace: string
+): Promise<ExportApplicationData> => {
+  // `dashboard.list` returns only workspace home dashboards; application dashboards are fetched
+  // per application.
+  const [applications, homeDashboards, policies] = await Promise.all([
+    db.application.list(workspace),
+    db.dashboard.list(workspace),
+    db.workspace.listWorkspaceApplicationAccessPolicies(workspace)
+  ]);
+  const applicationDashboards = new Map(
+    await Promise.all(
+      applications.map(
+        async application =>
+          [application.id, await db.dashboard.listByApplication(workspace, application.id)] as const
+      )
+    )
+  );
+  const policyByKey = new Map(policies.map(policy => [policy.application_id, policy]));
+  const byOrder = (a: WorkspaceDashboardDbResult, b: WorkspaceDashboardDbResult) =>
+    (a.application_order ?? a.sort_order) - (b.application_order ?? b.sort_order);
+
+  return {
+    applications: [...applications]
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map(application => {
+        const policy = policyByKey.get(application.key);
+        return {
+          id: application.key,
+          key: application.key,
+          name: application.name,
+          description: application.description,
+          accent_color: application.accent_color,
+          dashboards: [...(applicationDashboards.get(application.id) ?? [])]
+            .sort(byOrder)
+            .map(toExportDashboard),
+          access_policy: policy ? { mode: policy.mode, team_ids: policy.team_ids } : null
+        };
+      }),
+    home_dashboards: [...homeDashboards]
+      .filter(dashboard => dashboard.application_id == null)
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map(toExportDashboard)
+  };
+};
+
 const exportProjects = async (
   db: DatabaseAdapter,
   workspace: string,
@@ -684,11 +773,11 @@ const exportDocuments = async (
   const workflowConfigs = (
     await db.governanceCaseConfig.listCaseConfigForKind(workspace, DOCUMENT_STATUS_CASE_KIND)
   ).flatMap(row =>
-    row.case_subkind
+    row.case_subkinds[0]
       ? [
           {
             case_kind: row.case_kind,
-            case_subkind: row.case_subkind,
+            case_subkind: row.case_subkinds[0],
             name: row.name,
             description: row.description,
             enabled: row.enabled,

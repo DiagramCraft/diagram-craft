@@ -9,6 +9,7 @@ import {
   governanceCaseEventsQuery,
   governanceCaseQuery,
   governanceCasesQuery,
+  governanceSubmissionCountQuery,
   governanceSubmissionsQuery,
   governanceTaskCountQuery,
   governanceTasksQuery,
@@ -45,6 +46,9 @@ export const useGovernanceSubmissions = (
   query: ListGovernanceSubmissionsQuery = {},
   enabled = true
 ) => useQuery(governanceSubmissionsQuery(workspaceId, query, enabled));
+
+export const useGovernanceSubmissionCount = (workspaceId: string, enabled = true) =>
+  useQuery(governanceSubmissionCountQuery(workspaceId, enabled));
 
 export const useWithdrawGovernanceCase = (workspaceId: string) => {
   const queryClient = useQueryClient();
@@ -85,7 +89,8 @@ export const useDecideGovernanceAssignment = (workspaceId: string) => {
           idempotencyKey: crypto.randomUUID()
         }
       }),
-    onSuccess: async () => {
+    // Also on failure: a 409 means the case/assignment changed underneath us, so the lists are stale
+    onSettled: async () => {
       await Promise.all([
         invalidateGovernanceQueries(queryClient, workspaceId),
         invalidateNotificationQueries(queryClient, workspaceId)

@@ -1,25 +1,35 @@
+import { FieldDescriptionIcon } from '../../../components/FieldDescriptionIcon';
+import { Fragment, type CSSProperties, type ReactNode } from 'react';
 import { Chip } from '../../../components/Chip';
 import { DropdownMenu } from '../../../components/DropdownMenu';
+import { useNavigate } from '@tanstack/react-router';
+import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
+import { asEntityPublicId, entityDetailRoute } from '../../../routes/publicObjectRoutes';
 import { EntityNavigationLink } from '../../../components/EntityNavigationLink';
 import { Table } from '../../../components/table/Table';
 import { TypeBadge } from '../../../components/TypeBadge';
 import { resolveSchemaColor } from '../../../lib/schemaPresentation';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import {
-  entityMenuItems,
+  browserEntityMenuItems,
   entityName,
-  type EntityBrowserBaseViewProps,
-  projectEntityMenuItems
+  type EntityBrowserBaseViewProps
 } from './entityBrowserViewShared';
+import { useEntityCommonActions } from './useEntityCommonActions';
+import { nextSort, parseSort } from './entityBrowserSort';
 import { formatDate } from '../../../utils/dateFormat';
 import { useDateTimeFormatPreference } from '../../../hooks/useDateTimeFormatPreference';
 import {
   filterDisplayFieldIdsForContext,
   findEntityDisplayField,
   formatEntityDisplayValue,
+  getColumnRenderer,
   getDisplayFieldIds,
+  getEntityDisplayRawValue,
+  isNumericDisplayField,
   type EntityDisplayField
 } from './entityDisplayFields';
+import { renderColumnValue } from './columnRenderers';
 import { isEntityInProject } from './entityBrowserState';
 import styles from './TableView.module.css';
 
@@ -32,6 +42,13 @@ export type TableViewProps = EntityBrowserBaseViewProps & {
   onSelectRow?: (uid: string) => void;
   config: unknown;
   displayFields: EntityDisplayField[];
+  /** Omit the Type column, e.g. when the browser is scoped to a single schema. */
+  hideTypeColumn?: boolean;
+  /** Clicking a row navigates to the entity page instead of calling `onEntityClick`. */
+  rowOpensEntityPage?: boolean;
+  /** Current `sort` string and its setter; when both are given, column headers are sortable. */
+  sort?: string;
+  onSortChange?: (sort: string) => void;
 };
 
 export const TableView = ({
@@ -39,6 +56,7 @@ export const TableView = ({
   schemaMap,
   activeDateField,
   onEntityClick,
+  rowOpensEntityPage,
   onDelete,
   onClone,
   onManageCollections,
@@ -49,8 +67,14 @@ export const TableView = ({
   onSelectRow,
   readOnly,
   config,
-  displayFields
+  displayFields,
+  hideTypeColumn,
+  sort,
+  onSortChange
 }: TableViewProps) => {
+  const navigate = useNavigate();
+  const { workspaceSlug } = useWorkspaceContext();
+  const commonActions = useEntityCommonActions();
   const dateTimeFormatPreference = useDateTimeFormatPreference();
   const allSelected = !readOnly && rows.length > 0 && selectedIds?.size === rows.length;
   const someSelected =
@@ -62,6 +86,22 @@ export const TableView = ({
   const columns = fieldIds.map(
     id => displayFields.find(field => field.id === id) ?? { id, label: id, group: 'Fields' }
   );
+
+  const sortState = sort !== undefined ? parseSort(sort) : null;
+  const toggleSort =
+    onSortChange && sort !== undefined ? (key: string) => onSortChange(nextSort(sort, key)) : null;
+  const headerCell = (
+    key: string,
+    label: ReactNode,
+    props: { numeric?: boolean; style?: CSSProperties } = {}
+  ) =>
+    toggleSort ? (
+      <Table.SortableHeaderCell sortKey={key} sort={sortState} onSort={toggleSort} {...props}>
+        {label}
+      </Table.SortableHeaderCell>
+    ) : (
+      <Table.HeaderCell {...props}>{label}</Table.HeaderCell>
+    );
 
   return (
     <Table.Root scroll>
@@ -76,16 +116,25 @@ export const TableView = ({
               onChange={onSelectAll}
             />
           )}
-          <Table.HeaderCell style={{ minWidth: 200 }}>Name</Table.HeaderCell>
-          <Table.HeaderCell>Type</Table.HeaderCell>
+          {headerCell('_name', 'Name', { style: { minWidth: 200 } })}
+          {!hideTypeColumn && <Table.HeaderCell>Type</Table.HeaderCell>}
           {columns
             .filter(c => c.id !== '_description')
             .map(c => (
-              <Table.HeaderCell key={c.id}>{c.label}</Table.HeaderCell>
+              <Fragment key={c.id}>
+                {headerCell(
+                  c.id,
+                  <>
+                    {c.label}
+                    <FieldDescriptionIcon description={c.schemaField?.description} inline />
+                  </>,
+                  { numeric: isNumericDisplayField(c) }
+                )}
+              </Fragment>
             ))}
-          {activeDateField && !fieldIds.includes(activeDateField.id) && (
-            <Table.HeaderCell>{activeDateField.name}</Table.HeaderCell>
-          )}
+          {activeDateField &&
+            !fieldIds.includes(activeDateField.id) &&
+            headerCell(activeDateField.id, activeDateField.name)}
           {!readOnly && <Table.HeaderCell style={{ width: 28 }} />}
         </Table.Row>
       </Table.Head>
@@ -97,17 +146,24 @@ export const TableView = ({
             : undefined;
           const menuItems = readOnly
             ? []
-            : [
-                ...entityMenuItems(entity, onClone, onDelete, onManageCollections, onMerge),
-                ...projectEntityMenuItems(entity, projectContext)
-              ];
+            : browserEntityMenuItems(
+                entity,
+                { onClone, onDelete, onManageCollections, onMerge, projectContext },
+                commonActions
+              );
 
           return (
             <Table.Row
               key={entity._uid}
               aria-label={`Entity row: ${entityName(entity)}`}
               selected={selectedIds?.has(entity._uid)}
-              onClick={() => onEntityClick(entity._publicId)}
+              onClick={() =>
+                rowOpensEntityPage
+                  ? void navigate(
+                      entityDetailRoute(workspaceSlug, asEntityPublicId(entity._publicId))
+                    )
+                  : onEntityClick(entity._publicId)
+              }
             >
               {!readOnly && (
                 <Table.CheckboxCell
@@ -128,7 +184,11 @@ export const TableView = ({
                   )
                 }
                 title={
-                  <EntityNavigationLink publicId={entity._publicId} className={styles.nameLink}>
+                  <EntityNavigationLink
+                    publicId={entity._publicId}
+                    behavior={rowOpensEntityPage ? 'page' : 'drawer'}
+                    className={styles.nameLink}
+                  >
                     {entityName(entity)}
                   </EntityNavigationLink>
                 }
@@ -141,19 +201,26 @@ export const TableView = ({
                     : undefined
                 }
               />
-              <Table.Cell>
-                {schemaEntry && <Chip tone="ghost">{schemaEntry.schema.name}</Chip>}
-              </Table.Cell>
+              {!hideTypeColumn && (
+                <Table.Cell>
+                  {schemaEntry && <Chip tone="ghost">{schemaEntry.schema.name}</Chip>}
+                </Table.Cell>
+              )}
               {columns
                 .filter(c => c.id !== '_description')
                 .map(column => {
                   const field =
                     findEntityDisplayField(column.id, entity, schemaMap, displayFields) ?? column;
                   return (
-                    <Table.Cell key={column.id}>
-                      <span className="dim">
-                        {formatEntityDisplayValue(entity, field, dateTimeFormatPreference) ?? '—'}
-                      </span>
+                    <Table.Cell key={column.id} numeric={isNumericDisplayField(field)}>
+                      {renderColumnValue(
+                        {
+                          value: getEntityDisplayRawValue(entity, field),
+                          text: formatEntityDisplayValue(entity, field, dateTimeFormatPreference),
+                          field
+                        },
+                        getColumnRenderer(config, field.id)
+                      )}
                     </Table.Cell>
                   );
                 })}

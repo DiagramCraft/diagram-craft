@@ -51,7 +51,6 @@ const DiscussionComposer = ({
         onChange={e => setValue(e.target.value)}
       />
       <div className={styles.composerRow}>
-        <span className={styles.composerHint}>Visible to everyone with access to this page</span>
         <div className={styles.composerActions}>
           {onCancel && (
             <Button variant="secondary" size="sm" onClick={onCancel}>

@@ -1,3 +1,4 @@
+import { SettingsPage } from '../SettingsBlock';
 import { useEffect, useState } from 'react';
 import { TbCopy, TbEdit, TbKey, TbPlus, TbTrash, TbWebhook } from 'react-icons/tb';
 import type { Webhook, WebhookOperation } from '@arch-register/api-types/webhookContract';
@@ -11,10 +12,11 @@ import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteCo
 import { Table } from '../../../components/table/Table';
 import { DropdownMenu, type MenuItem } from '../../../components/DropdownMenu';
 import { Chip } from '../../../components/Chip';
-import { EmptyState } from '../../../components/EmptyState';
-import { LoadingState } from '../../../components/LoadingState';
+import { QueryState } from '../QueryState';
+import { MutationError } from '../MutationError';
 import { useWebhookOperations, useWebhooks, type WebhookInput } from '../../../hooks/useWebhooks';
 import { useRelationSchemas } from '../../../hooks/useRelationSchemas';
+import { SectionActions } from '../SectionActions';
 import styles from './WebhooksSubSection.module.css';
 
 const OPERATIONS: Array<{ value: WebhookOperation; label: string }> = [
@@ -171,7 +173,7 @@ const EditorDialog = ({
         <label className={styles.check}>
           <Checkbox value={enabled} onChange={value => setEnabled(value ?? false)} /> Enabled
         </label>
-        {error && <div className={styles.error}>{error.message}</div>}
+        <MutationError error={error} />
       </div>
     </Dialog>
   );
@@ -216,151 +218,154 @@ export const WebhooksSubSection = ({
   const [rotateId, setRotateId] = useState<string | null>(null);
 
   const save = async (input: WebhookInput) => {
-    if (editor === 'new') {
-      const created = await operations.create.mutateAsync(input);
-      setSecret(created.secret);
-    } else if (editor) {
-      await operations.update.mutateAsync({ id: editor.id, ...input });
+    try {
+      if (editor === 'new') {
+        const created = await operations.create.mutateAsync(input);
+        setSecret(created.secret);
+      } else if (editor) {
+        await operations.update.mutateAsync({ id: editor.id, ...input });
+      }
+      setEditor(null);
+    } catch {
+      // The error is surfaced in the dialog through the mutation state
     }
-    setEditor(null);
   };
 
   return (
-    <div className={styles.container}>
-      <div className={styles.intro}>
-        <span>
-          Signed deliveries are queued for the job server and retried on temporary failures.
-        </span>
+    <>
+      <SectionActions>
         <Button variant="primary" icon={<TbPlus size={13} />} onClick={() => setEditor('new')}>
           New webhook
         </Button>
-      </div>
-      {error ? (
-        <div className={styles.error}>Webhooks could not be loaded.</div>
-      ) : isLoading ? (
-        <LoadingState text="Loading webhooks…" size="sm" />
-      ) : webhooks.length === 0 ? (
-        <EmptyState
-          icon={<TbWebhook size={20} />}
-          title="No webhooks"
-          subtitle="Create an endpoint to receive entity change events."
-        />
-      ) : (
-        <Table.Root>
-          <Table.Head>
-            <Table.Row>
-              <Table.HeaderCell>Endpoint</Table.HeaderCell>
-              <Table.HeaderCell>Events</Table.HeaderCell>
-              <Table.HeaderCell>Entity types</Table.HeaderCell>
-              <Table.HeaderCell width={90}>State</Table.HeaderCell>
-              <Table.HeaderCell />
-            </Table.Row>
-          </Table.Head>
-          <Table.Body>
-            {webhooks.map(webhook => (
-              <Table.Row key={webhook.id}>
-                <Table.Cell>
-                  <div className={styles.url}>{webhook.url}</div>
-                </Table.Cell>
-                <Table.Cell>{webhook.event_filter.operations.join(', ')}</Table.Cell>
-                <Table.Cell>
-                  {webhook.event_filter.schema_ids.length === 0 &&
-                  webhook.event_filter.relation_schema_ids === undefined
-                    ? 'All'
-                    : [
-                        ...webhook.event_filter.schema_ids.map(
-                          id => schemas.find(schema => schema.id === id)?.name ?? id
-                        ),
-                        ...(webhook.event_filter.relation_schema_ids === undefined
-                          ? []
-                          : webhook.event_filter.relation_schema_ids.length === 0
-                            ? ['All relations']
-                            : webhook.event_filter.relation_schema_ids.map(
-                                id => relationSchemas.find(schema => schema.id === id)?.name ?? id
-                              ))
-                      ].join(', ')}
-                </Table.Cell>
-                <Table.Cell>
-                  <Chip
-                    dot={webhook.enabled ? 'var(--green)' : 'var(--cmp-fg-disabled)'}
-                    tone="ghost"
-                  >
-                    {webhook.enabled ? 'Enabled' : 'Disabled'}
-                  </Chip>
-                </Table.Cell>
-                <Table.ActionsCell>
-                  <DropdownMenu
-                    trigger={<Table.DotsButton aria-label={`Actions for ${webhook.url}`} />}
-                    items={
-                      [
-                        {
-                          label: 'Edit',
-                          icon: <TbEdit size={14} />,
-                          onClick: () => setEditor(webhook)
-                        },
-                        {
-                          label: 'Rotate secret',
-                          icon: <TbKey size={14} />,
-                          onClick: () => setRotateId(webhook.id)
-                        },
-                        {
-                          label: 'Delete',
-                          icon: <TbTrash size={14} />,
-                          danger: true,
-                          onClick: () => setDeleteId(webhook.id)
-                        }
-                      ] satisfies MenuItem[]
-                    }
-                  />
-                </Table.ActionsCell>
+      </SectionActions>
+      <SettingsPage>
+        <QueryState
+          isLoading={isLoading}
+          error={error}
+          isEmpty={webhooks.length === 0}
+          subject="webhooks"
+          empty={{
+            icon: <TbWebhook size={20} />,
+            title: 'No webhooks',
+            subtitle: 'Create an endpoint to receive entity change events.'
+          }}
+        >
+          <Table.Root>
+            <Table.Head>
+              <Table.Row>
+                <Table.HeaderCell>Endpoint</Table.HeaderCell>
+                <Table.HeaderCell>Events</Table.HeaderCell>
+                <Table.HeaderCell>Entity types</Table.HeaderCell>
+                <Table.HeaderCell width={90}>State</Table.HeaderCell>
+                <Table.HeaderCell />
               </Table.Row>
-            ))}
-          </Table.Body>
-        </Table.Root>
-      )}
-      <EditorDialog
-        webhook={editor}
-        schemas={schemas}
-        relationSchemas={relationSchemas}
-        pending={operations.create.isPending || operations.update.isPending}
-        error={(operations.create.error ?? operations.update.error) as Error | null}
-        onClose={() => setEditor(null)}
-        onSave={input => void save(input)}
-      />
-      <SecretDialog secret={secret} onClose={() => setSecret(null)} />
-      <Dialog
-        open={rotateId != null}
-        onClose={() => setRotateId(null)}
-        title="Rotate webhook secret?"
-        sub="The current secret will stop signing new attempts, including queued deliveries."
-        buttons={[
-          { label: 'Cancel', type: 'cancel', onClick: () => setRotateId(null) },
-          {
-            label: operations.rotateSecret.isPending ? 'Rotating…' : 'Rotate secret',
-            type: 'default',
-            disabled: operations.rotateSecret.isPending,
-            onClick: () => {
-              if (!rotateId) return;
-              void operations.rotateSecret.mutateAsync(rotateId).then(result => {
-                setRotateId(null);
-                setSecret(result.secret);
-              });
+            </Table.Head>
+            <Table.Body>
+              {webhooks.map(webhook => (
+                <Table.Row key={webhook.id}>
+                  <Table.Cell>
+                    <div className={styles.url}>{webhook.url}</div>
+                  </Table.Cell>
+                  <Table.Cell>{webhook.event_filter.operations.join(', ')}</Table.Cell>
+                  <Table.Cell>
+                    {webhook.event_filter.schema_ids.length === 0 &&
+                    webhook.event_filter.relation_schema_ids === undefined
+                      ? 'All'
+                      : [
+                          ...webhook.event_filter.schema_ids.map(
+                            id => schemas.find(schema => schema.id === id)?.name ?? id
+                          ),
+                          ...(webhook.event_filter.relation_schema_ids === undefined
+                            ? []
+                            : webhook.event_filter.relation_schema_ids.length === 0
+                              ? ['All relations']
+                              : webhook.event_filter.relation_schema_ids.map(
+                                  id => relationSchemas.find(schema => schema.id === id)?.name ?? id
+                                ))
+                        ].join(', ')}
+                  </Table.Cell>
+                  <Table.Cell>
+                    <Chip
+                      dot={webhook.enabled ? 'var(--green)' : 'var(--cmp-fg-disabled)'}
+                      tone="ghost"
+                    >
+                      {webhook.enabled ? 'Enabled' : 'Disabled'}
+                    </Chip>
+                  </Table.Cell>
+                  <Table.ActionsCell>
+                    <DropdownMenu
+                      trigger={<Table.DotsButton aria-label={`Actions for ${webhook.url}`} />}
+                      items={
+                        [
+                          {
+                            label: 'Edit',
+                            icon: <TbEdit size={14} />,
+                            onClick: () => setEditor(webhook)
+                          },
+                          {
+                            label: 'Rotate secret',
+                            icon: <TbKey size={14} />,
+                            onClick: () => setRotateId(webhook.id)
+                          },
+                          {
+                            label: 'Delete',
+                            icon: <TbTrash size={14} />,
+                            danger: true,
+                            onClick: () => setDeleteId(webhook.id)
+                          }
+                        ] satisfies MenuItem[]
+                      }
+                    />
+                  </Table.ActionsCell>
+                </Table.Row>
+              ))}
+            </Table.Body>
+          </Table.Root>
+        </QueryState>
+        <EditorDialog
+          webhook={editor}
+          schemas={schemas}
+          relationSchemas={relationSchemas}
+          pending={operations.create.isPending || operations.update.isPending}
+          error={(operations.create.error ?? operations.update.error) as Error | null}
+          onClose={() => setEditor(null)}
+          onSave={input => void save(input)}
+        />
+        <SecretDialog secret={secret} onClose={() => setSecret(null)} />
+        <Dialog
+          open={rotateId != null}
+          onClose={() => setRotateId(null)}
+          title="Rotate webhook secret?"
+          sub="The current secret will stop signing new attempts, including queued deliveries."
+          buttons={[
+            { label: 'Cancel', type: 'cancel', onClick: () => setRotateId(null) },
+            {
+              label: operations.rotateSecret.isPending ? 'Rotating…' : 'Rotate secret',
+              type: 'default',
+              disabled: operations.rotateSecret.isPending,
+              onClick: () => {
+                if (!rotateId) return;
+                void operations.rotateSecret.mutateAsync(rotateId).then(result => {
+                  setRotateId(null);
+                  setSecret(result.secret);
+                });
+              }
             }
-          }
-        ]}
-      >
-        <div className={styles.hint}>Update the receiving system before sending more events.</div>
-      </Dialog>
-      <DeleteConfirmationDialog
-        open={deleteId != null}
-        title="Delete webhook?"
-        message="Queued deliveries for this webhook will be skipped."
-        onCancel={() => setDeleteId(null)}
-        onConfirm={() => {
-          if (!deleteId) return;
-          void operations.remove.mutateAsync(deleteId).then(() => setDeleteId(null));
-        }}
-      />
-    </div>
+          ]}
+        >
+          <div className={styles.hint}>Update the receiving system before sending more events.</div>
+        </Dialog>
+        <DeleteConfirmationDialog
+          open={deleteId != null}
+          title="Delete webhook?"
+          message="Queued deliveries for this webhook will be skipped."
+          onCancel={() => setDeleteId(null)}
+          onConfirm={() => {
+            if (!deleteId) return;
+            void operations.remove.mutateAsync(deleteId).then(() => setDeleteId(null));
+          }}
+        />
+      </SettingsPage>
+    </>
   );
 };

@@ -3,6 +3,7 @@
  */
 import { SchemaField } from '@arch-register/api-types/schemaContract';
 import { parseCurrencyValue } from './currencyValue';
+import { parseDurationValue } from './durationValue';
 import { isMultiValuedScalarField } from '../domain/catalog/entityScalarValues';
 
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -218,6 +219,13 @@ export const validateCsvData = (rows: ParsedCsvRow[], fields: SchemaField[]): Pa
               errors.push(`${field.name} must use the format amount CODE, for example 1200.50 USD`);
             }
             break;
+          case 'duration':
+            if (!parseDurationValue(value)) {
+              errors.push(
+                `${field.name} must use the format amount unit, for example 3 years (units: days, weeks, months, years)`
+              );
+            }
+            break;
           case 'typedRelation':
             errors.push(`${field.name} is a typed relation field and cannot be set via CSV import`);
             break;
@@ -351,6 +359,17 @@ export const csvRowToEntity = (
         } else {
           const currency = parseCurrencyValue(trimmedValue);
           if (currency) entity[field.id] = currency;
+        }
+        break;
+      }
+      case 'duration': {
+        if (multiValue) {
+          entity[field.id] = (parsedMultiValue ?? [])
+            .map(value => parseDurationValue(value))
+            .filter(value => value != null);
+        } else {
+          const duration = parseDurationValue(trimmedValue);
+          if (duration) entity[field.id] = duration;
         }
         break;
       }

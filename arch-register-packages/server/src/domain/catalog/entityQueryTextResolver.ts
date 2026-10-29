@@ -17,6 +17,7 @@ import type {
   RelationField
 } from '@arch-register/api-types/relationSchemaContract';
 import { ASSESSMENT_FIELD_PREFIX } from '@arch-register/api-types/assessmentFilter';
+import { durationToDays, parseDurationValue } from '../../utils/durationValue';
 import {
   relationFieldById,
   schemaFieldById,
@@ -352,6 +353,7 @@ const resolveOpAndValue = (
   const isSelectField = isScalarLike && resolution.field.type === 'select';
   const isDateField = isScalarLike && resolution.field.type === 'date';
   const isCurrencyField = isScalarLike && resolution.field.type === 'currency';
+  const isDurationField = isScalarLike && resolution.field.type === 'duration';
 
   if ((parsed.kind === 'enumValue' || parsed.kind === 'enumLabel') && !isSelectField) {
     throw new TextCompileError(
@@ -396,6 +398,19 @@ const resolveOpAndValue = (
     (parsed.kind === 'date' || parsed.kind === 'enumValue' || parsed.kind === 'enumLabel')
   ) {
     throw new TextCompileError(`Currency fields only support numeric amount comparisons`, offset);
+  }
+
+  if (isDurationField) {
+    if (parsed.kind !== 'literal') {
+      throw new TextCompileError(`Duration fields only support duration comparisons`, offset);
+    }
+    if (typeof parsed.value === 'string') {
+      const duration = parseDurationValue(parsed.value);
+      if (!duration) {
+        throw new TextCompileError(`Invalid duration '${parsed.value}'`, offset);
+      }
+      value = durationToDays(duration);
+    }
   }
 
   let op: FilterOp;

@@ -257,7 +257,7 @@ export const updateWorkspaceSharedFieldGroup = async (
                 await tx.governanceCaseConfig.upsertCaseConfig({
                   workspace: ws,
                   case_kind: config.case_kind,
-                  case_subkind: encodeCaseSubkind(schemaId, migration.newFieldId),
+                  case_subkinds: [encodeCaseSubkind(schemaId, migration.newFieldId)],
                   name: config.name,
                   description: config.description,
                   enabled: config.enabled,

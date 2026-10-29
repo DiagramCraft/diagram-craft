@@ -1,4 +1,4 @@
-import { bench, describe } from 'vitest';
+import { describe, test } from 'vitest';
 
 import { Random } from '@diagram-craft/utils/random';
 import type { DiagramEdge } from './diagramEdge';
@@ -40,14 +40,12 @@ for (let i = 0; i < 100; i++) {
 
 describe('orthogonal routing', () => {
   describe('no waypoints', () => {
-    bench(
-      'no directions',
-      () => {
+    test('no directions', async ({ bench }) => {
+      await bench('no directions', () => {
         for (const edge of edges) {
           _test.buildOrthogonalEdgePath(edge, undefined, undefined);
         }
-      },
-      opts
-    );
+      }).run(opts);
+    });
   });
 });

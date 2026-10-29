@@ -4,8 +4,6 @@ import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteCo
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import {
-  TbCopy,
-  TbDownload,
   TbFileText,
   TbFolder,
   TbFolderOpen,
@@ -32,10 +30,9 @@ import {
   getFileNodeIcon,
   type MenuTarget
 } from '../lib/contentNode';
+import { ContentFileMenuItems } from './ContentFileMenuItems';
 import { TreeRow } from './TreeRow';
 import { RenameDialog } from './RenameDialog';
-import { ICON_MAP } from './TypeBadge';
-import type { SchemaIconId } from '../lib/schemaPresentation';
 
 type Operations = ReturnType<typeof useContentScopeOperations>;
 
@@ -107,40 +104,24 @@ export const ContentTree = forwardRef<ContentTreeHandle, Props>(function Content
     }
   };
 
+  const expand = (path: string) => {
+    if (initiallyExpanded) {
+      setCollapsed(previous => {
+        if (!previous.has(path)) return previous;
+        const next = new Set(previous);
+        next.delete(path);
+        return next;
+      });
+    } else {
+      setExpanded(previous => (previous.has(path) ? previous : new Set(previous).add(path)));
+    }
+  };
+
   const openUpload = (folder: string | null) => {
     setUploadFolder(folder);
     fileInputRef.current?.click();
   };
   useImperativeHandle(ref, () => ({ openUpload }));
-
-  const renderMoveNodes = (
-    file: ProjectFile,
-    nodes: ContentFolderNode[],
-    current: string | null
-  ): ReactNode =>
-    nodes.map(node =>
-      node.children.length ? (
-        <Menu.SubMenu key={node.path} label={node.name} leftSlot={<TbFolder size={13} />}>
-          <Menu.Item
-            disabled={node.path === current}
-            leftSlot={<TbFolder size={13} />}
-            onClick={() => operations.moveFile.mutate({ file, targetFolder: node.path })}
-          >
-            {node.name}
-          </Menu.Item>
-          {renderMoveNodes(file, node.children, current)}
-        </Menu.SubMenu>
-      ) : (
-        <Menu.Item
-          key={node.path}
-          disabled={node.path === current}
-          leftSlot={<TbFolder size={13} />}
-          onClick={() => operations.moveFile.mutate({ file, targetFolder: node.path })}
-        >
-          {node.name}
-        </Menu.Item>
-      )
-    );
 
   const renderMenu = (target: MenuTarget) => {
     if (target.type === 'folder')
@@ -197,95 +178,44 @@ export const ContentTree = forwardRef<ContentTreeHandle, Props>(function Content
         </>
       );
 
-    const current = parentPath(target.file.path);
     return (
-      <>
-        {target.type === 'file' && (
-          <>
-            <Menu.Item
-              leftSlot={<TbDownload size={13} />}
-              onClick={() => {
-                setMenu(null);
-                onDownload(target.file);
-              }}
-            >
-              Download
-            </Menu.Item>
-            <Menu.Separator />
-          </>
-        )}
-        {target.type === 'diagram' && (
-          <>
-            <Menu.Item
-              leftSlot={<TbCopy size={13} />}
-              onClick={() => operations.cloneFile.mutate(target.file)}
-            >
-              Clone
-            </Menu.Item>
-            <Menu.Separator />
-          </>
-        )}
-        <Menu.SubMenu label="Move to…" leftSlot={<TbFolderOpen size={13} />}>
-          <Menu.Item
-            disabled={current === null}
-            leftSlot={<TbFolderOpen size={13} />}
-            onClick={() => operations.moveFile.mutate({ file: target.file, targetFolder: null })}
-          >
-            Root
-          </Menu.Item>
-          {renderMoveNodes(target.file, tree, current)}
-        </Menu.SubMenu>
-        <Menu.Item leftSlot={<TbPencil size={13} />} onClick={() => setRenameTarget(target)}>
-          Rename
-        </Menu.Item>
-        <Menu.Separator />
-        <Menu.Item
-          type="danger"
-          leftSlot={<TbTrash size={13} />}
-          onClick={() => setDeleteTarget(target)}
-        >
-          Delete
-        </Menu.Item>
-      </>
-    );
-  };
-
-  const fileRow = (file: ProjectFile, depth?: number) => {
-    const documentTypeIcon = file.document_type_icon;
-    const DocumentTypeIcon = documentTypeIcon
-      ? ICON_MAP[documentTypeIcon as SchemaIconId]
-      : undefined;
-
-    return (
-      <TreeRow
-        key={file.id}
-        depth={depth}
-        icon={
-          file.type === 'markdown' && DocumentTypeIcon ? (
-            <DocumentTypeIcon size={13} />
-          ) : (
-            getFileNodeIcon(file.type)
-          )
-        }
-        label={file.original_filename ?? file.name}
-        active={file.id === activeFileId}
-        onClick={() => (file.type === 'file' ? onDownload(file) : onFileClick(file))}
-        onContextMenu={
-          file.read_only
-            ? undefined
-            : event => {
-                event.preventDefault();
-                event.stopPropagation();
-                setMenu({
-                  x: event.clientX,
-                  y: event.clientY,
-                  target: { type: fileMenuTargetType(file.type), file }
-                });
-              }
-        }
+      <ContentFileMenuItems
+        file={target.file}
+        tree={tree}
+        operations={operations}
+        onDownload={file => {
+          setMenu(null);
+          onDownload(file);
+        }}
+        onRename={() => setRenameTarget(target)}
+        onDelete={() => setDeleteTarget(target)}
       />
     );
   };
+
+  const fileRow = (file: ProjectFile, depth?: number) => (
+    <TreeRow
+      key={file.id}
+      depth={depth}
+      icon={getFileNodeIcon(file.type, 13, file.original_filename ?? file.name)}
+      label={file.original_filename ?? file.name}
+      active={file.id === activeFileId}
+      onClick={() => (file.type === 'file' ? onDownload(file) : onFileClick(file))}
+      onContextMenu={
+        file.read_only
+          ? undefined
+          : event => {
+              event.preventDefault();
+              event.stopPropagation();
+              setMenu({
+                x: event.clientX,
+                y: event.clientY,
+                target: { type: fileMenuTargetType(file.type), file }
+              });
+            }
+      }
+    />
+  );
 
   const folderNode = (node: ContentFolderNode, depth = 0): ReactNode => {
     const open = isExpanded(node.path);
@@ -305,7 +235,10 @@ export const ContentTree = forwardRef<ContentTreeHandle, Props>(function Content
           active={activeFolder === node.path}
           depth={depth}
           onExpand={() => toggle(node.path)}
-          onClick={() => onFolderClick(node.path)}
+          onClick={() => {
+            expand(node.path);
+            onFolderClick(node.path);
+          }}
           onContextMenu={
             node.read_only
               ? node.mount_id && parentPath(node.path) === null && onMountContextMenu

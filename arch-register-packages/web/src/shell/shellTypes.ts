@@ -1,6 +1,5 @@
 import type { IconType } from 'react-icons';
 import type { WorkspaceApplicationId } from '@arch-register/api-types/workspaceConfigContract';
-import type { AppRailItemId } from './appShellRegistry';
 
 export type BreadcrumbItem = {
   label: string;
@@ -19,10 +18,11 @@ export type WorkspaceCoreRailItemId =
   | 'assistant'
   | 'extract';
 
-export type WorkspaceRailItemId = WorkspaceCoreRailItemId | AppRailItemId;
+/** A core rail id (`WorkspaceCoreRailItemId`) or the id of an application dashboard. */
+export type WorkspaceRailItemId = string;
 
-/** Application identifier: `'home'` is the always-on core register; the rest are opt-in apps. */
-export type AppId = 'home' | AppRailItemId;
+/** Application identifier: `'home'` is the always-on core register; the rest are application keys. */
+export type AppId = string;
 
 /** Context passed to a section's `primarySidebar` factory (a structural subset of the shell context). */
 export type AppRailSectionContext = {
@@ -39,8 +39,8 @@ export type AppRailSection = {
   icon: IconType;
   tooltip: string;
   route: string;
-  /** Marks the section as rendering the seeded app dashboard stored under this key. */
-  dashboard?: { appKey: string };
+  /** Path params needed by `route` besides `workspaceSlug` (application dashboards). */
+  routeParams?: Record<string, string>;
   /** Renders a rail divider before this item. */
   separator?: boolean;
   /** Primary sidebar shown while this section is active; resolved by the section's route. */
@@ -50,8 +50,7 @@ export type AppRailSection = {
 /**
  * A workspace application — the layer above the left rail. Selecting an app in the switcher
  * scopes the rail to `sections` and re-skins the shell with `tint`. `'home'` carries no
- * `shortCode`/`tint` and is always enabled; other apps are enabled iff their backing workspace
- * capability has a valid configuration.
+ * `shortCode`/`tint`.
  */
 export type AppDefinition = {
   id: AppId;
@@ -64,5 +63,4 @@ export type AppDefinition = {
   tint?: string;
   description: string;
   sections: AppRailSection[];
-  enablement: 'always' | { capabilityType: string };
 };

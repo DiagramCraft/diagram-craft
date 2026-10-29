@@ -1,4 +1,8 @@
 @import "../../../packages/main/src/tokens.css";
+@import "@radix-ui/colors/amber.css";
+@import "@radix-ui/colors/amber-dark.css";
+@import "@radix-ui/colors/purple.css";
+@import "@radix-ui/colors/purple-dark.css";
 
 :root {
   text-rendering: optimizeLegibility;

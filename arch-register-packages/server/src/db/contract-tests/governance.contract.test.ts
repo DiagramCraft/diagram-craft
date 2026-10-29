@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { runContractSuiteAgainstBothDrivers } from './harness';
 import { createFixtureWorkspace } from '../testSupport/fixtures';
 import { createFixtureUser } from '../testSupport/fixtures';
+import { governanceEventTypeSchema } from '@arch-register/api-types/governanceContract';
 import type { DatabaseAdapter } from '../database';
 
 const createFixtureCase = async (
@@ -340,6 +341,35 @@ runContractSuiteAgainstBothDrivers('GovernanceDatabase', getDb => {
   });
 
   describe('event history', () => {
+    it('accepts every event type the API contract declares', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const user = await createFixtureUser(db);
+      const caseRow = await createFixtureCase(db, workspace, user.id);
+
+      // Guards the `governance_event.event_type` CHECK constraint against drifting from the enum
+      // (`escalated` was once emitted by the deadline scan but missing from the constraint).
+      for (const eventType of governanceEventTypeSchema.options) {
+        await db.governance.appendEvent({
+          id: randomUUID(),
+          case_id: caseRow.id,
+          workspace,
+          event_type: eventType,
+          actor_user_id: user.id,
+          occurred_at: new Date(),
+          previous_status: null,
+          resulting_status: 'open',
+          reason: null,
+          metadata: {}
+        });
+      }
+
+      const events = await db.governance.listEvents(caseRow.id);
+      expect(events.map(event => event.event_type).sort()).toEqual(
+        [...governanceEventTypeSchema.options].sort()
+      );
+    });
+
     it('is append-only and queryable in chronological order', async () => {
       const db = getDb();
       const workspace = await createFixtureWorkspace(db);

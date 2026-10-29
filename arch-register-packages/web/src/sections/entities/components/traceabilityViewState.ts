@@ -79,9 +79,39 @@ const toIncludedPaths = decodeIncludePathProjection;
 const includePathProjectionAlias = (pathId: string) =>
   `${TRACEABILITY_PROJECTION_PREFIX}${pathId}:path`;
 
+/** An id for a new path that no existing path uses, even after earlier paths were removed. */
+export const nextTraceabilityPathId = (paths: ReadonlyArray<{ id: string }>): string => {
+  const used = new Set(paths.map(path => path.id));
+  let next = Math.max(0, ...paths.map(path => Number(/^path-(\d+)$/.exec(path.id)?.[1] ?? 0))) + 1;
+  while (used.has(`path-${next}`)) next += 1;
+  return `path-${next}`;
+};
+
+/**
+ * Paths are edited by id, so two paths sharing one id would change together. Older configs can
+ * contain duplicates (ids used to be derived from the path count); keep the first path of each id
+ * and give later ones a fresh id. Returns the same object when the ids are already unique.
+ */
+export const withUniquePathIds = (config: TraceabilityViewConfig): TraceabilityViewConfig => {
+  if (new Set(config.paths.map(path => path.id)).size === config.paths.length) return config;
+  const paths: TraceabilityViewConfig['paths'] = [];
+  const seen = new Set<string>();
+  for (const path of config.paths) {
+    if (!seen.has(path.id)) {
+      seen.add(path.id);
+      paths.push(path);
+      continue;
+    }
+    const id = nextTraceabilityPathId([...config.paths, ...paths]);
+    seen.add(id);
+    paths.push({ ...path, id });
+  }
+  return { ...config, paths };
+};
+
 export const parseTraceabilityConfig = (config: unknown): TraceabilityViewConfig | null => {
   const result = traceabilityViewConfigSchema.safeParse(config);
-  return result.success ? result.data : null;
+  return result.success ? withUniquePathIds(result.data) : null;
 };
 
 export const traceabilityRelationDirections = pathRelationDirections;

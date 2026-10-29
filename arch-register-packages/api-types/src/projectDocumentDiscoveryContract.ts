@@ -20,7 +20,11 @@ const relatedDocumentSchema = z.object({
   field_inverse_name: z.string().nullable()
 });
 
-const documentBacklinkSchema = relatedDocumentSchema;
+const documentBacklinkSchema = relatedDocumentSchema.extend({
+  source: z
+    .enum(['metadata', 'body'])
+    .describe('Whether the link is a metadata field or in the page text')
+});
 
 const documentListItemSchema = z.object({
   file: projectFileSchema,

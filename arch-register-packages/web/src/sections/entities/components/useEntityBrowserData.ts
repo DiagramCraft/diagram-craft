@@ -1,3 +1,4 @@
+import { compareBySort, isFieldSort, parseSort } from './entityBrowserSort';
 import { useEffect, useMemo } from 'react';
 import { useEntities, useEntityFacets } from '../../../hooks/useEntities';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
@@ -35,6 +36,17 @@ type UseEntityBrowserDataProps = {
   includePlannedChanges?: boolean;
   activeViewConfig?: unknown;
   onCountChange?: (count: number) => void;
+  /** Forwarded to `useEntities`/`entitiesQuery` — see `EntityListOptions.includeUsageCount`. */
+  includeUsageCount?: boolean;
+};
+
+const describeFieldSort = (sort: string, schemas: EntitySchema[]): string => {
+  const parsed = parseSort(sort);
+  if (!parsed) return sort;
+  const name =
+    schemas.flatMap(schema => schema.fields).find(field => field.id === parsed.key)?.name ??
+    parsed.key.replace(/^_(projection:)?/, '');
+  return `${name} (${parsed.dir === 'asc' ? 'ascending' : 'descending'})`;
 };
 
 export const useEntityBrowserData = ({
@@ -59,7 +71,8 @@ export const useEntityBrowserData = ({
   asOf,
   includePlannedChanges = true,
   activeViewConfig,
-  onCountChange
+  onCountChange,
+  includeUsageCount
 }: UseEntityBrowserDataProps) => {
   const isPagedBrowse = !disablePaging && (view === 'table' || view === 'cards') && sort === 'name';
   const shouldLoadEntityList = enabled && !isTreeBasedView(view) && !!workspaceId;
@@ -103,7 +116,8 @@ export const useEntityBrowserData = ({
       limit: isPagedBrowse ? pageSize : undefined,
       offset: isPagedBrowse ? pagedOffset : undefined,
       asOf,
-      includePlannedChanges
+      includePlannedChanges,
+      includeUsageCount
     },
     { enabled: shouldLoadEntityList && isPagedBrowse }
   );
@@ -128,7 +142,8 @@ export const useEntityBrowserData = ({
       collectionId: collectionId ?? undefined,
       view: 'full',
       asOf,
-      includePlannedChanges
+      includePlannedChanges,
+      includeUsageCount
     },
     { enabled: shouldLoadEntityList && !isPagedBrowse }
   );
@@ -182,6 +197,7 @@ export const useEntityBrowserData = ({
 
   const sortOptions = useMemo(
     () => [
+      ...(isFieldSort(sort) ? [{ value: sort, label: describeFieldSort(sort, schemas) }] : []),
       { value: 'name', label: 'Name' },
       { value: 'type', label: 'Type' },
       { value: 'owner', label: 'Owner' },
@@ -190,7 +206,7 @@ export const useEntityBrowserData = ({
         ? dateFields.map(field => ({ value: `date:${field.id}`, label: `${field.name} date` }))
         : [])
     ],
-    [dateFields, view]
+    [dateFields, view, sort, schemas]
   );
 
   const activeDateFieldId = useMemo(() => {
@@ -205,7 +221,9 @@ export const useEntityBrowserData = ({
 
   const filtered = useMemo<BrowserEntityRecord[]>(() => {
     const result = [...entities] as BrowserEntityRecord[];
+    const fieldSort = isFieldSort(sort) ? parseSort(sort) : null;
     result.sort((a, b) => {
+      if (fieldSort) return compareBySort(a, b, fieldSort);
       if (sort === 'name') {
         return (a._name ?? a._slug ?? '').localeCompare(b._name ?? b._slug ?? '');
       }

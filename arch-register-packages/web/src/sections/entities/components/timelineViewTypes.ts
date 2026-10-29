@@ -14,6 +14,7 @@ export type TimelineConfig = {
   showMilestones: boolean;
   showAutosaves: boolean;
   showHorizonBands: boolean;
+  includeUndated: boolean;
 };
 
 export type TimelineHorizonId = 'historical' | 'now' | 'next' | 'later';
@@ -42,7 +43,8 @@ export const getTimelineConfigDefaults = (dateFields: FieldOption[]): TimelineCo
   showProjectLanes: true,
   showMilestones: true,
   showAutosaves: true,
-  showHorizonBands: true
+  showHorizonBands: true,
+  includeUndated: true
 });
 
 export const getDateValue = (entity: EntityRecord, fieldId: string | null): Date | null =>

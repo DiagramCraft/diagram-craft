@@ -18,7 +18,7 @@ MDX block so wiki pages can show a live (or static, published) snapshot of a sav
 ## View modes
 
 Views live directly in this folder: `TableView`, `CardsView`, `TreeView`, `RadarView`,
-`TimelineView`, `MatrixView`, `ExploreView`, and `EntityBrowserGraphView`. The graph view starts
+`TimelineView`, `RelationMatrixView`, `RelationColumnsView`, and `EntityBrowserGraphView`. The graph view starts
 with every filtered entity as a highlighted root and lazily traverses linked entities using the
 same relation data and depth/direction controls as the entity detail graph. There are two prop shapes:
 
@@ -39,7 +39,7 @@ There are three places that render these view components, each with different co
 1. **`EntityBrowser.tsx`** — the full interactive browser. Passes real mutation handlers
    (`onDelete`, `onClone`, row selection), a real `onConfigChange` that persists to the URL/saved
    view, and lets users freely reconfigure a view via its internal toolbar.
-2. **`EntityBrowserEmbedConfigForm.tsx`** (`markdown/mdx-components/blocks/entity-browser-embed/`) —
+2. **`EntityBrowserEmbedConfigForm.tsx`** (`widgets/data-views/entity-browser-embed/`) —
    the shared config-editing form for the `entity-browser-embed` MDX block/dashboard widget, rendered
    inside the generic `MdxWidgetConfigDialog`/`WidgetConfigDialog` chrome. Reuses
    `useEntityBrowserLocalState` and `EntityBrowserToolbar` so the same search/filter/sort/view UI

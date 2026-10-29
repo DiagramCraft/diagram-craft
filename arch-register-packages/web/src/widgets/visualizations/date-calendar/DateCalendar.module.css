@@ -1,0 +1,68 @@
+.cell {
+  background-color: var(--panel-bg);
+  padding: 10px;
+  min-height: 120px;
+}
+
+.cellLabel {
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.empty {
+  font-size: 12px;
+  padding: 4px 0;
+}
+
+.entries {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+}
+
+.entry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--base-bg);
+  border: 1px solid var(--panel-border);
+  border-left: 3px solid var(--tone, var(--cmp-fg-success, #22c55e));
+  border-radius: var(--r-sm);
+  padding: 5px 8px;
+  text-align: left;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.entry:hover {
+  background: var(--base-bg-hover);
+}
+
+.entryMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.entryName {
+  font-size: 11.5px;
+  color: var(--base-fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.entrySub {
+  font-size: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.caption {
+  margin-top: 8px;
+  font-size: 12px;
+}

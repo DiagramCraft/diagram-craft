@@ -169,4 +169,23 @@ describe('entity JSON projection', () => {
       child: { grandchild: 'grandchild', metadata: { id: 'child' } }
     });
   });
+
+  it('exposes entities that point at the root through referrers', () => {
+    const entities = [
+      entity('vendor-1', 'vendor', {}),
+      entity('contract-1', 'contract', { vendor: ['vendor-1'], contract_end: '2026-05-01' }),
+      entity('contract-2', 'contract', { vendor: ['other'] })
+    ];
+    const schemas = [
+      schema('vendor', []),
+      schema('contract', [
+        { id: 'vendor', name: 'Vendor', type: 'containment', symSchemaId: 'vendor' } as never
+      ])
+    ];
+
+    const projection = buildEntityProjection('vendor-1', entities, schemas, [], [], { depth: 1 });
+    const referrers = projection?.['referrers'] as Array<Record<string, unknown>>;
+    expect(referrers.map(r => (r['metadata'] as { id: string }).id)).toEqual(['contract-1']);
+    expect(referrers[0]?.['contract_end']).toBe('2026-05-01');
+  });
 });

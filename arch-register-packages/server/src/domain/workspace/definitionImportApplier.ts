@@ -1,3 +1,4 @@
+import { upsertRelationApprovalPolicy } from '../governance/schemaGovernancePolicy';
 import { randomUUID } from 'node:crypto';
 import type { DefinitionImportExecuteResponse } from '@arch-register/api-types/workspaceContract';
 import type { SchemaField } from '@arch-register/api-types/schemaContract';
@@ -287,12 +288,19 @@ export const applyDefinitionImport = async (
         })),
         color: relationSchema.color,
         icon: relationSchema.icon,
-        relation_approval_policy: relationSchema.relation_approval_policy,
         unique_endpoint_pair: relationSchema.unique_endpoint_pair ?? false,
         created_at: now,
         updated_at: now
       };
       await tx.relation.createRelationSchema(row);
+      await upsertRelationApprovalPolicy(
+        tx,
+        workspace,
+        row.id,
+        relationSchema.relation_approval_policy,
+        now,
+        authCtx.userId
+      );
       await tx.relation.createRelationSchemaVersion({
         id: randomUUID(),
         workspace,
@@ -458,7 +466,6 @@ export const applyDefinitionImport = async (
         workspace,
         type: configuration.type,
         bindings,
-        view_config: configuration.view_config ?? null,
         created_at: now,
         updated_at: now
       });

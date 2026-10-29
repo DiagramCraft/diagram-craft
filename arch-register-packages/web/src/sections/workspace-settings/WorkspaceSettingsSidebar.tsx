@@ -79,12 +79,6 @@ const SETTINGS_SECTIONS: SettingsNavItem[] = [
   { id: 'lifecycle-owners', label: 'Lifecycle', icon: <TbTag size={12} />, group: 'Model' },
   { id: 'teams', label: 'Teams', icon: <TbUsers size={12} />, group: 'People' },
   { id: 'roles', label: 'Roles & permissions', icon: <TbShieldLock size={12} />, group: 'People' },
-  {
-    id: 'global-permissions',
-    label: 'Global permissions',
-    icon: <TbShieldLock size={12} />,
-    group: 'Global Settings'
-  },
   { id: 'ai', label: 'AI', icon: <TbSparkles size={12} />, group: 'Workspace' },
   {
     id: 'workflows',

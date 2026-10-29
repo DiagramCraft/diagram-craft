@@ -1,44 +1,36 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { ASTNode } from '@diagram-craft/markdown';
-import { normalizeEntityGraphProps } from '../mdx-components/blocks/entity-graph/types';
 
 // Stub the component registry so this test only exercises the parser grammar,
 // independent of each component's own (heavy) implementation modules.
-vi.mock('../mdx-components/mdxRegistry', () => {
-  const MDX_COMPONENTS: Record<
+vi.mock('../../../widgets/shared/widgetRegistry', () => {
+  const mdxSpecs: Record<
     string,
     {
       mode: string;
       allowedProps: string[];
-      normalizeProps?: (props: Record<string, string>) => Record<string, string>;
       acceptsChildren?: boolean;
       acceptsRichContent?: boolean;
-      surfaces?: string[];
+      dashboardOnly?: boolean;
     }
   > = {
     DiagramEmbed: { mode: 'block', allowedProps: ['id'] },
     EntityCard: { mode: 'block', allowedProps: ['id'] },
-    EntityGraph: {
-      mode: 'block',
-      allowedProps: ['id', 'depth', 'direction'],
-      normalizeProps: normalizeEntityGraphProps
-    },
+    EntityGraph: { mode: 'block', allowedProps: ['id', 'depth', 'direction'] },
     EntityMention: { mode: 'inline', allowedProps: ['id'] },
+    WikiLink: { mode: 'inline', allowedProps: ['id'] },
     Caption: { mode: 'block', allowedProps: ['caption'], acceptsChildren: true },
     Callout: { mode: 'block', allowedProps: ['variant'], acceptsRichContent: true },
-    EntityLifecycleChart: { mode: 'block', allowedProps: [], surfaces: ['dashboard'] }
+    EntityLifecycleChart: { mode: 'block', allowedProps: [], dashboardOnly: true }
   };
+  const forWiki = () =>
+    Object.fromEntries(Object.entries(mdxSpecs).filter(([, spec]) => !spec.dashboardOnly));
   return {
-    MDX_COMPONENTS,
-    getMdxSpec: (name: string) => MDX_COMPONENTS[name as keyof typeof MDX_COMPONENTS],
-    getMdxSpecsForSurface: (surface: 'wiki' | 'dashboard') =>
-      Object.fromEntries(
-        Object.entries(MDX_COMPONENTS).filter(([, spec]) =>
-          surface === 'wiki'
-            ? spec.surfaces === undefined || spec.surfaces.includes('wiki')
-            : !!spec.surfaces?.includes('dashboard')
-        )
-      )
+    getWidgetDefinition: (name: string) => {
+      const mdx = mdxSpecs[name];
+      return mdx ? { type: name, mdx } : undefined;
+    },
+    getWikiMdxComponents: forWiki
   };
 });
 
@@ -55,6 +47,15 @@ describe('parseMarkdownWithComponents', () => {
       true,
       false
     ]);
+  });
+
+  it('parses an inline WikiLink by page id', () => {
+    const ast = parseMarkdownWithComponents(
+      'See <WikiLink id="3f2c9a52-1b7e-4d0c-9a3e-0c1f2a3b4c5d" /> for details'
+    );
+    const paragraph = ast[0] as { children?: Array<{ type: string; props?: { id?: string } }> };
+    const link = paragraph.children?.find(n => n.type === 'component');
+    expect(link?.props?.id).toBe('3f2c9a52-1b7e-4d0c-9a3e-0c1f2a3b4c5d');
   });
 
   it('parses a self-closing block component (regression)', () => {
@@ -186,19 +187,5 @@ describe('parseMarkdownWithComponents', () => {
   it('does not parse a dashboard-only component as a component node in wiki content', () => {
     const ast = parseMarkdownWithComponents('<EntityLifecycleChart />');
     expect(ast.every(n => n.type !== 'component')).toBe(true);
-  });
-
-  it('normalizes EntityGraph depth and direction props while parsing', () => {
-    expect(
-      parseMarkdownWithComponents('<EntityGraph id="APP-001" depth="4.8" direction="sideways" />')
-    ).toEqual([
-      {
-        type: 'component',
-        subtype: 'block',
-        name: 'EntityGraph',
-        props: { id: 'APP-001', depth: '3', direction: 'both' },
-        source: '<EntityGraph id="APP-001" depth="4.8" direction="sideways" />'
-      }
-    ]);
   });
 });

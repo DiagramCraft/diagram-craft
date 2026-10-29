@@ -174,7 +174,7 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
         {schema.fields.map(field => (
           <div key={field.id} className={'util-vstack'} style={{ gap: '0.2rem' }}>
             <label>{field.name}:</label>
-            {field.type === 'text' && (
+            {(field.type === 'text' || field.type === 'number') && (
               <TextInput
                 value={(formData[field.id] as string | undefined) ?? ''}
                 onChange={v => setFormData(prev => ({ ...prev, [field.id]: v ?? '' }))}

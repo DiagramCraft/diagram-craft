@@ -216,6 +216,7 @@ export class ZipExtractor {
     projects?: ParsedExportPackage['projects'];
     content_nodes?: ParsedExportPackage['content_nodes'];
     documents?: ParsedExportPackage['documents'];
+    applications?: ParsedExportPackage['applications'];
     contentFiles?: Map<string, Buffer>;
     jsonFiles: Map<string, string>;
   }> {
@@ -231,7 +232,8 @@ export class ZipExtractor {
       'relations.json',
       'projects.json',
       'content-nodes.json',
-      'documents.json'
+      'documents.json',
+      'applications.json'
     ]);
 
     const manifestStr = files.get('manifest.json');
@@ -278,6 +280,9 @@ export class ZipExtractor {
         }),
         ...(files.has('documents.json') && {
           documents: parseJson('documents.json', value => value)
+        }),
+        ...(files.has('applications.json') && {
+          applications: parseJson('applications.json', value => value)
         })
       });
     } catch (error) {

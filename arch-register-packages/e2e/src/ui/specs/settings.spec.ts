@@ -37,37 +37,61 @@ test.describe('settings section', () => {
     await dataModelPage.expectLoaded();
   });
 
-  test('shows the API specification binding from the Applications & Capabilities sidebar', async ({
-    page
-  }) => {
-    const settingsPage = new SettingsPage(page, defaultWorkspace.slug);
-
-    await settingsPage.goto('applications-capabilities');
-    await page.getByText('API & Integration Catalog', { exact: true }).click();
-    // The API specification binding is configured through its application entry.
-    await expect(page.getByRole('tab', { name: 'Binding', exact: true })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Enabled', exact: true })).toHaveAttribute(
-      'aria-pressed',
-      'true'
-    );
-    await expect(page.getByText('API entity schema', { exact: true })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Cancel', exact: true })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Save changes', exact: true })).toBeVisible();
-  });
-
-  test('groups applications with binding and access tabs', async ({ page }) => {
+  test('separates application access from capability bindings', async ({ page }) => {
     const settingsPage = new SettingsPage(page, defaultWorkspace.slug);
 
     await settingsPage.goto('applications-capabilities');
     await page.getByText('Strategy & Capability Modelling', { exact: true }).click();
-    await expect(page.getByRole('tab', { name: 'Bindings', exact: true })).toBeVisible();
-    await expect(page.getByRole('tab', { name: 'Fields', exact: true })).toBeVisible();
-    await expect(page.getByRole('tab', { name: 'Dashboard', exact: true })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'General', exact: true })).toBeVisible();
     await expect(page.getByRole('tab', { name: 'Access', exact: true })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Binding', exact: true })).toHaveCount(0);
 
+    // The API specification binding is edited from its own capability entry.
+    await page.getByText('API specification', { exact: true }).click();
+    await expect(page.getByRole('tab', { name: 'Binding', exact: true })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Access', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('tab', { name: 'General', exact: true })).toHaveCount(0);
+    await expect(page.getByText('API entity schema', { exact: true })).toBeVisible();
+
+    await page.getByText('API & Integration Catalog', { exact: true }).click();
     await page.getByRole('tab', { name: 'Access', exact: true }).click();
     await expect(
       page.getByRole('checkbox', { name: 'All workspace members', exact: true })
     ).toBeVisible();
+  });
+
+  test('adds, edits and deletes an application', async ({ page }) => {
+    const settingsPage = new SettingsPage(page, defaultWorkspace.slug);
+    const name = `E2E Application ${Date.now()}`;
+    const renamed = `${name} renamed`;
+
+    await settingsPage.goto('applications-capabilities');
+    await page.getByTitle('Add application', { exact: true }).click();
+    const dialog = page.getByRole('alertdialog');
+    await dialog.getByLabel('Name').fill(name);
+    await dialog.getByRole('button', { name: 'Add application', exact: true }).click();
+
+    // The new application is selected and shows its General tab.
+    await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
+    await page.getByRole('tab', { name: 'General', exact: true }).click();
+    await page.getByText('Name', { exact: true }).locator('..').getByRole('textbox').fill(renamed);
+    await page.getByRole('button', { name: 'Save changes', exact: true }).click();
+    await expect(page.getByRole('heading', { name: renamed, exact: true })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Application actions', exact: true }).click();
+    await page.getByRole('menuitem', { name: 'Delete application', exact: true }).click();
+    await expect(page.getByText('Delete application?', { exact: true })).toBeVisible();
+    await page
+      .getByRole('alertdialog')
+      .getByRole('button', { name: 'Delete', exact: true })
+      .click();
+    await expect(page.getByText(renamed, { exact: true })).toHaveCount(0);
+  });
+
+  test('offers applications in workspace export', async ({ page }) => {
+    const settingsPage = new SettingsPage(page, defaultWorkspace.slug);
+
+    await settingsPage.goto('export-import');
+    await expect(page.getByRole('checkbox', { name: /Applications/ })).toBeVisible();
   });
 });

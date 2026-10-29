@@ -6,20 +6,22 @@ import {
   wrapBlock
 } from './EditorBlock';
 
-// The real mdxRegistry.tsx transitively imports packages/main's MultiWindowDetector,
-// which crashes on localStorage in the vitest/Node environment (a pre-existing,
-// unrelated issue) — mock a representative slice covering block/inline/wrapper modes
-// instead of importing the full registry, mirroring preview/mdxMarkdown.test.ts.
-vi.mock('../mdx-components/mdxRegistry', () => ({
-  MDX_COMPONENTS: {
-    Caption: { mode: 'block', acceptsChildren: true },
-    ImageEmbed: { mode: 'block' },
-    DiagramEmbed: { mode: 'block' },
-    EntityField: { mode: 'inline' }
-  }
-}));
+// Mock a representative registry slice so these tests exercise wrapper and mode
+// behavior without loading every component registration.
+vi.mock('../../../widgets/shared/widgetRegistry', () => {
+  const definitions = [
+    { type: 'Caption', mdx: { mode: 'block', acceptsChildren: true } },
+    { type: 'ImageEmbed', mdx: { mode: 'block' } },
+    { type: 'DiagramEmbed', mdx: { mode: 'block' } },
+    { type: 'EntityField', mdx: { mode: 'inline' } }
+  ];
+  return {
+    getWidgetDefinitions: () => definitions,
+    getWidgetDefinition: (type: string) => definitions.find(definition => definition.type === type)
+  };
+});
 
-const { MDX_COMPONENTS } = await import('../mdx-components/mdxRegistry');
+const { getWidgetDefinitions } = await import('../../../widgets/shared/widgetRegistry');
 
 vi.mock('@platejs/markdown', () => ({
   serializeMd: vi.fn(() => 'serialized-md'),
@@ -186,27 +188,27 @@ describe('pasteBlockFromClipboard', () => {
 });
 
 describe('wrapper/non-wrapper classification', () => {
-  const registry = MDX_COMPONENTS as Record<
-    string,
-    { mode: 'block' | 'inline'; acceptsChildren?: boolean }
-  >;
+  const definitions = getWidgetDefinitions('mdx');
 
   it('Caption is the only wrapper (acceptsChildren: true)', () => {
-    const wrapperTypes = Object.entries(registry)
-      .filter(([, spec]) => spec.acceptsChildren)
-      .map(([type]) => type);
+    const wrapperTypes = definitions
+      .filter(definition => definition.mdx.acceptsChildren)
+      .map(definition => definition.type);
     expect(wrapperTypes).toEqual(['Caption']);
   });
 
   it('block-mode, non-wrapper components (e.g. ImageEmbed, DiagramEmbed) qualify as wrappable targets', () => {
-    expect(registry['ImageEmbed']?.mode).toBe('block');
-    expect(registry['ImageEmbed']?.acceptsChildren).toBeUndefined();
-    expect(registry['DiagramEmbed']?.mode).toBe('block');
-    expect(registry['DiagramEmbed']?.acceptsChildren).toBeUndefined();
+    const imageEmbed = definitions.find(definition => definition.type === 'ImageEmbed')?.mdx;
+    const diagramEmbed = definitions.find(definition => definition.type === 'DiagramEmbed')?.mdx;
+    expect(imageEmbed?.mode).toBe('block');
+    expect(imageEmbed?.acceptsChildren).toBeUndefined();
+    expect(diagramEmbed?.mode).toBe('block');
+    expect(diagramEmbed?.acceptsChildren).toBeUndefined();
   });
 
   it('inline-mode components (e.g. EntityField) are neither wrappers nor wrappable top-level blocks', () => {
-    expect(registry['EntityField']?.mode).toBe('inline');
-    expect(registry['EntityField']?.acceptsChildren).toBeUndefined();
+    const entityField = definitions.find(definition => definition.type === 'EntityField')?.mdx;
+    expect(entityField?.mode).toBe('inline');
+    expect(entityField?.acceptsChildren).toBeUndefined();
   });
 });

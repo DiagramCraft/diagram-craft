@@ -1,33 +1,9 @@
-/* Container */
+/* Container: anchors the absolutely positioned overlays; the frame itself comes from ViewControlsFrame */
 .screen {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
   position: relative;
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r-md);
-  min-height: 0;
 }
 
 /* Config bar */
-.configBar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  border-bottom: 1px solid var(--panel-border);
-  flex-shrink: 0;
-  flex-wrap: wrap;
-}
-
-.configSep {
-  width: 1px;
-  height: 16px;
-  background: var(--panel-border);
-  flex-shrink: 0;
-}
-
 .configArrow {
   font-size: 11px;
   color: var(--base-fg-more-dim);
@@ -39,54 +15,14 @@
   white-space: nowrap;
 }
 
-/* Segmented zoom control */
-.segmented {
-  display: inline-flex;
-  background: var(--cmp-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r);
-  overflow: hidden;
-}
-
-.segmented button {
-  height: 24px;
-  padding: 0 8px;
-  font-size: 11px;
-  color: var(--base-fg-more-dim);
-  background: transparent;
-  border: none;
-  border-right: 1px solid var(--panel-border);
-  cursor: pointer;
-  font-family: inherit;
-}
-
-.segmented button:last-child {
-  border-right: none;
-}
-
-.segmented button:hover {
-  background: var(--cmp-bg-hover);
-  color: var(--base-fg);
-}
-
-.segmented .segmentedActive {
-  background: var(--cmp-bg-active);
-  color: var(--base-fg);
-}
-
 /* Scroll area */
 .scrollWrap {
   flex: 1;
   overflow: auto;
   position: relative;
   min-height: 0;
-}
-
-/* Inner grid — wide enough to hold all columns */
-.grid {
-  display: table;
-  min-width: 100%;
-  border-collapse: collapse;
+  /* Same dimmed look as the "N entities" count in the header label. */
+  --tl-header-label-color: color-mix(in oklch, var(--base-fg-more-dim) 60%, transparent);
 }
 
 /* Header row (sticky) */
@@ -107,6 +43,13 @@
   z-index: 3;
   background: var(--base-bg);
   border-bottom: 1px solid var(--panel-border);
+}
+
+/* The shared header label is a fixed 28px; here let it stretch to the row's content height so it
+   cannot overhang and cover the row's bottom border in the first column. */
+.horizonRow > .labelColHeader {
+  height: auto;
+  color: var(--tl-header-label-color);
 }
 
 .horizonTrack {
@@ -213,7 +156,6 @@
 
 .groupLabelCol {
   background: var(--panel-bg);
-  border-bottom: 1px solid var(--panel-border);
   font-size: 11px;
   font-weight: 600;
   color: var(--base-fg-dim);
@@ -221,11 +163,11 @@
   letter-spacing: 0.4px;
 }
 
-.groupCount {
-  font-family: var(--font-mono);
-  font-weight: 400;
-  color: var(--base-fg-more-dim);
-  margin-left: 4px;
+.groupName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .groupSpacer {
@@ -265,10 +207,6 @@
   background: color-mix(in oklch, var(--accent-fg) 10%, var(--base-bg));
 }
 
-.entityRow > .labelCol {
-  border-bottom: 1px solid var(--panel-border);
-}
-
 .entityName {
   font-size: 12px;
   color: var(--base-fg);
@@ -277,16 +215,6 @@
   white-space: nowrap;
   flex: 1;
   min-width: 0;
-}
-
-.entityOwner {
-  max-width: 86px;
-  flex-shrink: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--base-fg-more-dim);
-  font-size: 9px;
 }
 
 /* Bar track */
@@ -423,9 +351,11 @@
   padding: 0 10px;
   background: var(--base-bg);
   border-right: 1px solid var(--panel-border);
-  border-bottom: 1px solid var(--panel-border);
-  color: var(--base-fg-more-dim);
+  color: var(--tl-header-label-color);
   font-size: 10px;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
 }
 
 .milestoneLaneTrack {
@@ -473,17 +403,6 @@
   z-index: 5;
 }
 
-.undatedSection {
-  border-top: 1px solid var(--panel-border);
-}
-
-.undatedHeader {
-  display: flex;
-  height: 28px;
-  background: var(--panel-bg);
-  border-bottom: 1px solid var(--panel-border);
-}
-
 /* Milestone line */
 .milestoneLine {
   position: absolute;
@@ -521,80 +440,8 @@
   z-index: 5;
 }
 
-/* Detail panel */
-.detail {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: 300px;
-  background: var(--panel-bg);
-  border-left: 1px solid var(--panel-border);
-  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.3);
-  z-index: 10;
-  display: flex;
-  flex-direction: column;
-  transform: translateX(100%);
-  transition: transform 0.18s ease;
-}
-
-.detailOpen {
-  transform: translateX(0);
-}
-
-.detailHead {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--panel-border);
-  flex-shrink: 0;
-}
-
-.detailMeta {
-  flex: 1;
-  min-width: 0;
-}
-
-.detailName {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--base-fg);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.detailType {
-  font-size: 11px;
-  color: var(--base-fg-more-dim);
-  margin-top: 1px;
-}
-
-.detailCloseBtn {
-  width: 22px;
-  height: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--r);
-  background: transparent;
-  border: none;
-  color: var(--base-fg-more-dim);
-  cursor: pointer;
-  flex-shrink: 0;
-  padding: 0;
-}
-
-.detailCloseBtn:hover {
-  background: var(--cmp-bg-hover);
-  color: var(--base-fg);
-}
-
+/* Detail drawer content (the drawer shell is the shared Drawer component) */
 .detailBody {
-  flex: 1;
-  overflow-y: auto;
-  padding: 12px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -626,12 +473,6 @@
   margin: 0;
 }
 
-.detailFooter {
-  padding: 10px 12px;
-  border-top: 1px solid var(--panel-border);
-  flex-shrink: 0;
-}
-
 /* ── Snapshot block ──────────────────────────────────────────────────────────── */
 
 .snapBlock {
@@ -649,8 +490,10 @@
   background: var(--cmp-bg);
 }
 
-.snapHeader > .labelCol {
-  border-bottom: 1px solid var(--panel-border);
+/* Entity row -> its project lanes: the same muted line as between lanes, across the whole grid
+   (the label column included). With no lanes below, the block's own bottom border closes the row. */
+.snapBlock > .snapHeader:not(:last-child) {
+  border-bottom: 1px solid color-mix(in oklch, var(--panel-border) 50%, transparent);
 }
 
 .snapLane {
@@ -659,21 +502,15 @@
   border-bottom: 1px solid color-mix(in oklch, var(--panel-border) 50%, transparent);
 }
 
-.snapLaneOwn {
-  /* no special background — own history appears first before project lanes */
+/* The block's own bottom border closes the last lane; keeping the lane's as well doubles the line. */
+.snapBlock > .snapLane:last-child {
+  border-bottom: 0;
 }
 
 .snapLaneLabel {
   font-size: 10px;
   color: var(--base-fg-more-dim);
   gap: 4px;
-}
-
-.snapLaneCount {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  opacity: 0.6;
-  margin-left: 2px;
 }
 
 .snapTrack {
@@ -688,7 +525,8 @@
   left: 0;
   right: 0;
   height: 1px;
-  background: var(--panel-border);
+  /* Dashed, so it reads as the timeline rather than as another lane border. */
+  background: repeating-linear-gradient(to right, var(--panel-border) 0 4px, transparent 4px 8px);
   pointer-events: none;
 }
 

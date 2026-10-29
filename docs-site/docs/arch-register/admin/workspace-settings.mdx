@@ -21,7 +21,7 @@ settings. Ask a workspace administrator if a section is missing.
 The implemented settings area includes:
 
 - general workspace identity
-- application capability bindings and application access policies
+- application access policies
 - supported currencies, default currency, and assessment types
 - lifecycle
 - model overview
@@ -68,9 +68,8 @@ One state can be designated as the workspace's deprecated state. Finalizing an
 
 ## Applications And Capabilities
 
-Open **Workspace Settings → Applications & Capabilities** to enable an optional application and connect its required
-roles to workspace schemas. Use the Access tab to choose all members or selected people and teams. The capability
-binding determines whether the app is configured; the access policy determines who may open it. See
+Open **Workspace Settings → Applications & Capabilities** and use the Access tab of an application to choose all
+members or selected people and teams. The access policy determines who may open the application. See
 [Workspace Templates and Capabilities](workspace-templates-capabilities) for the setup sequence and
 [Roles and Permissions](roles-permissions) for the access rules.
 
@@ -80,6 +79,14 @@ Use **Workflows** to configure governance behavior centrally. Each saved workflo
 approval strategy and quorum, reminder schedule, escalation strategy, fallback users and teams, and case-kind-specific
 extensions. Configurations may be workspace-wide or scoped to a supported case subkind, such as a document type and
 status field. Workspace admins are the final fallback when no configured target resolves.
+
+Entity change, entity deprecation and relation change workflows can be attached to several entity schemas or relation
+schemas at once: pick all the schemas the workflow applies to in the **Scope** selector and edit the configuration in
+one place. A schema can belong to only one configuration of a given workflow kind, so saving a scope that overlaps an
+existing configuration is rejected with the conflicting schemas listed. A schema-specific configuration takes
+precedence over the workspace-wide one. Removing a schema from the scope (or deleting the schema) makes it fall back to
+the workspace-wide configuration or the default; a configuration whose scope becomes empty is deleted. Document status
+and field date reminder workflows stay scoped to a single document type or field.
 
 Entity change approval and entity deprecation are configured in **Workflows** rather than on the entity schema editor.
 Administrators can set:

@@ -8,9 +8,8 @@ export type ReviewStatus = 'active' | 'approaching' | 'overdue' | 'incomplete';
 const REVIEW_APPROACHING_WINDOW_DAYS = 30;
 
 /**
- * Buckets a review date's freshness relative to `now`, using the same days-until-target windowing
- * as retention's expiry status (see `retentionStatus.ts`). Unlike retention, there is no
- * "expiry date" to report back — only the bucket.
+ * Buckets a review date's freshness relative to `now` using a days-until-target window. There is
+ * no "expiry date" to report back — only the bucket.
  */
 export const computeReviewStatus = (
   reviewDate: string | null | undefined,

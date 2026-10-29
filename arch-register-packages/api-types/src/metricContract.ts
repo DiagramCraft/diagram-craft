@@ -75,17 +75,48 @@ export const metricSourceSchema = z.discriminatedUnion('kind', [
 // `worstDirection` selects which end of that list is worse.
 export const enumSourceKinds = ['enum', 'assessmentEnum'] as const;
 
+/**
+ * `sourceSchemaId` value meaning "terminal entities of any schema". Only valid for sources that do
+ * not depend on a schema's own fields (lifecycle and assessment sources), for example when the last
+ * step of a map path can reach more than one schema.
+ */
+export const ANY_SOURCE_SCHEMA = '*';
+
+/** Whether a terminal of `schemaId` is a source for a metric with this `sourceSchemaId`. */
+export const metricSourceSchemaMatches = (sourceSchemaId: string, schemaId: string): boolean =>
+  sourceSchemaId === ANY_SOURCE_SCHEMA || sourceSchemaId === schemaId;
+
 export const metricAggregationSchema = z
-  .enum(['count', 'leafCount', 'sum', 'average', 'minimum', 'maximum', 'worst', 'percentage'])
+  .enum([
+    'none',
+    'count',
+    'leafCount',
+    'sum',
+    'average',
+    'minimum',
+    'maximum',
+    'best',
+    'worst',
+    'percentage'
+  ])
   .describe(
     'Aggregation function applied across matching descendant entities. "leafCount" counts only ' +
-      'terminal entities that have no containment children of their own.'
+      'terminal entities that have no containment children of their own. "none" is presentation ' +
+      'only (the map colors leaf boxes by their own value) and is not accepted by the roll-up API. "best" picks the opposite end of the scale from "worst".'
   );
+
+/** A heat-colour band for a numeric metric. `max: null` = open top band; evaluated low-to-high. */
+export const metricColourBandSchema = z.object({
+  max: z.number().nullable().describe('Inclusive upper bound; null for the open top band'),
+  tone: z.enum(['good', 'warn', 'bad']).describe('Severity tone the band is drawn in')
+});
 
 export const metricConfigSchema = z.object({
   sourceSchemaId: z
     .string()
-    .describe('Entity or relation schema identifier for the terminal metric source'),
+    .describe(
+      'Entity or relation schema identifier for the terminal metric source; "*" means any schema (lifecycle and assessment sources only)'
+    ),
   sourceContext: z
     .enum(['entity', 'relation'])
     .optional()
@@ -117,11 +148,18 @@ export const metricConfigSchema = z.object({
     .enum(['low', 'high'])
     .optional()
     .describe(
-      'Direction used for "worst" aggregation. For numeric/lifecycle sources, "low" means lower values are worse and "high" means higher values are worse. For enum sources, "low" means the first option in the enum\'s configured order is worse and "high" means the last option is worse. Required when aggregation is "worst".'
+      'Direction used for "worst" and "best" aggregation ("best" is the opposite end). For numeric/lifecycle sources, "low" means lower values are worse and "high" means higher values are worse. For enum sources, "low" means the first option in the enum\'s configured order is worse and "high" means the last option is worse. Required when aggregation is "worst" or "best".'
     ),
   targetCurrency: currencyCodeSchema
     .optional()
-    .describe('Target currency for currency-field rollups; defaults to the workspace currency')
+    .describe('Target currency for currency-field rollups; defaults to the workspace currency'),
+  colourBands: z
+    .array(metricColourBandSchema)
+    .optional()
+    .describe(
+      'Presentation only: when set on a numeric metric, boxes are drawn in the tone of the band ' +
+        'their value falls in instead of on the sequential colour ramp'
+    )
 });
 
 // ── Request / response ───────────────────────────────────────────────────────

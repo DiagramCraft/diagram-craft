@@ -13,7 +13,7 @@ import {
 import { useEntities } from '../../../hooks/useEntities';
 import type { SerializedDiagramDocument } from '@diagram-craft/model/serialization/serializedTypes';
 import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
-import { ApiError } from '../../../lib/http';
+import { getErrorMessage } from '../../../lib/http';
 
 type DestinationType = 'workspace' | 'entity' | 'project';
 
@@ -123,7 +123,7 @@ export const SaveDiagramFromGraphDialog = ({
       onCreated(file);
       onClose();
     } catch (error) {
-      setError(error instanceof ApiError ? error.message : 'Something went wrong');
+      setError(getErrorMessage(error));
     }
   };
 

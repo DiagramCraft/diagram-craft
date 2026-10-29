@@ -1,12 +1,16 @@
+import { SettingsPage } from '../SettingsBlock';
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@diagram-craft/app-components/Button';
+import { TbPlus } from 'react-icons/tb';
+import { SectionActions } from '../SectionActions';
 import { Select } from '@diagram-craft/app-components/Select';
 import { Banner } from '../../../components/Banner';
 import { Chip } from '../../../components/Chip';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
-import { DropdownMenu } from '../../../components/DropdownMenu';
 import { MemberAvatar, stableHue } from '../../../components/MemberAvatar';
 import { SearchInput } from '../../../components/SearchInput';
+import { ViewControls } from '../../../components/ViewControls';
+import { LabeledSelect } from '../../../components/LabeledSelect';
 import { useAuth } from '../../../auth/AuthContext';
 import { useAuthConfig } from '../../../hooks/useAuthConfig';
 import { useWorkspaceAuthorization } from '../../../auth/WorkspaceAuthorizationContext';
@@ -36,45 +40,20 @@ const TeamChip = ({ teamId, label }: { teamId: string; label: string }) => {
   );
 };
 
-const RoleMenu = ({
-  current,
-  roles,
-  onSelect
-}: {
-  current: string;
-  roles: WorkspaceRoleDefinition[];
-  onSelect: (role: string) => void;
-}) => {
+const RoleChip = ({ current, roles }: { current: string; roles: WorkspaceRoleDefinition[] }) => {
   const roleMeta = roles.find(r => r.id === current);
   if (!roleMeta) return null;
-
   return (
-    <DropdownMenu
-      trigger={
-        <button type="button" className={styles.roleBtn}>
-          <Chip tone="ghost" dot={roleMeta.tone}>
-            {roleMeta.name}
-          </Chip>
-        </button>
-      }
-      items={roles.map(role => ({
-        label: role.name,
-        icon: <span className={styles.roleMenuDot} style={{ background: role.tone }} />,
-        onClick: () => onSelect(role.id)
-      }))}
-    />
+    <Chip tone="ghost" dot={roleMeta.tone}>
+      {roleMeta.name}
+    </Chip>
   );
 };
 
-export const MembersSubSection = ({
-  workspaceSlug,
-  addDialogOpen,
-  onCloseAddDialog
-}: {
-  workspaceSlug: string;
-  addDialogOpen: boolean;
-  onCloseAddDialog: () => void;
-}) => {
+export const MembersSubSection = ({ workspaceSlug }: { workspaceSlug: string }) => {
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const onCloseAddDialog = () => setAddDialogOpen(false);
   const { data: members = [], isLoading, error } = useWorkspaceMembers(workspaceSlug);
   const { data: users = [], isLoading: isLoadingUsers } = useWorkspaceUsers(workspaceSlug, true);
   const { data: roles = [] } = useWorkspaceRoles(workspaceSlug);
@@ -124,159 +103,162 @@ export const MembersSubSection = ({
     [memberIds, users]
   );
 
+  const header = (
+    <SectionActions>
+      <Button variant="primary" icon={<TbPlus size={12} />} onClick={() => setAddDialogOpen(true)}>
+        Add user
+      </Button>
+    </SectionActions>
+  );
+
   if (error) {
     return (
-      <div className={styles.container}>
-        <Banner variant="error">Failed to load workspace members.</Banner>
-      </div>
+      <>
+        {header}
+        <SettingsPage stacked={false}>
+          <Banner variant="error">Failed to load workspace members.</Banner>
+        </SettingsPage>
+      </>
     );
   }
 
   return (
-    <div className={styles.container}>
-      {!isLoading && members.length > 0 && (
-        <div className={styles.toolbar}>
-          <SearchInput
-            size="sm"
-            placeholder="Search by name or email…"
-            value={query}
-            onChange={setQuery}
-            onClear={() => setQuery('')}
-          />
-          <label className={styles.filter}>
-            <span className={styles.filterLabel}>Role</span>
-            <select
-              className={styles.filterSelect}
+    <>
+      {header}
+      <SettingsPage stacked={false}>
+        {!isLoading && members.length > 0 && (
+          <ViewControls variant="page">
+            <SearchInput
+              size="sm"
+              placeholder="Search by name or email…"
+              value={query}
+              onChange={setQuery}
+              onClear={() => setQuery('')}
+            />
+            <LabeledSelect
+              label="Role"
               value={roleFilter}
-              onChange={e => setRoleFilter(e.target.value)}
-            >
-              <option value="">Any role</option>
-              {roles.map(r => (
-                <option key={r.id} value={r.id}>
-                  {r.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className={styles.filter}>
-            <span className={styles.filterLabel}>Team</span>
-            <select
-              className={styles.filterSelect}
+              onChange={setRoleFilter}
+              options={[
+                { value: '', label: 'Any role' },
+                ...roles.map(r => ({ value: r.id, label: r.name }))
+              ]}
+            />
+            <LabeledSelect
+              label="Team"
               value={teamFilter}
-              onChange={e => setTeamFilter(e.target.value)}
-            >
-              <option value="">Any team</option>
-              {teams.map(t => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-      )}
-      {isLoading ? (
-        <LoadingState text="Loading members…" size="sm" />
-      ) : members.length === 0 ? (
-        <EmptyState compact title="No members have been added to this workspace." />
-      ) : (
-        <Table.Root>
-          <Table.Head>
-            <Table.Row>
-              <Table.HeaderCell style={{ minWidth: 240 }}>Member</Table.HeaderCell>
-              <Table.HeaderCell>Role</Table.HeaderCell>
-              <Table.HeaderCell>Teams</Table.HeaderCell>
-              <Table.HeaderCell>Status</Table.HeaderCell>
-              <Table.HeaderCell>Added</Table.HeaderCell>
-            </Table.Row>
-          </Table.Head>
-          <Table.Body>
-            {filteredMembers.length === 0 && (
-              <Table.EmptyRow colSpan={5} title="No members match these filters." />
-            )}
-            {filteredMembers.map(member => {
-              const userInfo = usersById.get(member.user_id);
-              const memberTeams = teamsByUser.get(member.user_id) ?? [];
-              return (
-                <Table.Row key={member.user_id}>
-                  <Table.NameCell
-                    icon={
-                      <MemberAvatar
-                        name={member.display_name}
-                        email={member.email}
-                        userId={member.user_id}
-                        color={userInfo?.color ?? null}
-                      />
-                    }
-                    title={member.display_name}
-                    subtitle={member.email ?? member.user_id}
-                  />
-                  <Table.Cell>
-                    <RoleMenu
-                      current={member.role}
-                      roles={roles}
-                      onSelect={role => {
-                        void updateMemberRole
-                          .mutateAsync({ userId: member.user_id, role })
-                          .then(() => {
-                            if (member.user_id === user?.id) {
-                              void reloadUser();
-                            }
-                          });
-                      }}
-                    />
-                  </Table.Cell>
-                  <Table.Cell>
-                    <div className={styles.tags}>
-                      {memberTeams.length === 0 && <span className={styles.dim}>—</span>}
-                      {memberTeams.slice(0, 2).map(teamId => (
-                        <TeamChip
-                          key={teamId}
-                          teamId={teamId}
-                          label={teamsById.get(teamId)?.name ?? teamId}
+              onChange={setTeamFilter}
+              options={[
+                { value: '', label: 'Any team' },
+                ...teams.map(t => ({ value: t.id, label: t.name }))
+              ]}
+            />
+          </ViewControls>
+        )}
+        {isLoading ? (
+          <LoadingState text="Loading members…" size="sm" />
+        ) : members.length === 0 ? (
+          <EmptyState compact title="No members have been added to this workspace." />
+        ) : (
+          <Table.Root>
+            <Table.Head>
+              <Table.Row>
+                <Table.HeaderCell style={{ minWidth: 240 }}>Member</Table.HeaderCell>
+                <Table.HeaderCell>Role</Table.HeaderCell>
+                <Table.HeaderCell>Teams</Table.HeaderCell>
+                <Table.HeaderCell>Status</Table.HeaderCell>
+                <Table.HeaderCell>Added</Table.HeaderCell>
+              </Table.Row>
+            </Table.Head>
+            <Table.Body>
+              {filteredMembers.length === 0 && (
+                <Table.EmptyRow colSpan={5} title="No members match these filters." />
+              )}
+              {filteredMembers.map(member => {
+                const userInfo = usersById.get(member.user_id);
+                const memberTeams = teamsByUser.get(member.user_id) ?? [];
+                return (
+                  <Table.Row key={member.user_id} onClick={() => setEditingUserId(member.user_id)}>
+                    <Table.NameCell
+                      icon={
+                        <MemberAvatar
+                          name={member.display_name}
+                          email={member.email}
+                          userId={member.user_id}
+                          color={userInfo?.color ?? null}
                         />
-                      ))}
-                      {memberTeams.length > 2 && (
-                        <span className={styles.teamChipOverflow}>+{memberTeams.length - 2}</span>
+                      }
+                      title={member.display_name}
+                      subtitle={member.email ?? member.user_id}
+                    />
+                    <Table.Cell>
+                      <RoleChip current={member.role} roles={roles} />
+                    </Table.Cell>
+                    <Table.Cell>
+                      <div className={styles.tags}>
+                        {memberTeams.length === 0 && <span className={styles.dim}>—</span>}
+                        {memberTeams.slice(0, 2).map(teamId => (
+                          <TeamChip
+                            key={teamId}
+                            teamId={teamId}
+                            label={teamsById.get(teamId)?.name ?? teamId}
+                          />
+                        ))}
+                        {memberTeams.length > 2 && (
+                          <span className={styles.teamChipOverflow}>+{memberTeams.length - 2}</span>
+                        )}
+                      </div>
+                    </Table.Cell>
+                    <Table.Cell>
+                      {userInfo ? (
+                        <Chip
+                          tone="ghost"
+                          dot={userInfo.is_active ? 'var(--green)' : 'var(--cmp-fg-disabled)'}
+                        >
+                          {userInfo.is_active ? 'Active' : 'Inactive'}
+                        </Chip>
+                      ) : (
+                        <span className={styles.dim}>—</span>
                       )}
-                    </div>
-                  </Table.Cell>
-                  <Table.Cell>
-                    {userInfo ? (
-                      <Chip
-                        tone="ghost"
-                        dot={userInfo.is_active ? 'var(--green)' : 'var(--cmp-fg-disabled)'}
-                      >
-                        {userInfo.is_active ? 'Active' : 'Inactive'}
-                      </Chip>
-                    ) : (
-                      <span className={styles.dim}>—</span>
-                    )}
-                  </Table.Cell>
-                  <Table.Cell className={styles.dim}>{formatDate(member.created_at)}</Table.Cell>
-                </Table.Row>
-              );
-            })}
-          </Table.Body>
-        </Table.Root>
-      )}
-      <AddMemberDialog
-        open={addDialogOpen}
-        users={availableUsers}
-        loading={isLoadingUsers}
-        onClose={onCloseAddDialog}
-        onSave={async (userId, role) => {
-          await updateMemberRole.mutateAsync({ userId, role });
-          if (userId === user?.id) {
-            await reloadUser();
-          }
-          onCloseAddDialog();
-        }}
-        isSaving={updateMemberRole.isPending}
-        roles={roles}
-        canCreateUsers={canCreateUsers}
-      />
-    </div>
+                    </Table.Cell>
+                    <Table.Cell className={styles.dim}>{formatDate(member.created_at)}</Table.Cell>
+                  </Table.Row>
+                );
+              })}
+            </Table.Body>
+          </Table.Root>
+        )}
+        <EditMemberDialog
+          member={members.find(m => m.user_id === editingUserId) ?? null}
+          roles={roles}
+          isSaving={updateMemberRole.isPending}
+          onClose={() => setEditingUserId(null)}
+          onSave={async (userId, role) => {
+            await updateMemberRole.mutateAsync({ userId, role });
+            if (userId === user?.id) {
+              await reloadUser();
+            }
+            setEditingUserId(null);
+          }}
+        />
+        <AddMemberDialog
+          open={addDialogOpen}
+          users={availableUsers}
+          loading={isLoadingUsers}
+          onClose={onCloseAddDialog}
+          onSave={async (userId, role) => {
+            await updateMemberRole.mutateAsync({ userId, role });
+            if (userId === user?.id) {
+              await reloadUser();
+            }
+            onCloseAddDialog();
+          }}
+          isSaving={updateMemberRole.isPending}
+          roles={roles}
+          canCreateUsers={canCreateUsers}
+        />
+      </SettingsPage>
+    </>
   );
 };
 
@@ -429,6 +411,77 @@ const AddMemberDialog = ({
             setCreateUserDialogOpen(false);
           }}
         />
+      </div>
+    </Dialog>
+  );
+};
+
+const EditMemberDialog = ({
+  member,
+  roles,
+  isSaving,
+  onClose,
+  onSave
+}: {
+  member: { user_id: string; display_name: string; email: string | null; role: string } | null;
+  roles: WorkspaceRoleDefinition[];
+  isSaving: boolean;
+  onClose: () => void;
+  onSave: (userId: string, role: string) => Promise<void>;
+}) => {
+  const [selectedRole, setSelectedRole] = useState('');
+
+  useEffect(() => {
+    setSelectedRole(member?.role ?? '');
+  }, [member]);
+
+  if (!member) return null;
+
+  return (
+    <Dialog open onClose={onClose} title="Edit workspace member">
+      <div className={styles.dialogBody}>
+        <div className={styles.field}>
+          <div className={styles.fieldLeft}>
+            <div className={styles.fieldLabel}>Member</div>
+          </div>
+          <div className={styles.fieldRight}>
+            {member.display_name}
+            {member.email ? ` (${member.email})` : ''}
+          </div>
+        </div>
+        <div className={styles.field}>
+          <div className={styles.fieldLeft}>
+            <div className={styles.fieldLabel}>Role</div>
+            <div className={styles.fieldHint}>
+              Set the workspace role that is stored on this membership.
+            </div>
+          </div>
+          <div className={styles.fieldRight}>
+            <Select.Root
+              value={selectedRole}
+              onChange={value => setSelectedRole(value ?? '')}
+              style={{ width: '100%' }}
+            >
+              {roles.map(role => (
+                <Select.Item key={role.id} value={role.id}>
+                  {role.name}
+                </Select.Item>
+              ))}
+            </Select.Root>
+          </div>
+        </div>
+        <div className={styles.dialogActions}>
+          <Button onClick={onClose} disabled={isSaving}>
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            onClick={() => void onSave(member.user_id, selectedRole)}
+            disabled={!selectedRole || selectedRole === member.role || isSaving}
+          >
+            {isSaving ? 'Saving…' : 'Save'}
+          </Button>
+        </div>
       </div>
     </Dialog>
   );

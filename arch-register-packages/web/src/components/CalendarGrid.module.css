@@ -1,0 +1,24 @@
+.grid {
+  display: grid;
+  gap: 8px;
+}
+
+.cell {
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.cellEmphasized {
+  border-color: var(--cmp-accent-dim, var(--panel-border));
+}
+
+.cellHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+}

@@ -258,6 +258,8 @@ test.describe('project routes', () => {
       path: 'archive/auth-sequence.json',
       name: 'auth-sequence'
     });
+    // Links reference files by id, so relocating must not change it
+    expect(relocateResult.id).toBe(writeResult.id);
 
     const relocatedReadResult = await orpc.projects.getFileContent({
       params: { workspace: 'default', id: projectId },
@@ -555,6 +557,27 @@ test.describe('project routes', () => {
       params: { workspace: 'default', nodeId: document.id }
     });
     expect(revisions).toHaveLength(2);
+  });
+
+  test('rejects saving a new markdown document with a name already in use', async ({ orpc }) => {
+    const project = await createProject(orpc, { name: `Duplicate names ${Date.now()}` });
+    const body = {
+      scope: 'project' as const,
+      project_id: project.id,
+      name: 'Same name',
+      body: '# One',
+      document_type_id: null,
+      metadata: {}
+    };
+
+    await orpc.projects.saveNewMarkdownContent({ params: { workspace: 'default' }, body });
+
+    await expect(
+      orpc.projects.saveNewMarkdownContent({
+        params: { workspace: 'default' },
+        body: { ...body, body: '# Two' }
+      })
+    ).rejects.toThrow("A document named 'Same name' already exists here");
   });
 
   test('blocks restoring a revision that fails the current type requirements', async ({ orpc }) => {

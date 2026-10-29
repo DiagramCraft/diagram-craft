@@ -1,8 +1,6 @@
 import { useMemo } from 'react';
-import { TbGitBranch } from 'react-icons/tb';
 import styles from './TimelineView.module.css';
 import { TypeBadge } from '../../../components/TypeBadge';
-import { StatusChip } from '../../../components/StatusChip';
 import { dateToTimelinePx } from '../../../components/timeline/timelineUtils';
 import { resolveSchemaColor } from '../../../lib/schemaPresentation';
 import type {
@@ -50,9 +48,6 @@ export const dotCommitMessage = (dot: TimelineDot): string | null =>
 
 export const dotCreatedAt = (dot: TimelineDot): string =>
   dot.source === 'own' ? dot.version.created_at : dot.entry.changeCase.created_at;
-
-export const dotProjectId = (dot: TimelineDot): string | null =>
-  dot.source === 'own' ? null : dot.entry.changeCase.project_id;
 
 // ── SnapBlock ─────────────────────────────────────────────────────────────────
 
@@ -170,10 +165,14 @@ export const SnapBlock = ({
       />
     ));
 
-  const condensedDots = !showProjectLanes && projectFilterId == null && (
+  // The entity's own history always sits on its row; project dots join it there only when project
+  // lanes are off (with lanes on they get their own lanes, and a project filter draws them in the
+  // header bar).
+  const showProjectDotsOnRow = !showProjectLanes && projectFilterId == null;
+  const rowDots = (
     <>
-      <div className={styles.snapBaseline} />
-      {[...projectSnapshots, ...ownDots].map(snap => {
+      {projectFilterId == null && <div className={styles.snapBaseline} />}
+      {[...(showProjectDotsOnRow ? projectSnapshots : []), ...ownDots].map(snap => {
         if (snap.source === 'own') {
           const px = toPx(new Date(dotCreatedAt(snap)));
           const isSel = selectedSnapId === snap.id;
@@ -240,15 +239,6 @@ export const SnapBlock = ({
           >
             {entity._name ?? entity._slug}
           </span>
-          <span
-            className={styles.entityOwner}
-            title={`Owner: ${entity._owner?.name ?? 'Unassigned'}`}
-          >
-            {entity._owner?.name ?? 'Unassigned'}
-          </span>
-          {entity._lifecycle && (
-            <StatusChip value={entity._lifecycle.id} lifecycleStates={lifecycleStates} />
-          )}
         </div>
         <div className={styles.barCell} style={{ width: totalWidth }}>
           {renderHorizonFills()}
@@ -304,42 +294,9 @@ export const SnapBlock = ({
               }}
             />
           ) : null}
-          {condensedDots}
+          {rowDots}
         </div>
       </div>
-
-      {/* Own history lane */}
-      {(projectFilterId != null || showProjectLanes) && ownDots.length > 0 && (
-        <div className={`${styles.snapLane} ${styles.snapLaneOwn}`}>
-          <div className={`${styles.labelCol} ${styles.snapLaneLabel}`}>
-            <TbGitBranch size={10} style={{ color: 'var(--base-fg-more-dim)', flexShrink: 0 }} />
-            <span>Own history</span>
-          </div>
-          <div className={`${styles.barCell} ${styles.snapTrack}`} style={{ width: totalWidth }}>
-            {renderHorizonFills()}
-            <div className={styles.snapBaseline} />
-            {ownDots.map(snap => {
-              const px = toPx(new Date(dotCreatedAt(snap)));
-              const isSel = selectedSnapId === snap.id;
-              const status = dotStatus(snap);
-              const dotClass =
-                status === 'saved_version' ? styles.snapDotSavedVersion : styles.snapDotAutosave;
-              return (
-                <div
-                  key={snap.id}
-                  className={`${styles.snapDot} ${dotClass} ${isSel ? styles.snapDotSelected : ''}`}
-                  style={{ left: px }}
-                  onClick={ev => {
-                    ev.stopPropagation();
-                    onSnapSelect(isSel ? null : snap, entity);
-                  }}
-                  title={dotCommitMessage(snap) ?? status}
-                />
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       {/* Project lanes */}
       {projectFilterId == null &&

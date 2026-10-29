@@ -3,8 +3,11 @@ import { getRouteApi } from '@tanstack/react-router';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { Title } from '../../components/Title';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
+import { useApplications } from '../../hooks/useApplications';
 import { CapabilityBindingEditor } from './sub-sections/CapabilityBindingEditor';
 import { ApplicationAccessCard } from './sub-sections/ApplicationAccessCard';
+import { ApplicationAuxMenu } from './sub-sections/ApplicationAuxMenu';
+import { ApplicationGeneralCard } from './sub-sections/ApplicationGeneralCard';
 import {
   findApplicationsCapabilitiesItem,
   resolveApplicationsCapabilitiesTab
@@ -21,14 +24,17 @@ export const ApplicationsCapabilitiesScreen = () => {
   const search = routeApi.useSearch();
   const ctx = useWorkspaceContext();
   const workspaceSlug = params.workspaceSlug;
+  const { data: workspaceApplications = [] } = useApplications(workspaceSlug);
 
   const perms = {
     canManageBindings: ctx.permissions.canManageWorkspaces,
-    canManageAccess: ctx.permissions.canAdministerWorkspace ?? false
+    canManageAccess: ctx.permissions.canAdministerWorkspace ?? false,
+    canManageApplications: ctx.permissions.canManageDashboard
   };
 
-  const item = findApplicationsCapabilitiesItem(perms, search.item);
+  const item = findApplicationsCapabilitiesItem(perms, workspaceApplications, search.item);
   const [bindingActions, setBindingActions] = useState<ReactNode>();
+  const [generalActions, setGeneralActions] = useState<ReactNode>();
   const [accessActions, setAccessActions] = useState<ReactNode>();
   const [enabledControl, setEnabledControl] = useState<ReactNode>();
 
@@ -59,14 +65,11 @@ export const ApplicationsCapabilitiesScreen = () => {
   }
 
   const activeTab = resolveApplicationsCapabilitiesTab(item, search.tab);
-  const bindingSubTab =
-    activeTab === 'fields' || activeTab === 'dashboard' ? activeTab : 'bindings';
 
   const description =
-    getWorkspaceCapabilityDefinition(item.capabilityType)?.description ??
-    (item.kind === 'application'
-      ? 'Configure how this application binds to workspace schemas and who can use it.'
-      : 'Bind this capability to the schemas and fields used by this workspace.');
+    (item.capabilityType
+      ? getWorkspaceCapabilityDefinition(item.capabilityType)?.description
+      : undefined) ?? 'Control who can use this application.';
 
   const selectTab = (tab: string) =>
     navigate({
@@ -83,7 +86,28 @@ export const ApplicationsCapabilitiesScreen = () => {
           title={item.label}
           description={description}
           toggleButtons={enabledControl}
-          buttons={activeTab === 'access' ? accessActions : bindingActions}
+          menu={
+            item.kind === 'application' && item.applicationId ? (
+              <ApplicationAuxMenu
+                workspaceSlug={workspaceSlug}
+                applicationKey={item.applicationId}
+                onDeleted={() =>
+                  navigate({
+                    to: '/$workspaceSlug/settings/applications-capabilities',
+                    params: { workspaceSlug },
+                    search: {}
+                  })
+                }
+              />
+            ) : undefined
+          }
+          buttons={
+            item.kind === 'application'
+              ? activeTab === 'general'
+                ? generalActions
+                : accessActions
+              : bindingActions
+          }
         />
       </div>
 
@@ -98,22 +122,30 @@ export const ApplicationsCapabilitiesScreen = () => {
           </Tabs.List>
         </Tabs.Root>
 
-        {perms.canManageBindings && (
-          <div style={{ display: activeTab === 'access' ? 'none' : undefined }}>
+        {item.kind === 'capability' && item.capabilityType && perms.canManageBindings && (
+          <div>
             <CapabilityBindingEditor
               key={item.capabilityType}
               workspaceSlug={workspaceSlug}
               capabilityType={item.capabilityType}
               schemas={ctx.schemas}
               relationSchemas={ctx.relationSchemas}
-              subTab={bindingSubTab}
               onActionsChange={setBindingActions}
               onEnabledControlChange={setEnabledControl}
             />
           </div>
         )}
 
-        {activeTab === 'access' && item.applicationId && (
+        {item.kind === 'application' && item.applicationId && activeTab === 'general' && (
+          <ApplicationGeneralCard
+            key={item.applicationId}
+            workspaceSlug={workspaceSlug}
+            applicationKey={item.applicationId}
+            onActionsChange={setGeneralActions}
+          />
+        )}
+
+        {item.kind === 'application' && item.applicationId && activeTab === 'access' && (
           <ApplicationAccessCard
             workspaceSlug={workspaceSlug}
             applicationId={item.applicationId as Exclude<WorkspaceApplicationId, 'home'>}

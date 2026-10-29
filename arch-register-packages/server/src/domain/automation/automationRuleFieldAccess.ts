@@ -61,8 +61,8 @@ export const isAutomationWriteFieldKnownAcrossSchemas = (
   fieldId: string
 ) => schemas.length > 0 && schemas.every(schema => isAutomationWriteFieldKnown(schema, fieldId));
 
-/** The four numeric comparison operators (`greater_than`, etc.) are only meaningful for `number`
- *  and `currency` fields, and `derived` fields whose `resultType` is `number` or `rating` — every
+/** The four numeric comparison operators (`greater_than`, etc.) are only meaningful for `number`,
+ *  `currency` and `duration` (compared in days) fields, and `derived` fields whose `resultType` is `number` or `rating` — every
  *  other field type (including pseudo-fields, which never appear in `schema.fields`) is rejected.
  *  A field is treated as numeric-comparable only if every schema that declares it agrees. */
 export const isAutomationNumericComparableField = (
@@ -73,7 +73,9 @@ export const isAutomationNumericComparableField = (
   schemas.every(schema => {
     const field = schema.fields.find(f => f.id === fieldId);
     if (!field) return false;
-    if (field.type === 'number' || field.type === 'currency') return true;
+    if (field.type === 'number' || field.type === 'currency' || field.type === 'duration') {
+      return true;
+    }
     return (
       field.type === 'derived' && (field.resultType === 'number' || field.resultType === 'rating')
     );

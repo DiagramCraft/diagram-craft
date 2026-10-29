@@ -1,15 +1,12 @@
 import { useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { TbFileText } from 'react-icons/tb';
+import { TbFiles, TbFileText } from 'react-icons/tb';
 import { useRelatedDocumentContent } from '../../../hooks/useDocuments';
 import { EmptyState } from '../../../components/EmptyState';
 import { LoadingState } from '../../../components/LoadingState';
-import { Chip } from '../../../components/Chip';
-import { TreeRow } from '../../../components/TreeRow';
+import { Table } from '../../../components/table/Table';
 import { TypeBadge } from '../../../components/TypeBadge';
-import { HoverCard } from '../../../components/HoverCard';
-import hoverCardStyles from '../../../components/HoverCard.module.css';
-import { DocumentHoverCardBody } from '../../../components/DocumentHoverCardBody';
+import { EntityTabPage } from './EntityTabPage';
 import {
   asEntityPublicId,
   asProjectPublicId,
@@ -17,6 +14,8 @@ import {
   projectMarkdownRoute,
   workspaceMarkdownRoute
 } from '../../../routes/publicObjectRoutes';
+
+const SCOPE_LABEL = { project: 'Project', entity: 'Entity', workspace: 'Workspace' } as const;
 
 export const EntityRelatedContentTab = ({
   workspaceId,
@@ -27,115 +26,89 @@ export const EntityRelatedContentTab = ({
 }) => {
   const navigate = useNavigate();
   const { data = [], isLoading } = useRelatedDocumentContent(workspaceId, entityId);
-  const groups = useMemo(() => {
-    const grouped = new Map<
-      string,
-      {
-        typeName: string;
-        typeColor: string | null;
-        typeIcon: string | null;
-        fieldName: string;
-        items: typeof data;
-      }
-    >();
-    for (const item of data) {
-      const typeName = item.document_type_name ?? 'Untyped Markdown';
-      const fieldName = item.field_inverse_name ?? item.field_name;
-      const key = `${typeName} · ${fieldName}`;
-      const existing = grouped.get(key);
-      if (existing) existing.items.push(item);
-      else
-        grouped.set(key, {
-          typeName,
-          typeColor: item.document_type_color,
-          typeIcon: item.document_type_icon,
-          fieldName,
-          items: [item]
-        });
-    }
-    return [...grouped.entries()];
-  }, [data]);
+
+  const rows = useMemo(
+    () =>
+      data
+        .map(item => ({
+          item,
+          typeName: item.document_type_name ?? 'Untyped Markdown',
+          fieldName: item.field_inverse_name ?? item.field_name
+        }))
+        .sort(
+          (a, b) =>
+            a.typeName.localeCompare(b.typeName) ||
+            a.fieldName.localeCompare(b.fieldName) ||
+            a.item.file.name.localeCompare(b.item.file.name)
+        ),
+    [data]
+  );
 
   if (isLoading) return <LoadingState text="Loading related content…" />;
-  if (groups.length === 0)
+  if (rows.length === 0)
     return (
-      <EmptyState
-        title="No related typed documents"
-        subtitle="Documents that link to this entity will appear here."
-      />
+      <EntityTabPage>
+        <EmptyState
+          framed
+          icon={<TbFiles size={20} />}
+          title="No related typed documents"
+          subtitle="Documents that link to this entity will appear here."
+        />
+      </EntityTabPage>
+    );
+
+  const open = (item: (typeof data)[number]) =>
+    navigate(
+      item.scope === 'project'
+        ? projectMarkdownRoute(
+            workspaceId,
+            asProjectPublicId(item.file.project_public_id ?? item.file.project_id!),
+            item.file.id,
+            { mode: 'preview' }
+          )
+        : item.scope === 'entity'
+          ? entityMarkdownRoute(workspaceId, asEntityPublicId(entityId), item.file.id, {
+              mode: 'preview'
+            })
+          : workspaceMarkdownRoute(workspaceId, item.file.id, { mode: 'preview' })
     );
 
   return (
-    <div style={{ padding: 20, display: 'grid', gap: 18 }}>
-      {groups.map(([key, group]) => (
-        <section key={key}>
-          <h3
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              fontSize: 12,
-              margin: '0 0 8px'
-            }}
-          >
-            <TypeBadge
-              color={group.typeColor ?? 'var(--base-fg-dim)'}
-              name={group.typeName}
-              icon={group.typeIcon}
-              size={18}
-            />
-            <Chip tone="ghost">{group.typeName}</Chip>
-            <span className="dim">{group.fieldName}</span>
-          </h3>
-          <div style={{ display: 'grid', gap: 2 }}>
-            {group.items.map(item => (
-              <HoverCard
-                key={`${item.file.id}:${item.field_id}`}
-                anchorClassName={hoverCardStyles.blockAnchor}
-                content={
-                  <DocumentHoverCardBody
-                    name={item.file.name}
-                    path={item.file.path}
-                    documentTypeName={item.document_type_name}
-                    documentTypeColor={item.document_type_color}
-                    commentCount={item.file.comment_count}
-                    unresolvedCommentCount={item.file.unresolved_comment_count}
+    <EntityTabPage>
+      <Table.Root>
+        <Table.Head>
+          <Table.Row>
+            <Table.HeaderCell>Name</Table.HeaderCell>
+            <Table.HeaderCell>Type</Table.HeaderCell>
+            <Table.HeaderCell>Relation</Table.HeaderCell>
+            <Table.HeaderCell>Scope</Table.HeaderCell>
+          </Table.Row>
+        </Table.Head>
+        <Table.Body>
+          {rows.map(({ item, typeName, fieldName }) => (
+            <Table.Row key={`${item.file.id}:${item.field_id}`} onClick={() => open(item)}>
+              <Table.NameCell
+                icon={<TbFileText size={14} />}
+                title={item.file.name}
+                subtitle={item.file.path}
+              />
+              <Table.Cell>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <TypeBadge
+                    color={item.document_type_color ?? 'var(--base-fg-dim)'}
+                    name={typeName}
+                    icon={item.document_type_icon}
+                    size={16}
                   />
-                }
-              >
-                <TreeRow
-                  icon={<TbFileText size={14} />}
-                  label={item.file.name}
-                  trailing={
-                    <span className="dim" style={{ fontSize: 10 }}>
-                      {item.file.path}
-                    </span>
-                  }
-                  onClick={() =>
-                    navigate(
-                      item.scope === 'project'
-                        ? projectMarkdownRoute(
-                            workspaceId,
-                            asProjectPublicId(item.file.project_public_id ?? item.file.project_id!),
-                            item.file.id,
-                            { mode: 'preview' }
-                          )
-                        : item.scope === 'entity'
-                          ? entityMarkdownRoute(
-                              workspaceId,
-                              asEntityPublicId(entityId),
-                              item.file.id,
-                              { mode: 'preview' }
-                            )
-                          : workspaceMarkdownRoute(workspaceId, item.file.id, { mode: 'preview' })
-                    )
-                  }
-                />
-              </HoverCard>
-            ))}
-          </div>
-        </section>
-      ))}
-    </div>
+                  {typeName}
+                </span>
+              </Table.Cell>
+              <Table.Cell>{fieldName}</Table.Cell>
+              <Table.Cell>{SCOPE_LABEL[item.scope]}</Table.Cell>
+            </Table.Row>
+          ))}
+        </Table.Body>
+      </Table.Root>
+    </EntityTabPage>
   );
 };

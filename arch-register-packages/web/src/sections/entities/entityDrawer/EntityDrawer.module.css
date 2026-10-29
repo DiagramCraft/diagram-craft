@@ -185,6 +185,16 @@
   text-align: right;
 }
 
+.metadataLinkedValue {
+  flex-direction: column;
+  text-align: left;
+  gap: 0.5rem;
+
+  & > div {
+    background-color: var(--panel-bg);
+  }
+}
+
 .empty {
   color: var(--base-fg-more-dim);
   font-size: 12px;

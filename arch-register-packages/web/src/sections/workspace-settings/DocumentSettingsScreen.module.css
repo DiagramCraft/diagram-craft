@@ -18,22 +18,6 @@
   padding: 16px;
 }
 
-.bottomActions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  justify-content: space-between;
-  margin-top: 20px;
-  padding-top: 12px;
-  border-top: 1px solid var(--panel-border);
-}
-
-.bottomActionGroup {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
 .banner {
   display: flex;
   align-items: center;
@@ -106,10 +90,6 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-}
-
-.fieldOptions {
-  font-size: 11px;
 }
 
 .fieldEmpty {
@@ -197,13 +177,6 @@
 .iconBtn:hover {
   color: var(--base-fg-dim);
   background: var(--cmp-bg);
-}
-
-.formActions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 18px;
 }
 
 .defaultsGrid {

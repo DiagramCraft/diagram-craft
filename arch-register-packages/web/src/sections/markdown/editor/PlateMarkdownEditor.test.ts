@@ -14,9 +14,13 @@ import {
 import { handleTableKeyDown } from './PlateMarkdownEditorTable';
 import { editorPlugins, mdxRules } from './PlateMarkdownEditorPlugins';
 
-vi.mock('../mdx-components/mdxRegistry', () => ({
-  MDX_COMPONENTS: {
-    TestBlock: {
+vi.mock('../../../widgets/shared/widgetRegistry', () => {
+  const definition = {
+    type: 'TestBlock',
+    category: 'data-views',
+    surfaces: ['wiki'],
+    icon: () => null,
+    mdx: {
       editorSpec: {
         editableComponent: () => null,
         nodeOptions: { isVoid: true },
@@ -30,10 +34,8 @@ vi.mock('../mdx-components/mdxRegistry', () => ({
           })
         },
         slashCommand: {
-          key: 'test-block',
           label: 'Test block',
           description: 'Test block',
-          icon: 'T',
           onSelect: (
             editor: Parameters<typeof insertOrReplaceBlock>[0],
             helpers: { insertOrReplaceBlock: typeof insertOrReplaceBlock }
@@ -41,8 +43,12 @@ vi.mock('../mdx-components/mdxRegistry', () => ({
         }
       }
     }
-  }
-}));
+  };
+  return {
+    getWidgetDefinitions: () => [definition],
+    getWidgetDefinition: (type: string) => (type === 'TestBlock' ? definition : undefined)
+  };
+});
 
 const createMarkdownTestEditor = () =>
   createPlateEditor({
@@ -208,7 +214,7 @@ describe('slash command insertion helpers', () => {
   });
 
   it('includes registry-backed commands in the slash command list', () => {
-    const command = SLASH_COMMANDS.find(item => item.key === 'test-block');
+    const command = SLASH_COMMANDS.find(item => item.key === 'TestBlock');
 
     expect(command).toBeDefined();
     const editor = makeSlashEditor([{ type: 'p', children: [{ text: '' }] }]);

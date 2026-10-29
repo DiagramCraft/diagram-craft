@@ -1,0 +1,125 @@
+import { useState } from 'react';
+import { useEditorRef } from 'platejs/react';
+import type { TElement } from 'platejs';
+import { Dialog } from '@diagram-craft/app-components/Dialog';
+import { DialogContent } from '../../../sections/markdown/editor/BlockDialog';
+import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
+import { useMdxContext } from '../../../sections/markdown/MdxContext';
+import { getConfigDialogWidth } from '../configDialog';
+import type { ConfigFormSaveHook } from '../types';
+import {
+  createDefaultConfig,
+  getWidgetDefinition,
+  isValidComponentConfig
+} from '../widgetRegistry';
+
+export type MdxConfigSpec<E extends TElement, Config extends Record<string, unknown>> = {
+  /** Reads the element's config; `defaults` fills in anything the element doesn't carry. */
+  fromElement: (el: E, defaults: Config) => Config;
+  toElement: (config: Config) => Partial<E>;
+};
+
+type Props<E extends TElement, Config extends Record<string, unknown>> = {
+  element: E;
+  open: boolean;
+  onClose: () => void;
+  isNew: boolean;
+  spec: MdxConfigSpec<E, Config>;
+};
+
+export const MdxWidgetConfigDialog = <E extends TElement, Config extends Record<string, unknown>>({
+  element,
+  open,
+  onClose,
+  isNew,
+  spec
+}: Props<E, Config>) => {
+  const editor = useEditorRef();
+  const { workspaceSlug } = useWorkspaceContext();
+  const { projectId } = useMdxContext();
+  const definition = getWidgetDefinition(element.type);
+
+  const [config, setConfig] = useState<Config>(() => {
+    if (!definition?.configSchema) {
+      throw new Error(`Component "${element.type}" must define a config schema`);
+    }
+    const defaults = createDefaultConfig(definition, { workspaceSlug, projectId });
+    return isNew ? (defaults as Config) : spec.fromElement(element, defaults as Config);
+  });
+
+  const [saveHook, setSaveHook] = useState<ConfigFormSaveHook<Config> | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // The component's own validity rule (structure and completeness) is shared with the dashboard.
+  const canSave = isValidComponentConfig(definition, config) || !!saveHook?.ready;
+  const ConfigForm = definition?.configForm;
+
+  const handleConfirm = async () => {
+    const path = editor.api.findPath(element);
+    if (!path) {
+      onClose();
+      return;
+    }
+
+    if (!canSave) {
+      if (isNew) editor.tf.removeNodes({ at: path });
+      onClose();
+      return;
+    }
+
+    let finalConfig = config;
+    if (saveHook?.prepare) {
+      setIsSaving(true);
+      try {
+        finalConfig = await saveHook.prepare(config);
+      } finally {
+        setIsSaving(false);
+      }
+      if (!isValidComponentConfig(definition, finalConfig)) {
+        if (isNew) editor.tf.removeNodes({ at: path });
+        onClose();
+        return;
+      }
+    }
+
+    editor.tf.setNodes(spec.toElement(finalConfig), { at: path });
+    onClose();
+  };
+
+  const handleClose = () => {
+    if (isNew) {
+      const path = editor.api.findPath(element);
+      if (path) editor.tf.removeNodes({ at: path });
+    }
+    onClose();
+  };
+
+  if (!ConfigForm) return null;
+
+  return (
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      title={definition?.name ?? element.type}
+      width={getConfigDialogWidth(definition?.configDialog)}
+      buttons={[
+        { label: 'Cancel', type: 'cancel', onClick: handleClose },
+        {
+          label: 'Save',
+          type: 'default',
+          disabled: !canSave || isSaving,
+          onClick: () => void handleConfirm()
+        }
+      ]}
+    >
+      <DialogContent>
+        <ConfigForm
+          config={config}
+          onChange={setConfig}
+          context={{ mode: 'mdx', surface: projectId ? 'project' : 'workspace' }}
+          registerSaveHook={setSaveHook}
+        />
+      </DialogContent>
+    </Dialog>
+  );
+};

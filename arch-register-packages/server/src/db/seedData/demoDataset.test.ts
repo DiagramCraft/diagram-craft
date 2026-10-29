@@ -108,6 +108,16 @@ describe('demo bootstrap dataset: strategy entities', () => {
 });
 
 describe('demo bootstrap dataset: governance entities', () => {
+  it('stores compliance requirement summaries in the built-in description', () => {
+    expect(demoComplianceRequirementEntities).toHaveLength(8);
+    expect(demoComplianceRequirementEntities[0]?.description).toBe(
+      'The entity implements logical access security measures.'
+    );
+    expect(demoComplianceRequirementEntities.every(entity => !('description' in entity.data))).toBe(
+      true
+    );
+  });
+
   it('has no duplicate ids and every framework/relation reference resolves', () => {
     const allEntities = [
       ...demoFrameworkEntities,

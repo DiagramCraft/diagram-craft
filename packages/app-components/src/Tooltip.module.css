@@ -1,7 +1,13 @@
 /**
- *  Tooltip - .cTooltip
- *  | Arrow - .eArrow
+ *  TooltipPositioner - .cTooltipPositioner
+ *  | Tooltip - .cTooltip
+ *  | | Arrow - .eArrow
  */
+.cTooltipPositioner {
+  /* Above Dialog (1000) and Drawer (900) so tooltips triggered inside them are not covered. */
+  z-index: 1100;
+}
+
 .cTooltip {
   border-radius: var(--cmp-radius);
   padding: 10px;
@@ -16,8 +22,6 @@
   animation-name: tooltipShow;
   animation-duration: 250ms;
   will-change: opacity;
-
-  z-index: 500;
 
   .eArrow {
     background: transparent;

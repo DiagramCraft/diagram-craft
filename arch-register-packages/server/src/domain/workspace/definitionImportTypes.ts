@@ -109,7 +109,6 @@ export type ImportableCapabilityConfiguration = {
   id: string;
   type: string;
   bindings: WorkspaceCapabilityBindings;
-  view_config?: unknown | null;
 };
 
 export type ImportableSchemaPatch = {

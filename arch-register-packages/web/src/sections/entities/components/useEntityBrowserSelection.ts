@@ -8,6 +8,7 @@ import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaCo
 import { canClearBulkField, getBulkEditableFields, type BulkEditableField } from './bulkEditFields';
 import { useCancellableTimeout } from '../../../hooks/useCancellableTimeout';
 import { useWorkspaceAuthorization } from '../../../auth/WorkspaceAuthorizationContext';
+import { decodeDurationText } from '../../../utils/durationFormat';
 import { isMultiValuedScalarField } from '../../../lib/scalarFieldValues';
 
 export type BulkFieldRow = {
@@ -107,6 +108,10 @@ const applyFieldRowToBody = (
   }
   if (field.field.type === 'number') {
     body[field.id] = row.clearing ? null : Number(row.value);
+    return;
+  }
+  if (field.field.type === 'duration') {
+    body[field.id] = row.clearing ? null : decodeDurationText(row.value);
     return;
   }
   body[field.id] = row.clearing ? null : row.value;

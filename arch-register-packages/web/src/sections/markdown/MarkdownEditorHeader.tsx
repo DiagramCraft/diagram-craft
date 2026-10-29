@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import {
-  TbDots,
   TbFileText,
   TbHistory,
   TbMessage2,
@@ -13,7 +12,7 @@ import {
 } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Title } from '../../components/Title';
-import { DropdownMenu } from '../../components/DropdownMenu';
+import { TitleMenu } from '../../components/TitleMenu';
 import type { CommentsDisplayMode } from '../wikiComments/commentsDisplayMode';
 import styles from './MarkdownEditorScreen.module.css';
 
@@ -151,8 +150,9 @@ export const MarkdownEditorHeader = (props: {
           >
             Edit
           </Button>
-          <DropdownMenu
-            trigger={<Button icon={<TbDots size={13} />} disabled={!isViewMode} />}
+          <TitleMenu
+            label="Document actions"
+            disabled={!isViewMode}
             items={[
               { label: 'Versions', icon: <TbHistory size={13} />, onClick: actions.onOpenHistory },
               { label: 'Rename', icon: <TbPencil size={13} />, onClick: actions.onRenameRequest },

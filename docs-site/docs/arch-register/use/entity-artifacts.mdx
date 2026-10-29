@@ -8,7 +8,7 @@ general-purpose attachment store; use [entity content](content) for documents, d
 
 ## Sources And Revisions
 
-When the workspace has a valid API specification capability binding for the entity's schema, its detail screen has an
+When the workspace's API specification capability is bound to the entity's schema, its detail screen has an
 API catalog section. Authorized users can upload an API document, register an HTTPS or link-only source, and manually
 refresh a URL source. Each successful source version is retained as an immutable revision.
 
@@ -31,11 +31,10 @@ stale refresh still has a last successful revision. Users can select a particula
 older revision, for inspection. Raw specification content has a separate permission from catalog metadata and
 normalized entries.
 
-Workspace administrators configure artifact capabilities and schema bindings in **Workspace Settings → Applications
-& Capabilities**. The binding determines which schemas expose the catalog and which entity fields the integration
-uses. Managing sources requires entity edit access and the `artifact.manage` capability. Viewing raw specification
-content requires entity view access and the separate `artifact.content.view` capability. An entity schema without a
-valid binding does not show the API catalog.
+The API specification binding is set up by the workspace template and determines which schema exposes the catalog and
+which entity fields the integration uses. Managing sources requires entity edit access and the `artifact.manage` capability. Viewing raw specification
+content requires entity view access and the separate `artifact.content.view` capability. An entity schema without the
+binding does not show the API catalog.
 
 ## Related Pages
 

@@ -3,8 +3,9 @@ import { getRouteApi } from '@tanstack/react-router';
 import styles from './EntityBrowserScreen.module.css';
 import { Title } from '../../components/Title';
 import { Button } from '@diagram-craft/app-components/Button';
-import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
-import { TbPlus, TbDownload, TbUpload, TbDots, TbCheck, TbCopy, TbBookmark } from 'react-icons/tb';
+import { type MenuItem } from '../../components/DropdownMenu';
+import { TitleMenu } from '../../components/TitleMenu';
+import { TbPlus, TbDownload, TbUpload, TbCheck, TbCopy, TbBookmark } from 'react-icons/tb';
 import { useSavedViews, useCreateSavedView, useUpdateSavedView } from '../../hooks/useSavedViews';
 import { useDevConfig } from '../../hooks/useDevConfig';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
@@ -45,10 +46,10 @@ export const EntityBrowserScreen = () => {
   const [isSavingView, setIsSavingView] = useState(false);
   const [isCreatingBaseline, setIsCreatingBaseline] = useState(false);
   const { data: savedViews = [] } = useSavedViews(workspaceId, {
-    enabled: search.sidebarTab === 'views' || search.viewId != null
+    enabled: search.viewId != null
   });
   const { data: collections = [] } = useCollections(workspaceId, undefined, {
-    enabled: search.sidebarTab === 'bookmarks' || collectionId != null
+    enabled: collectionId != null
   });
   const createSavedViewMutation = useCreateSavedView(workspaceId);
   const updateSavedViewMutation = useUpdateSavedView(workspaceId);
@@ -292,10 +293,6 @@ export const EntityBrowserScreen = () => {
       onClick: handleExport
     });
 
-    if (devConfig?.enabled) {
-      items.push({ label: 'Dump View Config', onClick: handleDumpViewConfig });
-    }
-
     if (permissions.canCreateEntities && !readOnly) {
       items.push({
         label: 'Import CSV',
@@ -307,6 +304,10 @@ export const EntityBrowserScreen = () => {
             search: typeFilter ? { type: typeFilter } : undefined
           })
       });
+    }
+
+    if (devConfig?.enabled) {
+      items.push({ label: 'Dump View Config', onClick: handleDumpViewConfig });
     }
 
     return items;
@@ -337,7 +338,6 @@ export const EntityBrowserScreen = () => {
             search: (previous: Record<string, unknown>) => ({
               ...previous,
               baselineId: undefined,
-              sidebarTab: 'home',
               asOf: undefined,
               asOfIncludeProjects: undefined
             })
@@ -379,18 +379,14 @@ export const EntityBrowserScreen = () => {
               </Button>
             ) : undefined
           }
-          menu={
-            <DropdownMenu
-              trigger={<Button aria-label="Entity browser actions" icon={<TbDots size={14} />} />}
-              items={menuItems}
-            />
-          }
+          menu={<TitleMenu label="Entity browser actions" items={menuItems} />}
         />
       </div>
 
       <EntityBrowser
         onCountChange={setCount}
         onFirstFilteredSchemaIdChange={setFirstFilteredSchemaId}
+        tableRowOpensEntityPage
       />
 
       <SaveViewDialog

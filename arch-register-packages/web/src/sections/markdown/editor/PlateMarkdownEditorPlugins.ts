@@ -1,4 +1,3 @@
-import { createElement, type FC } from 'react';
 import type { MdRules } from '@platejs/markdown';
 import { MarkdownPlugin, remarkMdx } from '@platejs/markdown';
 import { DndPlugin } from '@platejs/dnd';
@@ -7,12 +6,11 @@ import { SlashPlugin, SlashInputPlugin } from '@platejs/slash-command/react';
 import remarkGfm from 'remark-gfm';
 import { NodeIdPlugin, type TElement } from 'platejs';
 import { createPlatePlugin } from 'platejs/react';
-import type { PlateElementProps } from 'platejs/react';
-import type { EditorSpec } from '../mdx-components/types';
-import { MDX_COMPONENTS } from '../mdx-components/mdxRegistry';
-import { CaptionNormalizePlugin } from '../mdx-components/blocks/caption/CaptionEditable';
-import { ColumnsNormalizePlugin } from '../mdx-components/blocks/columns/ColumnsEditable';
-import { TabsNormalizePlugin } from '../mdx-components/blocks/tabs/TabsEditable';
+import type { EditorSpec } from '../../../widgets/shared/types';
+import { getWidgetDefinitions } from '../../../widgets/shared/widgetRegistry';
+import { CaptionNormalizePlugin } from '../../../widgets/content-layout/caption/CaptionEditable';
+import { ColumnsNormalizePlugin } from '../../../widgets/content-layout/columns/ColumnsEditable';
+import { TabsNormalizePlugin } from '../../../widgets/content-layout/tabs/TabsEditable';
 import {
   BlockquoteElement,
   BoldLeaf,
@@ -40,6 +38,7 @@ import {
 import { SlashInputElement } from './PlateMarkdownEditorSlashCommands';
 
 const HEADING_TYPES = new Set(['h1', 'h2', 'h3']);
+const mdxDefinitions = getWidgetDefinitions('mdx');
 
 export const HeadingBreakPlugin = createPlatePlugin({
   key: 'heading-break',
@@ -71,30 +70,20 @@ export const HeadingBreakPlugin = createPlatePlugin({
 });
 
 export const mdxRules: MdRules = Object.fromEntries(
-  Object.entries(MDX_COMPONENTS)
-    .filter(([, spec]) => spec.editorSpec?.mdxRule)
-    .map(([name, spec]) => [name, spec.editorSpec!.mdxRule])
+  mdxDefinitions.flatMap(({ type, mdx }) =>
+    mdx.editorSpec?.mdxRule ? [[type, mdx.editorSpec.mdxRule] as const] : []
+  )
 );
-
-/**
- * The registry intentionally erases each component's Slate element type so it
- * can expose one homogeneous map. Adapt that erased component once at the
- * Plate boundary instead of spreading `any` casts across plugin assembly.
- */
-const toPlateElementComponent =
-  (component: EditorSpec['editableComponent']): FC<PlateElementProps> =>
-  props =>
-    createElement(component, props as unknown as Record<string, unknown>);
 
 const createMdxElementPlugin = (name: string, editorSpec: EditorSpec) =>
   createPlatePlugin({
     key: name,
     node: { isElement: true, ...editorSpec.nodeOptions }
-  }).withComponent(toPlateElementComponent(editorSpec.editableComponent));
+  }).withComponent(editorSpec.editableComponent);
 
-const mdxElementPlugins = Object.entries(MDX_COMPONENTS).flatMap(([name, spec]) => {
-  if (!spec.editorSpec) return [];
-  return [createMdxElementPlugin(name, spec.editorSpec)];
+const mdxElementPlugins = mdxDefinitions.flatMap(({ type, mdx }) => {
+  if (!mdx.editorSpec) return [];
+  return [createMdxElementPlugin(type, mdx.editorSpec)];
 });
 
 export const editorPlugins = [

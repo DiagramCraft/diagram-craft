@@ -99,6 +99,10 @@
                                   "type": "string",
                                   "description": "Field name"
                                 },
+                                "description": {
+                                  "type": "string",
+                                  "description": "User-facing description of what the field holds, shown alongside the field label"
+                                },
                                 "requirementLevel": {
                                   "anyOf": [
                                     {
@@ -180,6 +184,10 @@
                                 "name": {
                                   "type": "string",
                                   "description": "Field name"
+                                },
+                                "description": {
+                                  "type": "string",
+                                  "description": "User-facing description of what the field holds, shown alongside the field label"
                                 },
                                 "requirementLevel": {
                                   "anyOf": [
@@ -263,6 +271,10 @@
                                   "type": "string",
                                   "description": "Field name"
                                 },
+                                "description": {
+                                  "type": "string",
+                                  "description": "User-facing description of what the field holds, shown alongside the field label"
+                                },
                                 "requirementLevel": {
                                   "anyOf": [
                                     {
@@ -344,6 +356,10 @@
                                 "name": {
                                   "type": "string",
                                   "description": "Field name"
+                                },
+                                "description": {
+                                  "type": "string",
+                                  "description": "User-facing description of what the field holds, shown alongside the field label"
                                 },
                                 "requirementLevel": {
                                   "anyOf": [
@@ -427,6 +443,10 @@
                                   "type": "string",
                                   "description": "Field name"
                                 },
+                                "description": {
+                                  "type": "string",
+                                  "description": "User-facing description of what the field holds, shown alongside the field label"
+                                },
                                 "requirementLevel": {
                                   "anyOf": [
                                     {
@@ -508,6 +528,96 @@
                                 "name": {
                                   "type": "string",
                                   "description": "Field name"
+                                },
+                                "description": {
+                                  "type": "string",
+                                  "description": "User-facing description of what the field holds, shown alongside the field label"
+                                },
+                                "requirementLevel": {
+                                  "anyOf": [
+                                    {
+                                      "enum": [
+                                        "required",
+                                        "expected",
+                                        "optional"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Whether the field is required, expected, or optional"
+                                },
+                                "archived": {
+                                  "type": "boolean",
+                                  "description": "Whether the field is archived (hidden, but data is retained)"
+                                },
+                                "groupId": {
+                                  "type": "string",
+                                  "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                                },
+                                "external_kind": {
+                                  "enum": [
+                                    "ai",
+                                    "integration",
+                                    "automation"
+                                  ],
+                                  "type": "string",
+                                  "description": "Producer that manages this field"
+                                },
+                                "refresh_mode": {
+                                  "enum": [
+                                    "on_change",
+                                    "scheduled"
+                                  ],
+                                  "type": "string",
+                                  "description": "How the external value is expected to be refreshed"
+                                },
+                                "minCardinality": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991,
+                                  "description": "Minimum number of scalar values required"
+                                },
+                                "maxCardinality": {
+                                  "anyOf": [
+                                    {
+                                      "const": -1
+                                    },
+                                    {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 9007199254740991
+                                    }
+                                  ],
+                                  "description": "Maximum number of scalar values (-1 for unlimited; omitted means one)"
+                                },
+                                "type": {
+                                  "const": "duration",
+                                  "description": "Duration field: an amount and a unit (days, weeks, months, years)"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "type"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique field identifier"
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "description": "Field name"
+                                },
+                                "description": {
+                                  "type": "string",
+                                  "description": "User-facing description of what the field holds, shown alongside the field label"
                                 },
                                 "requirementLevel": {
                                   "anyOf": [
@@ -602,6 +712,10 @@
                                 "name": {
                                   "type": "string",
                                   "description": "Field name"
+                                },
+                                "description": {
+                                  "type": "string",
+                                  "description": "User-facing description of what the field holds, shown alongside the field label"
                                 },
                                 "requirementLevel": {
                                   "anyOf": [
@@ -731,6 +845,10 @@
                                   "type": "string",
                                   "description": "Field name"
                                 },
+                                "description": {
+                                  "type": "string",
+                                  "description": "User-facing description of what the field holds, shown alongside the field label"
+                                },
                                 "requirementLevel": {
                                   "anyOf": [
                                     {
@@ -812,6 +930,10 @@
                                 "name": {
                                   "type": "string",
                                   "description": "Field name"
+                                },
+                                "description": {
+                                  "type": "string",
+                                  "description": "User-facing description of what the field holds, shown alongside the field label"
                                 },
                                 "requirementLevel": {
                                   "anyOf": [
@@ -908,6 +1030,10 @@
                                   "type": "string",
                                   "description": "Field name"
                                 },
+                                "description": {
+                                  "type": "string",
+                                  "description": "User-facing description of what the field holds, shown alongside the field label"
+                                },
                                 "requirementLevel": {
                                   "anyOf": [
                                     {
@@ -998,6 +1124,10 @@
                                 "name": {
                                   "type": "string",
                                   "description": "Field name"
+                                },
+                                "description": {
+                                  "type": "string",
+                                  "description": "User-facing description of what the field holds, shown alongside the field label"
                                 },
                                 "requirementLevel": {
                                   "anyOf": [
@@ -1097,6 +1227,10 @@
                                   "type": "string",
                                   "description": "Field name"
                                 },
+                                "description": {
+                                  "type": "string",
+                                  "description": "User-facing description of what the field holds, shown alongside the field label"
+                                },
                                 "requirementLevel": {
                                   "const": "optional",
                                   "description": "Derived fields are never required"
@@ -1131,7 +1265,8 @@
                                     "currency",
                                     "select",
                                     "boolean",
-                                    "rating"
+                                    "rating",
+                                    "duration"
                                   ],
                                   "type": "string",
                                   "description": "Underlying type of the calculated value"
@@ -1277,6 +1412,28 @@
                                         ]
                                       },
                                       {
+                                        "type": "object",
+                                        "properties": {
+                                          "amount": {
+                                            "type": "number",
+                                            "minimum": 0
+                                          },
+                                          "unit": {
+                                            "enum": [
+                                              "days",
+                                              "weeks",
+                                              "months",
+                                              "years"
+                                            ],
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "amount",
+                                          "unit"
+                                        ]
+                                      },
+                                      {
                                         "type": "array",
                                         "items": {
                                           "type": "string"
@@ -1310,6 +1467,31 @@
                                           "required": [
                                             "amount",
                                             "currency"
+                                          ]
+                                        }
+                                      },
+                                      {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "object",
+                                          "properties": {
+                                            "amount": {
+                                              "type": "number",
+                                              "minimum": 0
+                                            },
+                                            "unit": {
+                                              "enum": [
+                                                "days",
+                                                "weeks",
+                                                "months",
+                                                "years"
+                                              ],
+                                              "type": "string"
+                                            }
+                                          },
+                                          "required": [
+                                            "amount",
+                                            "unit"
                                           ]
                                         }
                                       },
@@ -1814,6 +1996,10 @@
                                   "type": "string",
                                   "description": "Field name"
                                 },
+                                "description": {
+                                  "type": "string",
+                                  "description": "User-facing description of what the field holds, shown alongside the field label"
+                                },
                                 "requirementLevel": {
                                   "anyOf": [
                                     {
@@ -1876,6 +2062,10 @@
                                 "name": {
                                   "type": "string",
                                   "description": "Field name"
+                                },
+                                "description": {
+                                  "type": "string",
+                                  "description": "User-facing description of what the field holds, shown alongside the field label"
                                 },
                                 "requirementLevel": {
                                   "anyOf": [
@@ -1940,6 +2130,10 @@
                                   "type": "string",
                                   "description": "Field name"
                                 },
+                                "description": {
+                                  "type": "string",
+                                  "description": "User-facing description of what the field holds, shown alongside the field label"
+                                },
                                 "requirementLevel": {
                                   "anyOf": [
                                     {
@@ -2003,6 +2197,10 @@
                                   "type": "string",
                                   "description": "Field name"
                                 },
+                                "description": {
+                                  "type": "string",
+                                  "description": "User-facing description of what the field holds, shown alongside the field label"
+                                },
                                 "requirementLevel": {
                                   "anyOf": [
                                     {
@@ -2065,6 +2263,10 @@
                                 "name": {
                                   "type": "string",
                                   "description": "Field name"
+                                },
+                                "description": {
+                                  "type": "string",
+                                  "description": "User-facing description of what the field holds, shown alongside the field label"
                                 },
                                 "requirementLevel": {
                                   "anyOf": [
@@ -2140,6 +2342,10 @@
                                 "name": {
                                   "type": "string",
                                   "description": "Field name"
+                                },
+                                "description": {
+                                  "type": "string",
+                                  "description": "User-facing description of what the field holds, shown alongside the field label"
                                 },
                                 "requirementLevel": {
                                   "anyOf": [
@@ -2269,6 +2475,10 @@
                                   "type": "string",
                                   "description": "Field name"
                                 },
+                                "description": {
+                                  "type": "string",
+                                  "description": "User-facing description of what the field holds, shown alongside the field label"
+                                },
                                 "requirementLevel": {
                                   "anyOf": [
                                     {
@@ -2364,6 +2574,10 @@
                                   "type": "string",
                                   "description": "Field name"
                                 },
+                                "description": {
+                                  "type": "string",
+                                  "description": "User-facing description of what the field holds, shown alongside the field label"
+                                },
                                 "requirementLevel": {
                                   "const": "optional",
                                   "description": "Derived fields are never required"
@@ -2398,7 +2612,8 @@
                                     "currency",
                                     "select",
                                     "boolean",
-                                    "rating"
+                                    "rating",
+                                    "duration"
                                   ],
                                   "type": "string",
                                   "description": "Underlying type of the calculated value"
@@ -2627,7 +2842,7 @@
                           "disabled"
                         ],
                         "type": "string",
-                        "description": "Approval policy for relation instance changes. \"required\" is not yet supported — see #2574."
+                        "description": "Approval policy for relation instance changes. \"required\" means edits to existing relations go through a change proposal. Stored as the schema-scoped \"Relation change proposals\" workflow in Workspace settings > Workflows."
                       },
                       "created_at": {
                         "type": "string",
@@ -2813,6 +3028,10 @@
                                 "type": "string",
                                 "description": "Field name"
                               },
+                              "description": {
+                                "type": "string",
+                                "description": "User-facing description of what the field holds, shown alongside the field label"
+                              },
                               "requirementLevel": {
                                 "anyOf": [
                                   {
@@ -2875,6 +3094,10 @@
                               "name": {
                                 "type": "string",
                                 "description": "Field name"
+                              },
+                              "description": {
+                                "type": "string",
+                                "description": "User-facing description of what the field holds, shown alongside the field label"
                               },
                               "requirementLevel": {
                                 "anyOf": [
@@ -2939,6 +3162,10 @@
                                 "type": "string",
                                 "description": "Field name"
                               },
+                              "description": {
+                                "type": "string",
+                                "description": "User-facing description of what the field holds, shown alongside the field label"
+                              },
                               "requirementLevel": {
                                 "anyOf": [
                                   {
@@ -3002,6 +3229,10 @@
                                 "type": "string",
                                 "description": "Field name"
                               },
+                              "description": {
+                                "type": "string",
+                                "description": "User-facing description of what the field holds, shown alongside the field label"
+                              },
                               "requirementLevel": {
                                 "anyOf": [
                                   {
@@ -3064,6 +3295,10 @@
                               "name": {
                                 "type": "string",
                                 "description": "Field name"
+                              },
+                              "description": {
+                                "type": "string",
+                                "description": "User-facing description of what the field holds, shown alongside the field label"
                               },
                               "requirementLevel": {
                                 "anyOf": [
@@ -3139,6 +3374,10 @@
                               "name": {
                                 "type": "string",
                                 "description": "Field name"
+                              },
+                              "description": {
+                                "type": "string",
+                                "description": "User-facing description of what the field holds, shown alongside the field label"
                               },
                               "requirementLevel": {
                                 "anyOf": [
@@ -3268,6 +3507,10 @@
                                 "type": "string",
                                 "description": "Field name"
                               },
+                              "description": {
+                                "type": "string",
+                                "description": "User-facing description of what the field holds, shown alongside the field label"
+                              },
                               "requirementLevel": {
                                 "anyOf": [
                                   {
@@ -3363,6 +3606,10 @@
                                 "type": "string",
                                 "description": "Field name"
                               },
+                              "description": {
+                                "type": "string",
+                                "description": "User-facing description of what the field holds, shown alongside the field label"
+                              },
                               "requirementLevel": {
                                 "const": "optional",
                                 "description": "Derived fields are never required"
@@ -3397,7 +3644,8 @@
                                   "currency",
                                   "select",
                                   "boolean",
-                                  "rating"
+                                  "rating",
+                                  "duration"
                                 ],
                                 "type": "string",
                                 "description": "Underlying type of the calculated value"
@@ -3626,7 +3874,7 @@
                         "disabled"
                       ],
                       "type": "string",
-                      "description": "Approval policy for relation instance changes. \"required\" is not yet supported — see #2574."
+                      "description": "Approval policy for relation instance changes. \"required\" means edits to existing relations go through a change proposal. Stored as the schema-scoped \"Relation change proposals\" workflow in Workspace settings > Workflows."
                     },
                     "created_at": {
                       "type": "string",
@@ -7032,6 +7280,12 @@
                       },
                       "additionalProperties": {},
                       "description": "Values returned by structured EntityQuery projections"
+                    },
+                    "_usageCount": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "Total references to this entity (relation dependents, document/markdown mentions, project links, diagram files). Only present when includeUsageCount was requested — expensive to compute, so never included by default."
                     }
                   },
                   "required": [
@@ -7966,6 +8220,12 @@
                       },
                       "additionalProperties": {},
                       "description": "Values returned by structured EntityQuery projections"
+                    },
+                    "_usageCount": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "Total references to this entity (relation dependents, document/markdown mentions, project links, diagram files). Only present when includeUsageCount was requested — expensive to compute, so never included by default."
                     }
                   },
                   "required": [
@@ -8588,6 +8848,12 @@
                       },
                       "additionalProperties": {},
                       "description": "Values returned by structured EntityQuery projections"
+                    },
+                    "_usageCount": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "Total references to this entity (relation dependents, document/markdown mentions, project links, diagram files). Only present when includeUsageCount was requested — expensive to compute, so never included by default."
                     }
                   },
                   "required": [
@@ -9563,6 +9829,12 @@
                           },
                           "additionalProperties": {},
                           "description": "Values returned by structured EntityQuery projections"
+                        },
+                        "_usageCount": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991,
+                          "description": "Total references to this entity (relation dependents, document/markdown mentions, project links, diagram files). Only present when includeUsageCount was requested — expensive to compute, so never included by default."
                         }
                       },
                       "required": [
@@ -10761,6 +11033,12 @@
                           },
                           "additionalProperties": {},
                           "description": "Values returned by structured EntityQuery projections"
+                        },
+                        "_usageCount": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991,
+                          "description": "Total references to this entity (relation dependents, document/markdown mentions, project links, diagram files). Only present when includeUsageCount was requested — expensive to compute, so never included by default."
                         }
                       },
                       "required": [

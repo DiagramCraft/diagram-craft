@@ -7,6 +7,7 @@ import type {
 } from '@arch-register/api-types/documentContract';
 import {
   assertDocumentMetadataValid,
+  documentLinkTargetsFromBody,
   documentLinksFromMetadata,
   validateDocumentMetadata,
   validateDocumentTypeWrite
@@ -348,5 +349,19 @@ describe('documentLinksFromMetadata', () => {
       { field_id: 'documents', target_type: 'document', target_id: 'document-1', position: 0 },
       { field_id: 'documents', target_type: 'document', target_id: 'document-2', position: 1 }
     ]);
+  });
+});
+
+describe('documentLinkTargetsFromBody', () => {
+  it('returns the unique WikiLink ids in first-seen order', () => {
+    expect(
+      documentLinkTargetsFromBody(
+        'See <WikiLink id="a" /> and <WikiLink id="b"/>, then <WikiLink id="a" />'
+      )
+    ).toEqual(['a', 'b']);
+  });
+
+  it('ignores other components and plain text', () => {
+    expect(documentLinkTargetsFromBody('<EntityLink id="e1" /> and [a](b)')).toEqual([]);
   });
 });

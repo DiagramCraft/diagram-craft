@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
+import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import type { BrowserView, FilterCondition } from '@arch-register/api-types/viewContract';
 import type { BrowserViewConfigMap } from './entityBrowserState';
 import { getFilterValue } from './entityBrowserState';
@@ -10,6 +11,7 @@ export type EntityBrowserLocalStateInitial = Partial<{
   sort: string;
   view: BrowserView;
   viewConfigs: BrowserViewConfigMap;
+  entityQuery: EntityQuery | null;
 }>;
 
 type UseEntityBrowserLocalStateProps = {
@@ -29,6 +31,8 @@ export const useEntityBrowserLocalState = ({
   const [sort, setSort] = useState(initial?.sort ?? 'name');
   const [view, setView] = useState<BrowserView>(initial?.view ?? 'table');
   const [viewConfigs, setViewConfigs] = useState<BrowserViewConfigMap>(initial?.viewConfigs ?? {});
+
+  const [entityQuery, setEntityQuery] = useState<EntityQuery | null>(initial?.entityQuery ?? null);
 
   const typeFilter = useMemo(() => getFilterValue(conditions, '_schemaId'), [conditions]);
   const statusFilter = useMemo(() => getFilterValue(conditions, '_lifecycle'), [conditions]);
@@ -50,10 +54,12 @@ export const useEntityBrowserLocalState = ({
   return {
     activeViewConfig,
     conditions,
+    entityQuery,
     ownerFilter,
     projectScope,
     q,
     setConditions,
+    setEntityQuery,
     setActiveViewConfig,
     setProjectScope,
     setQ,

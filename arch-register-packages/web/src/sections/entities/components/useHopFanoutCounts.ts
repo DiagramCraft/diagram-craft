@@ -5,7 +5,7 @@ import {
   PATH_WALKER_PROJECTION_ALIAS,
   buildHopColumnQuery,
   decodeHopColumnNodes
-} from './pathWalkerViewState';
+} from './trailViewState';
 
 /**
  * For a column of source entities and a chosen outgoing `hop`, resolves how many distinct

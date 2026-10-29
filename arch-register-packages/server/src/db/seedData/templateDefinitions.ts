@@ -91,7 +91,6 @@ const definitionId = (
     'enum:information-governance:regulatory-tags': INFO_ASSET_IDS.regulatoryTagsEnum,
     'enum:information-governance:processing-purposes': INFO_ASSET_IDS.processingPurposesEnum,
     'enum:information-governance:residency-regions': INFO_ASSET_IDS.residencyRegionsEnum,
-    'enum:information-governance:retention-time-unit': RETENTION_IDS.timeUnitEnum,
     'enum:risk-compliance:risk-category': SEED_ENUM_IDS.riskCategory,
     'enum:risk-compliance:risk-status': SEED_ENUM_IDS.riskStatus,
     'enum:risk-compliance:risk-mitigation-effectiveness': SEED_ENUM_IDS.mitigationEffectiveness,
@@ -193,21 +192,6 @@ const rawSeedTemplateDefinitions = instantiateTemplateComposition(
   seedTemplateInstantiationOptions
 );
 
-const seedCapabilityConfigurations = rawSeedTemplateDefinitions.capabilityConfigurations.map(
-  configuration =>
-    configuration.type === 'risk-compliance'
-      ? {
-          ...configuration,
-          bindings: {
-            ...configuration.bindings,
-            dataEntity: {
-              target: { kind: 'entity_schema' as const, id: SEED_SCHEMA_IDS.dataEntity }
-            }
-          }
-        }
-      : configuration
-);
-
 const sharedFieldGroups = rawSeedTemplateDefinitions.fieldGroups as SharedFieldGroupDbResult[];
 
 const definitionOrder = <T>(
@@ -263,7 +247,6 @@ const enumOrder = [
   SEED_ENUM_IDS.strategicImportance,
   SEED_ENUM_IDS.investmentPriority,
   SEED_ENUM_IDS.capabilityReferenceModel,
-  SEED_ENUM_IDS.retentionTimeUnit,
   SEED_ENUM_IDS.regulatoryTags,
   SEED_ENUM_IDS.processingPurposes,
   SEED_ENUM_IDS.residencyRegions
@@ -307,7 +290,7 @@ const orderedRelationSchemas = definitionOrder(
 
 export const seedTemplateDefinitions: InstantiatedTemplateComposition = {
   ...rawSeedTemplateDefinitions,
-  capabilityConfigurations: seedCapabilityConfigurations,
+  capabilityConfigurations: rawSeedTemplateDefinitions.capabilityConfigurations,
   schemas: orderedSchemas,
   enums: orderedEnums,
   fieldGroups: orderedFieldGroups,
@@ -323,11 +306,5 @@ export const seedTemplateRelationSchemaDefinitions: RelationSchemaDbResult[] =
   seedTemplateDefinitions.relationSchemas;
 
 export const SEED_CAPABILITY_CONFIGURATION_IDS = {
-  'api-specification': '00000000-0000-0000-0000-000000000007',
-  'business-glossary': '00000000-0000-0000-0000-000000000008',
-  'strategy-model': '00000000-0000-0000-0000-00000000000a',
-  'vendor-management': '00000000-0000-0000-0000-00000000000b',
-  'data-stewardship': '00000000-0000-0000-0000-00000000000c',
-  'risk-compliance': '00000000-0000-0000-0000-00000000000d',
-  retention: RETENTION_IDS.capabilityConfiguration
+  'api-specification': '00000000-0000-0000-0000-000000000007'
 } as const;

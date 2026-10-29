@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BAND_TONE_COLORS, bandTone, heatColor, ratioColor } from './bandColor';
+import { BAND_TONE_COLORS, bandTone, heatColor, minBandTone, ratioColor } from './bandColor';
 
 describe('bandTone', () => {
   const bands = [
@@ -20,6 +20,30 @@ describe('bandTone', () => {
   it('falls back to the last band tone when no band matches', () => {
     expect(bandTone(10, [{ max: 2, tone: 'bad' }])).toBe('bad');
     expect(bandTone(1, [])).toBeNull();
+  });
+});
+
+describe('minBandTone', () => {
+  const bands = [
+    { min: -Infinity, tone: 'good' as const },
+    { min: 5, tone: 'neutral' as const },
+    { min: 10, tone: 'warn' as const },
+    { min: 15, tone: 'bad' as const }
+  ];
+
+  it('picks the last band whose min the value meets or exceeds', () => {
+    expect(minBandTone(0, bands)).toBe('good');
+    expect(minBandTone(4, bands)).toBe('good');
+    expect(minBandTone(5, bands)).toBe('neutral');
+    expect(minBandTone(9, bands)).toBe('neutral');
+    expect(minBandTone(10, bands)).toBe('warn');
+    expect(minBandTone(14, bands)).toBe('warn');
+    expect(minBandTone(15, bands)).toBe('bad');
+    expect(minBandTone(25, bands)).toBe('bad');
+  });
+
+  it('falls back to the first band tone when no band matches', () => {
+    expect(minBandTone(-1, [{ min: 0, tone: 'warn' }])).toBe('warn');
   });
 });
 

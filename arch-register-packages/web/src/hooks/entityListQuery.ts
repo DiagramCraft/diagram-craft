@@ -20,6 +20,9 @@ export type EntityListOptions = {
   includePlannedChanges?: boolean | null;
   treeExpansion?: 'ancestors' | 'both';
   treeDepth?: number | null;
+  /** Opt-in per-row usage count (`_usageCount`); not free, so only requested when a caller (e.g.
+   *  a table view showing that column) actually needs it. See `entityQueryOperations.ts`. */
+  includeUsageCount?: boolean;
 };
 
 export const toEntityListQuery = (options: EntityListOptions) => ({
@@ -37,5 +40,6 @@ export const toEntityListQuery = (options: EntityListOptions) => ({
   asOf: options.asOf ?? undefined,
   includePlannedChanges: options.includePlannedChanges ?? undefined,
   treeExpansion: options.treeExpansion ?? undefined,
-  treeDepth: options.treeDepth ?? undefined
+  treeDepth: options.treeDepth ?? undefined,
+  includeUsageCount: options.includeUsageCount ?? undefined
 });

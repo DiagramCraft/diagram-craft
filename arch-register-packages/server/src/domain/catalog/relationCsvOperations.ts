@@ -7,7 +7,8 @@ import { httpAssert } from '../../utils/httpAssert';
 import { requireSchemaRead, requireWorkspaceCapability } from '../auth/authorization';
 import { isFieldEditRestricted, isFieldViewRestricted } from '../auth/fieldGroupAccessControl';
 import { canEditTypedRelation } from './relationAccessControl';
-import { relationRequiresApproval } from './relationHelpers';
+import { relationRequiresApprovalWithPolicy } from './relationHelpers';
+import { getRelationApprovalPoliciesBySchema } from '../governance/schemaGovernancePolicy';
 import {
   createWorkspaceRelation,
   listAllRelations,
@@ -287,12 +288,20 @@ const parseFieldValue = (
 };
 
 const relationImportContext = async (db: DatabaseAdapter, workspace: string) => {
-  const [relationSchemas, entities, entitySchemas, enums, existingRelations] = await Promise.all([
+  const [
+    relationSchemas,
+    entities,
+    entitySchemas,
+    enums,
+    existingRelations,
+    relationApprovalPolicyBySchema
+  ] = await Promise.all([
     db.relation.listRelationSchemas(workspace),
     db.catalog.listEntities(workspace),
     db.catalog.listSchemas(workspace),
     db.catalog.listEnums(workspace),
-    listAllRelations(db, workspace, {})
+    listAllRelations(db, workspace, {}),
+    getRelationApprovalPoliciesBySchema(db, workspace)
   ]);
   return {
     relationSchemas,
@@ -302,7 +311,8 @@ const relationImportContext = async (db: DatabaseAdapter, workspace: string) => 
     entitySchemaById: new Map(entitySchemas.map(schema => [schema.id, schema])),
     relationSchemaById: new Map(relationSchemas.map(schema => [schema.id, schema])),
     enums,
-    existingRelations
+    existingRelations,
+    relationApprovalPolicyBySchema
   };
 };
 
@@ -379,7 +389,14 @@ const validateCsvRelationRow = (
     errors.push('Multiple existing relations match this schema and endpoint pair');
   }
   const existing = matches[0];
-  if (existing && schema && relationRequiresApproval(schema, existing)) {
+  if (
+    existing &&
+    schema &&
+    relationRequiresApprovalWithPolicy(
+      context.relationApprovalPolicyBySchema.get(schema.id),
+      existing
+    )
+  ) {
     errors.push(
       `Relation '${existing.id}' requires an approved change proposal before it can be edited`
     );
@@ -570,7 +587,14 @@ export const commitRelationsImport = async (
       }
     }
     const schema = context.relationSchemaById.get(row.schemaId);
-    if (existing && schema && relationRequiresApproval(schema, existing)) {
+    if (
+      existing &&
+      schema &&
+      relationRequiresApprovalWithPolicy(
+        context.relationApprovalPolicyBySchema.get(schema.id),
+        existing
+      )
+    ) {
       row.errors.push(
         `Relation '${existing.id}' requires an approved change proposal before it can be edited`
       );

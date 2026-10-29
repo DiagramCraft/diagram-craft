@@ -1,7 +1,10 @@
 import { useMemo, useRef, useState } from 'react';
+import { useOpenDiagram } from '../diagram/useOpenDiagram';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { TbFileText, TbFolderOpen, TbPlus, TbUpload } from 'react-icons/tb';
-import styles from '../projects/ProjectDetailScreen.module.css';
+import styles from './WorkspaceContentScreen.module.css';
+import { parentPath } from '../../lib/contentPath';
+import { useContentFileContextMenu } from '../../components/useContentFileContextMenu';
 import { Title } from '../../components/Title';
 import {
   contentDownloadUrl,
@@ -11,9 +14,9 @@ import {
 } from '../../hooks/useContentScope';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { Button } from '@diagram-craft/app-components/Button';
-import { AddDiagramDialog } from '../projects/AddDiagramDialog';
+import { AddDiagramDialog } from '../../dialogs/AddDiagramDialog';
 import { AddMarkdownDialog } from '../markdown/AddMarkdownDialog';
-import { ContentFolderDialog } from '../../components/ContentFolderDialog';
+import { AddContentFolderDialog } from '../../components/AddContentFolderDialog';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import {
@@ -34,6 +37,7 @@ type WorkspaceContentScreenProps = {
 
 export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceContentScreenProps) => {
   const navigate = useNavigate();
+  const { openDiagram, dialog: openDiagramDialog } = useOpenDiagram();
   const search = useSearch({ strict: false }) as WorkspaceContentSearchParams;
   const { workspace } = useWorkspaceContext();
   const scope: ContentScope = useMemo(
@@ -43,11 +47,18 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
   const { data } = useContentTree(scope);
   const contentOperations = useContentScopeOperations(scope);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileMenu = useContentFileContextMenu({
+    folders: data?.folders ?? [],
+    operations: contentOperations,
+    onDownload: file => handleDownloadClick(file.path, file.name, file.original_filename ?? null)
+  });
   const [addDiagramOpen, setAddDiagramOpen] = useState(false);
   const [addMarkdownOpen, setAddMarkdownOpen] = useState(false);
   const [addFolderOpen, setAddFolderOpen] = useState(false);
+  const folderSegments = folder ? folder.split('/').filter(Boolean) : [];
   const filter = search.contentQuery ?? '';
   const viewMode = search.contentView ?? 'grid';
+  const [sort, setSort] = useState('default');
 
   const setFilter = (value: string) => {
     const route = folder
@@ -77,10 +88,12 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
   };
 
   const handleDiagramClick = (fileId: string) => {
-    navigate({
-      to: '/$workspaceSlug/content/diagrams/$diagramId',
-      params: { workspaceSlug, diagramId: fileId }
-    });
+    void openDiagram(fileId, () =>
+      navigate({
+        to: '/$workspaceSlug/content/diagrams/$diagramId',
+        params: { workspaceSlug, diagramId: fileId }
+      })
+    );
   };
 
   const handleMarkdownClick = (fileId: string, mode: 'edit' | 'preview' = 'preview') => {
@@ -108,20 +121,68 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
   const isReadOnly = folderData?.read_only ?? false;
   const files = folder ? (folderData?.files ?? []) : (data?.rootFiles ?? []);
 
+  const subfolders = (data?.folders ?? [])
+    .filter(f => parentPath(f.path) === (folder || null))
+    .filter(f => !filter || f.name.toLowerCase().includes(filter.toLowerCase()))
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map(f => ({
+      path: f.path,
+      name: f.name,
+      fileCount: f.files.length,
+      readOnly: f.read_only
+    }));
+
+  const handleOpenFolder = (path: string) =>
+    navigate({
+      ...workspaceContentFolderRoute(workspaceSlug, path),
+      search: { contentView: search.contentView }
+    });
+
   const lc = filter.toLowerCase();
-  const filtered = lc ? files.filter(f => f.name.toLowerCase().includes(lc)) : files;
+  const matching = lc ? files.filter(f => f.name.toLowerCase().includes(lc)) : files;
+  const filtered =
+    sort === 'name-asc'
+      ? [...matching].sort((a, b) => a.name.localeCompare(b.name))
+      : sort === 'name-desc'
+        ? [...matching].sort((a, b) => b.name.localeCompare(a.name))
+        : sort === 'size'
+          ? [...matching].sort((a, b) => b.size_bytes - a.size_bytes)
+          : matching;
 
   return (
     <div className={styles.screen}>
+      {openDiagramDialog}
       <div className={styles.header}>
         <Title
           breadcrumb={[
             {
               label: 'Home',
               onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
-            }
+            },
+            ...(folderSegments.length > 0
+              ? [
+                  {
+                    label: workspace?.name ?? workspaceSlug,
+                    onClick: () =>
+                      navigate({ to: '/$workspaceSlug/content', params: { workspaceSlug } })
+                  },
+                  ...folderSegments.map((segment, i) => ({
+                    label: segment,
+                    onClick:
+                      i === folderSegments.length - 1
+                        ? undefined
+                        : () =>
+                            navigate(
+                              workspaceContentFolderRoute(
+                                workspaceSlug,
+                                folderSegments.slice(0, i + 1).join('/')
+                              )
+                            )
+                  }))
+                ]
+              : [])
           ]}
-          title={workspace?.name ?? workspaceSlug}
+          title={folderSegments.at(-1) ?? workspace?.name ?? workspaceSlug}
           buttons={
             !isReadOnly && (
               <MenuButton.Root>
@@ -164,32 +225,34 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
         />
       </div>
 
-      <div className={styles.meta}>
-        <div className={styles.metaItem}>
-          <div className={styles.metaLabel}>Items</div>
-          <div className={styles.metaValue}>
-            <span className="mono tabular">{files.length}</span>
-          </div>
-        </div>
-      </div>
-
       <DiagramBrowserToolbar
         filter={filter}
         onFilterChange={setFilter}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
+        sort={sort}
+        onSortChange={setSort}
+        sortOptions={[
+          { value: 'default', label: 'Default' },
+          { value: 'name-asc', label: 'Name A–Z' },
+          { value: 'name-desc', label: 'Name Z–A' },
+          { value: 'size', label: 'Size' }
+        ]}
       />
 
       <DiagramBrowserView
         hasFilter={filter.length > 0}
         viewMode={viewMode}
-        listItems={filtered.map(file => ({ file, folder }))}
+        listItems={filtered.map(file => ({ file }))}
         gridSections={[{ key: 'workspace-content', items: filtered, showAddButton: false }].map(
           section => ({
             ...section,
             items: section.items.map(file => ({ file }))
           })
         )}
+        subfolders={subfolders}
+        onOpenFolder={f => handleOpenFolder(f.path)}
+        onContextMenu={fileMenu.open}
         onOpenDiagram={file => handleDiagramClick(file.id)}
         onOpenMarkdown={file => handleMarkdownClick(file.id)}
         onDownloadFile={file =>
@@ -201,6 +264,8 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
         }}
         noMatchState={{ title: 'No matches', sub: `No items match "${filter}".` }}
       />
+
+      {fileMenu.element}
 
       <input
         ref={fileInputRef}
@@ -225,6 +290,8 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
         open={addMarkdownOpen}
         onClose={() => setAddMarkdownOpen(false)}
         workspaceSlug={workspaceSlug}
+        scope={scope}
+        folder={folder ?? null}
         onCreated={file => {
           setAddMarkdownOpen(false);
           handleMarkdownClick(file.id, 'edit');
@@ -245,12 +312,11 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
         isPending={contentOperations.createMarkdown.isPending}
       />
 
-      <ContentFolderDialog
+      <AddContentFolderDialog
+        scope={scope}
         open={addFolderOpen}
         onClose={() => setAddFolderOpen(false)}
         onCreated={() => setAddFolderOpen(false)}
-        onSubmit={path => contentOperations.createFolder.mutateAsync(path)}
-        isPending={contentOperations.createFolder.isPending}
         parentFolder={folder ?? undefined}
         placeholder="e.g. Architecture"
       />

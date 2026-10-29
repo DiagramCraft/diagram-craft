@@ -1,4 +1,4 @@
-import { useAppDashboard } from '../../hooks/useDashboard';
+import { useWorkspaceDashboard } from '../../hooks/useDashboard';
 import { DashboardSidebar } from './DashboardSidebar';
 
 /**
@@ -10,12 +10,12 @@ import { DashboardSidebar } from './DashboardSidebar';
  */
 export const AppDashboardPrimarySidebar = ({
   workspaceSlug,
-  appKey
+  dashboardId
 }: {
   workspaceSlug: string;
-  appKey: string;
+  dashboardId: string;
 }) => {
-  const { data: dashboard } = useAppDashboard(workspaceSlug, appKey);
+  const { data: dashboard } = useWorkspaceDashboard(workspaceSlug, dashboardId);
   if (!dashboard?.sidebar) return null;
 
   return (

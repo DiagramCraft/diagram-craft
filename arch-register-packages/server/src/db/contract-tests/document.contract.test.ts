@@ -68,6 +68,39 @@ runContractSuiteAgainstBothDrivers('DocumentDatabase', getDb => {
       updated_at: now
     });
     expect(template.project_id).toBe(project.id);
+
+    const untyped = await db.document.createDocumentTemplate({
+      id: randomUUID(),
+      workspace,
+      project_id: null,
+      name: 'Untyped template',
+      body: '# {{title}}',
+      document_type_id: null,
+      metadata_defaults: {},
+      created_at: now,
+      updated_at: now
+    });
+    expect(untyped.document_type_id).toBeNull();
+    expect(
+      (await db.document.getDocumentTemplate(workspace, untyped.id))?.document_type_id
+    ).toBeNull();
+    const retyped = await db.document.updateDocumentTemplate(workspace, untyped.id, {
+      project_id: null,
+      name: 'Untyped template',
+      body: '# {{title}}',
+      document_type_id: type.id,
+      metadata_defaults: {},
+      updated_at: new Date()
+    });
+    expect(retyped?.document_type_id).toBe(type.id);
+    await db.document.updateDocumentTemplate(workspace, untyped.id, {
+      project_id: null,
+      name: 'Untyped template',
+      body: '# {{title}}',
+      document_type_id: null,
+      metadata_defaults: {},
+      updated_at: new Date()
+    });
     expect(type.color).toBe('oklch(0.62 0.14 295)');
     expect(type.icon).toBe('clipboard');
     const updatedType = await db.document.updateDocumentType(workspace, type.id, {
@@ -365,6 +398,17 @@ runContractSuiteAgainstBothDrivers('DocumentDatabase', getDb => {
       })
     ]);
     expect(await db.document.listDocumentsLinkingDocument(workspace, newerNodeId)).toEqual([]);
+
+    // Body links live beside metadata links and are replaced independently of them
+    await db.document.replaceBodyDocumentLinks(workspace, newerNodeId, [olderNodeId]);
+    expect(await db.document.listDocumentsLinkingDocument(workspace, olderNodeId)).toHaveLength(2);
+    await db.document.replaceDocumentLinks(workspace, newerNodeId, []);
+    expect(await db.document.listDocumentsLinkingDocument(workspace, olderNodeId)).toEqual([
+      expect.objectContaining({ node_id: newerNodeId, field_id: '__body__' })
+    ]);
+    expect(await db.document.listDocumentLinks(workspace, newerNodeId)).toEqual([]);
+    await db.document.replaceBodyDocumentLinks(workspace, newerNodeId, []);
+    expect(await db.document.listDocumentsLinkingDocument(workspace, olderNodeId)).toEqual([]);
   });
 
   it('bumps document type version on update and leaves it unchanged when omitted', async () => {

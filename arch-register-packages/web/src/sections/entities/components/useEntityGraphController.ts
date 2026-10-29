@@ -28,6 +28,8 @@ type UseEntityGraphControllerOptions = {
   rootEntities?: readonly EntityGraphRoot[];
   graphName?: string;
   maxDepth?: number;
+  /** Layout the graph starts with; defaults to hierarchy. */
+  layout?: LayoutAlgorithm;
   direction?: EntityGraphDirection;
   relationSchemaIds?: readonly string[];
 };
@@ -40,6 +42,7 @@ export const useEntityGraphController = ({
   rootEntities: configuredRoots,
   graphName,
   maxDepth: configuredMaxDepth,
+  layout: configuredLayout,
   direction: configuredDirection,
   relationSchemaIds: configuredRelationSchemaIds
 }: UseEntityGraphControllerOptions) => {
@@ -58,7 +61,7 @@ export const useEntityGraphController = ({
       : [];
   }, [configuredRoots, rootEntityId, rootEntityName, rootEntitySchemaId]);
   const rootIds = useMemo(() => rootEntities.map(root => root.entityId), [rootEntities]);
-  const [layout, setLayout] = useState<LayoutAlgorithm>('hierarchy');
+  const [layout, setLayout] = useState<LayoutAlgorithm>(configuredLayout ?? 'hierarchy');
   const [layoutOptions, setLayoutOptions] = useState<LayoutOptions>(defaultLayoutOptions);
   const [maxDepth, setMaxDepth] = useState(configuredMaxDepth ?? 2);
   const [direction, setDirection] = useState<EntityGraphDirection>(configuredDirection ?? 'both');

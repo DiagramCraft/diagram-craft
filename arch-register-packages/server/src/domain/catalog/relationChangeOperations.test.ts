@@ -84,7 +84,6 @@ const relationSchema: RelationSchemaDbResult = {
   groups: [],
   color: null,
   icon: null,
-  relation_approval_policy: 'disabled',
   created_at: now,
   updated_at: now
 };
@@ -115,6 +114,7 @@ const makeRelation = (overrides: Partial<RelationDbResult> = {}): RelationDbResu
 const makeDb = (options: {
   relation?: RelationDbResult;
   schema?: RelationSchemaDbResult;
+  approvalRequired?: boolean;
   openApproval?: EntityChangeApprovalDbResult | null;
   revision?: EntityChangeApprovalRevisionDbResult | null;
 }) => {
@@ -156,6 +156,10 @@ const makeDb = (options: {
       listRelationSchemaVersions: vi.fn(async () => []),
       listRelations: vi.fn(async () => ({ items: [], total: 0 })),
       updateRelation
+    },
+    governanceCaseConfig: {
+      getCaseConfig: vi.fn(async () => ({ enabled: options.approvalRequired === true })),
+      listCaseConfig: vi.fn(async () => [])
     },
     catalog: {
       getEntity: vi.fn(async (_ws: string, id: string) =>
@@ -219,7 +223,7 @@ describe('getRelationChangeApproval', () => {
 
 describe('submitRelationChangeApproval', () => {
   it('rejects when the relation does not require approval', async () => {
-    const { db } = makeDb({ schema: { ...relationSchema, relation_approval_policy: 'disabled' } });
+    const { db } = makeDb({});
 
     await expect(
       submitRelationChangeApproval(db, 'ws-1', 'relation-1', eventForAuthCtx(), {
@@ -230,8 +234,7 @@ describe('submitRelationChangeApproval', () => {
   });
 
   it('creates an approval, a revision, and a governance case with subjectType relation', async () => {
-    const requiredSchema = { ...relationSchema, relation_approval_policy: 'required' as const };
-    const { db, createApproval, createApprovalRevision } = makeDb({ schema: requiredSchema });
+    const { db, createApproval, createApprovalRevision } = makeDb({ approvalRequired: true });
 
     await submitRelationChangeApproval(db, 'ws-1', 'relation-1', eventForAuthCtx(), {
       baseVersion: 1,
@@ -261,8 +264,7 @@ describe('submitRelationChangeApproval', () => {
   });
 
   it('rejects when the proposed data has no actual change', async () => {
-    const requiredSchema = { ...relationSchema, relation_approval_policy: 'required' as const };
-    const { db } = makeDb({ schema: requiredSchema });
+    const { db } = makeDb({ approvalRequired: true });
 
     await expect(
       submitRelationChangeApproval(db, 'ws-1', 'relation-1', eventForAuthCtx(), {
@@ -273,8 +275,7 @@ describe('submitRelationChangeApproval', () => {
   });
 
   it('rejects a proposal that changes a relation endpoint', async () => {
-    const requiredSchema = { ...relationSchema, relation_approval_policy: 'required' as const };
-    const { db } = makeDb({ schema: requiredSchema });
+    const { db } = makeDb({ approvalRequired: true });
 
     await expect(
       submitRelationChangeApproval(db, 'ws-1', 'relation-1', eventForAuthCtx(), {

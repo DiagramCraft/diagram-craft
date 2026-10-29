@@ -1,9 +1,9 @@
 import type { Dispatch, ReactNode, SetStateAction } from 'react';
 import { TbSettings } from 'react-icons/tb';
-import { Button } from '@diagram-craft/app-components/Button';
+import { ToolbarButton } from '../../../components/ToolbarButton';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { Popover } from '@diagram-craft/app-components/Popover';
-import { Select } from '@diagram-craft/app-components/Select';
+import { LabeledSelect } from '../../../components/LabeledSelect';
 import type { LayoutAlgorithm, LayoutOptions } from '../../../components/DependencyGraph';
 import styles from './EntityGraphView.module.css';
 
@@ -24,24 +24,27 @@ export const GraphLayoutToolbar = ({
 }: Props) => {
   return (
     <>
-      <span className={styles.eToolbarLabel}>Layout</span>
-      <Select.Root value={layout} onChange={value => value && setLayout(value as LayoutAlgorithm)}>
-        <Select.Item value="hierarchy">Hierarchy</Select.Item>
-        <Select.Item value="layered">Layered</Select.Item>
-        <Select.Item value="force">Force-directed</Select.Item>
-        <Select.Item value="tree">Tree</Select.Item>
-      </Select.Root>
+      <LabeledSelect
+        label="Layout"
+        value={layout}
+        onChange={value => setLayout(value as LayoutAlgorithm)}
+        options={[
+          { value: 'hierarchy', label: 'Hierarchy' },
+          { value: 'layered', label: 'Layered' },
+          { value: 'force', label: 'Force-directed' },
+          { value: 'tree', label: 'Tree' }
+        ]}
+      />
 
       {betweenLayoutAndSettings}
 
       <Popover.Root>
         <Popover.Trigger
           element={
-            <Button
-              size="sm"
-              variant="icon-only"
+            <ToolbarButton
               icon={<TbSettings size={13} />}
               title="Advanced layout settings"
+              aria-label="Advanced layout settings"
             />
           }
         />
