@@ -179,7 +179,9 @@ export const AddMarkdownDialog = ({
             style={{ width: '100%' }}
           >
             <Select.Item value="__blank__">Blank document</Select.Item>
-            {availableTemplates.map(template => (
+            {availableTemplates
+              .filter(template => template.document_type_id === documentTypeId)
+              .map(template => (
               <Select.Item key={template.id} value={template.id}>
                 {template.name}
               </Select.Item>

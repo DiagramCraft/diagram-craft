@@ -19,6 +19,8 @@ import type { DocumentMetadata } from '@arch-register/api-types/documentContract
 import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectCrudContract';
 import styles from './ProjectMarkdownTemplatesDialog.module.css';
 
+const UNTYPED = '__untyped__';
+
 type Props = {
   open: boolean;
   project: ProjectDetailData;
@@ -41,6 +43,7 @@ export const ProjectMarkdownTemplatesDialog = ({ open, project, workspaceId, onC
   const createTemplate = useCreateDocumentTemplate(workspaceId);
   const updateTemplate = useUpdateDocumentTemplate(workspaceId);
   const archiveTemplate = useArchiveDocumentTemplate(workspaceId);
+  const isUntyped = templateTypeId === UNTYPED;
   const selectedTemplateType = documentTypes.find(type => type.id === templateTypeId);
 
   const showEditor = isCreating || editingTemplateId != null;
@@ -50,7 +53,7 @@ export const ProjectMarkdownTemplatesDialog = ({ open, project, workspaceId, onC
     setEditingTemplateId(template.id);
     setTemplateName(template.name);
     setTemplateBody(template.body);
-    setTemplateTypeId(template.document_type_id);
+    setTemplateTypeId(template.document_type_id ?? UNTYPED);
     setTemplateDefaults(JSON.stringify(template.metadata_defaults, null, 2));
     setTemplateError('');
   };
@@ -76,10 +79,10 @@ export const ProjectMarkdownTemplatesDialog = ({ open, project, workspaceId, onC
   };
 
   const saveTemplate = async () => {
-    if (!templateName.trim() || !selectedTemplateType) return;
+    if (!templateName.trim() || (!selectedTemplateType && !isUntyped)) return;
     setTemplateError('');
     try {
-      const parsedDefaults: unknown = JSON.parse(templateDefaults);
+      const parsedDefaults: unknown = isUntyped ? {} : JSON.parse(templateDefaults);
       if (
         parsedDefaults === null ||
         typeof parsedDefaults !== 'object' ||
@@ -90,7 +93,7 @@ export const ProjectMarkdownTemplatesDialog = ({ open, project, workspaceId, onC
       const body = {
         name: templateName.trim(),
         body: templateBody,
-        document_type_id: selectedTemplateType.id,
+        document_type_id: selectedTemplateType?.id ?? null,
         metadata_defaults: parsedDefaults as DocumentMetadata,
         project_id: project.id
       };
@@ -133,8 +136,10 @@ export const ProjectMarkdownTemplatesDialog = ({ open, project, workspaceId, onC
                     {template.name}
                   </span>
                   <span className={styles.listRowSub}>
-                    {documentTypes.find(type => type.id === template.document_type_id)?.name ??
-                      'Unknown type'}
+                    {template.document_type_id === null
+                      ? 'Untyped Markdown'
+                      : (documentTypes.find(type => type.id === template.document_type_id)?.name ??
+                        'Unknown type')}
                     {template.archived ? ' · archived' : ''}
                   </span>
                 </button>
@@ -165,6 +170,7 @@ export const ProjectMarkdownTemplatesDialog = ({ open, project, workspaceId, onC
                     onChange={value => setTemplateTypeId(value ?? '')}
                     placeholder="Select a document type"
                   >
+                    <Select.Item value={UNTYPED}>Untyped Markdown</Select.Item>
                     {documentTypes
                       .filter(type => !type.archived || type.id === templateTypeId)
                       .map(type => (
@@ -182,14 +188,16 @@ export const ProjectMarkdownTemplatesDialog = ({ open, project, workspaceId, onC
                     onChange={value => setTemplateBody(value ?? '')}
                   />
                 </FormElement>
-                <FormElement label="Metadata defaults (JSON)" required={false}>
-                  <TextArea
-                    rows={4}
-                    value={templateDefaults}
-                    onChange={value => setTemplateDefaults(value ?? '')}
-                    placeholder="{}"
-                  />
-                </FormElement>
+                {!isUntyped && (
+                  <FormElement label="Metadata defaults (JSON)" required={false}>
+                    <TextArea
+                      rows={4}
+                      value={templateDefaults}
+                      onChange={value => setTemplateDefaults(value ?? '')}
+                      placeholder="{}"
+                    />
+                  </FormElement>
+                )}
                 {templateError && <Banner variant="error">{templateError}</Banner>}
               </div>
               <div className={styles.editorActions}>
@@ -210,7 +218,7 @@ export const ProjectMarkdownTemplatesDialog = ({ open, project, workspaceId, onC
                   onClick={() => void saveTemplate()}
                   disabled={
                     !templateName.trim() ||
-                    !selectedTemplateType ||
+                    (!selectedTemplateType && !isUntyped) ||
                     createTemplate.isPending ||
                     updateTemplate.isPending
                   }

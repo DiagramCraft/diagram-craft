@@ -303,6 +303,50 @@ test('workspace copy preserves typed documents, links, templates, and entity con
       project_id: sourceProject.id
     }
   });
+  const untypedTemplate = await orpc.documents.documentTemplates.create({
+    params: { workspace: source.url_slug },
+    body: {
+      name: `Untyped template ${suffix}`,
+      body: '# {{title}}',
+      document_type_id: null,
+      metadata_defaults: {},
+      project_id: null
+    }
+  });
+  expect(untypedTemplate.document_type_id).toBeNull();
+  const untypedProjectTemplate = await orpc.documents.documentTemplates.create({
+    params: { workspace: source.url_slug },
+    body: {
+      name: `Untyped project template ${suffix}`,
+      body: '# {{title}}',
+      document_type_id: null,
+      metadata_defaults: {},
+      project_id: sourceProject.id
+    }
+  });
+  const renamedUntyped = await orpc.documents.documentTemplates.update({
+    params: { workspace: source.url_slug, id: untypedTemplate.id },
+    body: {
+      name: `Untyped template renamed ${suffix}`,
+      body: '# {{title}}',
+      document_type_id: null,
+      metadata_defaults: {},
+      project_id: null
+    }
+  });
+  expect(renamedUntyped.document_type_id).toBeNull();
+  await expect(
+    orpc.documents.documentTemplates.create({
+      params: { workspace: source.url_slug },
+      body: {
+        name: `Untyped with defaults ${suffix}`,
+        body: '# {{title}}',
+        document_type_id: null,
+        metadata_defaults: { affected_entity: entity._uid },
+        project_id: null
+      }
+    })
+  ).rejects.toMatchObject({ status: 400 });
 
   const copiedWorkspace = await orpc.workspaces.create({
     body: {
@@ -365,6 +409,11 @@ test('workspace copy preserves typed documents, links, templates, and entity con
       })
     ])
   );
+  expect(copiedTemplates).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ name: renamedUntyped.name, document_type_id: null })
+    ])
+  );
   const copiedProjects = await orpc.projects.list({
     params: { workspace: copiedWorkspace.url_slug }
   });
@@ -377,6 +426,15 @@ test('workspace copy preserves typed documents, links, templates, and entity con
   expect(copiedProjectTemplates).toEqual(
     expect.arrayContaining([
       expect.objectContaining({ name: projectTemplate.name, project_id: copiedProject!.id })
+    ])
+  );
+  expect(copiedProjectTemplates).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        name: untypedProjectTemplate.name,
+        project_id: copiedProject!.id,
+        document_type_id: null
+      })
     ])
   );
 

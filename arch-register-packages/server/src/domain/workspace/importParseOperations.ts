@@ -255,7 +255,7 @@ export const parseImport = async (
       const nodeIds = new Set((data.content_nodes ?? []).map(node => node.id));
       const projectIds = new Set((data.projects ?? []).map(project => project.id));
       for (const template of data.documents.templates) {
-        if (!documentTypeIds.has(template.document_type_id)) {
+        if (template.document_type_id != null && !documentTypeIds.has(template.document_type_id)) {
           const message = `Document template '${template.id}' references document type '${template.document_type_id}', which is not included in the import archive and will be skipped`;
           diagnostics.push({
             code: 'missing_reference',

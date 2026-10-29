@@ -192208,7 +192208,14 @@
                         "type": "string"
                       },
                       "document_type_id": {
-                        "type": "string"
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
                       },
                       "metadata_defaults": {
                         "type": "object",
@@ -192299,8 +192306,15 @@
                     "type": "string"
                   },
                   "document_type_id": {
-                    "type": "string",
-                    "minLength": 1
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "metadata_defaults": {
                     "type": "object",
@@ -192382,7 +192396,14 @@
                       "type": "string"
                     },
                     "document_type_id": {
-                      "type": "string"
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     },
                     "metadata_defaults": {
                       "type": "object",
@@ -192482,8 +192503,15 @@
                     "type": "string"
                   },
                   "document_type_id": {
-                    "type": "string",
-                    "minLength": 1
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "metadata_defaults": {
                     "type": "object",
@@ -192565,7 +192593,14 @@
                       "type": "string"
                     },
                     "document_type_id": {
-                      "type": "string"
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     },
                     "metadata_defaults": {
                       "type": "object",
@@ -192745,7 +192780,14 @@
                       "type": "string"
                     },
                     "document_type_id": {
-                      "type": "string"
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     },
                     "metadata_defaults": {
                       "type": "object",

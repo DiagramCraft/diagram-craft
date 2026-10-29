@@ -1631,7 +1631,7 @@ export const importDocuments = async (
     if (template.project_id != null && !idMapping.projects.has(template.project_id)) continue;
     const projectId = resolveMappedIdOrNull(idMapping.projects, template.project_id);
     const documentTypeId = resolveMappedIdOrNull(typeMapping, template.document_type_id);
-    if (!documentTypeId) continue;
+    if (template.document_type_id != null && !documentTypeId) continue;
     const resolution = resolutions[template.id];
     const existing = existingTemplates.find(
       candidate =>
@@ -1658,7 +1658,7 @@ export const importDocuments = async (
       project_id: projectId,
       name: template.name,
       body: template.body,
-      document_type_id: documentTypeId,
+      document_type_id: documentTypeId ?? null,
       metadata_defaults: metadataDefaults,
       updated_at: new Date()
     };
