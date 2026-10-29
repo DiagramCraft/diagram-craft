@@ -552,15 +552,16 @@ export const relocateContentFile = async (
       const displayName = getDisplayNameForPath(source, newPath);
       const parentId = contentParentId(nodes, newPath);
       const timestamp = new Date();
-      const rootId = randomUUID();
-      const sourceContent = await storage.read(ws, resolved.storageId, source.id);
-      let rootContent = sourceContent;
+      // The node keeps its id so that references by id (document links, wiki links) stay valid
+      const rootId = source.id;
+      let rootContent: Buffer | undefined;
       let doc: SerializedDiagramDocument | undefined;
       let counts = {
         commentCount: source.comment_count,
         unresolvedCommentCount: source.unresolved_comment_count
       };
       if (source.type === 'diagram') {
+        const sourceContent = await storage.read(ws, resolved.storageId, source.id);
         const parsed = JSON.parse(sourceContent.toString('utf8'));
         if (parsed && typeof parsed === 'object' && 'name' in parsed) parsed.name = displayName;
         doc = parsed as SerializedDiagramDocument;
@@ -574,96 +575,52 @@ export const relocateContentFile = async (
       const attachmentSources = container
         ? [container, ...collectDescendantNodes(nodes, container.id)]
         : [];
-      const idMap = new Map<string, string>([[source.id, rootId]]);
-      for (const node of attachmentSources) idMap.set(node.id, randomUUID());
-      const attachmentContents = new Map<string, Buffer>();
-      for (const node of attachmentSources) {
-        if (node.type !== 'folder') {
-          attachmentContents.set(node.id, await storage.read(ws, resolved.storageId, node.id));
-        }
-      }
-      const oldBlobs = [source, ...attachmentSources].filter(node => node.type !== 'folder');
       let saved!: ContentNodeDbResult;
       await coordinateContentWrite({
         db,
         storage,
         operation: 'move',
         scope: resolved.kind,
-        nodeIds: [
-          source.id,
-          rootId,
-          ...attachmentSources.flatMap(node => [node.id, idMap.get(node.id)!])
-        ],
-        storageChanges: [
-          {
-            type: 'write',
-            workspace: ws,
-            storageId: resolved.storageId,
-            nodeId: rootId,
-            content: rootContent
-          },
-          ...attachmentSources
-            .filter(node => node.type !== 'folder')
-            .map(node => ({
-              type: 'write' as const,
-              workspace: ws,
-              storageId: resolved.storageId,
-              nodeId: idMap.get(node.id)!,
-              content: attachmentContents.get(node.id)!
-            })),
-          ...oldBlobs.map(node => ({
-            type: 'delete' as const,
-            workspace: ws,
-            storageId: resolved.storageId,
-            nodeId: node.id
-          }))
-        ],
+        nodeIds: [source.id, ...attachmentSources.map(node => node.id)],
+        storageChanges: rootContent
+          ? [
+              {
+                type: 'write' as const,
+                workspace: ws,
+                storageId: resolved.storageId,
+                nodeId: rootId,
+                content: rootContent
+              }
+            ]
+          : [],
         writeDatabase: async tx => {
-          saved = await tx.project.contentNodes.upsertContentNode({
-            id: rootId,
-            workspace: ws,
-            ...contentNodeScopeFields(resolved),
+          await tx.project.contentNodes.relocateContentNode(ws, rootId, {
             parent_id: parentId,
             path: newPath,
             name: displayName,
-            role: source.role,
-            type: source.type,
-            size_bytes: rootContent.length,
+            original_filename: source.type === 'file' ? displayName : source.original_filename,
+            size_bytes: rootContent?.length ?? source.size_bytes,
             comment_count: counts.commentCount,
             unresolved_comment_count: counts.unresolvedCommentCount,
-            created_atIfNew: source.created_at,
             updated_at: timestamp,
-            created_byIfNew: source.created_by,
-            updated_by: authCtx.userId,
-            mime_type: source.mime_type,
-            original_filename: source.type === 'file' ? displayName : source.original_filename
+            updated_by: authCtx.userId
           });
           const oldRoot = source.path.endsWith('.md') ? source.path.slice(0, -3) : source.path;
           const newRoot = newPath.endsWith('.md') ? newPath.slice(0, -3) : newPath;
           for (const node of attachmentSources) {
-            await tx.project.contentNodes.upsertContentNode({
-              id: idMap.get(node.id)!,
-              workspace: ws,
-              ...contentNodeScopeFields(resolved),
-              parent_id:
-                node.parent_id === source.id ? rootId : (idMap.get(node.parent_id ?? '') ?? null),
+            await tx.project.contentNodes.relocateContentNode(ws, node.id, {
+              parent_id: node.parent_id,
               path: buildRelocatedAttachmentPath(oldRoot, newRoot, node.path),
               name: node.name,
-              role: node.role,
-              type: node.type,
+              original_filename: node.original_filename,
               size_bytes: node.size_bytes,
               comment_count: node.comment_count,
               unresolved_comment_count: node.unresolved_comment_count,
-              created_atIfNew: node.created_at,
               updated_at: timestamp,
-              created_byIfNew: node.created_by,
-              updated_by: authCtx.userId,
-              mime_type: node.mime_type,
-              original_filename: node.original_filename
+              updated_by: authCtx.userId
             });
           }
           if (doc) await syncDiagramContentMetadata(tx, ws, rootId, doc, timestamp);
-          await resolved.deleteNodeByPath(tx, ws, filePath);
           saved = await reloadContentNode(tx, ws, rootId);
         },
         afterCommit: [
@@ -682,7 +639,7 @@ export const relocateContentFile = async (
                       await db.project.contentNodes.updateWorkspaceContentNodeDerivedData(
                         ws,
                         rootId,
-                        rootContent.length,
+                        rootContent!.length,
                         counts.commentCount,
                         counts.unresolvedCommentCount,
                         preview,

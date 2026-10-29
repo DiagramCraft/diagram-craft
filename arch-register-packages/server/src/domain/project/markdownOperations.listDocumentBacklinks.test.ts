@@ -166,6 +166,33 @@ describe('listDocumentBacklinks', () => {
     expect(result[0]?.file.id).toBe('adr-2');
   });
 
+  it('lists a page linking from its body text as a body backlink, regardless of its type', async () => {
+    const target = makeNode({ id: 'target' });
+    const source = makeNode({ id: 'source', name: 'Runbook' });
+    const db = makeDb(
+      { target, source },
+      [
+        {
+          workspace: 'ws-1',
+          node_id: 'source',
+          field_id: '__body__',
+          target_type: 'document',
+          target_id: 'target',
+          position: 0
+        }
+      ],
+      { source: { document_type_id: 'type-1', values: {} } },
+      { 'type-1': { id: 'type-1', name: 'ADR', color: null, icon: null, fields: [] } }
+    );
+
+    const result = await listDocumentBacklinks(db, 'ws-1', 'target', event);
+
+    expect(result).toEqual([
+      expect.objectContaining({ source: 'body', field_name: 'Linked in text' })
+    ]);
+    expect(result[0]?.file.id).toBe('source');
+  });
+
   it('silently excludes a linking document the caller cannot view', async () => {
     const target = makeNode({ id: 'target' });
     const hiddenSource = makeNode({ id: 'hidden', project_id: 'proj-1' });

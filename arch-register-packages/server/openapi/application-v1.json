@@ -79502,6 +79502,14 @@
                             "type": "null"
                           }
                         ]
+                      },
+                      "source": {
+                        "enum": [
+                          "metadata",
+                          "body"
+                        ],
+                        "type": "string",
+                        "description": "Whether the link is a metadata field or in the page text"
                       }
                     },
                     "required": [
@@ -79513,7 +79521,8 @@
                       "document_type_icon",
                       "field_id",
                       "field_name",
-                      "field_inverse_name"
+                      "field_inverse_name",
+                      "source"
                     ]
                   }
                 }

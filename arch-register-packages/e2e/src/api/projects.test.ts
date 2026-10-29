@@ -258,6 +258,8 @@ test.describe('project routes', () => {
       path: 'archive/auth-sequence.json',
       name: 'auth-sequence'
     });
+    // Links reference files by id, so relocating must not change it
+    expect(relocateResult.id).toBe(writeResult.id);
 
     const relocatedReadResult = await orpc.projects.getFileContent({
       params: { workspace: 'default', id: projectId },

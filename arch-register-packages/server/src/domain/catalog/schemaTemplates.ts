@@ -1144,8 +1144,7 @@ const strategySchemas: TemplateSchema[] = [
         description:
           'Calculated: the depth of the capability in the hierarchy, where L1 is top-level.',
         type: 'derived',
-        expression:
-          "entity.parent == null ? 'L1' : `L${toNumber(entity.parent.capability_level.replace('L', '')) + 1}`",
+        expression: `entity.parent == null ? 'L1' : \`L\${toNumber(entity.parent.capability_level.replace('L', '')) + 1}\``,
         resultType: 'text'
       },
       {

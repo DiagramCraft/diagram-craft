@@ -1,6 +1,10 @@
 import { newid } from '@diagram-craft/utils/id';
 import { SqliteDatabaseBase } from '../../../db/sqliteBase';
-import type { ContentNodeDatabase, ContentNodeDbUpsert } from './contentNodeDatabase';
+import type {
+  ContentNodeDatabase,
+  ContentNodeDbRelocate,
+  ContentNodeDbUpsert
+} from './contentNodeDatabase';
 import { CONTENT_NODE_SELECT_SQL, contentNodeMapper } from './contentNodeDatabase';
 import { normalizeContentNodeFields } from './projectDbNormalization';
 
@@ -325,6 +329,25 @@ export class SqliteContentNodeDatabase extends SqliteDatabaseBase implements Con
     }
     if (existing) return null;
     return await this.upsertContentNode(input);
+  }
+
+  async relocateContentNode(workspace: string, nodeId: string, input: ContentNodeDbRelocate) {
+    this.run(
+      'UPDATE content_node SET parent_id = ?, path = ?, name = ?, original_filename = ?, size_bytes = ?, comment_count = ?, unresolved_comment_count = ?, updated_at = ?, updated_by = ? WHERE workspace = ? AND id = ?',
+      [
+        input.parent_id,
+        input.path,
+        input.name,
+        input.original_filename,
+        input.size_bytes,
+        input.comment_count,
+        input.unresolved_comment_count,
+        input.updated_at.toISOString(),
+        input.updated_by,
+        workspace,
+        nodeId
+      ]
+    );
   }
 
   async deleteContentNodesByIds(workspace: string, nodeIds: readonly string[]) {

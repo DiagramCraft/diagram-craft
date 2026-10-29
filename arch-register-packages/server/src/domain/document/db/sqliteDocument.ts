@@ -1,3 +1,4 @@
+import { BODY_LINK_FIELD_ID } from '../documentValidation';
 import type { DatabaseRow } from '../../../db/rowMappers';
 import { databaseBoolean, databaseDate, parseDatabaseJson } from '../../../db/rowMappers';
 import { SqliteDatabaseBase } from '../../../db/sqliteBase';
@@ -538,8 +539,8 @@ export class SqliteDocumentDatabase extends SqliteDatabaseBase implements Docume
 
   async listDocumentLinks(workspace: string, nodeId: string) {
     return this.all(
-      'SELECT * FROM document_link_index WHERE workspace = ? AND node_id = ? ORDER BY field_id, position',
-      [workspace, nodeId],
+      'SELECT * FROM document_link_index WHERE workspace = ? AND node_id = ? AND field_id <> ? ORDER BY field_id, position',
+      [workspace, nodeId, BODY_LINK_FIELD_ID],
       linkMapper
     );
   }
@@ -555,15 +556,32 @@ export class SqliteDocumentDatabase extends SqliteDatabaseBase implements Docume
     }>
   ) {
     const replace = () => {
-      this.run('DELETE FROM document_link_index WHERE workspace = ? AND node_id = ?', [
-        workspace,
-        nodeId
-      ]);
+      this.run(
+        'DELETE FROM document_link_index WHERE workspace = ? AND node_id = ? AND field_id <> ?',
+        [workspace, nodeId, BODY_LINK_FIELD_ID]
+      );
       for (const link of links)
         this.run(
           'INSERT INTO document_link_index (workspace, node_id, field_id, target_type, target_id, position) VALUES (?, ?, ?, ?, ?, ?)',
           [workspace, nodeId, link.field_id, link.target_type, link.target_id, link.position]
         );
+    };
+    if ((this.db as typeof this.db & { inTransaction: boolean }).inTransaction) replace();
+    else this.db.transaction(replace)();
+  }
+
+  async replaceBodyDocumentLinks(workspace: string, nodeId: string, targetDocumentIds: string[]) {
+    const replace = () => {
+      this.run(
+        'DELETE FROM document_link_index WHERE workspace = ? AND node_id = ? AND field_id = ?',
+        [workspace, nodeId, BODY_LINK_FIELD_ID]
+      );
+      targetDocumentIds.forEach((targetId, position) =>
+        this.run(
+          'INSERT INTO document_link_index (workspace, node_id, field_id, target_type, target_id, position) VALUES (?, ?, ?, ?, ?, ?)',
+          [workspace, nodeId, BODY_LINK_FIELD_ID, 'document', targetId, position]
+        )
+      );
     };
     if ((this.db as typeof this.db & { inTransaction: boolean }).inTransaction) replace();
     else this.db.transaction(replace)();

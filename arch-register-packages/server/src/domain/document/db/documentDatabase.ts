@@ -234,6 +234,12 @@ export type DocumentDatabase = {
     nodeId: string,
     links: Omit<DocumentLinkIndexDbResult, 'workspace' | 'node_id'>[]
   ): Promise<void>;
+  /** Replaces the links written in the page body; metadata links are left untouched */
+  replaceBodyDocumentLinks(
+    workspace: string,
+    nodeId: string,
+    targetDocumentIds: string[]
+  ): Promise<void>;
   listDocumentsLinkingEntity(
     workspace: string,
     entityId: string

@@ -1,0 +1,24 @@
+.link {
+  color: var(--accent-fg);
+  text-decoration: underline;
+  cursor: pointer;
+  transition: color 80ms;
+}
+
+.link:hover {
+  color: var(--accent-fg-hover, var(--accent-fg));
+  text-decoration: underline;
+}
+
+.linkLoading {
+  color: var(--cmp-fg-disabled);
+  font-style: italic;
+  text-decoration: none;
+  cursor: default;
+}
+
+.linkUnavailable {
+  color: var(--error-fg, var(--cmp-fg-disabled));
+  text-decoration: line-through;
+  cursor: default;
+}

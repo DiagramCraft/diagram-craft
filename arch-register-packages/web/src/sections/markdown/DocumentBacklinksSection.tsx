@@ -34,7 +34,7 @@ export const DocumentBacklinksSection = ({
     const grouped = new Map<
       string,
       {
-        typeName: string;
+        typeName: string | null;
         typeColor: string | null;
         typeIcon: string | null;
         fieldName: string;
@@ -42,16 +42,18 @@ export const DocumentBacklinksSection = ({
       }
     >();
     for (const item of data) {
-      const typeName = item.document_type_name ?? 'Untyped Markdown';
+      // Links written in the page text are grouped on their own, regardless of the linking page's type
+      const isBody = item.source === 'body';
+      const typeName = isBody ? null : (item.document_type_name ?? 'Untyped Markdown');
       const fieldName = item.field_inverse_name ?? item.field_name;
-      const key = `${typeName} · ${fieldName}`;
+      const key = isBody ? 'body' : `${typeName} · ${fieldName}`;
       const existing = grouped.get(key);
       if (existing) existing.items.push(item);
       else
         grouped.set(key, {
           typeName,
-          typeColor: item.document_type_color,
-          typeIcon: item.document_type_icon,
+          typeColor: isBody ? null : item.document_type_color,
+          typeIcon: isBody ? null : item.document_type_icon,
           fieldName,
           items: [item]
         });
@@ -102,13 +104,17 @@ export const DocumentBacklinksSection = ({
                     margin: '0 0 8px'
                   }}
                 >
-                  <TypeBadge
-                    color={group.typeColor ?? 'var(--base-fg-dim)'}
-                    name={group.typeName}
-                    icon={group.typeIcon}
-                    size={18}
-                  />
-                  <Chip tone="ghost">{group.typeName}</Chip>
+                  {group.typeName !== null && (
+                    <>
+                      <TypeBadge
+                        color={group.typeColor ?? 'var(--base-fg-dim)'}
+                        name={group.typeName}
+                        icon={group.typeIcon}
+                        size={18}
+                      />
+                      <Chip tone="ghost">{group.typeName}</Chip>
+                    </>
+                  )}
                   <span className="dim">{group.fieldName}</span>
                 </h3>
                 <div style={{ display: 'grid', gap: 2 }}>

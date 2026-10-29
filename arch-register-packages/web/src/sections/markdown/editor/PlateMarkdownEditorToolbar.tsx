@@ -10,6 +10,9 @@ import {
 } from '@platejs/floating';
 import { useEditorId, useEditorRef, useEventEditorValue } from 'platejs/react';
 import { Toolbar } from '@diagram-craft/app-components/src/Toolbar';
+import { TbFileText } from 'react-icons/tb';
+import { WIKI_LINK_TYPE } from '../../../widgets/content-layout/wiki-link/WikiLinkEditable';
+import { insertOrReplaceInline } from './PlateMarkdownEditorSlashCommands';
 import styles from './PlateMarkdownEditor.module.css';
 
 const MarkButton = ({
@@ -51,6 +54,27 @@ const HeadingButton = ({ type, label }: { type: string; label: string }) => {
       }}
     >
       {type.toUpperCase()}
+    </Toolbar.Button>
+  );
+};
+
+const WikiLinkButton = () => {
+  const editor = useEditorRef();
+  return (
+    <Toolbar.Button
+      type="button"
+      title="Link to wiki page"
+      onMouseDown={event => {
+        event.preventDefault();
+        editor.tf.collapse({ edge: 'end' });
+        insertOrReplaceInline(editor, {
+          type: WIKI_LINK_TYPE,
+          nodeId: '',
+          children: [{ text: '' }]
+        });
+      }}
+    >
+      <TbFileText size={14} />
     </Toolbar.Button>
   );
 };
@@ -103,6 +127,8 @@ export const FloatingToolbar = () => {
         <HeadingButton type="h1" label="Heading 1" />
         <HeadingButton type="h2" label="Heading 2" />
         <HeadingButton type="h3" label="Heading 3" />
+        <Toolbar.Separator />
+        <WikiLinkButton />
       </Toolbar.Root>
     </div>
   );
