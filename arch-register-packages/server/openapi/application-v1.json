@@ -158605,6 +158605,214 @@
         }
       }
     },
+    "/{workspace}/governance/case-subjects": {
+      "post": {
+        "operationId": "governance.cases.subjects",
+        "summary": "Resolve display data for governance case subjects",
+        "description": "Resolves the subject name, bulk members and latest proposal revision for a batch of cases in one request. Cases whose subject the caller cannot view are omitted.",
+        "tags": [
+          "Governance",
+          "Governance"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "cases": {
+                    "type": "array",
+                    "maxItems": 500,
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "caseId": {
+                          "type": "string"
+                        },
+                        "caseKind": {
+                          "type": "string"
+                        },
+                        "subjectType": {
+                          "type": "string"
+                        },
+                        "subjectId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "caseId",
+                        "caseKind",
+                        "subjectType",
+                        "subjectId"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "cases"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string"
+                  },
+                  "additionalProperties": {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Display name of the subject, null when not resolvable"
+                      },
+                      "bulkMembers": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "uid": {
+                              "type": "string"
+                            },
+                            "publicId": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "uid",
+                            "publicId",
+                            "name"
+                          ]
+                        },
+                        "description": "Member entities of a bulk entity change"
+                      },
+                      "bulkEntityCount": {
+                        "anyOf": [
+                          {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Number of entities in a bulk change"
+                      },
+                      "proposal": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "status": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "status"
+                            ]
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "The current entity change proposal, if any"
+                      },
+                      "latestRevision": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "createdByName": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "createdAt": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "createdByName",
+                              "createdAt",
+                              "message"
+                            ]
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Latest revision of the entity change proposal, if any"
+                      }
+                    },
+                    "required": [
+                      "label",
+                      "bulkMembers",
+                      "bulkEntityCount",
+                      "proposal",
+                      "latestRevision"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/{workspace}/governance/cases/{id}/remind": {
       "post": {
         "operationId": "governance.cases.remind",
