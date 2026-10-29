@@ -36,7 +36,7 @@ import {
 } from '../../../components/ConformanceBadges';
 import { DropdownMenu, type MenuItem } from '../../../components/DropdownMenu';
 import { Drawer } from '../../../components/Drawer';
-import { ToolbarFilterBar } from '../../../components/ToolbarFilter';
+import { ViewControls } from '../../../components/ViewControls';
 import { LabeledSelect } from '../../../components/LabeledSelect';
 import { LoadingState } from '../../../components/LoadingState';
 import { QueryState } from '../QueryState';
@@ -498,298 +498,300 @@ export const ConformanceSubSection = ({
             <Tabs.Trigger value="violations">Violations ({violations?.total ?? 0})</Tabs.Trigger>
             <Tabs.Trigger value="runs">Evaluation runs ({runs.length})</Tabs.Trigger>
           </Tabs.List>
-        </Tabs.Root>
-
-        {tab === 'checks' && (
-          <section className={styles.section}>
-            <QueryState
-              isLoading={checksLoading}
-              error={checksError}
-              isEmpty={checks.length === 0}
-              subject="conformance checks"
-              empty={{
-                framed: true,
-                icon: <TbShieldCheck size={24} />,
-                title: 'No checks configured',
-                subtitle:
-                  'Conformance checks are centrally managed rules that evaluate entities against architectural and governance expectations. Add a scheduled validation, a query policy, or an AI prompt check to start finding violations across the workspace.',
-                action: canManageWorkspaces ? (
-                  <AddCheckMenu aiConfigured={aiConfigured} onSelect={handleAddCheck} />
-                ) : undefined
-              }}
-            >
-              <div className={styles.tableWrap}>
-                <Table.Root layout="fixed">
-                  <Table.Head>
-                    <Table.Row>
-                      <Table.HeaderCell>Name</Table.HeaderCell>
-                      <Table.HeaderCell>Type</Table.HeaderCell>
-                      <Table.HeaderCell>Severity</Table.HeaderCell>
-                      <Table.HeaderCell width={110}>Status</Table.HeaderCell>
-                      <Table.HeaderCell width={80}>Revision</Table.HeaderCell>
-                      {canManageWorkspaces && <Table.HeaderCell width={48} />}
-                    </Table.Row>
-                  </Table.Head>
-                  <Table.Body>
-                    {checks.map(check => {
-                      const TypeIcon = CHECK_TYPE_META[check.definition.type].icon;
-                      return (
-                        <Table.Row
-                          key={check.id}
-                          onClick={canManageWorkspaces ? () => openEdit(check) : undefined}
-                        >
-                          <Table.Cell>
-                            <div className={styles.title}>{check.name}</div>
-                            <div className={styles.muted}>
-                              {check.description ?? 'No description'}
-                            </div>
-                          </Table.Cell>
-                          <Table.Cell>
-                            <span className={styles.typeTag}>
-                              <TypeIcon size={12} /> {CHECK_TYPE_META[check.definition.type].label}
-                            </span>
-                          </Table.Cell>
-                          <Table.Cell>
-                            <SeverityBadge severity={check.severity} />
-                          </Table.Cell>
-                          <Table.Cell>
-                            <Chip
-                              dot={check.enabled ? 'var(--green)' : 'var(--cmp-fg-disabled)'}
-                              tone="ghost"
-                            >
-                              {check.enabled ? 'Enabled' : 'Disabled'}
-                            </Chip>
-                          </Table.Cell>
-                          <Table.Cell>
-                            <span className={styles.revision}>v{check.revision}</span>
-                          </Table.Cell>
-                          {canManageWorkspaces && (
-                            <Table.ActionsCell>
-                              <DropdownMenu
-                                trigger={
-                                  <Table.DotsButton aria-label={`Actions for ${check.name}`} />
-                                }
-                                items={
-                                  [
-                                    {
-                                      label: 'Edit',
-                                      icon: <TbPencil size={14} />,
-                                      onClick: () => openEdit(check)
-                                    },
-                                    {
-                                      label: 'Run',
-                                      icon: <TbPlayerPlay size={14} />,
-                                      onClick: () => runConformance.mutate(check.id)
-                                    },
-                                    {
-                                      label: check.enabled ? 'Disable' : 'Enable',
-                                      icon: check.enabled ? (
-                                        <TbPlayerPause size={14} />
-                                      ) : (
-                                        <TbCheck size={14} />
-                                      ),
-                                      onClick: () =>
-                                        updateCheck.mutate({
-                                          id: check.id,
-                                          body: { enabled: !check.enabled }
-                                        })
-                                    },
-                                    {
-                                      label: 'Delete',
-                                      icon: <TbTrash size={14} />,
-                                      danger: true,
-                                      onClick: () => setDeleteCheckTarget(check)
-                                    }
-                                  ] satisfies MenuItem[]
-                                }
-                              />
-                            </Table.ActionsCell>
-                          )}
-                        </Table.Row>
-                      );
-                    })}
-                  </Table.Body>
-                </Table.Root>
-              </div>
-            </QueryState>
-          </section>
-        )}
-
-        {tab === 'violations' && (
-          <section className={styles.section}>
-            <ToolbarFilterBar noPadding>
-              <LabeledSelect
-                label="Status"
-                value={status}
-                onChange={value => {
-                  setStatus(value as '' | ConformanceCheckStatus);
-                  setOffset(0);
+          <Tabs.Content value="checks" style={{ height: 'auto' }}>
+            <section className={styles.section}>
+              <QueryState
+                isLoading={checksLoading}
+                error={checksError}
+                isEmpty={checks.length === 0}
+                subject="conformance checks"
+                empty={{
+                  framed: true,
+                  icon: <TbShieldCheck size={24} />,
+                  title: 'No checks configured',
+                  subtitle:
+                    'Conformance checks are centrally managed rules that evaluate entities against architectural and governance expectations. Add a scheduled validation, a query policy, or an AI prompt check to start finding violations across the workspace.',
+                  action: canManageWorkspaces ? (
+                    <AddCheckMenu aiConfigured={aiConfigured} onSelect={handleAddCheck} />
+                  ) : undefined
                 }}
-                options={STATUS_OPTIONS}
-              />
-              <LabeledSelect
-                label="Severity"
-                value={severity}
-                onChange={value => {
-                  setSeverity(value as '' | ConformanceSeverity);
-                  setOffset(0);
-                }}
-                options={SEVERITY_OPTIONS}
-              />
-              <LabeledSelect
-                label="Check"
-                value={checkId}
-                onChange={value => {
-                  setCheckId(value);
-                  setOffset(0);
-                }}
-                options={[
-                  { value: '', label: 'All checks' },
-                  ...checks.map(check => ({ value: check.id, label: check.name }))
-                ]}
-              />
-              <LabeledSelect
-                label="Schema"
-                value={schemaId}
-                onChange={value => {
-                  setSchemaId(value);
-                  setOffset(0);
-                }}
-                options={[
-                  { value: '', label: 'All schemas' },
-                  ...schemas.map(schema => ({ value: schema.id, label: schema.name }))
-                ]}
-              />
-              <LabeledSelect
-                label="Owner"
-                value={ownerId}
-                onChange={value => {
-                  setOwnerId(value);
-                  setOffset(0);
-                }}
-                options={[
-                  { value: '', label: 'All owners' },
-                  ...teams.map(team => ({ value: team.id, label: team.name }))
-                ]}
-              />
-            </ToolbarFilterBar>
-            <div style={{ height: '8px' }}></div>
-            {!violations ? (
-              <LoadingState text="Loading violations…" size="sm" />
-            ) : violations.items.length === 0 ? (
-              <div className={styles.empty}>No violations match the current filter.</div>
-            ) : (
-              <div className={styles.vlist}>
+              >
                 <div className={styles.tableWrap}>
                   <Table.Root layout="fixed">
                     <Table.Head>
                       <Table.Row>
-                        <Table.HeaderCell>Entity</Table.HeaderCell>
-                        <Table.HeaderCell width={90}>Severity</Table.HeaderCell>
-                        <Table.HeaderCell width={140}>Status</Table.HeaderCell>
-                        <Table.HeaderCell>Message</Table.HeaderCell>
-                        <Table.HeaderCell>Check</Table.HeaderCell>
-                        <Table.HeaderCell width={130}>Schema</Table.HeaderCell>
-                        <Table.HeaderCell width={130}>Owner</Table.HeaderCell>
-                        <Table.HeaderCell width={150}>Last seen</Table.HeaderCell>
+                        <Table.HeaderCell>Name</Table.HeaderCell>
+                        <Table.HeaderCell>Type</Table.HeaderCell>
+                        <Table.HeaderCell>Severity</Table.HeaderCell>
+                        <Table.HeaderCell width={110}>Status</Table.HeaderCell>
+                        <Table.HeaderCell width={80}>Revision</Table.HeaderCell>
+                        {canManageWorkspaces && <Table.HeaderCell width={48} />}
                       </Table.Row>
                     </Table.Head>
                     <Table.Body>
-                      {violations.items.map(violation => {
-                        const violationSchemaName =
-                          schemas.find(schema => schema.id === violation.schema_id)?.name ??
-                          violation.schema_id ??
-                          '—';
-                        const violationOwnerName =
-                          teams.find(team => team.id === violation.owner_team_id)?.name ??
-                          'No owner';
+                      {checks.map(check => {
+                        const TypeIcon = CHECK_TYPE_META[check.definition.type].icon;
                         return (
                           <Table.Row
-                            key={violation.id}
-                            onClick={() => setOpenViolationId(violation.id)}
+                            key={check.id}
+                            onClick={canManageWorkspaces ? () => openEdit(check) : undefined}
                           >
-                            <Table.Cell>{violation.entity_name ?? violation.entity_id}</Table.Cell>
                             <Table.Cell>
-                              <SeverityBadge severity={violation.severity} />
+                              <div className={styles.title}>{check.name}</div>
+                              <div className={styles.muted}>
+                                {check.description ?? 'No description'}
+                              </div>
                             </Table.Cell>
                             <Table.Cell>
-                              <ViolationStatusChip status={violation.status} />
-                              {violation.status === 'exempt' && violation.exemption?.expires_at && (
-                                <div className={styles.muted}>
-                                  expires {formatDateTime(violation.exemption.expires_at)}
-                                </div>
-                              )}
+                              <span className={styles.typeTag}>
+                                <TypeIcon size={12} />{' '}
+                                {CHECK_TYPE_META[check.definition.type].label}
+                              </span>
                             </Table.Cell>
-                            <Table.Cell>{violation.message}</Table.Cell>
-                            <Table.Cell>{violation.check_name}</Table.Cell>
-                            <Table.Cell>{violationSchemaName}</Table.Cell>
-                            <Table.Cell>{violationOwnerName}</Table.Cell>
-                            <Table.Cell>{formatDateTime(violation.last_seen_at)}</Table.Cell>
+                            <Table.Cell>
+                              <SeverityBadge severity={check.severity} />
+                            </Table.Cell>
+                            <Table.Cell>
+                              <Chip
+                                dot={check.enabled ? 'var(--green)' : 'var(--cmp-fg-disabled)'}
+                                tone="ghost"
+                              >
+                                {check.enabled ? 'Enabled' : 'Disabled'}
+                              </Chip>
+                            </Table.Cell>
+                            <Table.Cell>
+                              <span className={styles.revision}>v{check.revision}</span>
+                            </Table.Cell>
+                            {canManageWorkspaces && (
+                              <Table.ActionsCell>
+                                <DropdownMenu
+                                  trigger={
+                                    <Table.DotsButton aria-label={`Actions for ${check.name}`} />
+                                  }
+                                  items={
+                                    [
+                                      {
+                                        label: 'Edit',
+                                        icon: <TbPencil size={14} />,
+                                        onClick: () => openEdit(check)
+                                      },
+                                      {
+                                        label: 'Run',
+                                        icon: <TbPlayerPlay size={14} />,
+                                        onClick: () => runConformance.mutate(check.id)
+                                      },
+                                      {
+                                        label: check.enabled ? 'Disable' : 'Enable',
+                                        icon: check.enabled ? (
+                                          <TbPlayerPause size={14} />
+                                        ) : (
+                                          <TbCheck size={14} />
+                                        ),
+                                        onClick: () =>
+                                          updateCheck.mutate({
+                                            id: check.id,
+                                            body: { enabled: !check.enabled }
+                                          })
+                                      },
+                                      {
+                                        label: 'Delete',
+                                        icon: <TbTrash size={14} />,
+                                        danger: true,
+                                        onClick: () => setDeleteCheckTarget(check)
+                                      }
+                                    ] satisfies MenuItem[]
+                                  }
+                                />
+                              </Table.ActionsCell>
+                            )}
                           </Table.Row>
                         );
                       })}
                     </Table.Body>
                   </Table.Root>
                 </div>
-                <Pagination
-                  pageSize={pageSize}
-                  onPageSizeChange={size => {
-                    setPageSize(size);
+              </QueryState>
+            </section>
+          </Tabs.Content>
+
+          <Tabs.Content value="violations" style={{ height: 'auto' }}>
+            <section className={styles.section}>
+              <ViewControls variant="tab">
+                <LabeledSelect
+                  label="Status"
+                  value={status}
+                  onChange={value => {
+                    setStatus(value as '' | ConformanceCheckStatus);
                     setOffset(0);
                   }}
-                  canGoPrev={offset > 0}
-                  canGoNext={offset + pageSize < (violations.total ?? 0)}
-                  onPrev={() => setOffset(Math.max(0, offset - pageSize))}
-                  onNext={() => setOffset(offset + pageSize)}
+                  options={STATUS_OPTIONS}
                 />
-              </div>
-            )}
-          </section>
-        )}
+                <LabeledSelect
+                  label="Severity"
+                  value={severity}
+                  onChange={value => {
+                    setSeverity(value as '' | ConformanceSeverity);
+                    setOffset(0);
+                  }}
+                  options={SEVERITY_OPTIONS}
+                />
+                <LabeledSelect
+                  label="Check"
+                  value={checkId}
+                  onChange={value => {
+                    setCheckId(value);
+                    setOffset(0);
+                  }}
+                  options={[
+                    { value: '', label: 'All checks' },
+                    ...checks.map(check => ({ value: check.id, label: check.name }))
+                  ]}
+                />
+                <LabeledSelect
+                  label="Schema"
+                  value={schemaId}
+                  onChange={value => {
+                    setSchemaId(value);
+                    setOffset(0);
+                  }}
+                  options={[
+                    { value: '', label: 'All schemas' },
+                    ...schemas.map(schema => ({ value: schema.id, label: schema.name }))
+                  ]}
+                />
+                <LabeledSelect
+                  label="Owner"
+                  value={ownerId}
+                  onChange={value => {
+                    setOwnerId(value);
+                    setOffset(0);
+                  }}
+                  options={[
+                    { value: '', label: 'All owners' },
+                    ...teams.map(team => ({ value: team.id, label: team.name }))
+                  ]}
+                />
+              </ViewControls>
+              {!violations ? (
+                <LoadingState text="Loading violations…" size="sm" />
+              ) : violations.items.length === 0 ? (
+                <div className={styles.empty}>No violations match the current filter.</div>
+              ) : (
+                <div className={styles.vlist}>
+                  <div className={styles.tableWrap}>
+                    <Table.Root layout="fixed">
+                      <Table.Head>
+                        <Table.Row>
+                          <Table.HeaderCell>Entity</Table.HeaderCell>
+                          <Table.HeaderCell width={90}>Severity</Table.HeaderCell>
+                          <Table.HeaderCell width={140}>Status</Table.HeaderCell>
+                          <Table.HeaderCell>Message</Table.HeaderCell>
+                          <Table.HeaderCell>Check</Table.HeaderCell>
+                          <Table.HeaderCell width={130}>Schema</Table.HeaderCell>
+                          <Table.HeaderCell width={130}>Owner</Table.HeaderCell>
+                          <Table.HeaderCell width={150}>Last seen</Table.HeaderCell>
+                        </Table.Row>
+                      </Table.Head>
+                      <Table.Body>
+                        {violations.items.map(violation => {
+                          const violationSchemaName =
+                            schemas.find(schema => schema.id === violation.schema_id)?.name ??
+                            violation.schema_id ??
+                            '—';
+                          const violationOwnerName =
+                            teams.find(team => team.id === violation.owner_team_id)?.name ??
+                            'No owner';
+                          return (
+                            <Table.Row
+                              key={violation.id}
+                              onClick={() => setOpenViolationId(violation.id)}
+                            >
+                              <Table.Cell>
+                                {violation.entity_name ?? violation.entity_id}
+                              </Table.Cell>
+                              <Table.Cell>
+                                <SeverityBadge severity={violation.severity} />
+                              </Table.Cell>
+                              <Table.Cell>
+                                <ViolationStatusChip status={violation.status} />
+                                {violation.status === 'exempt' &&
+                                  violation.exemption?.expires_at && (
+                                    <div className={styles.muted}>
+                                      expires {formatDateTime(violation.exemption.expires_at)}
+                                    </div>
+                                  )}
+                              </Table.Cell>
+                              <Table.Cell>{violation.message}</Table.Cell>
+                              <Table.Cell>{violation.check_name}</Table.Cell>
+                              <Table.Cell>{violationSchemaName}</Table.Cell>
+                              <Table.Cell>{violationOwnerName}</Table.Cell>
+                              <Table.Cell>{formatDateTime(violation.last_seen_at)}</Table.Cell>
+                            </Table.Row>
+                          );
+                        })}
+                      </Table.Body>
+                    </Table.Root>
+                  </div>
+                  <Pagination
+                    pageSize={pageSize}
+                    onPageSizeChange={size => {
+                      setPageSize(size);
+                      setOffset(0);
+                    }}
+                    canGoPrev={offset > 0}
+                    canGoNext={offset + pageSize < (violations.total ?? 0)}
+                    onPrev={() => setOffset(Math.max(0, offset - pageSize))}
+                    onNext={() => setOffset(offset + pageSize)}
+                  />
+                </div>
+              )}
+            </section>
+          </Tabs.Content>
 
-        {tab === 'runs' && (
-          <section className={styles.section}>
-            {runs.length === 0 ? (
-              <div className={styles.empty}>No evaluation runs yet.</div>
-            ) : (
-              <div className={styles.tableWrap}>
-                <Table.Root layout="fixed">
-                  <Table.Head>
-                    <Table.Row>
-                      <Table.HeaderCell>Started</Table.HeaderCell>
-                      <Table.HeaderCell>Scope</Table.HeaderCell>
-                      <Table.HeaderCell>Status</Table.HeaderCell>
-                      <Table.HeaderCell>Checked</Table.HeaderCell>
-                      <Table.HeaderCell>Violations</Table.HeaderCell>
-                      <Table.HeaderCell>Error</Table.HeaderCell>
-                    </Table.Row>
-                  </Table.Head>
-                  <Table.Body>
-                    {runs.map(run => (
-                      <Table.Row key={run.id}>
-                        <Table.Cell>{formatDateTime(run.started_at)}</Table.Cell>
-                        <Table.Cell>
-                          {run.check_id
-                            ? (checks.find(check => check.id === run.check_id)?.name ??
-                              run.check_id)
-                            : 'Workspace scan'}
-                        </Table.Cell>
-                        <Table.Cell>
-                          <Chip tone="ghost" dot={RUN_STATUS_META[run.status].tone}>
-                            {RUN_STATUS_META[run.status].label}
-                          </Chip>
-                        </Table.Cell>
-                        <Table.Cell>{run.checked_count}</Table.Cell>
-                        <Table.Cell>{run.violation_count}</Table.Cell>
-                        <Table.Cell>{run.error ?? '—'}</Table.Cell>
+          <Tabs.Content value="runs" style={{ height: 'auto' }}>
+            <section className={styles.section}>
+              {runs.length === 0 ? (
+                <div className={styles.empty}>No evaluation runs yet.</div>
+              ) : (
+                <div className={styles.tableWrap}>
+                  <Table.Root layout="fixed">
+                    <Table.Head>
+                      <Table.Row>
+                        <Table.HeaderCell>Started</Table.HeaderCell>
+                        <Table.HeaderCell>Scope</Table.HeaderCell>
+                        <Table.HeaderCell>Status</Table.HeaderCell>
+                        <Table.HeaderCell>Checked</Table.HeaderCell>
+                        <Table.HeaderCell>Violations</Table.HeaderCell>
+                        <Table.HeaderCell>Error</Table.HeaderCell>
                       </Table.Row>
-                    ))}
-                  </Table.Body>
-                </Table.Root>
-              </div>
-            )}
-          </section>
-        )}
+                    </Table.Head>
+                    <Table.Body>
+                      {runs.map(run => (
+                        <Table.Row key={run.id}>
+                          <Table.Cell>{formatDateTime(run.started_at)}</Table.Cell>
+                          <Table.Cell>
+                            {run.check_id
+                              ? (checks.find(check => check.id === run.check_id)?.name ??
+                                run.check_id)
+                              : 'Workspace scan'}
+                          </Table.Cell>
+                          <Table.Cell>
+                            <Chip tone="ghost" dot={RUN_STATUS_META[run.status].tone}>
+                              {RUN_STATUS_META[run.status].label}
+                            </Chip>
+                          </Table.Cell>
+                          <Table.Cell>{run.checked_count}</Table.Cell>
+                          <Table.Cell>{run.violation_count}</Table.Cell>
+                          <Table.Cell>{run.error ?? '—'}</Table.Cell>
+                        </Table.Row>
+                      ))}
+                    </Table.Body>
+                  </Table.Root>
+                </div>
+              )}
+            </section>
+          </Tabs.Content>
+        </Tabs.Root>
 
         <DeleteConfirmationDialog
           open={deleteCheckTarget != null}

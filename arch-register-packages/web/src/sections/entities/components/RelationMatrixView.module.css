@@ -1,19 +1,4 @@
-/* Outer wrapper — fills remaining height in the browser screen */
-.wrap {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r-md);
-}
-
 /* ── Config bar ──────────────────────────────────────────────── */
-
-.config {
-  composes: bar from "../../../components/ViewConfigBar.module.css";
-}
 
 .noRel {
   font-size: 11px;

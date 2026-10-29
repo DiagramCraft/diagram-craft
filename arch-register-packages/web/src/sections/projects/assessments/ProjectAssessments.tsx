@@ -17,7 +17,7 @@ import {
   type AssessmentListFilter
 } from '../../../lib/assessmentStatus';
 import { LoadingState } from '../../../components/LoadingState';
-import { ToolbarFilterBar } from '../../../components/ToolbarFilter';
+import { ViewControls } from '../../../components/ViewControls';
 import { LabeledSelect } from '../../../components/LabeledSelect';
 import { AssessmentEditorDialog } from './AssessmentEditorDialog';
 import type { AssessmentFormData } from './assessmentEditorState';
@@ -65,7 +65,7 @@ export const ProjectAssessments = ({
           ) : undefined
         }
         toolbar={
-          <ToolbarFilterBar>
+          <ViewControls variant="page">
             <LabeledSelect
               label="Status"
               value={statusFilter}
@@ -77,7 +77,7 @@ export const ProjectAssessments = ({
                 { value: 'all', label: `All (${count('all')})` }
               ]}
             />
-          </ToolbarFilterBar>
+          </ViewControls>
         }
       >
         {isLoading ? (

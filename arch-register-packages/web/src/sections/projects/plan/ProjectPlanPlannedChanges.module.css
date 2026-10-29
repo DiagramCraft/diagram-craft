@@ -11,10 +11,6 @@
 
 /* Spacing below the Future changes toolbar; the filter bar itself has no padding so the gap
    under the tabs matches the other Plan tabs */
-.plannedToolbar {
-  padding-bottom: 20px;
-}
-
 /* Future changes groups */
 .plannedChangesGroups {
   display: flex;

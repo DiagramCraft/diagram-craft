@@ -1,0 +1,19 @@
+/**
+ *  LabeledDateInput - .cLabeledDateInput (pill look from LabeledControl.module.css)
+ *  | Label - shared .eLabel (LabeledControl.module.css)
+ *  | Input - .eInput
+ */
+
+.cLabeledDateInput {
+  .eInput {
+    appearance: none;
+    background: transparent;
+    border: 0;
+    outline: 0;
+    color: var(--base-fg);
+    font-size: 11px;
+    font-family: inherit;
+    cursor: pointer;
+    padding: 0;
+  }
+}

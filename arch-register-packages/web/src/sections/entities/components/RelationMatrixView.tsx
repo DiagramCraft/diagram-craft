@@ -27,6 +27,7 @@ import { normalizeViewConfig } from './entityViewConfig';
 import { EmptyState } from '../../../components/EmptyState';
 import { autoPickColSchemaId, buildMatrixData, type MatrixAttrField } from './relationMatrixState';
 import { useHydratedEntityRows } from '../../../hooks/useHydratedEntityRows';
+import { ViewControls, ViewControlsFrame } from '../../../components/ViewControls';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -425,10 +426,10 @@ export const RelationMatrixView = ({
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <div className={styles.wrap}>
+    <ViewControlsFrame>
       {/* Config bar */}
       {!hideToolbar && (
-        <div className={styles.config}>
+        <ViewControls variant="view">
           <LabeledSelect
             label="Columns"
             value={colMode}
@@ -569,7 +570,7 @@ export const RelationMatrixView = ({
               notifyConfigChange({ hideEmptyCols: next });
             }}
           />
-        </div>
+        </ViewControls>
       )}
 
       {/* Matrix or empty state */}
@@ -703,6 +704,6 @@ export const RelationMatrixView = ({
           </table>
         </div>
       )}
-    </div>
+    </ViewControlsFrame>
   );
 };

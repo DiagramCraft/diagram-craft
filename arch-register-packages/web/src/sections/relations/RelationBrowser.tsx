@@ -12,7 +12,7 @@ import {
 } from 'react-icons/tb';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import styles from './RelationBrowser.module.css';
-import filterStyles from '../entities/components/EntityBrowser.module.css';
+import { ViewControls, ViewControlsSpacer } from '../../components/ViewControls';
 import { Chip } from '../../components/Chip';
 import { Pagination } from '../../components/Pagination';
 import { Title } from '../../components/Title';
@@ -348,7 +348,7 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
         />
       </div>
 
-      <div className={filterStyles.toolbar}>
+      <ViewControls variant="page">
         <RelationQueryModeControls
           workspaceId={workspaceId}
           relationQuery={relationQuery}
@@ -359,7 +359,8 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
           owners={owners}
           lifecycleStates={lifecycleStates}
         />
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+        <ViewControlsSpacer />
+        <div style={{ display: 'flex', gap: 8 }}>
           {view === 'table' && (
             <LabeledSelect
               label="Sort"
@@ -383,7 +384,7 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
             ]}
           />
         </div>
-      </div>
+      </ViewControls>
 
       {view === 'table' ? (
         <Table.Root scroll>

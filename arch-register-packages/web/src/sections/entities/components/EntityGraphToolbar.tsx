@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { ViewControls } from '../../../components/ViewControls';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { TbFileExport, TbFilter } from 'react-icons/tb';
@@ -54,7 +55,7 @@ export const EntityGraphToolbar = ({
   );
 
   return (
-    <div className={styles.eToolbar}>
+    <ViewControls variant="view" nowrap className={styles.eToolbar}>
       <GraphLayoutToolbar
         layout={layout}
         setLayout={setLayout}
@@ -139,6 +140,6 @@ export const EntityGraphToolbar = ({
           Create diagram
         </ToolbarButton>
       )}
-    </div>
+    </ViewControls>
   );
 };

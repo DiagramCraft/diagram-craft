@@ -38,6 +38,7 @@ import {
 import { useHydratedEntityRows } from '../../../hooks/useHydratedEntityRows';
 import { useDelayedDisclosure } from '../../../hooks/useDelayedDisclosure';
 import { usePersistedViewConfig } from '../../../hooks/usePersistedViewConfig';
+import { ViewControls, ViewControlsFrame } from '../../../components/ViewControls';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -287,9 +288,9 @@ export const BubbleChartView = ({
   const colorLabel = categoricalFields.find(f => f.id === config?.colorFieldId)?.label ?? '';
 
   return (
-    <div className={styles.screen}>
+    <ViewControlsFrame>
       {!hideToolbar && (
-        <div className={styles.config}>
+        <ViewControls variant="view">
           <LabeledSelect
             label="X axis"
             value={config?.xFieldId ?? ''}
@@ -454,7 +455,7 @@ export const BubbleChartView = ({
               No numeric or categorical fields available across the current entities.
             </span>
           )}
-        </div>
+        </ViewControls>
       )}
 
       <div className={styles.content}>
@@ -661,6 +662,6 @@ export const BubbleChartView = ({
           </div>
         )}
       </div>
-    </div>
+    </ViewControlsFrame>
   );
 };

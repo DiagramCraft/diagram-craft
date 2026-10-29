@@ -1,5 +1,5 @@
 import { TbHelp } from 'react-icons/tb';
-import { Button } from '@diagram-craft/app-components/Button';
+import { ToolbarButton } from '../../../components/ToolbarButton';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import type { BrowserView } from '@arch-register/api-types/viewContract';
 import { BROWSER_VIEW_META } from './browserViewMeta';
@@ -9,9 +9,8 @@ export const ViewHelpPopover = ({ view, label }: { view: BrowserView; label: str
   <Popover.Root>
     <Popover.Trigger
       element={
-        <Button
-          size="sm"
-          variant="ghost"
+        <ToolbarButton
+          variant="secondary"
           icon={<TbHelp size={14} />}
           aria-label="About this view"
           title="About this view"

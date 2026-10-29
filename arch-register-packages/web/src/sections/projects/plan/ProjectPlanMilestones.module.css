@@ -48,6 +48,3 @@
 }
 
 /* The filter bar has no padding of its own so the gap under the Plan tabs stays small */
-.filterBar {
-  padding-bottom: 8px;
-}

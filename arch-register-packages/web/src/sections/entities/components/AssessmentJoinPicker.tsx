@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import { TbCheck, TbStars } from 'react-icons/tb';
-import { Button } from '@diagram-craft/app-components/Button';
+import { ToolbarButton } from '../../../components/ToolbarButton';
 import { Popover, type PopoverActions } from '@diagram-craft/app-components/Popover';
 import type { AssessmentJoinOption } from './useJoinedAssessment';
 import filterStyles from '../../../components/FilterBuilder.module.css';
@@ -37,8 +37,7 @@ export const AssessmentJoinPicker = ({
     <Popover.Root actionsRef={actionsRef} onOpenChange={onOpenChange}>
       <Popover.Trigger
         element={
-          <Button
-            size="sm"
+          <ToolbarButton
             variant={value ? 'primary' : 'secondary'}
             disabled={isLoading || (isReady && options.length === 0)}
             title={
@@ -51,7 +50,7 @@ export const AssessmentJoinPicker = ({
           >
             <TbStars size={12} style={{ marginRight: 4 }} />
             {selected ? selected.assessment.name : 'Assessment'}
-          </Button>
+          </ToolbarButton>
         }
       />
       <Popover.Content

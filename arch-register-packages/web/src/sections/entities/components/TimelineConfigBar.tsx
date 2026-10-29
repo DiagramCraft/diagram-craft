@@ -1,7 +1,9 @@
 import { TbBriefcase2, TbCalendarOff, TbCalendarWeek, TbFlag, TbGitCommit } from 'react-icons/tb';
 import styles from './TimelineView.module.css';
+import { ViewControls, ViewControlsSeparator } from '../../../components/ViewControls';
+import { SegmentedControl } from '../../../components/SegmentedControl';
 import { LabeledSelect } from '../../../components/LabeledSelect';
-import { Button } from '@diagram-craft/app-components/Button';
+import { ToolbarButton } from '../../../components/ToolbarButton';
 import type { FieldOption } from './entityFieldSources';
 import type { TimelineConfig } from './timelineViewTypes';
 
@@ -18,9 +20,7 @@ export const TimelineConfigBar = ({
   dateFields: FieldOption[];
   isEventMode: boolean;
 }) => (
-  <div className={styles.configBar}>
-    <span className={styles.configMeta}>Date</span>
-
+  <ViewControls variant="view">
     <LabeledSelect
       label="Start"
       value={cfg.startFieldId ?? ''}
@@ -43,8 +43,7 @@ export const TimelineConfigBar = ({
       ]}
     />
 
-    <Button
-      size="sm"
+    <ToolbarButton
       variant={cfg.includeUndated ? 'primary' : 'secondary'}
       icon={<TbCalendarOff size={13} />}
       title={cfg.includeUndated ? 'Hide entities without dates' : 'Show entities without dates'}
@@ -55,7 +54,7 @@ export const TimelineConfigBar = ({
       onClick={() => onChange({ includeUndated: !cfg.includeUndated })}
     />
 
-    <div className={styles.configSep} />
+    <ViewControlsSeparator />
 
     <LabeledSelect
       label="Group"
@@ -71,28 +70,23 @@ export const TimelineConfigBar = ({
       ]}
     />
 
-    <div className={styles.configSep} />
+    <ViewControlsSeparator />
 
-    <div className={styles.segmented}>
-      {(['month', 'quarter', 'year'] as const).map(z => (
-        <button
-          key={z}
-          type="button"
-          className={cfg.zoom === z ? styles.segmentedActive : ''}
-          onClick={() => onChange({ zoom: z })}
-          title={z.charAt(0).toUpperCase() + z.slice(1)}
-        >
-          {z === 'month' ? 'Mo' : z === 'quarter' ? 'Qr' : 'Yr'}
-        </button>
-      ))}
-    </div>
+    <SegmentedControl
+      value={cfg.zoom}
+      onChange={zoom => onChange({ zoom })}
+      options={[
+        { value: 'month', label: 'Mo', title: 'Month' },
+        { value: 'quarter', label: 'Qr', title: 'Quarter' },
+        { value: 'year', label: 'Yr', title: 'Year' }
+      ]}
+    />
 
     {isEventMode && (
       <>
-        <div className={styles.configSep} />
+        <ViewControlsSeparator />
         {(cfg.groupBy === 'snapshot' || cfg.groupBy === 'capability') && (
-          <Button
-            size="sm"
+          <ToolbarButton
             variant={cfg.showProjectLanes ? 'primary' : 'secondary'}
             icon={<TbBriefcase2 size={13} />}
             title={cfg.showProjectLanes ? 'Hide project lanes' : 'Show project lanes'}
@@ -101,8 +95,7 @@ export const TimelineConfigBar = ({
             onClick={() => onChange({ showProjectLanes: !cfg.showProjectLanes })}
           />
         )}
-        <Button
-          size="sm"
+        <ToolbarButton
           variant={cfg.showMilestones ? 'primary' : 'secondary'}
           icon={<TbFlag size={13} />}
           title={cfg.showMilestones ? 'Hide milestones' : 'Show milestones'}
@@ -110,8 +103,7 @@ export const TimelineConfigBar = ({
           aria-pressed={cfg.showMilestones}
           onClick={() => onChange({ showMilestones: !cfg.showMilestones })}
         />
-        <Button
-          size="sm"
+        <ToolbarButton
           variant={cfg.showAutosaves ? 'primary' : 'secondary'}
           icon={<TbGitCommit size={13} />}
           title={cfg.showAutosaves ? 'Hide autosave snapshots' : 'Show autosave snapshots'}
@@ -122,9 +114,8 @@ export const TimelineConfigBar = ({
       </>
     )}
 
-    <div className={styles.configSep} />
-    <Button
-      size="sm"
+    <ViewControlsSeparator />
+    <ToolbarButton
       variant={cfg.showHorizonBands ? 'primary' : 'secondary'}
       icon={<TbCalendarWeek size={13} />}
       title={cfg.showHorizonBands ? 'Hide horizon bands' : 'Show horizon bands'}
@@ -132,5 +123,5 @@ export const TimelineConfigBar = ({
       aria-pressed={cfg.showHorizonBands}
       onClick={() => onChange({ showHorizonBands: !cfg.showHorizonBands })}
     />
-  </div>
+  </ViewControls>
 );

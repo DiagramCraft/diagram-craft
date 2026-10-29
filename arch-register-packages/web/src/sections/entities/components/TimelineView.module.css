@@ -1,33 +1,9 @@
-/* Container */
+/* Container: anchors the absolutely positioned overlays; the frame itself comes from ViewControlsFrame */
 .screen {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
   position: relative;
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r-md);
-  min-height: 0;
 }
 
 /* Config bar */
-.configBar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  border-bottom: 1px solid var(--panel-border);
-  flex-shrink: 0;
-  flex-wrap: wrap;
-}
-
-.configSep {
-  width: 1px;
-  height: 16px;
-  background: var(--panel-border);
-  flex-shrink: 0;
-}
-
 .configArrow {
   font-size: 11px;
   color: var(--base-fg-more-dim);
@@ -37,41 +13,6 @@
   font-size: 11px;
   color: var(--base-fg-more-dim);
   white-space: nowrap;
-}
-
-/* Segmented zoom control */
-.segmented {
-  display: inline-flex;
-  background: var(--cmp-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r);
-  overflow: hidden;
-}
-
-.segmented button {
-  height: 24px;
-  padding: 0 8px;
-  font-size: 11px;
-  color: var(--base-fg-more-dim);
-  background: transparent;
-  border: none;
-  border-right: 1px solid var(--panel-border);
-  cursor: pointer;
-  font-family: inherit;
-}
-
-.segmented button:last-child {
-  border-right: none;
-}
-
-.segmented button:hover {
-  background: var(--cmp-bg-hover);
-  color: var(--base-fg);
-}
-
-.segmented .segmentedActive {
-  background: var(--cmp-bg-active);
-  color: var(--base-fg);
 }
 
 /* Scroll area */

@@ -36,6 +36,7 @@ import {
   useHydratedEntityRows
 } from '../../../hooks/useHydratedEntityRows';
 import { usePersistedViewConfig } from '../../../hooks/usePersistedViewConfig';
+import { ViewControls, ViewControlsFrame } from '../../../components/ViewControls';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -304,9 +305,9 @@ export const RadarView = ({
   };
 
   return (
-    <div className={styles.screen}>
+    <ViewControlsFrame>
       {!hideToolbar && (
-        <div className={styles.config}>
+        <ViewControls variant="view">
           {!soleSchemaId && (
             <LabeledSelect
               label="Schema"
@@ -431,7 +432,7 @@ export const RadarView = ({
               No Select fields or lifecycle states on this schema.
             </span>
           )}
-        </div>
+        </ViewControls>
       )}
 
       <div className={styles.content}>
@@ -466,7 +467,7 @@ export const RadarView = ({
         ) : (
           <>
             {!hideToolbar && (
-              <div className={styles.toolbar}>
+              <ViewControls variant="page">
                 <span className={styles.pillsLabel}>Ring</span>
                 <div className={styles.pills}>
                   {rings.map((ring, ringIndex) => (
@@ -499,7 +500,7 @@ export const RadarView = ({
                     </button>
                   ))}
                 </div>
-              </div>
+              </ViewControls>
             )}
 
             <div className={styles.body}>
@@ -573,7 +574,7 @@ export const RadarView = ({
           </>
         )}
       </div>
-    </div>
+    </ViewControlsFrame>
   );
 };
 

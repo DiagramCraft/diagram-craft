@@ -1,8 +1,3 @@
-/* Screen */
-.screen {
-  composes: frame from "../../../components/ViewConfigBar.module.css";
-}
-
 /* Content */
 .content {
   padding: 20px 24px;
@@ -11,11 +6,6 @@
   flex: 1;
   min-height: 0;
   overflow: hidden;
-}
-
-/* Config bar */
-.config {
-  composes: bar from "../../../components/ViewConfigBar.module.css";
 }
 
 .noFields {

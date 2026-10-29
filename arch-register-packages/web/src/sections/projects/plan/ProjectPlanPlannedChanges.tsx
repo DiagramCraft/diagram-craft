@@ -21,7 +21,7 @@ import { Chip } from '../../../components/Chip';
 import { DropdownMenu } from '../../../components/DropdownMenu';
 import { TypeBadge } from '../../../components/TypeBadge';
 import { EmptyState } from '../../../components/EmptyState';
-import { ToolbarFilterBar } from '../../../components/ToolbarFilter';
+import { ViewControls } from '../../../components/ViewControls';
 import { LabeledSelect } from '../../../components/LabeledSelect';
 import { formatDate } from '../../../utils/dateFormat';
 import {
@@ -97,32 +97,30 @@ export const ProjectPlanPlannedChanges = ({
   });
 
   const toolbar = (
-    <div className={styles.plannedToolbar}>
-      <ToolbarFilterBar noPadding>
+    <ViewControls variant="tab">
+      <LabeledSelect
+        label="Show"
+        value={show}
+        onChange={value => setShow(value as ShowFilter)}
+        options={[
+          { value: 'all', label: 'All' },
+          { value: 'planned', label: 'Planned' },
+          { value: 'applied', label: 'Applied' },
+          { value: 'overdue', label: 'Overdue' }
+        ]}
+      />
+      <div className={styles.toolbarEnd}>
         <LabeledSelect
-          label="Show"
-          value={show}
-          onChange={value => setShow(value as ShowFilter)}
+          label="Group by"
+          value={groupBy}
+          onChange={value => setGroupBy(value as GroupBy)}
           options={[
-            { value: 'all', label: 'All' },
-            { value: 'planned', label: 'Planned' },
-            { value: 'applied', label: 'Applied' },
-            { value: 'overdue', label: 'Overdue' }
+            { value: 'date', label: 'Date' },
+            { value: 'entity', label: 'Entity' }
           ]}
         />
-        <div className={styles.toolbarEnd}>
-          <LabeledSelect
-            label="Group by"
-            value={groupBy}
-            onChange={value => setGroupBy(value as GroupBy)}
-            options={[
-              { value: 'date', label: 'Date' },
-              { value: 'entity', label: 'Entity' }
-            ]}
-          />
-        </div>
-      </ToolbarFilterBar>
-    </div>
+      </div>
+    </ViewControls>
   );
 
   if (visibleEntries.length === 0) {

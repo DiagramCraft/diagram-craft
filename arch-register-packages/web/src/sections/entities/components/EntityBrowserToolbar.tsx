@@ -1,5 +1,6 @@
 import { TbHistory } from 'react-icons/tb';
-import { Button } from '@diagram-craft/app-components/Button';
+import { ViewControls } from '../../../components/ViewControls';
+import { ToolbarButton } from '../../../components/ToolbarButton';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type {
   WorkspaceLifecycleState,
@@ -14,7 +15,6 @@ import type {
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import type { Assessment } from '@arch-register/api-types/assessmentContract';
 import { LabeledSelect } from '../../../components/LabeledSelect';
-import styles from './EntityBrowser.module.css';
 import { ManageFieldsPopover } from './ManageFieldsPopover';
 import { AssessmentJoinPicker } from './AssessmentJoinPicker';
 import { BROWSER_VIEW_OPTIONS, groupViewOptions } from './browserViewMeta';
@@ -105,7 +105,7 @@ export const EntityBrowserToolbar = ({
   allowedViews
 }: EntityBrowserToolbarProps) => {
   return (
-    <div className={styles.toolbar}>
+    <ViewControls variant="page">
       <QueryModeControls
         workspaceId={workspaceId}
         q={q}
@@ -172,13 +172,12 @@ export const EntityBrowserToolbar = ({
         disabled={!displayFields || !selectedDisplayFieldIds || !onDisplayFieldsChange}
       />
       {onToggleTimeline && (
-        <Button
-          size="sm"
+        <ToolbarButton
           variant={tlOpen || asOf ? 'primary' : 'secondary'}
           icon={<TbHistory size={12} />}
           onClick={onToggleTimeline}
         />
       )}
-    </div>
+    </ViewControls>
   );
 };

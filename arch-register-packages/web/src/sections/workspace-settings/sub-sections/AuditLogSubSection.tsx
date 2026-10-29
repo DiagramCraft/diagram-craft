@@ -12,7 +12,8 @@ import {
 } from '../../../routes/publicObjectRoutes';
 import { useEntityDrawer } from '../../entities/entityDrawer/useEntityDrawer';
 import { formatRelativeTime } from '../../../utils/dateFormat';
-import { ToolbarFilterBar, ToolbarFilterDate } from '../../../components/ToolbarFilter';
+import { LabeledDateInput } from '../../../components/LabeledDateInput';
+import { ViewControls } from '../../../components/ViewControls';
 import { LabeledSelect } from '../../../components/LabeledSelect';
 import { Table } from '../../../components/table/Table';
 import { EmptyState } from '../../../components/EmptyState';
@@ -145,7 +146,7 @@ export const AuditLogSubSection = ({
 
   return (
     <div className={styles.blockList}>
-      <ToolbarFilterBar>
+      <ViewControls variant="page">
         <LabeledSelect
           label="Object type"
           value={entityType}
@@ -158,9 +159,9 @@ export const AuditLogSubSection = ({
           onChange={value => setOperation(value as '' | AuditOperation)}
           options={AUDIT_OPERATIONS}
         />
-        <ToolbarFilterDate label="From" value={startDate} onChange={setStartDate} />
-        <ToolbarFilterDate label="To" value={endDate} onChange={setEndDate} />
-      </ToolbarFilterBar>
+        <LabeledDateInput label="From" value={startDate} onChange={setStartDate} />
+        <LabeledDateInput label="To" value={endDate} onChange={setEndDate} />
+      </ViewControls>
 
       {loading ? (
         <LoadingState text="Loading activity..." size="sm" />

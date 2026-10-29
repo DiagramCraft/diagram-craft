@@ -29,6 +29,7 @@ import { textColorForFill } from './mapColorScales';
 import { useHydratedEntityRows } from '../../../hooks/useHydratedEntityRows';
 import { usePersistedViewConfig } from '../../../hooks/usePersistedViewConfig';
 import styles from './HeatmapView.module.css';
+import { ViewControls, ViewControlsFrame } from '../../../components/ViewControls';
 
 export type { HeatmapConfig } from './heatmapViewState';
 
@@ -205,9 +206,9 @@ export const HeatmapView = ({
     activeCell != null ? (cells[activeCell.row]?.[activeCell.col] ?? null) : null;
 
   return (
-    <div className={styles.screen}>
+    <ViewControlsFrame>
       {!hideToolbar && (
-        <div className={styles.config}>
+        <ViewControls variant="view">
           <LabeledSelect
             label="Row"
             value={config?.likelihoodFieldId ?? ''}
@@ -261,7 +262,7 @@ export const HeatmapView = ({
               No numeric or categorical fields available across the current entities.
             </span>
           )}
-        </div>
+        </ViewControls>
       )}
 
       <div className={styles.content}>
@@ -393,6 +394,6 @@ export const HeatmapView = ({
           </div>
         </Popover.Imperative>
       )}
-    </div>
+    </ViewControlsFrame>
   );
 };
