@@ -90,7 +90,7 @@
 }
 
 .cardTitle {
-  color: var(--base-fg);
+  color: var(--panel-fg);
   font-size: 12px;
   font-weight: 500;
 }
@@ -98,7 +98,7 @@
 .cardSub {
   font-size: 11px;
   margin-top: 2px;
-  color: var(--cmp-fg-disabled);
+  color: var(--panel-fg-tertiary);
 }
 
 .emptyNote {

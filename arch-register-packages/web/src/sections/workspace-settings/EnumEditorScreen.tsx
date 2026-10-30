@@ -15,6 +15,7 @@ import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteCo
 import { ErrorDialog } from '@diagram-craft/app-components/ErrorDialog';
 import { EmptyState } from '../../components/EmptyState';
 import { Title } from '../../components/Title';
+import { Page } from '../../components/Page';
 import { useEnumDraft } from './useEnumDraft';
 
 const OPTIONS_LIST_ID = 'enum-options';
@@ -49,45 +50,40 @@ export const EnumEditorScreen = () => {
   } = useEnumDraft();
 
   return (
-    <div className={styles.screen}>
-      <div className={styles.head}>
-        <Title
-          breadcrumb={[
-            {
-              label: 'Home',
-              onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
-            },
-            { label: 'Settings' }
-          ]}
-          eyebrow="Enum"
-          buttons={
-            canEdit && (selected || isNew) ? (
-              <EditorSaveButtons
-                canSave={dirty && name.trim() !== ''}
-                dirty={dirty}
-                onCancel={revert}
-                pending={isSaving}
-                onSave={() => void save()}
-              />
-            ) : undefined
-          }
-          menu={
-            canEdit && selected ? (
-              <EditorActionsMenu
-                deleteLabel="Delete enum"
-                onDelete={() => setConfirmDelete(true)}
-              />
-            ) : undefined
-          }
-          titleTestId={selected || isNew ? 'enum-editor-title' : undefined}
-          title={selected || isNew ? name || 'New enum' : 'Enums'}
-          description={
-            selected || isNew
-              ? `${options.length} options`
-              : 'Define reusable option sets that select fields can reference.'
-          }
-        />
-      </div>
+    <Page>
+      <Title
+        breadcrumb={[
+          {
+            label: 'Home',
+            onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
+          },
+          { label: 'Settings' }
+        ]}
+        eyebrow="Enum"
+        buttons={
+          canEdit && (selected || isNew) ? (
+            <EditorSaveButtons
+              canSave={dirty && name.trim() !== ''}
+              dirty={dirty}
+              onCancel={revert}
+              pending={isSaving}
+              onSave={() => void save()}
+            />
+          ) : undefined
+        }
+        menu={
+          canEdit && selected ? (
+            <EditorActionsMenu deleteLabel="Delete enum" onDelete={() => setConfirmDelete(true)} />
+          ) : undefined
+        }
+        titleTestId={selected || isNew ? 'enum-editor-title' : undefined}
+        title={selected || isNew ? name || 'New enum' : 'Enums'}
+        description={
+          selected || isNew
+            ? `${options.length} options`
+            : 'Define reusable option sets that select fields can reference.'
+        }
+      />
 
       {selected || isNew ? (
         <div>
@@ -253,6 +249,6 @@ export const EnumEditorScreen = () => {
         message={errorMessage}
         onClose={() => setErrorMessage(null)}
       />
-    </div>
+    </Page>
   );
 };

@@ -265,7 +265,6 @@ export const TeamsSubSection = ({ workspaceSlug }: { workspaceSlug: string }) =>
                   <span className={styles.teamLeadRow}>
                     {leadUser && (
                       <>
-                        <span className={styles.dim}>Lead</span>
                         <MemberAvatar
                           name={leadUser.display_name}
                           email={leadUser.email}

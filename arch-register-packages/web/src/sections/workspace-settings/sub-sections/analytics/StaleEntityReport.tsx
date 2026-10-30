@@ -88,7 +88,11 @@ export const StaleEntityReport = ({
             {entities.map(entity => (
               <Table.Row key={entity._uid}>
                 <Table.Cell>
-                  <EntityNavigationLink publicId={entity._publicId} className={styles.linkButton}>
+                  <EntityNavigationLink
+                    publicId={entity._publicId}
+                    className={styles.linkButton}
+                    style={{ color: 'var(--panel-fg)' }}
+                  >
                     {entity._name}
                   </EntityNavigationLink>
                 </Table.Cell>

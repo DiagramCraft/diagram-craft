@@ -28,13 +28,14 @@
 
 .tileLabel {
   font-size: 11px;
-  color: var(--base-fg-dimmed);
+  color: var(--panel-fg-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .tileValue {
   font-size: 28px;
+  color: var(--panel-fg);
   font-weight: 500;
   letter-spacing: -0.5px;
   line-height: 1;
@@ -42,5 +43,5 @@
 
 .tileSub {
   font-size: 11.5px;
-  color: var(--base-fg-dimmed);
+  color: var(--panel-fg-tertiary);
 }

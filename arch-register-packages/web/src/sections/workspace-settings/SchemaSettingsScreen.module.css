@@ -1,11 +1,4 @@
 /* Schema settings editor */
-.screen {
-  padding: 20px 24px 32px;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow-y: auto;
-}
 
 .head {
   margin-bottom: 20px;
@@ -16,10 +9,6 @@
   border: 1px solid var(--panel-border);
   border-radius: var(--r-md);
   padding: 16px;
-}
-
-.editorHead {
-  margin-bottom: 16px;
 }
 
 .formRow {

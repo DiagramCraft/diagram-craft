@@ -24,7 +24,7 @@
 /* ============= Card header ============= */
 .teamCardHead {
   display: grid;
-  grid-template-columns: 6px 160px minmax(220px, 1.2fr) minmax(150px, 1fr) 40px 100px 16px;
+  grid-template-columns: 6px 160px minmax(220px, 2fr) minmax(150px, 1fr) 40px 100px 16px;
   align-items: center;
   gap: 12px;
   padding: 10px 14px 10px 0;
@@ -59,7 +59,7 @@
 }
 
 .teamDescription {
-  color: color-mix(in oklch, var(--base-fg-dimmed) 88%, white 12%);
+  color: var(--cmp-fg-tertiary);
   font-size: 10.5px;
   font-weight: 400;
   line-height: 1.35;
@@ -77,7 +77,7 @@
 }
 
 .teamCount {
-  color: var(--base-fg);
+  color: var(--cmp-fg-secondary);
   text-align: right;
   font-variant-numeric: tabular-nums;
   font-family: var(--font-mono, monospace);
@@ -221,7 +221,7 @@
 
 /* ============= Shared utilities ============= */
 .dim {
-  color: var(--cmp-fg-disabled);
+  color: var(--base-fg-dimmed);
   font-size: 11px;
 }
 

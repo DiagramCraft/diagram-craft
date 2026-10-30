@@ -462,15 +462,14 @@ export const ExportImportSubSection = () => {
                   <div className={styles.inlineSuccess}>Import completed. Reloading…</div>
                 )}
                 <div className={styles.actionButtons}>
-                  {!importSummary && importFile && (
-                    <Button
-                      onClick={handleImportParse}
-                      disabled={importStatus === 'parsing'}
-                      icon={<TbUpload size={13} />}
-                    >
-                      {importStatus === 'parsing' ? 'Parsing…' : 'Preview import'}
-                    </Button>
-                  )}
+                  <Button
+                    onClick={handleImportParse}
+                    disabled={importStatus === 'parsing' || !importFile || importSummary}
+                    icon={<TbUpload size={13} />}
+                  >
+                    {importStatus === 'parsing' ? 'Parsing…' : 'Preview import'}
+                  </Button>
+
                   {importSummary && (
                     <Button
                       onClick={handleImportExecute}

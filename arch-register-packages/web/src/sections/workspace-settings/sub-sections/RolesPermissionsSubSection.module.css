@@ -52,7 +52,7 @@
 
 .builtinChip {
   font-size: 10px;
-  color: var(--cmp-fg-disabled);
+  color: var(--panel-fg-dimmed);
   background: var(--panel-bg);
   border-radius: 4px;
   padding: 1px 6px;
@@ -62,7 +62,7 @@
 
 .roleDescription {
   font-size: 11px;
-  color: var(--base-fg-dimmed);
+  color: var(--base-fg-tertiary);
   line-height: 1.4;
 }
 
@@ -81,7 +81,7 @@
 }
 
 .matrixCapName {
-  color: var(--base-fg-secondary);
+  color: var(--base-fg);
 }
 
 .matrixCheck {

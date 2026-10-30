@@ -97,6 +97,7 @@ export const AnalyticsOverview = ({ onSelectStale }: { onSelectStale: () => void
                     <button
                       type="button"
                       className={styles.linkButton}
+                      style={{ color: 'var(--cmp-fg)', textAlign: 'left' }}
                       onClick={() => navigateToEntities({ type: row.schemaId })}
                     >
                       {row.schemaName}
@@ -137,6 +138,7 @@ export const AnalyticsOverview = ({ onSelectStale }: { onSelectStale: () => void
                       <button
                         type="button"
                         className={styles.linkButton}
+                        style={{ color: 'var(--cmp-fg)', textAlign: 'left' }}
                         onClick={() => navigateToEntities({ type: row.schemaId })}
                       >
                         {row.schemaName}
@@ -213,6 +215,7 @@ export const AnalyticsOverview = ({ onSelectStale }: { onSelectStale: () => void
                       <button
                         type="button"
                         className={styles.linkButton}
+                        style={{ color: 'var(--cmp-fg)', textAlign: 'left' }}
                         onClick={() => navigateToEntities(ownershipGapSearch(row.schemaId))}
                       >
                         {row.schemaName}
@@ -247,6 +250,7 @@ export const AnalyticsOverview = ({ onSelectStale }: { onSelectStale: () => void
                       <button
                         type="button"
                         className={styles.linkButton}
+                        style={{ color: 'var(--cmp-fg)', textAlign: 'left' }}
                         onClick={() => navigateToEntities({ type: row.schemaId })}
                       >
                         {row.schemaName}

@@ -171,9 +171,9 @@ export const RolesPermissionsSubSection = ({ workspaceSlug }: { workspaceSlug: s
         })}
       </div>
 
-      <Table.Root stickyHeader bordered={true}>
+      <Table.Root>
         <Table.Head>
-          <tr>
+          <Table.Row>
             <Table.HeaderCell>Capability</Table.HeaderCell>
             {roles.map(role => (
               <Table.HeaderCell
@@ -186,7 +186,7 @@ export const RolesPermissionsSubSection = ({ workspaceSlug }: { workspaceSlug: s
                 {role.name}
               </Table.HeaderCell>
             ))}
-          </tr>
+          </Table.Row>
         </Table.Head>
         <Table.Body>
           {WORKSPACE_CAPABILITY_GROUPS.map(group => (

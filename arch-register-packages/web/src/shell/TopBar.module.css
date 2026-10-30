@@ -428,7 +428,7 @@
 
 .menuSub {
   font-size: 11px;
-  color: var(--cmp-fg-disabled);
+  color: var(--cmp-fg-tertiary);
 }
 
 .menuItem {
@@ -487,10 +487,6 @@
 
 .appswBtnStatic:hover {
   background: transparent;
-}
-
-.appswBtn > svg {
-  color: var(--cmp-fg-disabled);
 }
 
 .appswBadge {
@@ -579,7 +575,7 @@
 
 .appswTileSub {
   font-size: 11px;
-  color: var(--cmp-fg-disabled);
+  color: var(--cmp-fg-tertiary);
   line-height: 1.4;
 }
 

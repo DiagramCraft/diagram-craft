@@ -694,7 +694,9 @@ export const ConformanceSubSection = ({
                             key={violation.id}
                             onClick={() => setOpenViolationId(violation.id)}
                           >
-                            <Table.Cell>{violation.entity_name ?? violation.entity_id}</Table.Cell>
+                            <Table.Cell primary>
+                              {violation.entity_name ?? violation.entity_id}
+                            </Table.Cell>
                             <Table.Cell>
                               <SeverityBadge severity={violation.severity} />
                             </Table.Cell>

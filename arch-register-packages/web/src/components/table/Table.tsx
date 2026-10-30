@@ -164,6 +164,7 @@ type CellSharedProps = {
   numeric?: boolean;
   sticky?: boolean;
   width?: number | string;
+  primary?: boolean;
 };
 
 const cellStyle = (
@@ -212,10 +213,19 @@ const Cell = ({
   className,
   style,
   onClick,
+  primary,
   ...rest
 }: CellProps) => (
   <td
-    className={cx(styles.td, alignClass(align, numeric), sticky && styles.stickyCol, className)}
+    className={
+      cx(
+        styles.td,
+        alignClass(align, numeric),
+        sticky && styles.stickyCol,
+        className,
+        primary && styles.primary
+      ) + ' surface'
+    }
     style={cellStyle(width, style)}
     onClick={interactive ? (onClick ?? stopClick) : onClick}
     {...rest}

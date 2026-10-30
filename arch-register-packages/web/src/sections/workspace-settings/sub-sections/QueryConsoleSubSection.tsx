@@ -58,9 +58,6 @@ export const QueryConsoleSubSection = ({ workspaceId }: { workspaceId: string })
             <Button variant="primary" disabled={!canRun} onClick={() => void run()}>
               {isPending ? 'Running…' : 'Run query'}
             </Button>
-            <span className={styles.hint}>
-              Results are evaluated with your current permissions.
-            </span>
           </div>
         }
       >

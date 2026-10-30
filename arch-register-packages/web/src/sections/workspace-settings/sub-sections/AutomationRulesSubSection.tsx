@@ -757,7 +757,7 @@ export const AutomationRulesSubSection = ({
                 <Table.Body>
                   {rules.map(rule => (
                     <Table.Row key={rule.id}>
-                      <Table.Cell>
+                      <Table.Cell primary>
                         <div>{rule.name}</div>
                         {rule.description && <div className={styles.muted}>{rule.description}</div>}
                       </Table.Cell>

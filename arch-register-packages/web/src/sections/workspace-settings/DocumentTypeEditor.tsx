@@ -57,65 +57,187 @@ export const DocumentTypeEditor = ({
       })
   });
 
+  const editorBody = (
+    <div className={styles.editor}>
+      {selected?.archived && (
+        <div className={styles.banner}>
+          <TbInfoCircle size={12} />
+          Archived — visible on existing documents for history, but not offered when creating new
+          ones.
+        </div>
+      )}
+
+      <div className={styles.formRow}>
+        <div>
+          <div className={styles.formLabel}>Name</div>
+          <TextInput
+            value={draft.name}
+            onChange={value => draft.setName(value ?? '')}
+            style={{ width: '100%' }}
+          />
+        </div>
+        <div style={{ flex: 2 }}>
+          <div className={styles.formLabel}>Description</div>
+          <TextInput
+            value={draft.description}
+            onChange={value => draft.setDescription(value ?? '')}
+            style={{ width: '100%' }}
+          />
+        </div>
+      </div>
+
+      <div className={styles.appearanceRow}>
+        <div>
+          <div className={styles.formLabel}>Color</div>
+          <div className={styles.colorSwatches}>
+            {SCHEMA_COLORS.map(preset => (
+              <button
+                type="button"
+                key={preset}
+                className={`${styles.swatch} ${draft.color === preset ? styles.swatchActive : ''}`}
+                style={{ background: preset }}
+                title={preset}
+                onClick={() => draft.setColor(preset)}
+              />
+            ))}
+          </div>
+        </div>
+        <div>
+          <div className={styles.formLabel}>Icon</div>
+          <div className={styles.iconPicker}>
+            {SCHEMA_ICONS.map(id => {
+              const Icon = ICON_MAP[id];
+              return (
+                <button
+                  type="button"
+                  key={id}
+                  className={`${styles.iconOption} ${draft.icon === id ? styles.iconOptionActive : ''}`}
+                  title={id}
+                  onClick={() => draft.setIcon(id)}
+                >
+                  <Icon size={14} />
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      <Tabs.Root autoHeight value={panelTab} onValueChange={setPanelTab}>
+        <Tabs.List aria-label="Document type sections">
+          <Tabs.Trigger value="fields">Fields</Tabs.Trigger>
+          <Tabs.Trigger value="ai">AI actions</Tabs.Trigger>
+        </Tabs.List>
+        <Tabs.Content value="fields">
+          <div className={styles.fieldsHead}>
+            <div className={styles.sectionLabel}>Fields</div>
+            <Button variant="ghost" icon={<TbPlus size={11} />} onClick={draft.addField}>
+              Add field
+            </Button>
+          </div>
+
+          {draft.fields.length > 0 ? (
+            <div className={styles.fieldsTable}>
+              <FieldConfigList
+                items={draft.fields}
+                getId={field => draft.fieldKeys.get(field.id) ?? field.id}
+                listId={FIELDS_LIST_ID}
+                onReorder={draft.reorderFields}
+                renderItem={(field, _index, drag) => (
+                  <DocumentFieldRow
+                    field={field}
+                    onUpdate={patch => draft.updateField(field.id, patch)}
+                    onRemove={() => draft.removeField(field)}
+                    dragHandleRef={drag.ref}
+                  />
+                )}
+              />
+            </div>
+          ) : (
+            <div className={styles.fieldsTable}>
+              <div className={styles.fieldEmpty}>
+                No fields defined yet. Click &quot;Add field&quot; to get started.
+              </div>
+            </div>
+          )}
+          <div className={styles.fieldsHint}>
+            <TbInfoCircle size={11} />
+            Fields already used by documents keep their value type. Renaming or removing a used
+            field will ask you to choose how to migrate its data before saving.
+          </div>
+        </Tabs.Content>
+        <Tabs.Content value="ai">
+          <DocumentAiActionsSection
+            workspaceSlug={workspaceSlug}
+            documentTypeId={selected?.id ?? null}
+            fields={draft.fields}
+            aiActions={draft.aiActions}
+            onChange={draft.setAiActions}
+          />
+        </Tabs.Content>
+      </Tabs.Root>
+    </div>
+  );
+
   return (
     <>
       {selected || isNew ? (
-        <div>
-          <div className={styles.editorHead}>
-            <Title
-              breadcrumb={[
-                {
-                  label: 'Home',
-                  onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
-                },
-                { label: 'Settings' }
-              ]}
-              eyebrow="Document type"
-              icon={
-                <TypeBadge
-                  color={
-                    draft.color ??
-                    (selected ? typeColor.get(selected.id) : undefined) ??
-                    'var(--base-fg-secondary)'
-                  }
-                  name={draft.name || 'New document type'}
-                  icon={draft.icon}
-                  size={26}
+        <>
+          <Title
+            breadcrumb={[
+              {
+                label: 'Home',
+                onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
+              },
+              { label: 'Settings' }
+            ]}
+            eyebrow="Document type"
+            icon={
+              <TypeBadge
+                color={
+                  draft.color ??
+                  (selected ? typeColor.get(selected.id) : undefined) ??
+                  'var(--base-fg-secondary)'
+                }
+                name={draft.name || 'New document type'}
+                icon={draft.icon}
+                size={26}
+              />
+            }
+            title={draft.name || 'New document type'}
+            description={
+              draft.description ||
+              `${draft.fields.filter(field => !field.retired).length} fields${selected ? ` · version ${selected.version}` : ''}`
+            }
+            buttons={
+              <EditorSaveButtons
+                canSave={draft.dirty && draft.name.trim() !== ''}
+                dirty={draft.dirty}
+                pending={draft.isSaving}
+                onSave={() => void draft.save()}
+                onCancel={draft.revert}
+              />
+            }
+            menu={
+              selected ? (
+                <EditorActionsMenu
+                  deleteLabel="Delete type"
+                  onDelete={() => draft.setConfirmDelete(true)}
+                  extraItems={[
+                    {
+                      label: selected.archived ? 'Unarchive' : 'Archive',
+                      icon: selected.archived ? <TbEye size={14} /> : <TbArchive size={14} />,
+                      onClick: () => void draft.toggleArchived()
+                    }
+                  ]}
                 />
-              }
-              title={draft.name || 'New document type'}
-              description={
-                draft.description ||
-                `${draft.fields.filter(field => !field.retired).length} fields${selected ? ` · version ${selected.version}` : ''}`
-              }
-              buttons={
-                <EditorSaveButtons
-                  canSave={draft.dirty && draft.name.trim() !== ''}
-                  dirty={draft.dirty}
-                  pending={draft.isSaving}
-                  onSave={() => void draft.save()}
-                  onCancel={draft.revert}
-                />
-              }
-              menu={
-                selected ? (
-                  <EditorActionsMenu
-                    deleteLabel="Delete type"
-                    onDelete={() => draft.setConfirmDelete(true)}
-                    extraItems={[
-                      {
-                        label: selected.archived ? 'Unarchive' : 'Archive',
-                        icon: selected.archived ? <TbEye size={14} /> : <TbArchive size={14} />,
-                        onClick: () => void draft.toggleArchived()
-                      }
-                    ]}
-                  />
-                ) : undefined
-              }
-            />
-          </div>
-          {selected && (
+              ) : undefined
+            }
+          />
+
+          {selected ? (
             <Tabs.Root
+              autoHeight
               value={draft.showHistory ? 'history' : 'edit'}
               onValueChange={value => draft.setShowHistory(value === 'history')}
             >
@@ -123,135 +245,18 @@ export const DocumentTypeEditor = ({
                 <Tabs.Trigger value="edit">Edit</Tabs.Trigger>
                 <Tabs.Trigger value="history">Version history</Tabs.Trigger>
               </Tabs.List>
+              <Tabs.Content value="edit">{editorBody}</Tabs.Content>
+              <Tabs.Content value="history">
+                <DocumentTypeVersionHistorySubSection
+                  workspaceId={workspaceSlug}
+                  documentTypeId={selected.id}
+                />
+              </Tabs.Content>
             </Tabs.Root>
-          )}
-          {draft.showHistory && selected ? (
-            <DocumentTypeVersionHistorySubSection
-              workspaceId={workspaceSlug}
-              documentTypeId={selected.id}
-            />
           ) : (
-            <div className={styles.editor}>
-              {selected?.archived && (
-                <div className={styles.banner}>
-                  <TbInfoCircle size={12} />
-                  Archived — visible on existing documents for history, but not offered when
-                  creating new ones.
-                </div>
-              )}
-
-              <div className={styles.formRow}>
-                <div>
-                  <div className={styles.formLabel}>Name</div>
-                  <TextInput
-                    value={draft.name}
-                    onChange={value => draft.setName(value ?? '')}
-                    style={{ width: '100%' }}
-                  />
-                </div>
-                <div style={{ flex: 2 }}>
-                  <div className={styles.formLabel}>Description</div>
-                  <TextInput
-                    value={draft.description}
-                    onChange={value => draft.setDescription(value ?? '')}
-                    style={{ width: '100%' }}
-                  />
-                </div>
-              </div>
-
-              <div className={styles.appearanceRow}>
-                <div>
-                  <div className={styles.formLabel}>Color</div>
-                  <div className={styles.colorSwatches}>
-                    {SCHEMA_COLORS.map(preset => (
-                      <button
-                        type="button"
-                        key={preset}
-                        className={`${styles.swatch} ${draft.color === preset ? styles.swatchActive : ''}`}
-                        style={{ background: preset }}
-                        title={preset}
-                        onClick={() => draft.setColor(preset)}
-                      />
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <div className={styles.formLabel}>Icon</div>
-                  <div className={styles.iconPicker}>
-                    {SCHEMA_ICONS.map(id => {
-                      const Icon = ICON_MAP[id];
-                      return (
-                        <button
-                          type="button"
-                          key={id}
-                          className={`${styles.iconOption} ${draft.icon === id ? styles.iconOptionActive : ''}`}
-                          title={id}
-                          onClick={() => draft.setIcon(id)}
-                        >
-                          <Icon size={14} />
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-
-              <Tabs.Root autoHeight value={panelTab} onValueChange={setPanelTab}>
-                <Tabs.List aria-label="Document type sections">
-                  <Tabs.Trigger value="fields">Fields</Tabs.Trigger>
-                  <Tabs.Trigger value="ai">AI actions</Tabs.Trigger>
-                </Tabs.List>
-                <Tabs.Content value="fields">
-                  <div className={styles.fieldsHead}>
-                    <div className={styles.sectionLabel}>Fields</div>
-                    <Button variant="ghost" icon={<TbPlus size={11} />} onClick={draft.addField}>
-                      Add field
-                    </Button>
-                  </div>
-
-                  {draft.fields.length > 0 ? (
-                    <div className={styles.fieldsTable}>
-                      <FieldConfigList
-                        items={draft.fields}
-                        getId={field => draft.fieldKeys.get(field.id) ?? field.id}
-                        listId={FIELDS_LIST_ID}
-                        onReorder={draft.reorderFields}
-                        renderItem={(field, _index, drag) => (
-                          <DocumentFieldRow
-                            field={field}
-                            onUpdate={patch => draft.updateField(field.id, patch)}
-                            onRemove={() => draft.removeField(field)}
-                            dragHandleRef={drag.ref}
-                          />
-                        )}
-                      />
-                    </div>
-                  ) : (
-                    <div className={styles.fieldsTable}>
-                      <div className={styles.fieldEmpty}>
-                        No fields defined yet. Click &quot;Add field&quot; to get started.
-                      </div>
-                    </div>
-                  )}
-                  <div className={styles.fieldsHint}>
-                    <TbInfoCircle size={11} />
-                    Fields already used by documents keep their value type. Renaming or removing a
-                    used field will ask you to choose how to migrate its data before saving.
-                  </div>
-                </Tabs.Content>
-                <Tabs.Content value="ai">
-                  <DocumentAiActionsSection
-                    workspaceSlug={workspaceSlug}
-                    documentTypeId={selected?.id ?? null}
-                    fields={draft.fields}
-                    aiActions={draft.aiActions}
-                    onChange={draft.setAiActions}
-                  />
-                </Tabs.Content>
-              </Tabs.Root>
-            </div>
+            editorBody
           )}
-        </div>
+        </>
       ) : (
         <EmptyState
           title="No document type selected"

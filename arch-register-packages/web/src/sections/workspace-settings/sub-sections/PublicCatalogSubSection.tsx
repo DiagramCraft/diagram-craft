@@ -454,7 +454,8 @@ export const PublicCatalogSubSection = ({
                         gap: 6,
                         alignItems: 'center',
                         fontSize: 12,
-                        opacity: field.selectable ? 1 : 0.6
+                        opacity: field.selectable ? 1 : 0.6,
+                        color: 'var(--panel-fg-secondary)'
                       }}
                     >
                       <input

@@ -124,66 +124,65 @@ export const DocumentTemplateEditor = ({
   return (
     <>
       {selected || isNew ? (
-        <div>
-          <div className={styles.editorHead}>
-            <Title
-              breadcrumb={[
-                {
-                  label: 'Home',
-                  onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
-                },
-                { label: 'Settings' }
-              ]}
-              icon={
-                <TypeBadge
-                  color={
-                    selectedType
-                      ? resolveDocumentTypeColor(selectedType, types.indexOf(selectedType))
-                      : 'var(--base-fg-secondary)'
-                  }
-                  name={selectedType?.name}
-                  icon={selectedType?.icon}
-                  size={26}
+        <>
+          <Title
+            breadcrumb={[
+              {
+                label: 'Home',
+                onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
+              },
+              { label: 'Settings' }
+            ]}
+            icon={
+              <TypeBadge
+                color={
+                  selectedType
+                    ? resolveDocumentTypeColor(selectedType, types.indexOf(selectedType))
+                    : 'var(--base-fg-secondary)'
+                }
+                name={selectedType?.name}
+                icon={selectedType?.icon}
+                size={26}
+              />
+            }
+            buttons={
+              <Button
+                variant="primary"
+                onClick={() => void handleSave()}
+                disabled={
+                  !dirty ||
+                  !name.trim() ||
+                  !documentTypeId ||
+                  createTemplate.isPending ||
+                  updateTemplate.isPending
+                }
+              >
+                {createTemplate.isPending || updateTemplate.isPending ? 'Saving…' : 'Save'}
+              </Button>
+            }
+            menu={
+              selected ? (
+                <EditorActionsMenu
+                  deleteLabel="Delete template"
+                  onDelete={() => setConfirmDelete(true)}
+                  extraItems={[
+                    {
+                      label: selected.archived ? 'Unarchive' : 'Archive',
+                      icon: selected.archived ? <TbEye size={14} /> : <TbArchive size={14} />,
+                      onClick: () =>
+                        void archiveTemplate.mutateAsync({
+                          id: selected.id,
+                          archived: !selected.archived
+                        })
+                    }
+                  ]}
                 />
-              }
-              buttons={
-                <Button
-                  variant="primary"
-                  onClick={() => void handleSave()}
-                  disabled={
-                    !dirty ||
-                    !name.trim() ||
-                    !documentTypeId ||
-                    createTemplate.isPending ||
-                    updateTemplate.isPending
-                  }
-                >
-                  {createTemplate.isPending || updateTemplate.isPending ? 'Saving…' : 'Save'}
-                </Button>
-              }
-              menu={
-                selected ? (
-                  <EditorActionsMenu
-                    deleteLabel="Delete template"
-                    onDelete={() => setConfirmDelete(true)}
-                    extraItems={[
-                      {
-                        label: selected.archived ? 'Unarchive' : 'Archive',
-                        icon: selected.archived ? <TbEye size={14} /> : <TbArchive size={14} />,
-                        onClick: () =>
-                          void archiveTemplate.mutateAsync({
-                            id: selected.id,
-                            archived: !selected.archived
-                          })
-                      }
-                    ]}
-                  />
-                ) : undefined
-              }
-              title={name ?? 'New template'}
-              description={`For ${documentTypeId === UNTYPED ? 'untyped Markdown' : selectedType ? selectedType.name : 'an unknown type'}${selectedType?.archived ? ' · archived type' : ''}`}
-            />
-          </div>
+              ) : undefined
+            }
+            title={name ?? 'New template'}
+            description={`For ${documentTypeId === UNTYPED ? 'untyped Markdown' : selectedType ? selectedType.name : 'an unknown type'}${selectedType?.archived ? ' · archived type' : ''}`}
+          />
+
           <div className={styles.editor}>
             <div className={styles.formRow}>
               <div>
@@ -248,7 +247,7 @@ export const DocumentTemplateEditor = ({
               }}
             />
           </div>
-        </div>
+        </>
       ) : (
         <EmptyState
           icon={<TbFileText size={22} />}

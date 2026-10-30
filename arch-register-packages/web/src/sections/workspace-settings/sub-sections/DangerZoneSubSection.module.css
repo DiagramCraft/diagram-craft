@@ -27,7 +27,7 @@
 }
 
 .dangerCardText {
-  color: var(--cmp-fg-disabled);
+  color: var(--panel-fg-tertiary);
   font-size: 12px;
   line-height: 1.5;
   margin-top: 4px;

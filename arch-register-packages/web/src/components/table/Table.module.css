@@ -65,7 +65,7 @@
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--cmp-fg-disabled);
+  color: var(--base-fg-tertiary);
   background: var(--base-bg);
   padding: 8px 10px;
   border-bottom: 1px solid var(--panel-border);
@@ -93,6 +93,11 @@
 .table .td {
   padding: 8px 10px;
   vertical-align: middle;
+  color: var(--panel-fg-secondary);
+}
+
+.table .primary {
+  color: var(--panel-fg);
 }
 
 .table tbody tr {
@@ -280,7 +285,7 @@
   align-items: center;
   justify-content: center;
   border-radius: var(--r);
-  color: var(--cmp-fg-disabled);
+  color: var(--panel-fg-tertiary);
 }
 
 .dotsBtn:hover {
@@ -319,7 +324,7 @@
 .groupHeaderCell {
   background: var(--panel-bg);
   font-weight: 600;
-  color: var(--base-fg-secondary);
+  color: var(--panel-fg-secondary);
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.04em;

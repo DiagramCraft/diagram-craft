@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { EmptyState } from '../../components/EmptyState';
 import { Title, type TitleBreadcrumbItem } from '../../components/Title';
+import { Page } from '../../components/Page';
 import styles from './SchemaSettingsScreen.module.css';
 
 type SchemaEditorScreenShellProps = {
@@ -49,21 +50,19 @@ export const SchemaEditorScreenShell = ({
   emptyAction,
   dialogs
 }: SchemaEditorScreenShellProps) => (
-  <div className={styles.screen}>
+  <Page>
     {hasSelection ? (
-      <div>
-        <div className={styles.editorHead}>
-          <Title
-            breadcrumb={breadcrumb}
-            titleTestId={titleTestId}
-            icon={icon}
-            eyebrow={eyebrow}
-            menu={menu}
-            buttons={buttons}
-            title={title}
-            description={description}
-          />
-        </div>
+      <>
+        <Title
+          breadcrumb={breadcrumb}
+          titleTestId={titleTestId}
+          icon={icon}
+          eyebrow={eyebrow}
+          menu={menu}
+          buttons={buttons}
+          title={title}
+          description={description}
+        />
         {onShowHistoryChange ? (
           <Tabs.Root
             autoHeight
@@ -84,7 +83,7 @@ export const SchemaEditorScreenShell = ({
         ) : (
           editor
         )}
-      </div>
+      </>
     ) : (
       <EmptyState
         icon={emptyIcon}
@@ -94,5 +93,5 @@ export const SchemaEditorScreenShell = ({
       />
     )}
     {dialogs}
-  </div>
+  </Page>
 );

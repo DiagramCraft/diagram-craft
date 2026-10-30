@@ -424,7 +424,7 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
                   <Table.Body>
                     {servers.map(server => (
                       <Table.Row key={server.id}>
-                        <Table.Cell>
+                        <Table.Cell primary>
                           <div>{server.name}</div>
                           <div className={styles.muted}>{server.id}</div>
                         </Table.Cell>

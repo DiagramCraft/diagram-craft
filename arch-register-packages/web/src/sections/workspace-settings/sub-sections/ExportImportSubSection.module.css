@@ -27,7 +27,7 @@
 }
 
 .checkboxHint {
-  color: var(--cmp-fg-disabled);
+  color: var(--panel-fg-tertiary);
   font-size: 11px;
 }
 
@@ -194,7 +194,8 @@
   align-items: center;
   gap: 6px;
   font-size: 11.5px;
-  color: var(--cmp-fg-disabled);
+  margin-top: 0.5rem;
+  color: var(--panel-fg-tertiary);
 }
 
 .previewMessages {
