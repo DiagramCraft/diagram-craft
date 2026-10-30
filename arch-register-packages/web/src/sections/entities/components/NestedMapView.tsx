@@ -687,7 +687,7 @@ export const NestedMapView = ({
 
   const nameStyle = useCallback(
     (node: TreeNode, dimmed: boolean, isLeaf: boolean): React.CSSProperties | undefined => {
-      if (dimmed) return { color: 'var(--base-fg-more-dim)' };
+      if (dimmed) return { color: 'var(--base-fg-dimmed)' };
       const color = resolveBoxColor(
         node,
         metricConfig,

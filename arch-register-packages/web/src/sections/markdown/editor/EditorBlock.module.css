@@ -50,7 +50,7 @@
 }
 
 .dragHandle:hover {
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   background: var(--cmp-bg);
 }
 
@@ -134,7 +134,7 @@
 
 .blockActionBtn:hover {
   background: var(--cmp-bg);
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
 }
 
 .blockActionBtn:disabled {

@@ -1,10 +1,3 @@
-.blockList {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 16px 24px 32px;
-}
-
 .summary,
 .hint {
   color: var(--cmp-fg-disabled);
@@ -97,7 +90,7 @@
 }
 
 .cardTitle {
-  color: var(--base-fg);
+  color: var(--panel-fg);
   font-size: 12px;
   font-weight: 500;
 }
@@ -105,7 +98,7 @@
 .cardSub {
   font-size: 11px;
   margin-top: 2px;
-  color: var(--cmp-fg-disabled);
+  color: var(--panel-fg-tertiary);
 }
 
 .emptyNote {

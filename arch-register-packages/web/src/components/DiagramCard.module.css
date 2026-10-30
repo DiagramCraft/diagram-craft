@@ -94,11 +94,11 @@
 }
 
 .cmtTotal {
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
 }
 
 .cmtTotal svg {
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }
 
 .diagramSub {
@@ -117,7 +117,7 @@
   gap: 12px;
   padding: 8px 10px;
   text-align: left;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   cursor: pointer;
   background: none;
   border: none;

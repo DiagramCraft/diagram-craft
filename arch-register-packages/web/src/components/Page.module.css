@@ -1,0 +1,6 @@
+/** Scrollable page body with the standard page padding. */
+.cPage {
+  padding: 20px 24px 12px;
+  height: 100%;
+  overflow-y: auto;
+}

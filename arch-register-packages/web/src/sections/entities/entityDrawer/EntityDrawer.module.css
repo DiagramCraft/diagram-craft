@@ -27,7 +27,7 @@
 }
 
 .badgeLabel {
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   font-size: 11px;
 }
 
@@ -68,12 +68,12 @@
   display: flex;
   justify-content: space-between;
   gap: 10px;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   font-size: 12px;
 }
 
 .queryFieldLabel {
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }
 
 .queryFieldValue {
@@ -126,7 +126,7 @@
 .sectionToggle::after {
   content: "⌄";
   float: right;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }
 
 .sectionToggle[aria-expanded="false"]::after {
@@ -173,7 +173,7 @@
 }
 
 .metadataLabel {
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
 }
 
 .metadataValue {
@@ -196,7 +196,7 @@
 }
 
 .empty {
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   font-size: 12px;
 }
 
@@ -210,7 +210,7 @@
 
 .statLabel {
   font-size: 10.5px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   display: flex;
   align-items: center;
   gap: 6px;

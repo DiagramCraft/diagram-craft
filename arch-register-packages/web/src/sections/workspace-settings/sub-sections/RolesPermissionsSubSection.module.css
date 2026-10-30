@@ -5,7 +5,6 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
   gap: 10px;
-  margin-bottom: 24px;
 }
 
 .roleCard {
@@ -53,7 +52,7 @@
 
 .builtinChip {
   font-size: 10px;
-  color: var(--cmp-fg-disabled);
+  color: var(--panel-fg-dimmed);
   background: var(--panel-bg);
   border-radius: 4px;
   padding: 1px 6px;
@@ -63,7 +62,7 @@
 
 .roleDescription {
   font-size: 11px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-tertiary);
   line-height: 1.4;
 }
 
@@ -77,19 +76,12 @@
 }
 
 .roleStatValue {
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   font-weight: 600;
 }
 
-/* Permission matrix */
-.matrixWrap {
-  border: 1px solid var(--cmp-border);
-  border-radius: 8px;
-  overflow: hidden;
-}
-
 .matrixCapName {
-  color: var(--base-fg-dim);
+  color: var(--base-fg);
 }
 
 .matrixCheck {
@@ -116,7 +108,7 @@
 .roleActionBtn {
   border: 1px solid var(--cmp-border);
   background: var(--base-bg);
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   border-radius: 6px;
   padding: 4px 8px;
   font-size: 11px;
@@ -147,13 +139,13 @@
 
 .dialogLabel {
   font-size: 12px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }
 
 .requiredMark {
   font-size: 13px;
   font-weight: 600;
-  color: color-mix(in oklch, var(--error-fg) 80%, var(--base-fg-more-dim));
+  color: color-mix(in oklch, var(--error-fg) 80%, var(--base-fg-dimmed));
   margin-left: 2px;
   vertical-align: middle;
 }
@@ -206,7 +198,7 @@
 
 .capCount {
   font-size: 11px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   padding: 1px 7px;
   border: 1px solid var(--cmp-border);
   border-radius: 999px;
@@ -252,7 +244,7 @@
 .capGroupToggle {
   margin-left: auto;
   font-size: 10.5px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   background: transparent;
   border: none;
   cursor: pointer;
@@ -271,7 +263,7 @@
   gap: 8px;
   min-width: 0;
   font-size: 12px;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   padding: 6px 6px;
   border-radius: 6px;
   cursor: pointer;
@@ -280,7 +272,7 @@
 
 .capName {
   font-size: 12.5px;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   transition: color 70ms;
 }
 
@@ -296,7 +288,7 @@
   margin-left: auto;
   font-size: 10px;
   font-family: monospace;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   opacity: 0;
   transition: opacity 70ms;
   flex-shrink: 0;
@@ -310,7 +302,7 @@
   appearance: none;
   width: 14px;
   height: 14px;
-  border: 1px solid var(--base-fg-more-dim);
+  border: 1px solid var(--base-fg-dimmed);
   border-radius: 3px;
   background: transparent;
   margin: 0;

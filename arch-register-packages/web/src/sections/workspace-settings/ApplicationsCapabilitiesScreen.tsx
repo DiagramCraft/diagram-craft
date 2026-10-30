@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { getRouteApi } from '@tanstack/react-router';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { Title } from '../../components/Title';
+import { Page } from '../../components/Page';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useApplications } from '../../hooks/useApplications';
 import { CapabilityBindingEditor } from './sub-sections/CapabilityBindingEditor';
@@ -14,7 +15,6 @@ import {
 } from './applicationsCapabilities';
 import { getWorkspaceCapabilityDefinition } from '@arch-register/api-types/integrationCatalog';
 import type { WorkspaceApplicationId } from '@arch-register/api-types/workspaceConfigContract';
-import styles from './WorkspaceSettingsScreen.module.css';
 
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/applications-capabilities');
 
@@ -52,15 +52,11 @@ export const ApplicationsCapabilitiesScreen = () => {
 
   if (!item || item.tabs.length === 0) {
     return (
-      <div className={styles.screen}>
-        <div className={styles.head}>
-          <Title
-            breadcrumb={breadcrumb}
-            title="Applications & Capabilities"
-            description="No applications or capabilities are available for your current permissions."
-          />
-        </div>
-      </div>
+      <Title
+        breadcrumb={breadcrumb}
+        title="Applications & Capabilities"
+        description="No applications or capabilities are available for your current permissions."
+      />
     );
   }
 
@@ -79,51 +75,47 @@ export const ApplicationsCapabilitiesScreen = () => {
     });
 
   return (
-    <div className={styles.screen}>
-      <div className={styles.head}>
-        <Title
-          breadcrumb={breadcrumb}
-          title={item.label}
-          description={description}
-          toggleButtons={enabledControl}
-          menu={
-            item.kind === 'application' && item.applicationId ? (
-              <ApplicationAuxMenu
-                workspaceSlug={workspaceSlug}
-                applicationKey={item.applicationId}
-                onDeleted={() =>
-                  navigate({
-                    to: '/$workspaceSlug/settings/applications-capabilities',
-                    params: { workspaceSlug },
-                    search: {}
-                  })
-                }
-              />
-            ) : undefined
-          }
-          buttons={
-            item.kind === 'application'
-              ? activeTab === 'general'
-                ? generalActions
-                : accessActions
-              : bindingActions
-          }
-        />
-      </div>
+    <Page>
+      <Title
+        breadcrumb={breadcrumb}
+        title={item.label}
+        description={description}
+        toggleButtons={enabledControl}
+        menu={
+          item.kind === 'application' && item.applicationId ? (
+            <ApplicationAuxMenu
+              workspaceSlug={workspaceSlug}
+              applicationKey={item.applicationId}
+              onDeleted={() =>
+                navigate({
+                  to: '/$workspaceSlug/settings/applications-capabilities',
+                  params: { workspaceSlug },
+                  search: {}
+                })
+              }
+            />
+          ) : undefined
+        }
+        buttons={
+          item.kind === 'application'
+            ? activeTab === 'general'
+              ? generalActions
+              : accessActions
+            : bindingActions
+        }
+      />
 
-      <div style={{ padding: '0 24px 24px' }}>
-        <Tabs.Root value={activeTab} onValueChange={selectTab}>
-          <Tabs.List aria-label={`${item.label} configuration`}>
-            {item.tabs.map(tab => (
-              <Tabs.Trigger key={tab.id} value={tab.id}>
-                {tab.label}
-              </Tabs.Trigger>
-            ))}
-          </Tabs.List>
-        </Tabs.Root>
+      <Tabs.Root autoHeight value={activeTab} onValueChange={selectTab}>
+        <Tabs.List aria-label={`${item.label} configuration`}>
+          {item.tabs.map(tab => (
+            <Tabs.Trigger key={tab.id} value={tab.id}>
+              {tab.label}
+            </Tabs.Trigger>
+          ))}
+        </Tabs.List>
 
         {item.kind === 'capability' && item.capabilityType && perms.canManageBindings && (
-          <div>
+          <Tabs.Content value="bindings">
             <CapabilityBindingEditor
               key={item.capabilityType}
               workspaceSlug={workspaceSlug}
@@ -133,26 +125,29 @@ export const ApplicationsCapabilitiesScreen = () => {
               onActionsChange={setBindingActions}
               onEnabledControlChange={setEnabledControl}
             />
-          </div>
+          </Tabs.Content>
         )}
 
-        {item.kind === 'application' && item.applicationId && activeTab === 'general' && (
-          <ApplicationGeneralCard
-            key={item.applicationId}
-            workspaceSlug={workspaceSlug}
-            applicationKey={item.applicationId}
-            onActionsChange={setGeneralActions}
-          />
+        {item.kind === 'application' && item.applicationId && (
+          <>
+            <Tabs.Content value="general">
+              <ApplicationGeneralCard
+                key={item.applicationId}
+                workspaceSlug={workspaceSlug}
+                applicationKey={item.applicationId}
+                onActionsChange={setGeneralActions}
+              />
+            </Tabs.Content>
+            <Tabs.Content value="access">
+              <ApplicationAccessCard
+                workspaceSlug={workspaceSlug}
+                applicationId={item.applicationId as Exclude<WorkspaceApplicationId, 'home'>}
+                onActionsChange={setAccessActions}
+              />
+            </Tabs.Content>
+          </>
         )}
-
-        {item.kind === 'application' && item.applicationId && activeTab === 'access' && (
-          <ApplicationAccessCard
-            workspaceSlug={workspaceSlug}
-            applicationId={item.applicationId as Exclude<WorkspaceApplicationId, 'home'>}
-            onActionsChange={setAccessActions}
-          />
-        )}
-      </div>
-    </div>
+      </Tabs.Root>
+    </Page>
   );
 };

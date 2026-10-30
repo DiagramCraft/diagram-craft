@@ -1,22 +1,5 @@
-.screen {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow-y: auto;
-}
-
-.head {
-  padding: 20px 24px 12px;
-}
-
-.content {
-  padding: 8px 24px 32px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
 .loading {
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   padding: 32px 0;
   font-size: 13px;
 }
@@ -31,7 +14,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   font-size: 13px;
 }
 
@@ -43,7 +26,7 @@
 
 .groupTitle {
   margin: 0;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   font-size: 13px;
   font-weight: 600;
 }
@@ -64,7 +47,7 @@
 }
 
 .issueIcon {
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   flex: 0 0 auto;
   padding-top: 1px;
 }
@@ -83,14 +66,14 @@
 }
 
 .issueMeta {
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.45px;
 }
 
 .mitigation {
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   font-size: 12px;
   line-height: 1.45;
 }
@@ -109,7 +92,7 @@
   padding: 0;
   border: 0;
   background: none;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   cursor: pointer;
   font: inherit;
   font-size: 11px;

@@ -12,6 +12,7 @@ import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TbEdit, TbLink, TbLinkOff, TbPlus, TbRefresh } from 'react-icons/tb';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
 import { Title } from '../../components/Title';
+import { Page } from '../../components/Page';
 import { Table } from '../../components/table/Table';
 import { StatusChip } from '../../components/StatusChip';
 import { EntityPicker } from '../../components/EntityPicker';
@@ -168,9 +169,10 @@ export const IntegrationSyncScreen = () => {
   };
 
   return (
-    <div className={styles.screen}>
+    <Page>
       <Title
         title="Integration sync"
+        description="Sources are configured and approved here by workspace administrators. Integration clients can start runs only for configured sources that are active or degraded; paused sources are  blocked."
         chips={<span>{sources.length} sources</span>}
         buttons={
           canManageWorkspaces ? (
@@ -192,12 +194,6 @@ export const IntegrationSyncScreen = () => {
           ) : undefined
         }
       />
-
-      <p style={{ color: 'var(--base-fg-more-dim)', maxWidth: 760 }}>
-        Sources are configured and approved here by workspace administrators. Integration clients
-        can start runs only for configured sources that are active or degraded; paused sources are
-        blocked.
-      </p>
 
       <div className={tileStyles.tiles} style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
         <div className={tileStyles.tile}>
@@ -232,226 +228,227 @@ export const IntegrationSyncScreen = () => {
         </div>
       </div>
 
-      <div style={{ marginTop: 16 }}>
-        <Tabs.Root value={tab} onValueChange={value => setTab(value as IntegrationSyncTab)}>
-          <Tabs.List>
-            <Tabs.Trigger value="sources">Sources ({sources.length})</Tabs.Trigger>
-            <Tabs.Trigger value="runs">Recent runs ({runs.length})</Tabs.Trigger>
-            <Tabs.Trigger value="records">
-              Managed records needing attention ({recordsNeedingAttention.length})
-            </Tabs.Trigger>
-          </Tabs.List>
-          <Tabs.Content value="sources" style={{ height: 'auto' }}>
-            <Table.Root scroll stickyHeader>
-              <Table.Head>
-                <Table.Row>
-                  <Table.HeaderCell>Source</Table.HeaderCell>
-                  <Table.HeaderCell>Type</Table.HeaderCell>
-                  <Table.HeaderCell>Status</Table.HeaderCell>
-                  <Table.HeaderCell>Last successful run</Table.HeaderCell>
-                  {canManageWorkspaces && <Table.HeaderCell width={48} />}
-                </Table.Row>
-              </Table.Head>
-              <Table.Body>
-                {sources.length === 0 ? (
-                  <Table.EmptyRow colSpan={canManageWorkspaces ? 5 : 4}>
-                    No integration sources have been configured yet.
-                  </Table.EmptyRow>
-                ) : (
-                  sources.map(source => (
-                    <Table.Row
-                      key={source.id}
-                      selected={selectedSourceKey === source.sourceKey}
-                      onClick={() =>
-                        setSelectedSourceKey(
-                          selectedSourceKey === source.sourceKey ? null : source.sourceKey
-                        )
-                      }
-                    >
-                      <Table.NameCell title={source.displayName} subtitle={source.sourceKey} />
-                      <Table.Cell>{source.type}</Table.Cell>
-                      <Table.Cell>
-                        <StatusChip value={source.status} />
-                      </Table.Cell>
-                      <Table.Cell>{dateLabel(source.lastSuccessAt)}</Table.Cell>
-                      {canManageWorkspaces && (
-                        <Table.ActionsCell>
-                          <DropdownMenu
-                            trigger={
-                              <Table.DotsButton aria-label={`Actions for ${source.displayName}`} />
-                            }
-                            items={
-                              [
-                                {
-                                  label: 'Edit',
-                                  icon: <TbEdit size={14} />,
-                                  onClick: () =>
-                                    setSourceEditor({
-                                      sourceKey: source.sourceKey,
-                                      displayName: source.displayName,
-                                      type: source.type,
-                                      owner: source.owner ?? '',
-                                      status: source.status
-                                    })
-                                }
-                              ] satisfies MenuItem[]
-                            }
-                          />
-                        </Table.ActionsCell>
+      <Tabs.Root
+        autoHeight
+        value={tab}
+        onValueChange={value => setTab(value as IntegrationSyncTab)}
+      >
+        <Tabs.List>
+          <Tabs.Trigger value="sources">Sources ({sources.length})</Tabs.Trigger>
+          <Tabs.Trigger value="runs">Recent runs ({runs.length})</Tabs.Trigger>
+          <Tabs.Trigger value="records">
+            Managed records needing attention ({recordsNeedingAttention.length})
+          </Tabs.Trigger>
+        </Tabs.List>
+        <Tabs.Content value="sources">
+          <Table.Root scroll stickyHeader>
+            <Table.Head>
+              <Table.Row>
+                <Table.HeaderCell>Source</Table.HeaderCell>
+                <Table.HeaderCell>Type</Table.HeaderCell>
+                <Table.HeaderCell>Status</Table.HeaderCell>
+                <Table.HeaderCell>Last successful run</Table.HeaderCell>
+                {canManageWorkspaces && <Table.HeaderCell width={48} />}
+              </Table.Row>
+            </Table.Head>
+            <Table.Body>
+              {sources.length === 0 ? (
+                <Table.EmptyRow colSpan={canManageWorkspaces ? 5 : 4}>
+                  No integration sources have been configured yet.
+                </Table.EmptyRow>
+              ) : (
+                sources.map(source => (
+                  <Table.Row
+                    key={source.id}
+                    selected={selectedSourceKey === source.sourceKey}
+                    onClick={() =>
+                      setSelectedSourceKey(
+                        selectedSourceKey === source.sourceKey ? null : source.sourceKey
+                      )
+                    }
+                  >
+                    <Table.NameCell title={source.displayName} subtitle={source.sourceKey} />
+                    <Table.Cell>{source.type}</Table.Cell>
+                    <Table.Cell>
+                      <StatusChip value={source.status} />
+                    </Table.Cell>
+                    <Table.Cell>{dateLabel(source.lastSuccessAt)}</Table.Cell>
+                    {canManageWorkspaces && (
+                      <Table.ActionsCell>
+                        <DropdownMenu
+                          trigger={
+                            <Table.DotsButton aria-label={`Actions for ${source.displayName}`} />
+                          }
+                          items={
+                            [
+                              {
+                                label: 'Edit',
+                                icon: <TbEdit size={14} />,
+                                onClick: () =>
+                                  setSourceEditor({
+                                    sourceKey: source.sourceKey,
+                                    displayName: source.displayName,
+                                    type: source.type,
+                                    owner: source.owner ?? '',
+                                    status: source.status
+                                  })
+                              }
+                            ] satisfies MenuItem[]
+                          }
+                        />
+                      </Table.ActionsCell>
+                    )}
+                  </Table.Row>
+                ))
+              )}
+            </Table.Body>
+          </Table.Root>
+        </Tabs.Content>
+        <Tabs.Content value="runs">
+          {selectedSourceKey && (
+            <div>
+              <Button variant="ghost" onClick={() => setSelectedSourceKey(null)}>
+                Clear source filter
+              </Button>
+            </div>
+          )}
+          <Table.Root scroll stickyHeader>
+            <Table.Head>
+              <Table.Row>
+                <Table.HeaderCell>Source</Table.HeaderCell>
+                <Table.HeaderCell>Coverage</Table.HeaderCell>
+                <Table.HeaderCell>Status</Table.HeaderCell>
+                <Table.HeaderCell>Started</Table.HeaderCell>
+                <Table.HeaderCell numeric>Changed</Table.HeaderCell>
+                <Table.HeaderCell numeric>Failures</Table.HeaderCell>
+                <Table.HeaderCell width={48} />
+              </Table.Row>
+            </Table.Head>
+            <Table.Body>
+              {runs.length === 0 ? (
+                <Table.EmptyRow colSpan={7}>
+                  {allRuns.length === 0
+                    ? 'No sync runs have been recorded yet.'
+                    : 'No sync runs for this source.'}
+                </Table.EmptyRow>
+              ) : (
+                runs.map(run => (
+                  <Table.Row key={run.id}>
+                    <Table.Cell>{run.sourceKey}</Table.Cell>
+                    <Table.Cell>{run.coverage}</Table.Cell>
+                    <Table.Cell>
+                      <StatusChip value={run.status} />
+                    </Table.Cell>
+                    <Table.Cell>{dateLabel(run.startedAt)}</Table.Cell>
+                    <Table.Cell numeric>{run.counts.created + run.counts.updated}</Table.Cell>
+                    <Table.Cell numeric>{run.counts.failed + run.failures.length}</Table.Cell>
+                    <Table.ActionsCell>
+                      {run.status === 'failed' && (
+                        <DropdownMenu
+                          trigger={<Table.DotsButton aria-label={`Actions for run ${run.id}`} />}
+                          items={
+                            [
+                              {
+                                label: 'Retry',
+                                icon: <TbRefresh size={14} />,
+                                disabled: retry.isPending,
+                                onClick: () => retry.mutate(run.id)
+                              }
+                            ] satisfies MenuItem[]
+                          }
+                        />
                       )}
-                    </Table.Row>
-                  ))
-                )}
-              </Table.Body>
-            </Table.Root>
-          </Tabs.Content>
-          <Tabs.Content value="runs" style={{ height: 'auto' }}>
-            {selectedSourceKey && (
-              <div>
-                <Button variant="ghost" onClick={() => setSelectedSourceKey(null)}>
-                  Clear source filter
-                </Button>
-              </div>
-            )}
-            <Table.Root scroll stickyHeader>
-              <Table.Head>
-                <Table.Row>
-                  <Table.HeaderCell>Source</Table.HeaderCell>
-                  <Table.HeaderCell>Coverage</Table.HeaderCell>
-                  <Table.HeaderCell>Status</Table.HeaderCell>
-                  <Table.HeaderCell>Started</Table.HeaderCell>
-                  <Table.HeaderCell numeric>Changed</Table.HeaderCell>
-                  <Table.HeaderCell numeric>Failures</Table.HeaderCell>
-                  <Table.HeaderCell width={48} />
-                </Table.Row>
-              </Table.Head>
-              <Table.Body>
-                {runs.length === 0 ? (
-                  <Table.EmptyRow colSpan={7}>
-                    {allRuns.length === 0
-                      ? 'No sync runs have been recorded yet.'
-                      : 'No sync runs for this source.'}
-                  </Table.EmptyRow>
-                ) : (
-                  runs.map(run => (
-                    <Table.Row key={run.id}>
-                      <Table.Cell>{run.sourceKey}</Table.Cell>
-                      <Table.Cell>{run.coverage}</Table.Cell>
-                      <Table.Cell>
-                        <StatusChip value={run.status} />
-                      </Table.Cell>
-                      <Table.Cell>{dateLabel(run.startedAt)}</Table.Cell>
-                      <Table.Cell numeric>{run.counts.created + run.counts.updated}</Table.Cell>
-                      <Table.Cell numeric>{run.counts.failed + run.failures.length}</Table.Cell>
-                      <Table.ActionsCell>
-                        {run.status === 'failed' && (
-                          <DropdownMenu
-                            trigger={<Table.DotsButton aria-label={`Actions for run ${run.id}`} />}
-                            items={
-                              [
-                                {
-                                  label: 'Retry',
-                                  icon: <TbRefresh size={14} />,
-                                  disabled: retry.isPending,
-                                  onClick: () => retry.mutate(run.id)
-                                }
-                              ] satisfies MenuItem[]
-                            }
-                          />
-                        )}
-                      </Table.ActionsCell>
-                    </Table.Row>
-                  ))
-                )}
-              </Table.Body>
-            </Table.Root>
-          </Tabs.Content>
-          <Tabs.Content value="records" style={{ height: 'auto' }}>
-            {selectedSourceKey && (
-              <div>
-                <Button variant="ghost" onClick={() => setSelectedSourceKey(null)}>
-                  Clear source filter
-                </Button>
-              </div>
-            )}
-            <Table.Root scroll stickyHeader>
-              <Table.Head>
-                <Table.Row>
-                  <Table.HeaderCell>Source</Table.HeaderCell>
-                  <Table.HeaderCell>Type</Table.HeaderCell>
-                  <Table.HeaderCell>External key</Table.HeaderCell>
-                  <Table.HeaderCell>State</Table.HeaderCell>
-                  <Table.HeaderCell>Last seen</Table.HeaderCell>
-                  <Table.HeaderCell width={48} />
-                </Table.Row>
-              </Table.Head>
-              <Table.Body>
-                {recordsNeedingAttention.length === 0 ? (
-                  <Table.EmptyRow colSpan={6}>
-                    No stale, missing, orphaned, or failing records.
-                  </Table.EmptyRow>
-                ) : (
-                  recordsNeedingAttention.map(record => (
-                    <Table.Row key={record.id}>
-                      <Table.Cell>{record.sourceKey}</Table.Cell>
-                      <Table.Cell>{record.recordType}</Table.Cell>
-                      <Table.Cell title={record.externalKey}>{record.externalKey}</Table.Cell>
-                      <Table.Cell>
-                        <StatusChip value={record.state} />
-                      </Table.Cell>
-                      <Table.Cell>{dateLabel(record.lastSeenAt)}</Table.Cell>
-                      <Table.ActionsCell>
-                        {record.state === 'orphaned' && (
-                          <DropdownMenu
-                            trigger={
-                              <Table.DotsButton aria-label={`Actions for ${record.externalKey}`} />
-                            }
-                            items={
-                              [
-                                ...(record.recordType === 'entity' ||
-                                record.recordType === 'relation'
-                                  ? [
-                                      {
-                                        label: 'Relink',
-                                        icon: <TbLink size={14} />,
-                                        disabled: relink.isPending,
-                                        onClick: () => {
-                                          setRelinkTarget({
-                                            id: record.id,
-                                            externalKey: record.externalKey,
-                                            recordType: record.recordType as 'entity' | 'relation'
-                                          });
-                                          setSelectedEntity(null);
-                                          setSelectedRelation(null);
-                                        }
+                    </Table.ActionsCell>
+                  </Table.Row>
+                ))
+              )}
+            </Table.Body>
+          </Table.Root>
+        </Tabs.Content>
+        <Tabs.Content value="records">
+          {selectedSourceKey && (
+            <div>
+              <Button variant="ghost" onClick={() => setSelectedSourceKey(null)}>
+                Clear source filter
+              </Button>
+            </div>
+          )}
+          <Table.Root scroll stickyHeader>
+            <Table.Head>
+              <Table.Row>
+                <Table.HeaderCell>Source</Table.HeaderCell>
+                <Table.HeaderCell>Type</Table.HeaderCell>
+                <Table.HeaderCell>External key</Table.HeaderCell>
+                <Table.HeaderCell>State</Table.HeaderCell>
+                <Table.HeaderCell>Last seen</Table.HeaderCell>
+                <Table.HeaderCell width={48} />
+              </Table.Row>
+            </Table.Head>
+            <Table.Body>
+              {recordsNeedingAttention.length === 0 ? (
+                <Table.EmptyRow colSpan={6}>
+                  No stale, missing, orphaned, or failing records.
+                </Table.EmptyRow>
+              ) : (
+                recordsNeedingAttention.map(record => (
+                  <Table.Row key={record.id}>
+                    <Table.Cell>{record.sourceKey}</Table.Cell>
+                    <Table.Cell>{record.recordType}</Table.Cell>
+                    <Table.Cell title={record.externalKey}>{record.externalKey}</Table.Cell>
+                    <Table.Cell>
+                      <StatusChip value={record.state} />
+                    </Table.Cell>
+                    <Table.Cell>{dateLabel(record.lastSeenAt)}</Table.Cell>
+                    <Table.ActionsCell>
+                      {record.state === 'orphaned' && (
+                        <DropdownMenu
+                          trigger={
+                            <Table.DotsButton aria-label={`Actions for ${record.externalKey}`} />
+                          }
+                          items={
+                            [
+                              ...(record.recordType === 'entity' || record.recordType === 'relation'
+                                ? [
+                                    {
+                                      label: 'Relink',
+                                      icon: <TbLink size={14} />,
+                                      disabled: relink.isPending,
+                                      onClick: () => {
+                                        setRelinkTarget({
+                                          id: record.id,
+                                          externalKey: record.externalKey,
+                                          recordType: record.recordType as 'entity' | 'relation'
+                                        });
+                                        setSelectedEntity(null);
+                                        setSelectedRelation(null);
                                       }
-                                    ]
-                                  : []),
-                                {
-                                  label: 'Stop managing',
-                                  icon: <TbLinkOff size={14} />,
-                                  danger: true,
-                                  disabled: stopManaging.isPending,
-                                  onClick: () =>
-                                    setStopManagingTarget({
-                                      id: record.id,
-                                      externalKey: record.externalKey,
-                                      recordType: record.recordType
-                                    })
-                                }
-                              ] satisfies MenuItem[]
-                            }
-                          />
-                        )}
-                      </Table.ActionsCell>
-                    </Table.Row>
-                  ))
-                )}
-              </Table.Body>
-            </Table.Root>
-          </Tabs.Content>
-        </Tabs.Root>
-      </div>
+                                    }
+                                  ]
+                                : []),
+                              {
+                                label: 'Stop managing',
+                                icon: <TbLinkOff size={14} />,
+                                danger: true,
+                                disabled: stopManaging.isPending,
+                                onClick: () =>
+                                  setStopManagingTarget({
+                                    id: record.id,
+                                    externalKey: record.externalKey,
+                                    recordType: record.recordType
+                                  })
+                              }
+                            ] satisfies MenuItem[]
+                          }
+                        />
+                      )}
+                    </Table.ActionsCell>
+                  </Table.Row>
+                ))
+              )}
+            </Table.Body>
+          </Table.Root>
+        </Tabs.Content>
+      </Tabs.Root>
 
       <Dialog
         open={relinkTarget !== null}
@@ -638,6 +635,6 @@ export const IntegrationSyncScreen = () => {
           </div>
         )}
       </Dialog>
-    </div>
+    </Page>
   );
 };

@@ -114,7 +114,7 @@
   background: var(--base-bg);
   border: 1px solid var(--panel-border);
   border-radius: var(--r-sm);
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
 }
 
 .slashItemText {
@@ -162,7 +162,7 @@
   border: none;
   border-radius: var(--r-sm);
   cursor: pointer;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   font-size: 13px;
   transition:
     background 0.08s,

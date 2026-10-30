@@ -27,7 +27,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
 }
 
 .typeSelect {
@@ -139,7 +139,7 @@
 
 .matchOff {
   background: transparent;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
 }
 
 /* ── Rows ── */
@@ -190,7 +190,7 @@
   border: 1px solid var(--panel-border);
   border-radius: var(--r);
   background: transparent;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   cursor: pointer;
 }
 
@@ -451,7 +451,7 @@
   white-space: nowrap;
   font-family: var(--font-mono, monospace);
   font-size: 11.5px;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
 }
 
 .advancedLeafBadge {
@@ -508,7 +508,7 @@
   align-items: center;
   gap: 4px;
   font-size: 11px;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   white-space: nowrap;
 }
 
@@ -546,5 +546,5 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
 }

@@ -31,7 +31,7 @@
 
 .optionDescription,
 .back {
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   font-size: 11px;
 }
 

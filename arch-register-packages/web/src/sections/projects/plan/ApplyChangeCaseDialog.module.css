@@ -30,7 +30,7 @@
 
 .conflictOptionLabel {
   font-size: 12px;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
 }
 
 .caseSummaryHead {
@@ -47,7 +47,7 @@
 
 .caseSummaryDescription {
   font-size: 12px;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   margin-top: 2px;
 }
 
@@ -67,7 +67,7 @@
   border: 1px solid var(--cmp-border);
   background: var(--cmp-bg);
   font-size: 11.5px;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
 }
 
 .memberSummaryItemActive {

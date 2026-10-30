@@ -16,5 +16,5 @@
 
 .off {
   background: transparent;
-  border: 1px solid var(--base-fg-more-dim);
+  border: 1px solid var(--base-fg-dimmed);
 }

@@ -159,7 +159,7 @@ export const StoryPlayerPanel = () => {
                       display: 'flex',
                       justifyContent: 'space-between',
                       fontSize: '0.8em',
-                      color: 'var(--base-fg-dim)',
+                      color: 'var(--base-fg-secondary)',
                       marginBottom: '0.5rem'
                     }}
                   >
@@ -193,7 +193,7 @@ export const StoryPlayerPanel = () => {
         )}
 
         {!currentStory && (
-          <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--base-fg-dim)' }}>
+          <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--base-fg-secondary)' }}>
             Select a story to play
           </div>
         )}

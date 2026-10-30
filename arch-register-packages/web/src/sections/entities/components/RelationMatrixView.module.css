@@ -2,7 +2,7 @@
 
 .noRel {
   font-size: 11px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }
 
 /* ── Scroll container ────────────────────────────────────────── */
@@ -41,7 +41,7 @@
 
 .cornerLabel {
   font-size: 10px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   font-family: var(--font-mono, monospace);
   letter-spacing: 0.2px;
 }
@@ -104,7 +104,7 @@ button.colLabel:hover {
 .colCount {
   display: block;
   font-size: 9.5px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   font-variant-numeric: tabular-nums;
   line-height: 1.8;
   min-height: 18px;
@@ -168,7 +168,7 @@ button.colLabel:hover {
 
 .rowCount {
   font-size: 10px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   font-variant-numeric: tabular-nums;
   padding: 0 8px;
   flex-shrink: 0;
@@ -222,7 +222,7 @@ button.colLabel:hover {
   padding: 10px 12px;
   font-family: var(--font-sans);
   font-size: 11px;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
 }
 
 .legendItem {

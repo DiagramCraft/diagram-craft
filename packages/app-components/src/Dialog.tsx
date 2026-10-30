@@ -154,7 +154,7 @@ export const Dialog = ({
           style={level > 0 ? { zIndex: 1000 + level * 2 } : undefined}
         >
           <BaseUIAlertDialog.Popup
-            className={`${styles.cDialog}${className ? ` ${className}` : ''}`}
+            className={`${styles.cDialog}${className ? ` ${className}` : ''} surface`}
             style={width != null ? { width } : undefined}
             initialFocus={true}
           >

@@ -6,12 +6,12 @@
 /* Config bar */
 .configArrow {
   font-size: 11px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }
 
 .configMeta {
   font-size: 11px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   white-space: nowrap;
 }
 
@@ -22,7 +22,7 @@
   position: relative;
   min-height: 0;
   /* Same dimmed look as the "N entities" count in the header label. */
-  --tl-header-label-color: color-mix(in oklch, var(--base-fg-more-dim) 60%, transparent);
+  --tl-header-label-color: color-mix(in oklch, var(--base-fg-dimmed) 60%, transparent);
 }
 
 /* Header row (sticky) */
@@ -70,13 +70,13 @@
   font-family: var(--font-mono);
   text-transform: uppercase;
   letter-spacing: 0.3px;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   overflow: hidden;
   white-space: nowrap;
 }
 
 .horizonBand[data-horizon="historical"] {
-  background: color-mix(in oklch, var(--base-fg-more-dim) 7%, var(--base-bg));
+  background: color-mix(in oklch, var(--base-fg-dimmed) 7%, var(--base-bg));
 }
 
 .horizonBand[data-horizon="now"] {
@@ -89,7 +89,7 @@
 }
 
 .horizonBand[data-horizon="later"] {
-  background: color-mix(in oklch, var(--base-fg-more-dim) 4%, var(--base-bg));
+  background: color-mix(in oklch, var(--base-fg-dimmed) 4%, var(--base-bg));
 }
 
 /* Sticky label column — shared by header and all data rows */
@@ -115,7 +115,7 @@
   background: var(--base-bg);
   font-size: 10px;
   font-family: var(--font-mono);
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   text-transform: uppercase;
   letter-spacing: 0.4px;
 }
@@ -130,7 +130,7 @@
   text-align: center;
   font-size: 10px;
   font-family: var(--font-mono);
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   text-transform: uppercase;
   letter-spacing: 0.4px;
   border-right: 1px solid var(--panel-border);
@@ -158,7 +158,7 @@
   background: var(--panel-bg);
   font-size: 11px;
   font-weight: 600;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   text-transform: uppercase;
   letter-spacing: 0.4px;
 }
@@ -191,7 +191,7 @@
 
 .labelColClickable:hover {
   text-decoration: underline;
-  text-decoration-color: var(--base-fg-more-dim);
+  text-decoration-color: var(--base-fg-dimmed);
   text-underline-offset: 2px;
 }
 
@@ -235,7 +235,7 @@
 }
 
 .horizonFill[data-horizon="historical"] {
-  background: color-mix(in oklch, var(--base-fg-more-dim) 5%, transparent);
+  background: color-mix(in oklch, var(--base-fg-dimmed) 5%, transparent);
 }
 
 .horizonFill[data-horizon="now"] {
@@ -247,7 +247,7 @@
 }
 
 .horizonFill[data-horizon="later"] {
-  background: color-mix(in oklch, var(--base-fg-more-dim) 3%, transparent);
+  background: color-mix(in oklch, var(--base-fg-dimmed) 3%, transparent);
 }
 
 /* Timeline bar */
@@ -457,7 +457,7 @@
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.4px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }
 
 .detailFieldValue {
@@ -468,7 +468,7 @@
 
 .detailDesc {
   font-size: 12px;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   line-height: 1.5;
   margin: 0;
 }
@@ -509,7 +509,7 @@
 
 .snapLaneLabel {
   font-size: 10px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   gap: 4px;
 }
 
@@ -541,7 +541,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--base-fg-more-dim);
+  background: var(--base-fg-dimmed);
   transform: translateY(-50%) translateX(-50%);
 }
 
@@ -615,7 +615,7 @@
 
 .snapStatusAutosave {
   background: var(--cmp-bg);
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }
 
 .snapStatusSavedVersion {

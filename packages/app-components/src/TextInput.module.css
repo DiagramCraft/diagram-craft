@@ -52,7 +52,7 @@
   }
 
   .eSearchIcon {
-    color: var(--base-fg-more-dim);
+    color: var(--base-fg-dimmed);
     flex-shrink: 0;
   }
 

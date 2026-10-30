@@ -338,7 +338,7 @@ const DataProviderListView = (props: DataViewProps) => {
                     </div>
 
                     <div
-                      style={{ color: isRuleLayer ? 'var(--base-fg-more-dim)' : 'default' }}
+                      style={{ color: isRuleLayer ? 'var(--base-fg-dimmed)' : 'default' }}
                       onMouseDown={ev => {
                         const node =
                           dataTemplates.length > 0

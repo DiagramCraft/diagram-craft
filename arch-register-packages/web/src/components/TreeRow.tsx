@@ -74,7 +74,7 @@ export const TreeRow = ({
       <span className={styles.label} style={labelStyle}>
         {label}
       </span>
-      {trailing && <span className={styles.trailing}>{trailing}</span>}
+      {trailing !== undefined && <span className={styles.trailing}>{trailing}</span>}
       {tagColor && <span className={styles.tag} style={{ background: tagColor }} />}
       {chevronPosition === 'end' ? chevron : null}
     </div>

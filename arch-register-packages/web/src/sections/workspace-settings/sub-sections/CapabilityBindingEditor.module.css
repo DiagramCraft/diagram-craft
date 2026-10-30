@@ -11,13 +11,13 @@
   border: 1px solid var(--cmp-border);
   border-radius: var(--r);
   background: var(--cmp-bg);
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   font-size: 12px;
   white-space: nowrap;
 }
 
 .toggle:hover:not(:disabled) {
-  border-color: var(--cmp-border-hover, var(--base-fg-more-dim));
+  border-color: var(--cmp-border-hover, var(--base-fg-dimmed));
 }
 
 .toggle:disabled {
@@ -34,7 +34,7 @@
   height: 14px;
   border-radius: 8px;
   background: var(--base-bg);
-  border: 1px solid var(--base-fg-more-dim);
+  border: 1px solid var(--base-fg-dimmed);
   position: relative;
   flex: none;
   transition:
@@ -50,7 +50,7 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: var(--base-fg-more-dim);
+  background: var(--base-fg-dimmed);
   transition:
     transform 120ms,
     background 120ms;
@@ -67,13 +67,6 @@
 }
 
 /* ---- Binding table ---- */
-.mapIntro {
-  margin: 0 0 10px;
-  font-size: 11.5px;
-  color: var(--base-fg-more-dim);
-  text-wrap: pretty;
-}
-
 .map {
   border: 1px solid var(--panel-border);
   border-radius: var(--r-md);
@@ -91,7 +84,7 @@
   font-size: 10px;
   letter-spacing: 0.8px;
   text-transform: uppercase;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-tertiary);
 }
 
 .grp {
@@ -123,14 +116,14 @@
 }
 
 .grpIcon {
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   flex: none;
 }
 
 .grpName {
   font-size: 12.5px;
   font-weight: 600;
-  color: var(--base-fg);
+  color: var(--cmp-fg);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -140,7 +133,7 @@
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.7px;
-  color: var(--base-fg-more-dim);
+  color: var(--cmp-fg-tertiary);
   flex: none;
 }
 
@@ -185,7 +178,7 @@
 
 .rowName {
   font-size: 12px;
-  color: var(--base-fg-dim);
+  color: var(--panel-fg-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -203,7 +196,7 @@
 
 .optional {
   font-size: 10.5px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   flex: none;
 }
 
@@ -213,7 +206,7 @@
 
 .note {
   font-size: 11.5px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }
 
 .issues {

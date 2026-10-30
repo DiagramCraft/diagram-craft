@@ -1,7 +1,7 @@
 .description {
   max-width: 680px;
   margin: 4px 0 0;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   font-size: 11.5px;
 }
 
@@ -70,6 +70,6 @@
 }
 
 .message {
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   font-size: 12px;
 }

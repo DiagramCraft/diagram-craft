@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { EmptyState } from '../../components/EmptyState';
 import { Title, type TitleBreadcrumbItem } from '../../components/Title';
+import { Page } from '../../components/Page';
 import styles from './SchemaSettingsScreen.module.css';
 
 type SchemaEditorScreenShellProps = {
@@ -26,6 +27,9 @@ type SchemaEditorScreenShellProps = {
   dialogs?: ReactNode;
 };
 
+/** Spacing between the Edit / Version history tab bar and its content. */
+const VIEW_STYLE = { paddingTop: 16 } as const;
+
 export const SchemaEditorScreenShell = ({
   hasSelection,
   breadcrumb,
@@ -46,23 +50,22 @@ export const SchemaEditorScreenShell = ({
   emptyAction,
   dialogs
 }: SchemaEditorScreenShellProps) => (
-  <div className={styles.screen}>
+  <Page>
     {hasSelection ? (
-      <div>
-        <div className={styles.editorHead}>
-          <Title
-            breadcrumb={breadcrumb}
-            titleTestId={titleTestId}
-            icon={icon}
-            eyebrow={eyebrow}
-            menu={menu}
-            buttons={buttons}
-            title={title}
-            description={description}
-          />
-        </div>
-        {onShowHistoryChange && (
+      <>
+        <Title
+          breadcrumb={breadcrumb}
+          titleTestId={titleTestId}
+          icon={icon}
+          eyebrow={eyebrow}
+          menu={menu}
+          buttons={buttons}
+          title={title}
+          description={description}
+        />
+        {onShowHistoryChange ? (
           <Tabs.Root
+            autoHeight
             value={showHistory ? 'history' : 'edit'}
             onValueChange={value => onShowHistoryChange(value === 'history')}
           >
@@ -70,12 +73,17 @@ export const SchemaEditorScreenShell = ({
               <Tabs.Trigger value="edit">Edit</Tabs.Trigger>
               <Tabs.Trigger value="history">Version history</Tabs.Trigger>
             </Tabs.List>
+            <Tabs.Content value="edit" style={VIEW_STYLE}>
+              {editor}
+            </Tabs.Content>
+            <Tabs.Content value="history" style={VIEW_STYLE}>
+              {history ?? editor}
+            </Tabs.Content>
           </Tabs.Root>
+        ) : (
+          editor
         )}
-        <div className={onShowHistoryChange ? styles.viewContent : undefined}>
-          {history ?? editor}
-        </div>
-      </div>
+      </>
     ) : (
       <EmptyState
         icon={emptyIcon}
@@ -85,5 +93,5 @@ export const SchemaEditorScreenShell = ({
       />
     )}
     {dialogs}
-  </div>
+  </Page>
 );

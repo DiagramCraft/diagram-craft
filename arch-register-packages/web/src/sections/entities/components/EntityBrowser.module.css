@@ -59,7 +59,7 @@
 }
 
 .fieldsGroupLabel {
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   font-size: 11px;
   font-weight: 600;
   margin-bottom: 4px;
@@ -76,7 +76,7 @@
   background: none;
   cursor: pointer;
   text-align: left;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   font-family: inherit;
   font-size: 11px;
   font-weight: 600;
@@ -95,7 +95,7 @@
   border: none;
   border-radius: 4px;
   background: none;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   cursor: pointer;
 }
 
@@ -141,7 +141,7 @@
   border-radius: var(--r);
   border: none;
   background: transparent;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   cursor: pointer;
 }
 
@@ -215,5 +215,5 @@
 }
 
 .viewHelpText {
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }

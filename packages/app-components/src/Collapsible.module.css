@@ -13,7 +13,7 @@
   .eTrigger {
     position: relative;
     z-index: 5;
-    color: var(--base-fg-dim);
+    color: var(--base-fg-secondary);
 
     .eTriggerInner {
       width: 100%;
@@ -22,7 +22,7 @@
       align-items: center;
       gap: 0.125rem;
       font-size: 11px;
-      color: var(--base-fg-dim);
+      color: var(--base-fg-secondary);
       display: flex;
       justify-content: space-between;
       border: 1px solid transparent;

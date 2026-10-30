@@ -7,7 +7,7 @@
   border-radius: 99px;
   background: var(--cmp-bg);
   border: 1px solid var(--panel-border);
-  color: var(--base-fg-dim);
+  color: var(--fg-secondary);
   font-size: 11px;
   white-space: nowrap;
 }
@@ -15,7 +15,7 @@
 .ghost {
   background: transparent;
   border-color: var(--cmp-border);
-  color: var(--base-fg-more-dim);
+  color: var(--fg-tertiary);
 }
 
 .accent {

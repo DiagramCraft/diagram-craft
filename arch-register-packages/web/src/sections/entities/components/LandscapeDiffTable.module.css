@@ -11,7 +11,7 @@
   cursor: pointer;
   display: flex;
   align-items: center;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
 }
 
 .entityName {
@@ -19,7 +19,7 @@
 }
 
 .entityPublicId {
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   font-size: 12px;
 }
 
@@ -32,7 +32,7 @@
   flex-wrap: wrap;
   gap: 4px 16px;
   font-size: 12px;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
 }
 
 .conflictCount {

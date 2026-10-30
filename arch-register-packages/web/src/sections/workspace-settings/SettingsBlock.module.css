@@ -1,11 +1,3 @@
-/* Block list */
-.list {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 16px 24px 32px;
-}
-
 /* Section (Block) */
 .block {
   background: var(--panel-bg);
@@ -43,7 +35,7 @@
 .description {
   font-size: 11.5px;
   margin-top: 2px;
-  color: var(--cmp-fg-disabled);
+  color: var(--panel-fg-tertiary);
 }
 
 .body {
@@ -88,21 +80,10 @@
   margin-top: 4px;
   line-height: 1.5;
   max-width: 200px;
-  color: var(--cmp-fg-disabled);
+  color: var(--panel-fg-tertiary);
 }
 
 .fieldRight {
   min-width: 0;
   font-size: 11px;
-}
-
-/* Page (list-style settings content) */
-.page {
-  padding: 0 24px 24px;
-}
-
-.pageStacked {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
 }

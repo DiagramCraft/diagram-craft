@@ -14,6 +14,15 @@
 @import "@radix-ui/colors/orange-dark.css";
 @import "@radix-ui/colors/black-alpha.css";
 
+/*
+ * The --theme-* custom properties referenced throughout this file (e.g. --theme-dark-base-bg,
+ * --theme-cmp-radius) are not set anywhere in this codebase. They are an extension mechanism for
+ * embedders of Diagram Craft: a consumer can override an individual token by defining the matching
+ * --theme-* variable in their own CSS, without needing to touch the semantic tokens (--base-bg,
+ * --cmp-radius, etc.) that components actually consume.
+ */
+
+/*noinspection CssUnresolvedCustomProperty*/
 :root {
   --r: 4px;
   --r-md: 6px;
@@ -21,6 +30,7 @@
   --font-sans: var(--theme-font-sans, Inter, system-ui, Avenir, Helvetica, Arial, sans-serif);
 }
 
+/*noinspection CssUnresolvedCustomProperty*/
 [data-theme="dark"],
 .dark-theme {
   color-scheme: dark;
@@ -40,11 +50,15 @@
 
   --base-bg: var(--theme-dark-base-bg, var(--gray-1));
   --base-fg: var(--theme-dark-base-fg, var(--gray-12));
-  --base-fg-dim: var(--theme-dark-base-fg-dim, var(--gray-11));
-  --base-fg-more-dim: var(--theme-dark-base-fg-more-dim, var(--gray-8));
+  --base-fg-tertiary: var(--theme-dark-base-fg-secondary, var(--gray-10));
+  --base-fg-secondary: var(--theme-dark-base-fg-dim, var(--gray-11));
+  --base-fg-dimmed: var(--theme-dark-base-fg-more-dim, var(--gray-8));
 
   --panel-bg: var(--theme-dark-panel-bg, var(--gray-2));
   --panel-fg: var(--theme-dark-panel-fg, var(--gray-12));
+  --panel-fg-secondary: var(--theme-dark-panel-fg-secondary, var(--gray-11));
+  --panel-fg-tertiary: var(--theme-dark-panel-fg-tertiary, var(--gray-10));
+  --panel-fg-dimmed: var(--theme-dark-panel-fg-dimmed, var(--gray-7));
   --panel-border: var(--theme-dark-panel-border, var(--gray-4));
 
   --accent-bg: var(--theme-dark-accent-bg, var(--blue-4));
@@ -56,6 +70,8 @@
   --accent-chroma: var(--theme-dark-accent-chroma, var(--blue-9));
 
   --cmp-fg: var(--theme-dark-cmp-fg, var(--gray-12));
+  --cmp-fg-secondary: var(--theme-dark-cmp-fg-secondary, var(--gray-11));
+  --cmp-fg-tertiary: var(--theme-dark-cmp-fg-tertiary, var(--gray-10));
   --cmp-fg-disabled: var(--theme-dark-cmp-fg-disabled, var(--gray-8));
   --cmp-fg-dimmed: var(--theme-dark-cmp-fg-dimmed, var(--gray-6));
   --cmp-bg: var(--theme-dark-cmp-bg, var(--gray-3));
@@ -85,8 +101,14 @@
   --green: var(--theme-dark-green, var(--green-9));
   --error-fg: var(--theme-dark-error-fg, var(--red-9));
   --warning-fg: var(--theme-dark-warning-fg, var(--orange-9));
+
+  --fg: var(--base-fg);
+  --fg-secondary: var(--base-fg-secondary);
+  --fg-tertiary: var(--base-fg-tertiary);
+  --fg-dim: var(--base-fg-dimmed);
 }
 
+/*noinspection CssUnresolvedCustomProperty*/
 [data-theme="light"],
 .light-theme {
   color-scheme: light;
@@ -106,11 +128,15 @@
 
   --base-bg: var(--theme-light-base-bg, var(--gray-1));
   --base-fg: var(--theme-light-base-fg, var(--gray-12));
-  --base-fg-dim: var(--theme-light-base-fg-dim, var(--gray-11));
-  --base-fg-more-dim: var(--theme-light-base-fg-more-dim, var(--gray-9));
+  --base-fg-tertiary: var(--theme-light-base-fg-secondary, var(--gray-10));
+  --base-fg-secondary: var(--theme-light-base-fg-dim, var(--gray-11));
+  --base-fg-dimmed: var(--theme-light-base-fg-more-dim, var(--gray-9));
 
   --panel-bg: var(--theme-light-panel-bg, var(--gray-2));
   --panel-fg: var(--theme-light-panel-fg, var(--gray-12));
+  --panel-fg-secondary: var(--theme-light-panel-fg-secondary, var(--gray-11));
+  --panel-fg-tertiary: var(--theme-light-panel-fg-tertiary, var(--gray-10));
+  --panel-fg-dimmed: var(--theme-light-panel-fg-dimmed, var(--gray-8));
   --panel-border: var(--theme-light-panel-border, var(--gray-4));
 
   --accent-bg: var(--theme-light-accent-bg, var(--blue-4));
@@ -122,6 +148,8 @@
   --accent-chroma: var(--theme-light-accent-chroma, var(--blue-9));
 
   --cmp-fg: var(--theme-light-cmp-fg, var(--gray-12));
+  --cmp-fg-secondary: var(--theme-dark-cmp-fg-secondary, var(--gray-11));
+  --cmp-fg-tertiary: var(--theme-dark-cmp-fg-tertiary, var(--gray-10));
   --cmp-fg-disabled: var(--theme-light-cmp-fg-disabled, var(--gray-8));
   --cmp-fg-dimmed: var(--theme-light-cmp-fg-dimmed, var(--gray-6));
   --cmp-bg: var(--theme-light-cmp-bg, var(--gray-3));
@@ -151,4 +179,37 @@
   --green: var(--theme-light-green, var(--green-9));
   --error-fg: var(--theme-light-error-fg, var(--red-9));
   --warning-fg: var(--theme-light-warning-fg, var(--orange-9));
+
+  --fg: var(--base-fg);
+  --fg-secondary: var(--base-fg-secondary);
+  --fg-tertiary: var(--base-fg-tertiary);
+  --fg-dim: var(--base-fg-dimmed);
+}
+
+/** This is to achieve nesting of surfaces */
+
+.surface,
+.surface .surface .surface,
+.surface .surface .surface .surface .surface {
+  --fg: var(--panel-fg);
+  --fg-secondary: var(--panel-fg-secondary);
+  --fg-tertiary: var(--panel-fg-tertiary);
+  --fg-dim: var(--panel-fg-dimmed);
+
+  background-color: var(--panel-bg);
+}
+
+.surface .surface,
+.surface .surface .surface .surface {
+  --fg: var(--base-fg);
+  --fg-secondary: var(--base-fg-secondary);
+  --fg-tertiary: var(--base-fg-tertiary);
+  --fg-dim: var(--base-fg-dimmed);
+
+  background-color: var(--base-bg);
+}
+
+/* Debug sentinel to clearly see the limits of panel nesting */
+.surface .surface .surface .surface .surface .surface {
+  background-color: hotpink !important;
 }

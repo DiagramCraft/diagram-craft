@@ -22,7 +22,7 @@
   align-items: center;
   gap: 5px;
   font-size: 11px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   font-variant-numeric: tabular-nums;
 }
 

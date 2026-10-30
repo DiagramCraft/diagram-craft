@@ -5,7 +5,7 @@
   border-radius: var(--r-md);
   overflow: hidden;
   text-align: left;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   display: flex;
   flex-direction: column;
   transition:

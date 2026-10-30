@@ -57,7 +57,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: var(--base-fg-more-dim);
+    color: var(--base-fg-dimmed);
     border-radius: 4px;
     background: transparent;
     border: none;

@@ -26,7 +26,7 @@ export const EdgeLineToolbarButton = () => {
                 backgroundColor: 'var(--canvas-bg)',
                 marginRight: '3px',
                 paddingTop: '2px',
-                border: '1px solid var(--base-fg-more-dim)',
+                border: '1px solid var(--base-fg-dimmed)',
                 borderRadius: '3px'
               }}
             >

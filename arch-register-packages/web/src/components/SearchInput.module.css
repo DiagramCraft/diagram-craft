@@ -51,7 +51,7 @@
   padding: 0 8px;
   background: var(--cmp-bg);
   border-radius: var(--r);
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }
 
 .sm:focus-within {

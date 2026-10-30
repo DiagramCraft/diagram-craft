@@ -14,7 +14,7 @@
   margin: 0 6px;
   border-radius: var(--r, 4px);
   background: none;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   flex-shrink: 0;
 
   &:hover {

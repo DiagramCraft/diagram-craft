@@ -339,7 +339,7 @@ export const EntitiesSidebar = ({
               testId="entity-filter-all"
               active={!hasFacetSelection(activeFacets) && !onRelationsRoute}
               onClick={clearFacetSelection}
-              trailing={<span className="dim mono">{totalEntities}</span>}
+              trailing={totalEntities}
             />
             <TreeRow
               icon={<TbArrowsRightLeft size={12} />}
@@ -371,7 +371,7 @@ export const EntitiesSidebar = ({
                     label={s.name}
                     checked={activeFacets.schemaIds.includes(s.id)}
                     onToggle={() => toggleFacet('type', s.id)}
-                    trailing={<span className="dim mono">{s.entity_count}</span>}
+                    trailing={s.entity_count}
                     tagColor={resolveSchemaColor(s, i)}
                     iconOffset
                   />
@@ -398,7 +398,7 @@ export const EntitiesSidebar = ({
                   label={s.label}
                   checked={activeFacets.lifecycleValues.includes(s.id)}
                   onToggle={() => toggleFacet('status', s.id)}
-                  trailing={<span className="dim mono">{s.count}</span>}
+                  trailing={s.count}
                   iconOffset
                 />
               );
@@ -416,7 +416,7 @@ export const EntitiesSidebar = ({
                 label={ownerName}
                 checked={activeFacets.ownerIds.includes(ownerId)}
                 onToggle={() => toggleFacet('owner', ownerId)}
-                trailing={<span className="dim mono">{count}</span>}
+                trailing={count}
               />
             ))}
           </>
@@ -519,7 +519,7 @@ export const EntitiesSidebar = ({
                       event.stopPropagation();
                       setCollectionMenu({ x: event.clientX, y: event.clientY, collection });
                     }}
-                    trailing={<span className="dim mono">{collection.entityCount}</span>}
+                    trailing={collection.entityCount}
                   />
                 ))}
               </>

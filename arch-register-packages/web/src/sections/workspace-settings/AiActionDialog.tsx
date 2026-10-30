@@ -210,13 +210,17 @@ export const AiActionDialog = ({
     >
       {draft && (
         <DialogContent>
-          <Tabs.Root value={tab} onValueChange={value => setTab(value as 'edit' | 'test')}>
+          <Tabs.Root
+            autoHeight
+            value={tab}
+            onValueChange={value => setTab(value as 'edit' | 'test')}
+          >
             <Tabs.List aria-label="AI action dialog sections">
               <Tabs.Trigger value="edit">Edit action</Tabs.Trigger>
               <Tabs.Trigger value="test">Test action</Tabs.Trigger>
             </Tabs.List>
 
-            <Tabs.Content value="edit" style={{ height: 'auto' }}>
+            <Tabs.Content value="edit">
               <div className={styles.editContent}>
                 <div className={styles.formGrid}>
                   <DialogSection label="Name">
@@ -317,7 +321,7 @@ export const AiActionDialog = ({
               </div>
             </Tabs.Content>
 
-            <Tabs.Content value="test" style={{ height: 'auto' }}>
+            <Tabs.Content value="test">
               <div className={styles.testHeader}>
                 <div>
                   <div className={styles.testTitle}>Test the current action draft</div>

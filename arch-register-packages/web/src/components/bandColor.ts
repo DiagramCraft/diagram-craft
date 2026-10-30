@@ -10,7 +10,7 @@ export const BAND_TONE_COLORS: Record<ToneOrNeutral, string> = {
   good: 'var(--green)',
   warn: 'var(--warning-fg)',
   bad: 'var(--error-fg, #e05252)',
-  neutral: 'var(--base-fg-more-dim)'
+  neutral: 'var(--base-fg-dimmed)'
 };
 
 /**

@@ -100,7 +100,7 @@
   .eBottomContainer {
     button {
       padding: 0;
-      color: var(--base-fg-more-dim);
+      color: var(--base-fg-dimmed);
     }
 
     button[data-pressed] {

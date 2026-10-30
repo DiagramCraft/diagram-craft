@@ -50,7 +50,7 @@
 
 .propLabel {
   font-size: 12px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -135,7 +135,7 @@
 }
 
 .metaPropValue {
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   display: flex;
   align-items: center;
   gap: 4px;
@@ -151,7 +151,7 @@
 }
 
 .projectLink {
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -170,7 +170,7 @@
 }
 
 .unboundRelationEmpty {
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   font-size: 11px;
   font-weight: 400;
 }
@@ -370,5 +370,5 @@
 }
 
 .metaPropMuted {
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }

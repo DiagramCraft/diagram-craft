@@ -1,13 +1,13 @@
 import { useDraft } from '../useDraft';
 import { MutationError } from '../MutationError';
 import { SaveBarButtons } from '../SaveBarButtons';
-import { useCallback } from 'react';
+import { Fragment, useCallback } from 'react';
 import styles from './LifecycleSubSection.module.css';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Select } from '@diagram-craft/app-components/Select';
 import { LIFECYCLE_COLOR_PRESETS } from '@arch-register/api-types/colors';
-import { SettingsBlock, SettingsBlockField, SettingsBlockList } from '../SettingsBlock';
+import { SettingsBlock, SettingsBlockField } from '../SettingsBlock';
 import { SectionActions } from '../SectionActions';
 import { TbPlus, TbTrash } from 'react-icons/tb';
 import { useUpdateLifecycleStates } from '../../../hooks/useWorkspaceConfig';
@@ -95,79 +95,73 @@ export const LifecycleSubSection = ({
           onSave={handleSave}
         />
       </SectionActions>
-      <SettingsBlockList>
-        <MutationError error={updateLifecycleStatesMutation.error} />
-        <SettingsBlock
-          title="Lifecycle states"
-          description="Define the lifecycle stages an entity can be in. Each state has a display label and a color."
-        >
-          <div className={styles.fieldGrid}>
-            {states.map((s, i) => (
-              <>
-                <TextInput
-                  value={s.label}
-                  onChange={value => updateState(i, { label: value ?? '' })}
-                  placeholder="Label (e.g. Production)"
-                />
+      <MutationError error={updateLifecycleStatesMutation.error} />
+      <SettingsBlock
+        title="Lifecycle states"
+        description="Define the lifecycle stages an entity can be in. Each state has a display label and a color."
+      >
+        <div className={styles.fieldGrid}>
+          {states.map((s, i) => (
+            <Fragment key={s.id}>
+              <TextInput
+                value={s.label}
+                onChange={value => updateState(i, { label: value ?? '' })}
+                placeholder="Label (e.g. Production)"
+              />
 
-                <div className={styles.swatches}>
-                  {COLOR_PRESETS.map(c => (
-                    <button
-                      key={c.value}
-                      type="button"
-                      title={c.label}
-                      onClick={() => updateState(i, { color: c.value })}
-                      className={`${styles.swatch} ${s.color === c.value ? styles.swatchActive : ''}`}
-                      style={{ background: c.value }}
-                    />
-                  ))}
-                </div>
-                <Button
-                  variant="danger"
-                  onClick={() => removeState(i)}
-                  style={{ padding: '0 6px' }}
-                >
-                  <TbTrash size={12} />
-                </Button>
-                {i < states.length - 1 && (
-                  <div
-                    style={{
-                      gridColumn: '1 / 5',
-                      borderBottom: '1px dashed var(--panel-border)',
-                      margin: '4px 0'
-                    }}
+              <div className={styles.swatches}>
+                {COLOR_PRESETS.map(c => (
+                  <button
+                    key={c.value}
+                    type="button"
+                    title={c.label}
+                    onClick={() => updateState(i, { color: c.value })}
+                    className={`${styles.swatch} ${s.color === c.value ? styles.swatchActive : ''}`}
+                    style={{ background: c.value }}
                   />
-                )}
-              </>
-            ))}
-          </div>
-          <div className={styles.addRow}>
-            <Button icon={<TbPlus size={12} />} onClick={addState}>
-              Add state
-            </Button>
-          </div>
-        </SettingsBlock>
+                ))}
+              </div>
+              <Button variant="danger" onClick={() => removeState(i)} style={{ padding: '0 6px' }}>
+                <TbTrash size={12} />
+              </Button>
+              {i < states.length - 1 && (
+                <div
+                  style={{
+                    gridColumn: '1 / 5',
+                    borderBottom: '1px dashed var(--panel-border)',
+                    margin: '4px 0'
+                  }}
+                />
+              )}
+            </Fragment>
+          ))}
+        </div>
+        <div className={styles.addRow}>
+          <Button icon={<TbPlus size={12} />} onClick={addState}>
+            Add state
+          </Button>
+        </div>
+      </SettingsBlock>
 
-        <SettingsBlock title="Deprecated state">
-          <SettingsBlockField
-            label="Deprecated state"
-            hint="Entities move to this lifecycle state when a deprecation is finalized."
+      <SettingsBlock title="Deprecated state">
+        <SettingsBlockField
+          label="Deprecated state"
+          hint="Entities move to this lifecycle state when a deprecation is finalized."
+        >
+          <Select.Root
+            value={deprecatedStateId}
+            placeholder="None"
+            onChange={v => setDeprecatedStateById(v ?? '')}
           >
-            <Select.Root
-              value={deprecatedStateId}
-              placeholder="None"
-              onChange={v => setDeprecatedStateById(v ?? '')}
-            >
-              <Select.Item value="">None</Select.Item>
-              {states.map(s => (
-                <Select.Item key={s.id} value={s.id}>
-                  {s.label.trim() === '' ? 'Untitled state' : s.label.trim()}
-                </Select.Item>
-              ))}
-            </Select.Root>
-          </SettingsBlockField>
-        </SettingsBlock>
-      </SettingsBlockList>
+            <Select.Item value="">None</Select.Item>
+            {states.map(s => (
+              <Select.Item key={s.id} value={s.id}>
+                {s.label.trim() === '' ? 'Untitled state' : s.label.trim()}
+              </Select.Item>
+            ))}
+          </Select.Root>
+        </SettingsBlockField>
+      </SettingsBlock>
     </>
   );
 };

@@ -69,7 +69,7 @@
   align-items: center;
   justify-content: center;
   border-radius: var(--r);
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }
 
 .notificationTrigger:hover {
@@ -160,7 +160,7 @@
   padding: 0 12px;
   height: 28px;
   font-size: 10.5px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -272,7 +272,7 @@
 }
 
 .notificationOp {
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
 }
 
 .notificationWhen {
@@ -422,13 +422,13 @@
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--cmp-fg-disabled);
+  color: var(--cmp-fg-tertiary);
   padding: 6px 8px 4px;
 }
 
 .menuSub {
   font-size: 11px;
-  color: var(--cmp-fg-disabled);
+  color: var(--cmp-fg-tertiary);
 }
 
 .menuItem {
@@ -438,7 +438,7 @@
   width: 100%;
   padding: 6px 8px;
   border-radius: var(--r);
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   text-align: left;
 }
 
@@ -487,10 +487,6 @@
 
 .appswBtnStatic:hover {
   background: transparent;
-}
-
-.appswBtn > svg {
-  color: var(--cmp-fg-disabled);
 }
 
 .appswBadge {
@@ -579,41 +575,8 @@
 
 .appswTileSub {
   font-size: 11px;
-  color: var(--cmp-fg-disabled);
+  color: var(--cmp-fg-tertiary);
   line-height: 1.4;
-}
-
-/* App menu */
-
-.appMenuDrop {
-  position: absolute;
-  top: 32px;
-  left: 0;
-  min-width: 200px;
-  background: var(--cmp-bg);
-  border: 1px solid var(--cmp-border);
-  border-radius: var(--r-md);
-  padding: 4px;
-  z-index: 50;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-}
-
-/* Account menu */
-.acctMenu {
-  position: relative;
-}
-
-.acctMenuDrop {
-  position: absolute;
-  top: 32px;
-  right: 0;
-  min-width: 240px;
-  background: var(--cmp-bg);
-  border: 1px solid var(--cmp-border);
-  border-radius: var(--r-md);
-  padding: 4px;
-  z-index: 50;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
 .acctHeader {
@@ -653,7 +616,7 @@
 
 .acctEmail {
   font-size: 11px;
-  color: var(--cmp-fg-disabled);
+  color: var(--cmp-fg-tertiary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -664,7 +627,7 @@
   display: flex;
   align-items: center;
   gap: 2px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }
 
 .crumbs > svg {

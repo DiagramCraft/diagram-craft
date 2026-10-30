@@ -1,4 +1,3 @@
-import { SettingsPage } from '../SettingsBlock';
 import { type TeamRole } from '@arch-register/permissions';
 import { SectionActions } from '../SectionActions';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -224,9 +223,7 @@ export const TeamsSubSection = ({ workspaceSlug }: { workspaceSlug: string }) =>
     return (
       <>
         {header}
-        <SettingsPage stacked={false}>
-          <Banner variant="error">Failed to load teams.</Banner>
-        </SettingsPage>
+        <Banner variant="error">Failed to load teams.</Banner>
       </>
     );
   }
@@ -234,222 +231,204 @@ export const TeamsSubSection = ({ workspaceSlug }: { workspaceSlug: string }) =>
   return (
     <>
       {header}
-      <SettingsPage stacked={false}>
-        {isLoadingTeams || isLoadingAssignments ? (
-          <LoadingState text="Loading teams…" size="sm" />
-        ) : teamDrafts.length === 0 ? (
-          <EmptyState compact title="No owner teams have been created for this workspace." />
-        ) : (
-          <div className={styles.teamList}>
-            {teamDrafts.map(team => {
-              const teamAssignments = sortAssignments(team.assignments);
-              const isOpen = openId === team.id;
-              const adminAssignment = teamAssignments.find(a => a.role === 'team_admin');
-              const leadUser = adminAssignment ? usersById.get(adminAssignment.user_id) : undefined;
-              return (
-                <div
-                  key={team.id}
-                  className={`${styles.teamCard} ${isOpen ? styles.teamCardOpen : ''}`}
+      {isLoadingTeams || isLoadingAssignments ? (
+        <LoadingState text="Loading teams…" size="sm" />
+      ) : teamDrafts.length === 0 ? (
+        <EmptyState compact title="No owner teams have been created for this workspace." />
+      ) : (
+        <div className={styles.teamList}>
+          {teamDrafts.map(team => {
+            const teamAssignments = sortAssignments(team.assignments);
+            const isOpen = openId === team.id;
+            const adminAssignment = teamAssignments.find(a => a.role === 'team_admin');
+            const leadUser = adminAssignment ? usersById.get(adminAssignment.user_id) : undefined;
+            return (
+              <div
+                key={team.id}
+                className={`${styles.teamCard} ${isOpen ? styles.teamCardOpen : ''}`}
+              >
+                <button
+                  type="button"
+                  className={styles.teamCardHead}
+                  onClick={() => setOpenId(isOpen ? null : team.id)}
                 >
-                  <button
-                    type="button"
-                    className={styles.teamCardHead}
-                    onClick={() => setOpenId(isOpen ? null : team.id)}
-                  >
-                    <span
-                      className={styles.teamColorBar}
-                      style={{ background: team.color ?? `oklch(0.65 0.15 ${stableHue(team.id)})` }}
-                    />
-                    <div className={styles.teamNameSection}>
-                      <span className={styles.teamName}>{team.name}</span>
-                    </div>
-                    {team.description && (
-                      <span className={styles.teamDescription}>{team.description}</span>
-                    )}
-                    <span className={styles.teamLeadRow}>
-                      {leadUser && (
-                        <>
-                          <span className={styles.dim}>Lead</span>
-                          <MemberAvatar
-                            name={leadUser.display_name}
-                            email={leadUser.email}
-                            userId={leadUser.id}
-                            color={leadUser.color ?? null}
-                            size={18}
-                          />
-                          <span>{getUserLabel(leadUser)}</span>
-                        </>
-                      )}
-                    </span>
-                    <span className={styles.teamCount}>{teamAssignments.length}</span>
-                    <span className={styles.teamAvatars}>
-                      {teamAssignments.slice(0, 4).map(a => {
-                        const u = usersById.get(a.user_id);
-                        return u ? (
-                          <MemberAvatar
-                            key={a.user_id}
-                            name={u.display_name}
-                            email={u.email}
-                            userId={u.id}
-                            color={u.color ?? null}
-                            size={20}
-                          />
-                        ) : null;
-                      })}
-                      {teamAssignments.length > 4 && (
-                        <span className={styles.avatarMore}>+{teamAssignments.length - 4}</span>
-                      )}
-                    </span>
-                    <TbChevronRight
-                      size={11}
-                      className={`${styles.chevron} ${isOpen ? styles.chevronOpen : ''}`}
-                    />
-                  </button>
-                  {isOpen && (
-                    <div className={styles.teamCardBody}>
-                      <div className={styles.teamActions}>
-                        <Button
-                          variant="ghost"
-                          icon={<TbEdit size={11} />}
-                          onClick={() => setEditTeamId(team.id)}
-                        >
-                          Edit team
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          icon={<TbPlus size={11} />}
-                          onClick={() => setAddMembersTeamId(team.id)}
-                        >
-                          Add members
-                        </Button>
-                        <div style={{ flex: 1 }} />
-                        <span className={styles.dim}>
-                          {teamAssignments.length}{' '}
-                          {teamAssignments.length === 1 ? 'member' : 'members'}
-                        </span>
-                      </div>
-                      <div className={styles.teamMembers}>
-                        {teamAssignments.length === 0 ? (
-                          <div className={styles.emptyInline}>No users assigned to this team.</div>
-                        ) : (
-                          teamAssignments.map(a => {
-                            const user = usersById.get(a.user_id);
-                            return (
-                              <div key={a.user_id} className={styles.teamMember}>
-                                <MemberAvatar
-                                  name={user?.display_name ?? ''}
-                                  email={user?.email ?? null}
-                                  userId={a.user_id}
-                                  color={user?.color ?? null}
-                                  size={24}
-                                />
-                                <div className={styles.teamMemberName}>
-                                  <div>{user ? getUserLabel(user) : a.user_id}</div>
-                                  <div className={`${styles.dim} ${styles.mono}`}>
-                                    {user?.email ?? ''}
-                                  </div>
-                                </div>
-                                <div className={styles.roleCell}>
-                                  <RoleMenu
-                                    current={a.role}
-                                    disabled={isSaving}
-                                    onSelect={newRole =>
-                                      void changeRole(team.id, a.user_id, newRole)
-                                    }
-                                  />
-                                </div>
-                                <button
-                                  type="button"
-                                  className={styles.removeMemberBtn}
-                                  title="Remove from team"
-                                  disabled={isSaving}
-                                  onClick={() => void removeMember(team.id, a.user_id)}
-                                >
-                                  <TbTrash size={11} />
-                                </button>
-                              </div>
-                            );
-                          })
-                        )}
-                      </div>
-                    </div>
+                  <span
+                    className={styles.teamColorBar}
+                    style={{ background: team.color ?? `oklch(0.65 0.15 ${stableHue(team.id)})` }}
+                  />
+                  <div className={styles.teamNameSection}>
+                    <span className={styles.teamName}>{team.name}</span>
+                  </div>
+                  {team.description && (
+                    <span className={styles.teamDescription}>{team.description}</span>
                   )}
-                </div>
-              );
-            })}
-          </div>
-        )}
+                  <span className={styles.teamLeadRow}>
+                    {leadUser && (
+                      <>
+                        <MemberAvatar
+                          name={leadUser.display_name}
+                          email={leadUser.email}
+                          userId={leadUser.id}
+                          color={leadUser.color ?? null}
+                          size={18}
+                        />
+                        <span>{getUserLabel(leadUser)}</span>
+                      </>
+                    )}
+                  </span>
+                  <span className={styles.teamCount}>{teamAssignments.length}</span>
+                  <span className={styles.teamAvatars}>
+                    {teamAssignments.slice(0, 4).map(a => {
+                      const u = usersById.get(a.user_id);
+                      return u ? (
+                        <MemberAvatar
+                          key={a.user_id}
+                          name={u.display_name}
+                          email={u.email}
+                          userId={u.id}
+                          color={u.color ?? null}
+                          size={20}
+                        />
+                      ) : null;
+                    })}
+                    {teamAssignments.length > 4 && (
+                      <span className={styles.avatarMore}>+{teamAssignments.length - 4}</span>
+                    )}
+                  </span>
+                  <TbChevronRight
+                    size={11}
+                    className={`${styles.chevron} ${isOpen ? styles.chevronOpen : ''}`}
+                  />
+                </button>
+                {isOpen && (
+                  <div className={styles.teamCardBody}>
+                    <div className={styles.teamActions}>
+                      <Button
+                        variant="ghost"
+                        icon={<TbEdit size={11} />}
+                        onClick={() => setEditTeamId(team.id)}
+                      >
+                        Edit team
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        icon={<TbPlus size={11} />}
+                        onClick={() => setAddMembersTeamId(team.id)}
+                      >
+                        Add members
+                      </Button>
+                      <div style={{ flex: 1 }} />
+                      <span className={styles.dim}>
+                        {teamAssignments.length}{' '}
+                        {teamAssignments.length === 1 ? 'member' : 'members'}
+                      </span>
+                    </div>
+                    <div className={styles.teamMembers}>
+                      {teamAssignments.length === 0 ? (
+                        <div className={styles.emptyInline}>No users assigned to this team.</div>
+                      ) : (
+                        teamAssignments.map(a => {
+                          const user = usersById.get(a.user_id);
+                          return (
+                            <div key={a.user_id} className={styles.teamMember}>
+                              <MemberAvatar
+                                name={user?.display_name ?? ''}
+                                email={user?.email ?? null}
+                                userId={a.user_id}
+                                color={user?.color ?? null}
+                                size={24}
+                              />
+                              <div className={styles.teamMemberName}>
+                                <div>{user ? getUserLabel(user) : a.user_id}</div>
+                                <div className={`${styles.dim} ${styles.mono}`}>
+                                  {user?.email ?? ''}
+                                </div>
+                              </div>
+                              <div className={styles.roleCell}>
+                                <RoleMenu
+                                  current={a.role}
+                                  disabled={isSaving}
+                                  onSelect={newRole => void changeRole(team.id, a.user_id, newRole)}
+                                />
+                              </div>
+                              <button
+                                type="button"
+                                className={styles.removeMemberBtn}
+                                title="Remove from team"
+                                disabled={isSaving}
+                                onClick={() => void removeMember(team.id, a.user_id)}
+                              >
+                                <TbTrash size={11} />
+                              </button>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
 
-        <TeamDialog
-          key={editTeam?.id ?? 'edit-empty'}
-          open={editTeam != null}
-          mode="edit"
-          initialTeamName={editTeam?.name ?? ''}
-          initialColor={editTeam?.color}
-          initialDescription={editTeam?.description}
-          onClose={() => setEditTeamId(null)}
-          onSave={async (name, color, description) => {
-            if (!editTeam) return;
-            const updatedTeam = { ...editTeam, name, color, description };
-            const nextTeams = teamDrafts.map(team =>
-              team.id === editTeam.id ? updatedTeam : team
-            );
-            await persistTeams(
-              nextTeams,
-              updateTeams.mutateAsync,
-              updateTeamAssignments.mutateAsync
-            );
-            setEditTeamId(null);
-          }}
-          isSaving={isSaving}
-        />
+      <TeamDialog
+        key={editTeam?.id ?? 'edit-empty'}
+        open={editTeam != null}
+        mode="edit"
+        initialTeamName={editTeam?.name ?? ''}
+        initialColor={editTeam?.color}
+        initialDescription={editTeam?.description}
+        onClose={() => setEditTeamId(null)}
+        onSave={async (name, color, description) => {
+          if (!editTeam) return;
+          const updatedTeam = { ...editTeam, name, color, description };
+          const nextTeams = teamDrafts.map(team => (team.id === editTeam.id ? updatedTeam : team));
+          await persistTeams(nextTeams, updateTeams.mutateAsync, updateTeamAssignments.mutateAsync);
+          setEditTeamId(null);
+        }}
+        isSaving={isSaving}
+      />
 
-        <TeamDialog
-          open={addDialogOpen}
-          mode="create"
-          initialTeamName=""
-          initialColor={null}
-          initialDescription=""
-          onClose={onCloseAddDialog}
-          onSave={async (name, color, description) => {
-            await persistTeams(
-              [
-                ...teamDrafts,
-                { id: crypto.randomUUID(), name, color, description, assignments: [] }
-              ],
-              updateTeams.mutateAsync,
-              updateTeamAssignments.mutateAsync
-            );
-            onCloseAddDialog();
-          }}
-          isSaving={isSaving}
-        />
+      <TeamDialog
+        open={addDialogOpen}
+        mode="create"
+        initialTeamName=""
+        initialColor={null}
+        initialDescription=""
+        onClose={onCloseAddDialog}
+        onSave={async (name, color, description) => {
+          await persistTeams(
+            [...teamDrafts, { id: crypto.randomUUID(), name, color, description, assignments: [] }],
+            updateTeams.mutateAsync,
+            updateTeamAssignments.mutateAsync
+          );
+          onCloseAddDialog();
+        }}
+        isSaving={isSaving}
+      />
 
-        <AddMembersDialog
-          open={addMembersTeam != null}
-          teamName={addMembersTeam?.name ?? ''}
-          existingUserIds={addMembersTeam?.assignments.map(a => a.user_id) ?? []}
-          users={users}
-          loadingUsers={isLoadingUsers}
-          onClose={() => setAddMembersTeamId(null)}
-          onSave={async newAssignments => {
-            if (!addMembersTeam) return;
-            const nextTeams = teamDrafts.map(team =>
-              team.id === addMembersTeam.id
-                ? { ...team, assignments: [...team.assignments, ...newAssignments] }
-                : team
-            );
-            await persistTeams(
-              nextTeams,
-              updateTeams.mutateAsync,
-              updateTeamAssignments.mutateAsync
-            );
-            setAddMembersTeamId(null);
-          }}
-          isSaving={isSaving}
-          canCreateUsers={canCreateUsers}
-        />
-      </SettingsPage>
+      <AddMembersDialog
+        open={addMembersTeam != null}
+        teamName={addMembersTeam?.name ?? ''}
+        existingUserIds={addMembersTeam?.assignments.map(a => a.user_id) ?? []}
+        users={users}
+        loadingUsers={isLoadingUsers}
+        onClose={() => setAddMembersTeamId(null)}
+        onSave={async newAssignments => {
+          if (!addMembersTeam) return;
+          const nextTeams = teamDrafts.map(team =>
+            team.id === addMembersTeam.id
+              ? { ...team, assignments: [...team.assignments, ...newAssignments] }
+              : team
+          );
+          await persistTeams(nextTeams, updateTeams.mutateAsync, updateTeamAssignments.mutateAsync);
+          setAddMembersTeamId(null);
+        }}
+        isSaving={isSaving}
+        canCreateUsers={canCreateUsers}
+      />
     </>
   );
 };

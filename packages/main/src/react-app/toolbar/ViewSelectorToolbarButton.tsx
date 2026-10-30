@@ -66,7 +66,7 @@ export const ViewSelectorToolbarButton = () => {
         marginTop: '-5px'
       }}
     >
-      <div style={{ fontSize: '11px', color: 'var(--base-fg-dim)' }}>View:</div>
+      <div style={{ fontSize: '11px', color: 'var(--base-fg-secondary)' }}>View:</div>
       <div style={{ width: 'fit-content', flexShrink: 0 }}>
         <Select.Root
           value={activeViewId}

@@ -17,7 +17,7 @@
   flex: 0 0 auto;
   font-size: 13px;
   font-weight: 500;
-  color: var(--cmp-fg-secondary, var(--cmp-fg));
+  color: var(--cmp-fg-tertiary, var(--cmp-fg));
   background: transparent;
   border: none;
   border-bottom: 2px solid transparent;
@@ -101,7 +101,7 @@
 
 .tabHeaderBtn {
   font-size: 11px;
-  color: var(--cmp-fg-secondary, var(--cmp-fg));
+  color: var(--cmp-fg-tertiary, var(--cmp-fg));
   background: transparent;
   border: none;
   border-radius: var(--r-sm);

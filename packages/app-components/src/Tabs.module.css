@@ -40,7 +40,7 @@
       }
 
       &:not([data-active]) {
-        color: var(--base-fg-more-dim);
+        color: var(--base-fg-dimmed);
 
         &:hover {
           color: var(--panel-fg);
@@ -60,6 +60,10 @@
     &:focus-visible {
       outline: none;
     }
+  }
+
+  &[data-auto-height] .eContent {
+    height: auto;
   }
 }
 
@@ -92,7 +96,7 @@
   align-items: center;
   justify-content: center;
   padding: 0;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   background: none;
   border: 0;
   border-bottom: 1.5px solid transparent;

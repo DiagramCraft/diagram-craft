@@ -23,7 +23,7 @@
           top: 9px;
           right: 18px;
           content: "";
-          border-bottom: 1px solid var(--base-fg-more-dim);
+          border-bottom: 1px solid var(--base-fg-dimmed);
         }
       }
 

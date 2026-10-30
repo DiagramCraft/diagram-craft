@@ -15,7 +15,7 @@
 }
 
 .scopeDetail {
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   font-size: 12px;
   line-height: 1.4;
 }
@@ -36,7 +36,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--cmp-fg-secondary);
+  color: var(--cmp-fg-tertiary);
   font-size: 12px;
   cursor: pointer;
 }

@@ -60,7 +60,7 @@ export const EntityTooltip = ({
           schemaColor={color}
           tags={displayFields.some(f => f.id === '_tags') ? node._tags : undefined}
           rows={rows}
-          titleStyle={isLinked ? undefined : { color: 'var(--base-fg-more-dim)' }}
+          titleStyle={isLinked ? undefined : { color: 'var(--base-fg-dimmed)' }}
         />
       }
     >

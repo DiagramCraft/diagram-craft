@@ -12,13 +12,13 @@
 
 .stepDescription,
 .schemaDescription {
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   font-size: 12px;
   line-height: 1.45;
 }
 
 .loading {
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   padding: 8px 0;
 }
 
@@ -50,7 +50,7 @@
 }
 
 .schemaMeta {
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   font-size: 11px;
   margin-top: 8px;
 }
@@ -86,7 +86,7 @@
 }
 
 .mappingColumnDescription {
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   font-size: 11px;
   line-height: 1.4;
   margin-top: 3px;
@@ -105,7 +105,7 @@
 }
 
 .typeCardDescription {
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   line-height: 1.5;
 }
 
@@ -122,7 +122,7 @@
   flex: 1;
   border-top: 2px solid var(--cmp-border);
   padding-top: 5px;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   font-size: 10px;
 }
 

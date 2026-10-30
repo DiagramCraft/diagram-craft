@@ -1,4 +1,3 @@
-import { SettingsPage } from '../SettingsBlock';
 import { useState } from 'react';
 import { SectionActions } from '../SectionActions';
 import { TbKey, TbPlus } from 'react-icons/tb';
@@ -46,47 +45,45 @@ export const WorkspaceApiTokensSubSection = ({ workspaceSlug }: { workspaceSlug:
           Create token
         </Button>
       </SectionActions>
-      <SettingsPage stacked={false}>
-        <ApiTokenIntro>
-          Tokens created here are owned by the workspace itself, not any individual member, so they
-          keep working even if the admin who created them leaves. For a personal token tied to your
-          own account, use Account Settings instead.
-        </ApiTokenIntro>
 
-        <QueryState
-          isLoading={isLoading}
-          error={error}
-          isEmpty={tokens.length === 0}
-          subject="API tokens"
-          empty={{
-            icon: <TbKey size={20} />,
-            title: 'No API tokens',
-            subtitle: 'Create a token for a CI pipeline or service integration.',
-            compact: true
-          }}
-        >
-          <TokenTable tokens={tokens} onRevoke={setRevokeId} />
-        </QueryState>
+      <ApiTokenIntro>
+        Tokens created here are owned by the workspace itself, not any individual member, so they
+        keep working even if the admin who created them leaves. For a personal token tied to your
+        own account, use Account Settings instead.
+      </ApiTokenIntro>
 
-        <TokenCreateDialog
-          open={createDialogOpen}
-          sup="Workspace API tokens"
-          pending={createToken.isPending}
-          error={createToken.error instanceof Error ? createToken.error : null}
-          onClose={onCloseCreateDialog}
-          onCreate={handleCreate}
-        />
-        <SecretDialog token={secret} onClose={() => setSecret(null)} />
-        <RevokeTokenDialog
-          token={tokenToRevoke}
-          pending={revokeToken.isPending}
-          onCancel={() => setRevokeId(null)}
-          onConfirm={() => {
-            if (!revokeId || revokeToken.isPending) return;
-            void revokeToken.mutateAsync(revokeId).then(() => setRevokeId(null));
-          }}
-        />
-      </SettingsPage>
+      <QueryState
+        isLoading={isLoading}
+        error={error}
+        isEmpty={tokens.length === 0}
+        subject="API tokens"
+        empty={{
+          icon: <TbKey size={20} />,
+          title: 'No API tokens',
+          subtitle: 'Create a token for a CI pipeline or service integration.'
+        }}
+      >
+        <TokenTable tokens={tokens} onRevoke={setRevokeId} />
+      </QueryState>
+
+      <TokenCreateDialog
+        open={createDialogOpen}
+        sup="Workspace API tokens"
+        pending={createToken.isPending}
+        error={createToken.error instanceof Error ? createToken.error : null}
+        onClose={onCloseCreateDialog}
+        onCreate={handleCreate}
+      />
+      <SecretDialog token={secret} onClose={() => setSecret(null)} />
+      <RevokeTokenDialog
+        token={tokenToRevoke}
+        pending={revokeToken.isPending}
+        onCancel={() => setRevokeId(null)}
+        onConfirm={() => {
+          if (!revokeId || revokeToken.isPending) return;
+          void revokeToken.mutateAsync(revokeId).then(() => setRevokeId(null));
+        }}
+      />
     </>
   );
 };

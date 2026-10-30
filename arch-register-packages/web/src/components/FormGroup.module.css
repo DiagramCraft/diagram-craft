@@ -40,7 +40,7 @@
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.025em;
-      color: var(--base-fg-dim);
+      color: var(--base-fg-secondary);
     }
 
     .eSupplementaryLabel {
@@ -85,11 +85,11 @@
       border-bottom: 1px solid var(--cmp-border);
 
       .eIcon {
-        color: var(--base-fg-dim);
+        color: var(--base-fg-secondary);
       }
 
       .eTextIcon {
-        color: var(--base-fg-more-dim);
+        color: var(--base-fg-dimmed);
       }
 
       .eAction {
@@ -115,11 +115,11 @@
       }
 
       .eIcon {
-        color: var(--base-fg-dim);
+        color: var(--base-fg-secondary);
       }
 
       .eTextIcon {
-        color: var(--base-fg-more-dim);
+        color: var(--base-fg-dimmed);
       }
 
       .eAction {

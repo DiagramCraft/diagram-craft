@@ -65,7 +65,7 @@
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--cmp-fg-disabled);
+  color: var(--base-fg-tertiary);
   background: var(--base-bg);
   padding: 8px 10px;
   border-bottom: 1px solid var(--panel-border);
@@ -93,6 +93,11 @@
 .table .td {
   padding: 8px 10px;
   vertical-align: middle;
+  color: var(--panel-fg-secondary);
+}
+
+.table .primary {
+  color: var(--panel-fg);
 }
 
 .table tbody tr {
@@ -186,7 +191,7 @@
   appearance: none;
   width: 14px;
   height: 14px;
-  border: 1px solid var(--base-fg-more-dim);
+  border: 1px solid var(--base-fg-dimmed);
   border-radius: 3px;
   background: transparent;
   margin: 0;
@@ -250,7 +255,7 @@
 }
 
 .nameMuted {
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }
 
 .nameSub {
@@ -259,7 +264,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 340px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }
 
 /* Actions */
@@ -280,11 +285,11 @@
   align-items: center;
   justify-content: center;
   border-radius: var(--r);
-  color: var(--cmp-fg-disabled);
+  color: var(--panel-fg-tertiary);
 }
 
 .dotsBtn:hover {
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   background: var(--cmp-bg);
 }
 
@@ -311,7 +316,7 @@
 /* Empty row */
 .emptyRow .td {
   text-align: center;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   padding: 24px 10px;
 }
 
@@ -319,7 +324,7 @@
 .groupHeaderCell {
   background: var(--panel-bg);
   font-weight: 600;
-  color: var(--base-fg-dim);
+  color: var(--panel-fg-secondary);
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.04em;

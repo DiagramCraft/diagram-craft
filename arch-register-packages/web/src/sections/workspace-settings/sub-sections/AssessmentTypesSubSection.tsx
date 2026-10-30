@@ -7,7 +7,7 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import type { AssessmentType } from '@arch-register/api-types/workspaceConfigContract';
 import { useUpdateAssessmentTypes } from '../../../hooks/useWorkspaceConfig';
-import { SettingsBlock, SettingsBlockList } from '../SettingsBlock';
+import { SettingsBlock } from '../SettingsBlock';
 import { SectionActions } from '../SectionActions';
 import styles from './AssessmentTypesSubSection.module.css';
 
@@ -39,46 +39,42 @@ export const AssessmentTypesSubSection = ({
       <SectionActions>
         <SaveBarButtons dirty={dirty} pending={mutation.isPending} onCancel={reset} onSave={save} />
       </SectionActions>
-      <SettingsBlockList>
-        <MutationError error={mutation.error} />
-        <SettingsBlock
-          title="Assessment types"
-          description="Categorize assessments for dashboards and future assessment views. Removing a type uncategorizes existing assessments that used it."
+      <MutationError error={mutation.error} />
+      <SettingsBlock
+        title="Assessment types"
+        description="Categorize assessments for dashboards and future assessment views. Removing a type uncategorizes existing assessments that used it."
+      >
+        <div className={styles.fieldGrid}>
+          {types.map((type, index) => (
+            <Fragment key={type.id}>
+              <TextInput
+                value={type.name}
+                onChange={value =>
+                  setTypes(current =>
+                    current.map((item, i) => (i === index ? { ...item, name: value ?? '' } : item))
+                  )
+                }
+                placeholder="Name (e.g. Risk & compliance)"
+              />
+              <Button
+                onClick={() => setTypes(current => current.filter((_, i) => i !== index))}
+                variant="danger"
+                style={{ marginLeft: '1rem' }}
+                title="Delete type"
+              >
+                <TbTrash size={12} />
+              </Button>
+              {index < types.length - 1 && <div className={styles.divider} />}
+            </Fragment>
+          ))}
+        </div>
+        <Button
+          icon={<TbPlus size={12} />}
+          onClick={() => setTypes(current => [...current, { id: crypto.randomUUID(), name: '' }])}
         >
-          <div className={styles.fieldGrid}>
-            {types.map((type, index) => (
-              <Fragment key={type.id}>
-                <TextInput
-                  value={type.name}
-                  onChange={value =>
-                    setTypes(current =>
-                      current.map((item, i) =>
-                        i === index ? { ...item, name: value ?? '' } : item
-                      )
-                    )
-                  }
-                  placeholder="Name (e.g. Risk & compliance)"
-                />
-                <Button
-                  onClick={() => setTypes(current => current.filter((_, i) => i !== index))}
-                  variant="danger"
-                  style={{ marginLeft: '1rem' }}
-                  title="Delete type"
-                >
-                  <TbTrash size={12} />
-                </Button>
-                {index < types.length - 1 && <div className={styles.divider} />}
-              </Fragment>
-            ))}
-          </div>
-          <Button
-            icon={<TbPlus size={12} />}
-            onClick={() => setTypes(current => [...current, { id: crypto.randomUUID(), name: '' }])}
-          >
-            Add assessment type
-          </Button>
-        </SettingsBlock>
-      </SettingsBlockList>
+          Add assessment type
+        </Button>
+      </SettingsBlock>
     </>
   );
 };

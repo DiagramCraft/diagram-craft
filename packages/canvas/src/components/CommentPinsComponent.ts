@@ -30,7 +30,7 @@ const COMMENT_PIN_INDICATOR: DeepRequired<Indicator> = {
 
 const RESOLVED_COMMENT_PIN_INDICATOR: DeepRequired<Indicator> = {
   ...COMMENT_PIN_INDICATOR,
-  color: 'var(--base-fg-more-dim)'
+  color: 'var(--base-fg-dimmed)'
 };
 
 export type CommentMarker = {

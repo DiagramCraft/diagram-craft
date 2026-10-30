@@ -5,7 +5,7 @@
   height: 100vh;
   width: 100vw;
   overflow: hidden;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   font-size: 13px;
 }
 

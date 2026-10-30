@@ -37,7 +37,7 @@ div[data-frame="true"] .card {
 
 .label {
   font-size: 13px;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
 }
 
 .viewLink {
