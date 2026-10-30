@@ -1,4 +1,3 @@
-import { SettingsPage } from '../SettingsBlock';
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbPlus } from 'react-icons/tb';
@@ -115,9 +114,7 @@ export const MembersSubSection = ({ workspaceSlug }: { workspaceSlug: string }) 
     return (
       <>
         {header}
-        <SettingsPage stacked={false}>
-          <Banner variant="error">Failed to load workspace members.</Banner>
-        </SettingsPage>
+        <Banner variant="error">Failed to load workspace members.</Banner>
       </>
     );
   }
@@ -125,7 +122,7 @@ export const MembersSubSection = ({ workspaceSlug }: { workspaceSlug: string }) 
   return (
     <>
       {header}
-      <SettingsPage stacked={false}>
+      <div>
         {!isLoading && members.length > 0 && (
           <ViewControls variant="page">
             <SearchInput
@@ -228,36 +225,36 @@ export const MembersSubSection = ({ workspaceSlug }: { workspaceSlug: string }) 
             </Table.Body>
           </Table.Root>
         )}
-        <EditMemberDialog
-          member={members.find(m => m.user_id === editingUserId) ?? null}
-          roles={roles}
-          isSaving={updateMemberRole.isPending}
-          onClose={() => setEditingUserId(null)}
-          onSave={async (userId, role) => {
-            await updateMemberRole.mutateAsync({ userId, role });
-            if (userId === user?.id) {
-              await reloadUser();
-            }
-            setEditingUserId(null);
-          }}
-        />
-        <AddMemberDialog
-          open={addDialogOpen}
-          users={availableUsers}
-          loading={isLoadingUsers}
-          onClose={onCloseAddDialog}
-          onSave={async (userId, role) => {
-            await updateMemberRole.mutateAsync({ userId, role });
-            if (userId === user?.id) {
-              await reloadUser();
-            }
-            onCloseAddDialog();
-          }}
-          isSaving={updateMemberRole.isPending}
-          roles={roles}
-          canCreateUsers={canCreateUsers}
-        />
-      </SettingsPage>
+      </div>
+      <EditMemberDialog
+        member={members.find(m => m.user_id === editingUserId) ?? null}
+        roles={roles}
+        isSaving={updateMemberRole.isPending}
+        onClose={() => setEditingUserId(null)}
+        onSave={async (userId, role) => {
+          await updateMemberRole.mutateAsync({ userId, role });
+          if (userId === user?.id) {
+            await reloadUser();
+          }
+          setEditingUserId(null);
+        }}
+      />
+      <AddMemberDialog
+        open={addDialogOpen}
+        users={availableUsers}
+        loading={isLoadingUsers}
+        onClose={onCloseAddDialog}
+        onSave={async (userId, role) => {
+          await updateMemberRole.mutateAsync({ userId, role });
+          if (userId === user?.id) {
+            await reloadUser();
+          }
+          onCloseAddDialog();
+        }}
+        isSaving={updateMemberRole.isPending}
+        roles={roles}
+        canCreateUsers={canCreateUsers}
+      />
     </>
   );
 };

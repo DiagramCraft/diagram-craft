@@ -1,20 +1,3 @@
-.screen {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow-y: auto;
-}
-
-.head {
-  padding: 20px 24px 12px;
-}
-
-.content {
-  padding: 8px 24px 32px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
 .loading {
   color: var(--base-fg-dimmed);
   padding: 32px 0;

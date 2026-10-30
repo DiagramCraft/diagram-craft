@@ -27,12 +27,24 @@ const SURFACES: Surface[] = [
   {
     name: 'cmp',
     bg: '--cmp-bg',
-    fgs: ['--cmp-fg', '--cmp-fg-secondary', '--cmp-fg-disabled', '--cmp-fg-dimmed']
+    fgs: [
+      '--cmp-fg',
+      '--cmp-fg-secondary',
+      '--cmp-fg-tertiary',
+      '--cmp-fg-disabled',
+      '--cmp-fg-dimmed'
+    ]
   },
   {
     name: 'cmp-hover',
     bg: '--cmp-bg-hover',
-    fgs: ['--cmp-fg', '--cmp-fg-secondary', '--cmp-fg-disabled', '--cmp-fg-dimmed']
+    fgs: [
+      '--cmp-fg',
+      '--cmp-fg-secondary',
+      '--cmp-fg-tertiary',
+      '--cmp-fg-disabled',
+      '--cmp-fg-dimmed'
+    ]
   },
   {
     name: 'accent',

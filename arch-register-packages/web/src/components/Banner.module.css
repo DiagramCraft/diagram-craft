@@ -27,7 +27,7 @@
 }
 
 .banner[data-variant="neutral"] {
-  color: var(--cmp-fg-disabled);
+  color: var(--panel-fg-tertiary);
   background: var(--panel-bg);
   border-color: var(--panel-border);
 }

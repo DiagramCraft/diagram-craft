@@ -67,9 +67,8 @@
 }
 
 .intro {
-  max-width: 720px;
-  padding: 12px 0 18px;
-  color: var(--cmp-fg-disabled);
+  max-width: calc(100% - 200px);
+  color: var(--base-fg-tertiary);
   font-size: 12px;
   line-height: 1.5;
 }

@@ -21,7 +21,6 @@ import {
 import { useWorkspaces } from '../../hooks/useWorkspaces';
 import { SectionActions } from '../workspace-settings/SectionActions';
 import { QueryState } from '../workspace-settings/QueryState';
-import { SettingsPage } from '../workspace-settings/SettingsBlock';
 import styles from './ApiTokensSubSection.module.css';
 
 type TokenGroup = {
@@ -85,39 +84,37 @@ export const ApiTokensSubSection = () => {
           New API token
         </Button>
       </SectionActions>
-      <SettingsPage stacked={false}>
-        <ApiTokenIntro>
-          API tokens belong to your account and are each limited to one workspace. Treat them like
-          passwords and revoke them when no longer needed.
-        </ApiTokenIntro>
 
-        <QueryState
-          isLoading={isLoadingTokens || isLoadingWorkspaces}
-          error={tokenError ?? workspaceError}
-          isEmpty={tokens.length === 0}
-          subject="API tokens"
-          empty={{
-            icon: <TbKey size={20} />,
-            title: 'No API tokens',
-            subtitle: 'Create a token for a CI pipeline or service integration.',
-            compact: true
-          }}
-        >
-          {groups.map(group => (
-            <div className={styles.workspaceGroup} key={group.workspaceId}>
-              <div className={styles.workspaceHead}>
-                <div className={styles.workspaceName}>
-                  {group.workspace?.name ?? 'Unknown workspace'}
-                </div>
-                <div className={styles.workspaceSlug}>
-                  {group.workspace?.url_slug ?? group.workspaceId}
-                </div>
+      <ApiTokenIntro>
+        API tokens belong to your account and are each limited to one workspace. Treat them like
+        passwords and revoke them when no longer needed.
+      </ApiTokenIntro>
+
+      <QueryState
+        isLoading={isLoadingTokens || isLoadingWorkspaces}
+        error={tokenError ?? workspaceError}
+        isEmpty={tokens.length === 0}
+        subject="API tokens"
+        empty={{
+          icon: <TbKey size={20} />,
+          title: 'No API tokens',
+          subtitle: 'Create a token for a CI pipeline or service integration.'
+        }}
+      >
+        {groups.map(group => (
+          <div className={styles.workspaceGroup} key={group.workspaceId}>
+            <div className={styles.workspaceHead}>
+              <div className={styles.workspaceName}>
+                {group.workspace?.name ?? 'Unknown workspace'}
               </div>
-              <TokenTable tokens={group.tokens} onRevoke={setRevokeId} />
+              <div className={styles.workspaceSlug}>
+                {group.workspace?.url_slug ?? group.workspaceId}
+              </div>
             </div>
-          ))}
-        </QueryState>
-      </SettingsPage>
+            <TokenTable tokens={group.tokens} onRevoke={setRevokeId} />
+          </div>
+        ))}
+      </QueryState>
 
       <TokenCreateDialog
         open={createDialogOpen}

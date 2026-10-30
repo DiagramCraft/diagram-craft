@@ -70,7 +70,8 @@
   --accent-chroma: var(--theme-dark-accent-chroma, var(--blue-9));
 
   --cmp-fg: var(--theme-dark-cmp-fg, var(--gray-12));
-  --cmp-fg-secondary: var(--theme-dark-cmp-fg-secondary, var(--gray-10));
+  --cmp-fg-secondary: var(--theme-dark-cmp-fg-secondary, var(--gray-11));
+  --cmp-fg-tertiary: var(--theme-dark-cmp-fg-tertiary, var(--gray-10));
   --cmp-fg-disabled: var(--theme-dark-cmp-fg-disabled, var(--gray-8));
   --cmp-fg-dimmed: var(--theme-dark-cmp-fg-dimmed, var(--gray-6));
   --cmp-bg: var(--theme-dark-cmp-bg, var(--gray-3));
@@ -147,7 +148,8 @@
   --accent-chroma: var(--theme-light-accent-chroma, var(--blue-9));
 
   --cmp-fg: var(--theme-light-cmp-fg, var(--gray-12));
-  --cmp-fg-secondary: var(--theme-dark-cmp-fg-secondary, var(--gray-10));
+  --cmp-fg-secondary: var(--theme-dark-cmp-fg-secondary, var(--gray-11));
+  --cmp-fg-tertiary: var(--theme-dark-cmp-fg-tertiary, var(--gray-10));
   --cmp-fg-disabled: var(--theme-light-cmp-fg-disabled, var(--gray-8));
   --cmp-fg-dimmed: var(--theme-light-cmp-fg-dimmed, var(--gray-6));
   --cmp-bg: var(--theme-light-cmp-bg, var(--gray-3));

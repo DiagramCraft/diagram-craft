@@ -7,11 +7,7 @@ import {
   useUpdateNotificationPreferences
 } from '../../hooks/useNotificationPreferences';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import {
-  SettingsBlock,
-  SettingsBlockField,
-  SettingsBlockList
-} from '../workspace-settings/SettingsBlock';
+import { SettingsBlock, SettingsBlockField } from '../workspace-settings/SettingsBlock';
 import { QueryState } from '../workspace-settings/QueryState';
 import { MutationError } from '../workspace-settings/MutationError';
 import { SectionActions } from '../workspace-settings/SectionActions';
@@ -106,55 +102,54 @@ export const NotificationPreferencesSubSection = () => {
           onSave={handleSave}
         />
       </SectionActions>
-      <SettingsBlockList>
-        <MutationError error={updatePreferences.error} />
-        <SettingsBlock
-          title="Notification delivery"
-          description="Choose which notification types deliver in-app or by email. Email delivery is asynchronous and may take a few minutes."
-        >
-          {data.notificationTypes.map(type => (
-            <SettingsBlockField
-              key={type.notificationType}
-              label={
-                <>
-                  {type.label}
-                  {type.category === 'reminder' && ' (reminder)'}
-                </>
-              }
-              hint={type.description}
-            >
-              <div className={styles.channels}>
+
+      <MutationError error={updatePreferences.error} />
+      <SettingsBlock
+        title="Notification delivery"
+        description="Choose which notification types deliver in-app or by email. Email delivery is asynchronous and may take a few minutes."
+      >
+        {data.notificationTypes.map(type => (
+          <SettingsBlockField
+            key={type.notificationType}
+            label={
+              <>
+                {type.label}
+                {type.category === 'reminder' && ' (reminder)'}
+              </>
+            }
+            hint={type.description}
+          >
+            <div className={styles.channels}>
+              <div className={styles.channel}>
+                <Checkbox
+                  label="In-app"
+                  value={inAppByType[type.notificationType] ?? false}
+                  onChange={value =>
+                    setInAppByType(current => ({
+                      ...current,
+                      [type.notificationType]: value ?? false
+                    }))
+                  }
+                />
+              </div>
+              {emailImplemented && (
                 <div className={styles.channel}>
                   <Checkbox
-                    label="In-app"
-                    value={inAppByType[type.notificationType] ?? false}
+                    label="Email"
+                    value={emailByType[type.notificationType] ?? false}
                     onChange={value =>
-                      setInAppByType(current => ({
+                      setEmailByType(current => ({
                         ...current,
                         [type.notificationType]: value ?? false
                       }))
                     }
                   />
                 </div>
-                {emailImplemented && (
-                  <div className={styles.channel}>
-                    <Checkbox
-                      label="Email"
-                      value={emailByType[type.notificationType] ?? false}
-                      onChange={value =>
-                        setEmailByType(current => ({
-                          ...current,
-                          [type.notificationType]: value ?? false
-                        }))
-                      }
-                    />
-                  </div>
-                )}
-              </div>
-            </SettingsBlockField>
-          ))}
-        </SettingsBlock>
-      </SettingsBlockList>
+              )}
+            </div>
+          </SettingsBlockField>
+        ))}
+      </SettingsBlock>
     </>
   );
 };

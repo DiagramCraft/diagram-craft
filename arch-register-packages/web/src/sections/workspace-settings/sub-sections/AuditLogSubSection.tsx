@@ -145,58 +145,60 @@ export const AuditLogSubSection = ({
   };
 
   return (
-    <div className={styles.blockList}>
-      <ViewControls variant="page">
-        <LabeledSelect
-          label="Object type"
-          value={entityType}
-          onChange={value => setEntityType(value as '' | AuditEntityType)}
-          options={AUDIT_ENTITY_TYPES}
-        />
-        <LabeledSelect
-          label="Action"
-          value={operation}
-          onChange={value => setOperation(value as '' | AuditOperation)}
-          options={AUDIT_OPERATIONS}
-        />
-        <LabeledDateInput label="From" value={startDate} onChange={setStartDate} />
-        <LabeledDateInput label="To" value={endDate} onChange={setEndDate} />
-      </ViewControls>
+    <>
+      <div>
+        <ViewControls variant="page">
+          <LabeledSelect
+            label="Object type"
+            value={entityType}
+            onChange={value => setEntityType(value as '' | AuditEntityType)}
+            options={AUDIT_ENTITY_TYPES}
+          />
+          <LabeledSelect
+            label="Action"
+            value={operation}
+            onChange={value => setOperation(value as '' | AuditOperation)}
+            options={AUDIT_OPERATIONS}
+          />
+          <LabeledDateInput label="From" value={startDate} onChange={setStartDate} />
+          <LabeledDateInput label="To" value={endDate} onChange={setEndDate} />
+        </ViewControls>
 
-      {loading ? (
-        <LoadingState text="Loading activity..." size="sm" />
-      ) : entries.length === 0 ? (
-        <EmptyState compact title="No audit log entries match the current filters." />
-      ) : (
-        <Table.Root>
-          <Table.Head>
-            <Table.Row>
-              <Table.HeaderCell width={140}>Object type</Table.HeaderCell>
-              <Table.HeaderCell width={120}>When</Table.HeaderCell>
-              <Table.HeaderCell width={160}>User</Table.HeaderCell>
-              <Table.HeaderCell width={100}>Action</Table.HeaderCell>
-              <Table.HeaderCell>Target</Table.HeaderCell>
-            </Table.Row>
-          </Table.Head>
-          <Table.Body>
-            {entries.map(entry => (
-              <Table.Row key={entry.id} onClick={() => handleEntryClick(entry)}>
-                <Table.Cell>
-                  <span
-                    className={`${styles.activityTypeBadge} ${getEntityTypeTone(entry.entity_type)}`}
-                  >
-                    {getEntityTypeLabel(entry.entity_type)}
-                  </span>
-                </Table.Cell>
-                <Table.Cell>{formatRelativeTime(entry.timestamp)}</Table.Cell>
-                <Table.Cell>{entry.user_display_name ?? entry.user_id ?? 'Unknown'}</Table.Cell>
-                <Table.Cell>{getOperationLabel(entry.operation)}</Table.Cell>
-                <Table.Cell>{entry.entity_name}</Table.Cell>
+        {loading ? (
+          <LoadingState text="Loading activity..." size="sm" />
+        ) : entries.length === 0 ? (
+          <EmptyState compact title="No audit log entries match the current filters." />
+        ) : (
+          <Table.Root>
+            <Table.Head>
+              <Table.Row>
+                <Table.HeaderCell width={140}>Object type</Table.HeaderCell>
+                <Table.HeaderCell width={120}>When</Table.HeaderCell>
+                <Table.HeaderCell width={160}>User</Table.HeaderCell>
+                <Table.HeaderCell width={100}>Action</Table.HeaderCell>
+                <Table.HeaderCell>Target</Table.HeaderCell>
               </Table.Row>
-            ))}
-          </Table.Body>
-        </Table.Root>
-      )}
-    </div>
+            </Table.Head>
+            <Table.Body>
+              {entries.map(entry => (
+                <Table.Row key={entry.id} onClick={() => handleEntryClick(entry)}>
+                  <Table.Cell>
+                    <span
+                      className={`${styles.activityTypeBadge} ${getEntityTypeTone(entry.entity_type)}`}
+                    >
+                      {getEntityTypeLabel(entry.entity_type)}
+                    </span>
+                  </Table.Cell>
+                  <Table.Cell>{formatRelativeTime(entry.timestamp)}</Table.Cell>
+                  <Table.Cell>{entry.user_display_name ?? entry.user_id ?? 'Unknown'}</Table.Cell>
+                  <Table.Cell>{getOperationLabel(entry.operation)}</Table.Cell>
+                  <Table.Cell>{entry.entity_name}</Table.Cell>
+                </Table.Row>
+              ))}
+            </Table.Body>
+          </Table.Root>
+        )}
+      </div>
+    </>
   );
 };

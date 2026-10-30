@@ -1,8 +1,9 @@
 import { SaveBarButtons } from '../SaveBarButtons';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
-import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { Banner } from '../../../components/Banner';
+import { MutationError } from '../MutationError';
+import { SettingsBlock, SettingsBlockField } from '../SettingsBlock';
 import { LoadingState } from '../../../components/LoadingState';
 import { useApplications } from '../../../hooks/useApplications';
 import { PrincipalPicker } from '../../../components/PrincipalPicker';
@@ -15,7 +16,6 @@ import {
   useApplicationAccessConfiguration,
   useUpdateApplicationAccessPolicy
 } from '../../../hooks/useWorkspaceConfig';
-import styles from './ApplicationAccessSubSection.module.css';
 
 type ManagedApplicationId = Exclude<WorkspaceApplicationId, 'home'>;
 
@@ -105,42 +105,26 @@ export const ApplicationAccessCard = ({
   const saving = busy;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', paddingTop: '1rem' }}>
-      {updatePolicy.error && (
-        <Banner variant="error">
-          {updatePolicy.error instanceof Error
-            ? updatePolicy.error.message
-            : 'Failed to save application access.'}
-        </Banner>
-      )}
-
-      <p
-        style={{
-          margin: 0,
-          fontSize: '11.5px',
-          color: 'var(--base-fg-tertiary)',
-          textWrap: 'pretty'
-        }}
+    <>
+      <MutationError error={updatePolicy.error} />
+      <SettingsBlock
+        title="Access"
+        description={`Controls who can open ${app.name}, independent of workspace roles and entity permissions. Global administrators and workspace role managers always keep access.`}
       >
-        Controls who can open {app.name}, independent of workspace roles and entity permissions.
-        Global administrators and workspace role managers always keep access.
-      </p>
-
-      <div className={styles.controls}>
-        <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '11px' }}>
+        <SettingsBlockField label="All workspace members">
           <Checkbox
             value={draft.allMembers}
             disabled={saving}
             onChange={value => setDraft({ allMembers: !!value })}
           />
-          All workspace members
-        </label>
+        </SettingsBlockField>
 
         {!draft.allMembers && (
-          <div className={styles.targetGrid}>
-            <FormElement
+          <>
+            <SettingsBlockField
               label="Teams"
               hint="Team membership grants access to every member of the team."
+              align="top"
             >
               <PrincipalPicker
                 workspaceSlug={workspaceSlug}
@@ -148,18 +132,22 @@ export const ApplicationAccessCard = ({
                 values={draft.team_ids}
                 onChange={team_ids => setDraft({ team_ids })}
               />
-            </FormElement>
-            <FormElement label="People" hint="Selections are additive with team grants.">
+            </SettingsBlockField>
+            <SettingsBlockField
+              label="People"
+              hint="Selections are additive with team grants."
+              align="top"
+            >
               <PrincipalPicker
                 workspaceSlug={workspaceSlug}
                 kind="user"
                 values={draft.user_ids}
                 onChange={user_ids => setDraft({ user_ids })}
               />
-            </FormElement>
-          </div>
+            </SettingsBlockField>
+          </>
         )}
-      </div>
-    </div>
+      </SettingsBlock>
+    </>
   );
 };

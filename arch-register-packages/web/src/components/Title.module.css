@@ -33,7 +33,7 @@
 }
 
 .navCurrent {
-  color: var(--base-fg-dimmed);
+  color: var(--base-fg-tertiary);
   font-size: 12px;
 }
 

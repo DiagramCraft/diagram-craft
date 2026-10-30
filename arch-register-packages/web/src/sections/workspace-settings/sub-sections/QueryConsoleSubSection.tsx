@@ -3,7 +3,7 @@ import type { EntityQueryParseError } from '@arch-register/api-types/entityContr
 import { Button } from '@diagram-craft/app-components/Button';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { useParseEntityQueryText, useRunEntityQuery } from '../../../hooks/useEntityQueryText';
-import { SettingsBlock, SettingsBlockField, SettingsBlockList } from '../SettingsBlock';
+import { SettingsBlock, SettingsBlockField } from '../SettingsBlock';
 import styles from './QueryConsoleSubSection.module.css';
 
 const errorMessage = (error: unknown) =>
@@ -49,7 +49,7 @@ export const QueryConsoleSubSection = ({ workspaceId }: { workspaceId: string })
   };
 
   return (
-    <SettingsBlockList>
+    <>
       <SettingsBlock
         title="Entity query"
         description="Enter the entity query text DSL used by advanced entity views and saved views."
@@ -104,6 +104,6 @@ export const QueryConsoleSubSection = ({ workspaceId }: { workspaceId: string })
           <pre className={styles.output}>{result.raw}</pre>
         </SettingsBlock>
       )}
-    </SettingsBlockList>
+    </>
   );
 };
