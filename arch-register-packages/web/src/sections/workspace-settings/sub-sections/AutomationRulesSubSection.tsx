@@ -724,7 +724,7 @@ export const AutomationRulesSubSection = ({
           New rule
         </Button>
       </SectionActions>
-      <Tabs.Root value={tab} onValueChange={v => setTab(v as AutomationTab)}>
+      <Tabs.Root autoHeight value={tab} onValueChange={v => setTab(v as AutomationTab)}>
         <Tabs.List>
           <Tabs.Trigger value="rules">Rules ({rules.length})</Tabs.Trigger>
           <Tabs.Trigger value="runs">Runs</Tabs.Trigger>

@@ -29,7 +29,7 @@ export const AssessmentEditorTabs = ({
   editor: AssessmentEditorController;
   schemas: EntitySchema[];
 }) => (
-  <Tabs.Root defaultValue="basic-info">
+  <Tabs.Root autoHeight defaultValue="basic-info">
     <Tabs.List aria-label="Assessment editor sections">
       <Tabs.Trigger value="basic-info">Basic Info</Tabs.Trigger>
       <Tabs.Trigger value="assignment">Assignment</Tabs.Trigger>
@@ -38,19 +38,19 @@ export const AssessmentEditorTabs = ({
       <Tabs.Trigger value="advanced">Advanced</Tabs.Trigger>
     </Tabs.List>
 
-    <Tabs.Content value="basic-info" style={{ height: 'auto' }}>
+    <Tabs.Content value="basic-info">
       <AssessmentBasicInfoTab editor={editor} />
     </Tabs.Content>
-    <Tabs.Content value="assignment" style={{ height: 'auto' }}>
+    <Tabs.Content value="assignment">
       <AssessmentAssignmentTab editor={editor} />
     </Tabs.Content>
-    <Tabs.Content value="scope" style={{ height: 'auto' }}>
+    <Tabs.Content value="scope">
       <AssessmentScopeTab editor={editor} schemas={schemas} />
     </Tabs.Content>
-    <Tabs.Content value="fields" style={{ height: 'auto' }}>
+    <Tabs.Content value="fields">
       <AssessmentFieldsTab editor={editor} />
     </Tabs.Content>
-    <Tabs.Content value="advanced" style={{ height: 'auto' }}>
+    <Tabs.Content value="advanced">
       <AssessmentAdvancedTab editor={editor} />
     </Tabs.Content>
   </Tabs.Root>

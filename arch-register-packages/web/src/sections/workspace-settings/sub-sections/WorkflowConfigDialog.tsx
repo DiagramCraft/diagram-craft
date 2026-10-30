@@ -130,7 +130,7 @@ export const WorkflowConfigDialog = ({
         }
       ]}
     >
-      <Tabs.Root value={tab} onValueChange={setTab}>
+      <Tabs.Root autoHeight value={tab} onValueChange={setTab}>
         <Tabs.List aria-label="Workflow configuration sections">
           <Tabs.Trigger value="overview">Overview</Tabs.Trigger>
           {caseKind.supportsApprovals !== false && (
@@ -152,7 +152,7 @@ export const WorkflowConfigDialog = ({
           )}
           {isFieldDateReminder && <Tabs.Trigger value="recurrence">Recurrence</Tabs.Trigger>}
         </Tabs.List>
-        <Tabs.Content value="overview" style={{ height: 'auto' }}>
+        <Tabs.Content value="overview">
           <div className={styles.workflowToggles}>
             <label className={styles.check}>
               <Checkbox value={enabled} onChange={checked => setEnabled(checked ?? false)} />
@@ -202,7 +202,7 @@ export const WorkflowConfigDialog = ({
           )}
         </Tabs.Content>
         {caseKind.supportsApprovals !== false && (
-          <Tabs.Content value="approvals" style={{ height: 'auto' }}>
+          <Tabs.Content value="approvals">
             <WorkflowApprovalEditor
               workspaceSlug={workspaceSlug}
               caseKind={caseKind}
@@ -214,7 +214,7 @@ export const WorkflowConfigDialog = ({
           </Tabs.Content>
         )}
         {caseKind.supportsReminders !== false && (
-          <Tabs.Content value="reminders" style={{ height: 'auto' }}>
+          <Tabs.Content value="reminders">
             <WorkflowReminderEditor
               reminders={config.reminders}
               onChange={reminders => update({ reminders })}
@@ -222,7 +222,7 @@ export const WorkflowConfigDialog = ({
           </Tabs.Content>
         )}
         {caseKind.supportsEscalation !== false && (
-          <Tabs.Content value="escalation" style={{ height: 'auto' }}>
+          <Tabs.Content value="escalation">
             <WorkflowEscalationEditor
               workspaceSlug={workspaceSlug}
               caseKind={caseKind}
@@ -233,7 +233,7 @@ export const WorkflowConfigDialog = ({
           </Tabs.Content>
         )}
         {caseKind.supportsInitiationFields !== false && (
-          <Tabs.Content value="initiation-fields" style={{ height: 'auto' }}>
+          <Tabs.Content value="initiation-fields">
             <WorkflowInitiationFieldsEditor
               workspaceSlug={workspaceSlug}
               fields={config.initiationFields ?? []}
@@ -242,7 +242,7 @@ export const WorkflowConfigDialog = ({
           </Tabs.Content>
         )}
         {isFieldDateReminder && (
-          <Tabs.Content value="recurrence" style={{ height: 'auto' }}>
+          <Tabs.Content value="recurrence">
             <WorkflowDateReminderEditor
               extension={dateReminderExtension}
               onChange={extension =>
@@ -257,7 +257,7 @@ export const WorkflowConfigDialog = ({
           </Tabs.Content>
         )}
         {caseKind.case_kind === 'document.status' && (
-          <Tabs.Content value="values" style={{ height: 'auto' }}>
+          <Tabs.Content value="values">
             <WorkflowStatusValuesEditor
               options={enumField?.enumOptions ?? []}
               statusValues={statusValues}

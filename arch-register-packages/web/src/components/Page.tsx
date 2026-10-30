@@ -1,15 +1,9 @@
+import type { ReactNode } from 'react';
 import { Stack } from './Stack';
+import styles from './Page.module.css';
 
-export const Page = (props: { children: React.ReactNode }) => {
-  return (
-    <div
-      style={{
-        padding: '20px 24px 12px',
-        height: '100%',
-        overflowY: 'auto'
-      }}
-    >
-      <Stack>{props.children}</Stack>
-    </div>
-  );
-};
+export const Page = ({ children }: { children: ReactNode }) => (
+  <div className={styles.cPage}>
+    <Stack>{children}</Stack>
+  </div>
+);

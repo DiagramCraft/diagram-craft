@@ -105,7 +105,7 @@ export const ApplicationsCapabilitiesScreen = () => {
         }
       />
 
-      <Tabs.Root value={activeTab} onValueChange={selectTab}>
+      <Tabs.Root autoHeight value={activeTab} onValueChange={selectTab}>
         <Tabs.List aria-label={`${item.label} configuration`}>
           {item.tabs.map(tab => (
             <Tabs.Trigger key={tab.id} value={tab.id}>

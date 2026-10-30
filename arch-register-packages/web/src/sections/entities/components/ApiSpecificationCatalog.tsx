@@ -23,6 +23,7 @@ import {
 } from '../../../hooks/useArtifacts';
 import type { ApiSpecificationSourceState } from '../../../hooks/useArtifacts';
 import { TbAlertTriangle, TbChevronDown, TbExternalLink, TbRefresh } from 'react-icons/tb';
+import { Banner } from '../../../components/Banner';
 import styles from '../EntityApiSection.module.css';
 import sharedStyles from '../EntityDetailScreen.module.css';
 
@@ -274,8 +275,7 @@ export const ApiSourceVersionPicker = ({
 export const RevisionDiagnostics = ({ revision }: { revision: ApiSpecificationRevision }) => {
   if (revision.diagnostics.length === 0) return null;
   return (
-    <div className={`${styles.notice} ${styles.noticeWarning} ${styles.catalogNotice}`}>
-      <TbAlertTriangle size={13} />
+    <Banner variant="warning" icon={<TbAlertTriangle size={13} />}>
       <div>
         <div>
           {revision.diagnostics.length} normalization diagnostic
@@ -289,7 +289,7 @@ export const RevisionDiagnostics = ({ revision }: { revision: ApiSpecificationRe
           ))}
         </ul>
       </div>
-    </div>
+    </Banner>
   );
 };
 
@@ -302,56 +302,50 @@ export const StatusNotice = ({
 }) => {
   if (status === 'link_only') {
     return (
-      <div className={`${styles.notice} ${styles.noticeInfo}`}>
-        <TbExternalLink size={13} />
+      <Banner variant="info" icon={<TbExternalLink size={13} />}>
         This API is linked to an external source; no local normalized operations are available.
-      </div>
+      </Banner>
     );
   }
 
   if (!revision) {
     if (status === 'pending') {
       return (
-        <div className={`${styles.notice} ${styles.noticeInfo}`}>
-          <TbRefresh size={13} />
+        <Banner variant="info" icon={<TbRefresh size={13} />}>
           The API source is being processed. Normalized operations will appear after ingestion.
-        </div>
+        </Banner>
       );
     }
 
     return (
-      <div className={`${styles.notice} ${styles.noticeError}`}>
-        <TbAlertTriangle size={13} />
+      <Banner variant="error" icon={<TbAlertTriangle size={13} />}>
         No successful normalized revision is available for the selected source.
-      </div>
+      </Banner>
     );
   }
 
   if (!revision.isCurrent) {
     return (
-      <div className={`${styles.notice} ${styles.noticeInfo}`}>
-        <TbAlertTriangle size={13} />
+      <Banner variant="info" icon={<TbAlertTriangle size={13} />}>
         Showing a historical revision. The source&apos;s current version remains unchanged.
-      </div>
+      </Banner>
     );
   }
 
   if (status === 'pending') {
     return (
-      <div className={`${styles.notice} ${styles.noticeInfo}`}>
-        <TbRefresh size={13} />
+      <Banner variant="info" icon={<TbRefresh size={13} />}>
         The source is being processed; the selected current revision remains browseable.
-      </div>
+      </Banner>
     );
   }
 
   if (status !== 'current' && status !== 'not_configured') {
     return (
-      <div className={`${styles.notice} ${styles.noticeWarning}`}>
-        <TbAlertTriangle size={13} />
+      <Banner variant="warning" icon={<TbAlertTriangle size={13} />}>
         This catalog is showing the last successful revision. It is not current because the latest
         source attempt is {getArtifactStatusLabel(status).toLowerCase()}.
-      </div>
+      </Banner>
     );
   }
 

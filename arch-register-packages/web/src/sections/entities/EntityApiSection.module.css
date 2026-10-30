@@ -102,39 +102,6 @@
   overflow-wrap: anywhere;
 }
 
-.sourceNotice,
-.notice {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  margin-top: 12px;
-  padding: 9px 10px;
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r);
-  font-size: 12px;
-  line-height: 1.45;
-}
-
-.sourceNotice,
-.noticeWarning {
-  color: var(--warning-fg);
-  background: color-mix(in oklch, var(--warning-fg) 7%, transparent);
-}
-
-.catalogNotice {
-  margin-inline: 16px;
-}
-
-.noticeError {
-  color: var(--danger-fg);
-  background: color-mix(in oklch, var(--danger-fg) 7%, transparent);
-}
-
-.noticeInfo {
-  color: var(--accent-fg);
-  background: color-mix(in oklch, var(--accent-fg) 7%, transparent);
-}
-
 .sourceActions {
   gap: 12px;
   flex-wrap: wrap;

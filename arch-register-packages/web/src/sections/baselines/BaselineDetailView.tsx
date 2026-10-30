@@ -147,14 +147,18 @@ export const BaselineDetailView = ({
       </section>
 
       <section className={styles.panel}>
-        <Tabs.Root value={activeTab} onValueChange={value => setActiveTab(value as BaselineTab)}>
+        <Tabs.Root
+          autoHeight
+          value={activeTab}
+          onValueChange={value => setActiveTab(value as BaselineTab)}
+        >
           <Tabs.List aria-label="Baseline details">
             <Tabs.Trigger value="entities">Entities</Tabs.Trigger>
             <Tabs.Trigger value="relations">Relations</Tabs.Trigger>
             <Tabs.Trigger value="compare">Compare</Tabs.Trigger>
           </Tabs.List>
 
-          <Tabs.Content value="entities" style={{ height: 'auto' }}>
+          <Tabs.Content value="entities">
             <div className={styles.tabContent}>
               {baseline.entities.length === 0 ? (
                 <p className={styles.subtitle}>No entities were captured.</p>
@@ -183,7 +187,7 @@ export const BaselineDetailView = ({
             </div>
           </Tabs.Content>
 
-          <Tabs.Content value="relations" style={{ height: 'auto' }}>
+          <Tabs.Content value="relations">
             <div className={styles.tabContent}>
               {baseline.relations.length === 0 ? (
                 <p className={styles.subtitle}>No relations were captured.</p>
@@ -210,7 +214,7 @@ export const BaselineDetailView = ({
             </div>
           </Tabs.Content>
 
-          <Tabs.Content value="compare" style={{ height: 'auto' }}>
+          <Tabs.Content value="compare">
             <div className={styles.tabContent}>
               <div className={styles.toolbar}>
                 <Select.Root

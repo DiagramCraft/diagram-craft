@@ -61,6 +61,10 @@
       outline: none;
     }
   }
+
+  &[data-auto-height] .eContent {
+    height: auto;
+  }
 }
 
 .eOverflowContainer {

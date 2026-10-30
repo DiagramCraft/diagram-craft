@@ -1,13 +1,6 @@
-export const Stack = (props: { children: React.ReactNode }) => {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '1rem'
-      }}
-    >
-      {props.children}
-    </div>
-  );
-};
+import type { ReactNode } from 'react';
+import styles from './Stack.module.css';
+
+export const Stack = ({ children }: { children: ReactNode }) => (
+  <div className={styles.cStack}>{children}</div>
+);

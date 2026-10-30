@@ -26,6 +26,9 @@ type SchemaEditorScreenShellProps = {
   dialogs?: ReactNode;
 };
 
+/** Spacing between the Edit / Version history tab bar and its content. */
+const VIEW_STYLE = { paddingTop: 16 } as const;
+
 export const SchemaEditorScreenShell = ({
   hasSelection,
   breadcrumb,
@@ -61,8 +64,9 @@ export const SchemaEditorScreenShell = ({
             description={description}
           />
         </div>
-        {onShowHistoryChange && (
+        {onShowHistoryChange ? (
           <Tabs.Root
+            autoHeight
             value={showHistory ? 'history' : 'edit'}
             onValueChange={value => onShowHistoryChange(value === 'history')}
           >
@@ -70,11 +74,16 @@ export const SchemaEditorScreenShell = ({
               <Tabs.Trigger value="edit">Edit</Tabs.Trigger>
               <Tabs.Trigger value="history">Version history</Tabs.Trigger>
             </Tabs.List>
+            <Tabs.Content value="edit" style={VIEW_STYLE}>
+              {editor}
+            </Tabs.Content>
+            <Tabs.Content value="history" style={VIEW_STYLE}>
+              {history ?? editor}
+            </Tabs.Content>
           </Tabs.Root>
+        ) : (
+          editor
         )}
-        <div className={onShowHistoryChange ? styles.viewContent : undefined}>
-          {history ?? editor}
-        </div>
       </div>
     ) : (
       <EmptyState

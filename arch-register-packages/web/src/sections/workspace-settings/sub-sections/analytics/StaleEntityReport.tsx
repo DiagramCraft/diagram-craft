@@ -108,22 +108,15 @@ export const StaleEntityReport = ({
             {analytics.stale.totalCount}
           </span>
           <div>
-            <button
-              type="button"
-              className={styles.applyButton}
-              disabled={pageIndex === 0}
-              onClick={() => setPageIndex(index => index - 1)}
-            >
+            <Button disabled={pageIndex === 0} onClick={() => setPageIndex(index => index - 1)}>
               Prev
-            </button>
-            <button
-              type="button"
-              className={styles.applyButton}
+            </Button>
+            <Button
               disabled={(pageIndex + 1) * pageSize >= analytics.stale.totalCount}
               onClick={() => setPageIndex(index => index + 1)}
             >
               Next
-            </button>
+            </Button>
           </div>
         </div>
       )}

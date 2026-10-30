@@ -22,11 +22,6 @@
   margin-bottom: 16px;
 }
 
-/* Spacing between the Edit / Version history tab bar and its content */
-.viewContent {
-  padding-top: 16px;
-}
-
 .formRow {
   display: flex;
   flex-direction: row;

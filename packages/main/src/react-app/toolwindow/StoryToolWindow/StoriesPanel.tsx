@@ -266,7 +266,9 @@ export const StoriesPanel = () => {
               <Tree.Children>
                 {story.steps.length === 0 && (
                   <Tree.Node>
-                    <Tree.NodeLabel style={{ fontStyle: 'italic', color: 'var(--base-fg-secondary)' }}>
+                    <Tree.NodeLabel
+                      style={{ fontStyle: 'italic', color: 'var(--base-fg-secondary)' }}
+                    >
                       No steps yet
                     </Tree.NodeLabel>
                   </Tree.Node>

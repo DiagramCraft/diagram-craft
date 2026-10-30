@@ -92,20 +92,6 @@
   gap: 2px;
 }
 
-.notice {
-  font-size: 11.5px;
-  color: var(--cmp-fg-disabled);
-  padding: 8px 10px;
-  border: 1px solid var(--panel-border);
-  border-radius: 6px;
-  background: var(--panel-bg);
-}
-
-.notice.warning {
-  color: var(--warning-fg);
-  border-color: color-mix(in oklch, var(--warning-fg) 40%, var(--panel-border));
-}
-
 .typeTag {
   display: inline-flex;
   align-items: center;

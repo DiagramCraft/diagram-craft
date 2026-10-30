@@ -196,12 +196,12 @@ export const DocumentTypeEditor = ({
                 </div>
               </div>
 
-              <Tabs.Root value={panelTab} onValueChange={setPanelTab}>
+              <Tabs.Root autoHeight value={panelTab} onValueChange={setPanelTab}>
                 <Tabs.List aria-label="Document type sections">
                   <Tabs.Trigger value="fields">Fields</Tabs.Trigger>
                   <Tabs.Trigger value="ai">AI actions</Tabs.Trigger>
                 </Tabs.List>
-                <Tabs.Content value="fields" style={{ height: 'auto' }}>
+                <Tabs.Content value="fields">
                   <div className={styles.fieldsHead}>
                     <div className={styles.sectionLabel}>Fields</div>
                     <Button variant="ghost" icon={<TbPlus size={11} />} onClick={draft.addField}>
@@ -239,7 +239,7 @@ export const DocumentTypeEditor = ({
                     used field will ask you to choose how to migrate its data before saving.
                   </div>
                 </Tabs.Content>
-                <Tabs.Content value="ai" style={{ height: 'auto' }}>
+                <Tabs.Content value="ai">
                   <DocumentAiActionsSection
                     workspaceSlug={workspaceSlug}
                     documentTypeId={selected?.id ?? null}

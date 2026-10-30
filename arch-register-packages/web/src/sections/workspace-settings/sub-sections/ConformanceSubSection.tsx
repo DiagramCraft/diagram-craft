@@ -481,13 +481,13 @@ export const ConformanceSubSection = ({
           </div>
         </div>
       )}
-      <Tabs.Root value={tab} onValueChange={value => setTab(value as Tab)}>
+      <Tabs.Root autoHeight value={tab} onValueChange={value => setTab(value as Tab)}>
         <Tabs.List>
           <Tabs.Trigger value="checks">Checks ({checks.length})</Tabs.Trigger>
           <Tabs.Trigger value="violations">Violations ({violations?.total ?? 0})</Tabs.Trigger>
           <Tabs.Trigger value="runs">Evaluation runs ({runs.length})</Tabs.Trigger>
         </Tabs.List>
-        <Tabs.Content value="checks" style={{ height: 'auto' }}>
+        <Tabs.Content value="checks">
           <section className={styles.section}>
             <QueryState
               isLoading={checksLoading}
@@ -602,7 +602,7 @@ export const ConformanceSubSection = ({
           </section>
         </Tabs.Content>
 
-        <Tabs.Content value="violations" style={{ height: 'auto' }}>
+        <Tabs.Content value="violations">
           <section className={styles.section}>
             <ViewControls variant="tab">
               <LabeledSelect
@@ -733,7 +733,7 @@ export const ConformanceSubSection = ({
           </section>
         </Tabs.Content>
 
-        <Tabs.Content value="runs" style={{ height: 'auto' }}>
+        <Tabs.Content value="runs">
           <section className={styles.section}>
             {runs.length === 0 ? (
               <div className={styles.empty}>No evaluation runs yet.</div>

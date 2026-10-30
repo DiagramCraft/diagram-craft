@@ -10,6 +10,7 @@ const Root = (props: RootProps) => {
       value={props.value}
       defaultValue={props.defaultValue}
       onValueChange={props.onValueChange}
+      data-auto-height={props.autoHeight ? '' : undefined}
     >
       {props.children}
     </BaseUITabs.Root>
@@ -21,6 +22,8 @@ type RootProps = {
   value?: string;
   children: React.ReactNode;
   onValueChange?: (value: string) => void;
+  /** Size the panels to their content instead of the fixed default height. Padding is unchanged. */
+  autoHeight?: boolean;
 };
 
 const List = (props: ListProps) => {

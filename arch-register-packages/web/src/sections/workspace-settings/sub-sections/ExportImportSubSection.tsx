@@ -296,7 +296,11 @@ export const ExportImportSubSection = () => {
 
   return (
     <>
-      <Tabs.Root value={tab} onValueChange={v => setTab(v as 'export' | 'import' | 'definitions')}>
+      <Tabs.Root
+        autoHeight
+        value={tab}
+        onValueChange={v => setTab(v as 'export' | 'import' | 'definitions')}
+      >
         <Tabs.List>
           <Tabs.Trigger value="export">Export</Tabs.Trigger>
           <Tabs.Trigger value="import">Import</Tabs.Trigger>

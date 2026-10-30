@@ -397,13 +397,13 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
         workspaceSlug={workspaceSlug}
         onClose={() => setCreateDialogOpen(false)}
       />
-      <Tabs.Root value={tab} onValueChange={v => setTab(v as JobsTab)}>
+      <Tabs.Root autoHeight value={tab} onValueChange={v => setTab(v as JobsTab)}>
         <Tabs.List>
           <Tabs.Trigger value="schedules">Schedules ({schedules.length})</Tabs.Trigger>
           <Tabs.Trigger value="history">Run history</Tabs.Trigger>
           <Tabs.Trigger value="servers">Servers ({servers.length})</Tabs.Trigger>
         </Tabs.List>
-        <Tabs.Content value="servers" style={{ height: 'auto' }}>
+        <Tabs.Content value="servers">
           <section className={styles.section}>
             <QueryState
               isLoading={serversLoading}
@@ -446,7 +446,7 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
           </section>
         </Tabs.Content>
 
-        <Tabs.Content value="schedules" style={{ height: 'auto' }}>
+        <Tabs.Content value="schedules">
           <section className={styles.section}>
             {runNowError && <Banner variant="error">{runNowError}</Banner>}
             <QueryState
@@ -539,7 +539,7 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
           </section>
         </Tabs.Content>
 
-        <Tabs.Content value="history" style={{ height: 'auto' }}>
+        <Tabs.Content value="history">
           <ViewControls variant="tab">
             <LabeledSelect
               label="Schedule"

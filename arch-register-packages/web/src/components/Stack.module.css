@@ -1,0 +1,6 @@
+/** Vertical stack with the standard gap between children. */
+.cStack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}

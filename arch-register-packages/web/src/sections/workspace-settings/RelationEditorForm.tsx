@@ -64,15 +64,15 @@ export const RelationEditorForm = () => {
         </>
       }
     >
-      <Tabs.Root value={panelTab} onValueChange={setPanelTab}>
+      <Tabs.Root autoHeight value={panelTab} onValueChange={setPanelTab}>
         <Tabs.List aria-label="Relation editor sections">
           <Tabs.Trigger value="fields">Fields</Tabs.Trigger>
           <Tabs.Trigger value="validation">Validation</Tabs.Trigger>
         </Tabs.List>
-        <Tabs.Content value="fields" style={{ height: 'auto' }}>
+        <Tabs.Content value="fields">
           <RelationFieldsEditor />
         </Tabs.Content>
-        <Tabs.Content value="validation" style={{ height: 'auto' }}>
+        <Tabs.Content value="validation">
           <RelationValidationTab />
         </Tabs.Content>
       </Tabs.Root>

@@ -583,39 +583,6 @@
   line-height: 1.4;
 }
 
-/* App menu */
-
-.appMenuDrop {
-  position: absolute;
-  top: 32px;
-  left: 0;
-  min-width: 200px;
-  background: var(--cmp-bg);
-  border: 1px solid var(--cmp-border);
-  border-radius: var(--r-md);
-  padding: 4px;
-  z-index: 50;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-}
-
-/* Account menu */
-.acctMenu {
-  position: relative;
-}
-
-.acctMenuDrop {
-  position: absolute;
-  top: 32px;
-  right: 0;
-  min-width: 240px;
-  background: var(--cmp-bg);
-  border: 1px solid var(--cmp-border);
-  border-radius: var(--r-md);
-  padding: 4px;
-  z-index: 50;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-}
-
 .acctHeader {
   display: flex;
   align-items: center;

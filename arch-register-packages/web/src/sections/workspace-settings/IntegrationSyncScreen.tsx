@@ -228,7 +228,11 @@ export const IntegrationSyncScreen = () => {
         </div>
       </div>
 
-      <Tabs.Root value={tab} onValueChange={value => setTab(value as IntegrationSyncTab)}>
+      <Tabs.Root
+        autoHeight
+        value={tab}
+        onValueChange={value => setTab(value as IntegrationSyncTab)}
+      >
         <Tabs.List>
           <Tabs.Trigger value="sources">Sources ({sources.length})</Tabs.Trigger>
           <Tabs.Trigger value="runs">Recent runs ({runs.length})</Tabs.Trigger>
@@ -236,7 +240,7 @@ export const IntegrationSyncScreen = () => {
             Managed records needing attention ({recordsNeedingAttention.length})
           </Tabs.Trigger>
         </Tabs.List>
-        <Tabs.Content value="sources" style={{ height: 'auto' }}>
+        <Tabs.Content value="sources">
           <Table.Root scroll stickyHeader>
             <Table.Head>
               <Table.Row>
@@ -300,7 +304,7 @@ export const IntegrationSyncScreen = () => {
             </Table.Body>
           </Table.Root>
         </Tabs.Content>
-        <Tabs.Content value="runs" style={{ height: 'auto' }}>
+        <Tabs.Content value="runs">
           {selectedSourceKey && (
             <div>
               <Button variant="ghost" onClick={() => setSelectedSourceKey(null)}>
@@ -361,7 +365,7 @@ export const IntegrationSyncScreen = () => {
             </Table.Body>
           </Table.Root>
         </Tabs.Content>
-        <Tabs.Content value="records" style={{ height: 'auto' }}>
+        <Tabs.Content value="records">
           {selectedSourceKey && (
             <div>
               <Button variant="ghost" onClick={() => setSelectedSourceKey(null)}>

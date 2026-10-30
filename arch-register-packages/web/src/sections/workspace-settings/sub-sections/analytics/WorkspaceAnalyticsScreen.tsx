@@ -24,6 +24,7 @@ export const WorkspaceAnalyticsScreen = ({ analyticsView }: { analyticsView?: 's
 
   return (
     <Tabs.Root
+      autoHeight
       value={analyticsView ?? 'overview'}
       onValueChange={value => selectView(value as AnalyticsView)}
     >
