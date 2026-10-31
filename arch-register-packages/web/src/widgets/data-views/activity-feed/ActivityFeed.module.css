@@ -4,7 +4,7 @@
 }
 
 .emptyInline {
-  color: var(--fg-dim);
+  color: var(--fg-dimmed);
   padding: 8px;
   font-size: 12px;
 }
@@ -18,7 +18,7 @@
   font-size: 12px;
 }
 .activityType {
-  color: var(--fg-dim);
+  color: var(--fg-dimmed);
 }
 .activityOp {
   color: var(--fg-tertiary);
@@ -51,5 +51,5 @@ div[data-frame="true"] .activityRow {
 .activityTime {
   margin-left: auto;
   font-size: 11px;
-  color: var(--fg-dim);
+  color: var(--fg-dimmed);
 }

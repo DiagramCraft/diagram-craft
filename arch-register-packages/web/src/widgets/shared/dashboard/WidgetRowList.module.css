@@ -48,7 +48,7 @@
 }
 
 .emptyInline {
-  color: var(--fg-dim);
+  color: var(--fg-dimmed);
   padding: 0;
   font-size: 12px;
 }
@@ -88,5 +88,5 @@
 }
 
 .doneIcon {
-  color: var(--fg-dim);
+  color: var(--fg-dimmed);
 }

@@ -140,5 +140,5 @@ div[data-frame="true"][data-framed="true"] {
 }
 
 .unresolved {
-  color: var(--fg-dim);
+  color: var(--fg-dimmed);
 }

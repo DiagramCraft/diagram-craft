@@ -323,6 +323,7 @@ All packages use `workspace:*` protocol for internal dependencies, managed by pn
 - **Permission System**: See `permissions/PERMISSIONS.md`
 - **Feature Inventory**: See `FEATURES.md` and the repository-level `feature-maps/`
 - **AI Setup**: See `AI_SETUP.md`
+- **Color tokens**: See `web/COLOR_TOKENS.md` for which foreground tokens to use on which background
 - **End-user docs**: See `docs-site/` at the repository root
 
 ## 🛠️ Maintenance

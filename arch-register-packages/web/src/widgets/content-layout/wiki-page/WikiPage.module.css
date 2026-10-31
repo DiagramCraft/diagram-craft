@@ -4,7 +4,7 @@
 }
 
 .message {
-  color: var(--fg-dim);
+  color: var(--fg-dimmed);
   padding: 8px;
   font-size: 13px;
 }
