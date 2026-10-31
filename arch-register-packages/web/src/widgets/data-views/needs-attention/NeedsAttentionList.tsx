@@ -85,7 +85,7 @@ export const NeedsAttentionList = ({
           >
             <span className={styles.rowMain}>
               <span className={styles.rowName}>{item.entity._name}</span>
-              <span className={`${styles.rowSub} dim`}>
+              <span className={`${styles.rowSub}`}>
                 {caseKindLabel(item.case.caseKind, item.case.payload)}
                 {priority && (
                   <span className={styles.priorityPill} style={{ color: PRIORITY_TONE[priority] }}>
@@ -95,7 +95,7 @@ export const NeedsAttentionList = ({
               </span>
             </span>
             {item.case.dueAt && (
-              <span className="dim mono" style={{ fontSize: 10.5 }}>
+              <span className="mono" style={{ fontSize: 10.5, color: 'var(--fg-tertiary)' }}>
                 due {formatDate(item.case.dueAt, '—', dateTimeFormatPreference)}
               </span>
             )}

@@ -33,7 +33,7 @@
 }
 
 .metrics span {
-  color: var(--cmp-fg-disabled);
+  color: var(--fg-tertiary);
   font-size: 10px;
 }
 
@@ -50,17 +50,22 @@
 }
 
 .breakdownTitle {
-  color: var(--cmp-fg-disabled);
+  color: var(--fg-secondary);
   font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
 }
 
 .row {
+  color: var(--fg-secondary);
   display: flex;
   justify-content: space-between;
   gap: 8px;
   font-size: 11px;
+
+  > strong {
+    color: var(--fg-tertiary);
+  }
 }
 
 .link {
@@ -79,4 +84,5 @@
 
 .message {
   font-size: 12px;
+  color: var(--fg-tertiary);
 }

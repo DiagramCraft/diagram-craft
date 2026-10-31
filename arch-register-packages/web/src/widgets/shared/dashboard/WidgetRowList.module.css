@@ -26,13 +26,13 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--fg-secondary);
+  color: var(--fg);
 }
 
 .rowMeta {
   margin-left: auto;
   font-size: 11px;
-  color: var(--fg-dim);
+  color: var(--fg-tertiary);
   white-space: nowrap;
 }
 
@@ -57,6 +57,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 11px;
+  color: var(--fg-tertiary);
 }
 
 /* Fixed columns (name | bar | value) so bars line up and share one width across rows. */

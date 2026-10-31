@@ -99,7 +99,7 @@ export const UpcomingByDateWidget = ({ config }: Props) => {
           >
             <span className={styles.text}>
               <span className={rowStyles.rowLabel}>{String(record._name)}</span>
-              {sublabel && <span className={`${rowStyles.rowSub} dim`}>{sublabel}</span>}
+              {sublabel && <span className={`${rowStyles.rowSub}`}>{sublabel}</span>}
             </span>
             {value && (
               <span className={`${rowStyles.rowMeta} mono`}>

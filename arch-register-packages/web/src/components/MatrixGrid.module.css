@@ -13,7 +13,7 @@
 
 .corner {
   font-size: 10.5px;
-  color: var(--base-fg-dimmed);
+  color: var(--fg-tertiary);
   display: flex;
   align-items: flex-end;
   padding-bottom: 4px;
@@ -30,7 +30,7 @@
 
 .columnHeader {
   font-size: 10.5px;
-  color: var(--base-fg-dimmed);
+  color: var(--fg-tertiary);
   text-align: center;
   align-self: end;
   padding-bottom: 4px;
@@ -43,7 +43,7 @@
 
 .rowHeader {
   font-size: 10.5px;
-  color: var(--base-fg-dimmed);
+  color: var(--fg-tertiary);
   display: flex;
   align-items: center;
   justify-content: flex-end;

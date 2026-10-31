@@ -91,8 +91,8 @@ export const AssessmentProgressTableWidget = ({
                   title={summary.assessment.name}
                   subtitle={summary.assessment.description || undefined}
                 />
-                <Table.Cell className="dim">{summary.kind}</Table.Cell>
-                <Table.Cell className="dim">
+                <Table.Cell>{summary.kind}</Table.Cell>
+                <Table.Cell>
                   {projectsById.get(summary.assessment.project_id)?.name ?? '—'}
                 </Table.Cell>
                 <Table.Cell>
@@ -107,10 +107,10 @@ export const AssessmentProgressTableWidget = ({
                           : 'var(--cmp-fg-accent, #3b82f6)'
                       }
                     />
-                    <span className="dim mono">{Math.round(summary.percent * 100)}%</span>
+                    <span className="mono">{Math.round(summary.percent * 100)}%</span>
                   </span>
                 </Table.Cell>
-                <Table.Cell numeric className="dim mono">
+                <Table.Cell numeric className="mono">
                   {summary.questions}
                 </Table.Cell>
                 <Table.Cell numeric style={{ color: dueTone(summary.due) }}>

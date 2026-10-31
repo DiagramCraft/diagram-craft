@@ -25,12 +25,12 @@
   font-size: 12px;
   max-width: 360px;
   text-align: center;
-  color: var(--cmp-fg-disabled);
+  color: var(--base-fg-tertiary);
 }
 
 .compact {
   padding: 18px 16px;
-  color: var(--base-fg-dimmed);
+  color: var(--base-fg-tertiary);
   font-size: 13px;
 }
 

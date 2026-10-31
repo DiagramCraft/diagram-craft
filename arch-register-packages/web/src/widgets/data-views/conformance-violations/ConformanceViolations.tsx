@@ -69,7 +69,7 @@ export const ConformanceViolationsWidget = ({
         </button>
       ))}
       {grouped.total > grouped.entities.length && (
-        <div className={`${styles.more} dim`}>
+        <div className={`${styles.more}`}>
           +{grouped.total - grouped.entities.length} more with gaps
         </div>
       )}
