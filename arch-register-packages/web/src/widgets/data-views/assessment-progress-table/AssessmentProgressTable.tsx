@@ -60,9 +60,7 @@ export const AssessmentProgressTableWidget = ({
   };
 
   if (!isLoading && !schemaFound) {
-    return (
-      <div className={`${styles.message} dim`}>Entity type “{config.schemaName}” not found.</div>
-    );
+    return <div className={styles.message}>Entity type “{config.schemaName}” not found.</div>;
   }
 
   return (

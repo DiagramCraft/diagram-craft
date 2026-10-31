@@ -75,15 +75,15 @@ export const AssessmentsWidget = ({ config }: Props) => {
   );
 
   if (dashboardSurface === 'project' && projectId === undefined) {
-    return <div className={`${styles.emptyInline} dim`}>No project in context.</div>;
+    return <div className={styles.emptyInline}>No project in context.</div>;
   }
 
   if (isLoading) {
-    return <div className={`${styles.emptyInline} dim`}>Loading assessments...</div>;
+    return <div className={styles.emptyInline}>Loading assessments...</div>;
   }
 
   if (filteredAssessments.length === 0) {
-    return <div className={`${styles.emptyInline} dim`}>No {emptyStateLabel[config.mode]}.</div>;
+    return <div className={styles.emptyInline}>No {emptyStateLabel[config.mode]}.</div>;
   }
 
   const shown = filteredAssessments.slice(0, MAX_ITEMS);
@@ -106,7 +106,7 @@ export const AssessmentsWidget = ({ config }: Props) => {
         >
           <span className={styles.rowLabel}>{assessment.name}</span>
           {config.relativeDue && (
-            <span className={`${styles.rowSub} dim mono`}>
+            <span className={`${styles.rowSub} mono`}>
               {projectNameById.get(assessment.project_id) ?? '—'}
             </span>
           )}
@@ -123,7 +123,7 @@ export const AssessmentsWidget = ({ config }: Props) => {
         </button>
       ))}
       {filteredAssessments.length > MAX_ITEMS && (
-        <div className={`${styles.footer} dim`}>
+        <div className={styles.footer}>
           +{filteredAssessments.length - MAX_ITEMS} more assessments
         </div>
       )}

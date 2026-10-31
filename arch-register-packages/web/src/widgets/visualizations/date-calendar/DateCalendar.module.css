@@ -5,11 +5,13 @@
 }
 
 .cellLabel {
+  color: var(--fg-dim);
   font-weight: 600;
   font-size: 12px;
 }
 
 .empty {
+  color: var(--fg-dim);
   font-size: 12px;
   padding: 4px 0;
 }
@@ -56,6 +58,7 @@
 }
 
 .entrySub {
+  color: var(--fg-dim);
   font-size: 10px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -63,6 +66,15 @@
 }
 
 .caption {
+  color: var(--fg-dim);
   margin-top: 8px;
   font-size: 12px;
+}
+
+.dayNumber {
+  color: var(--fg-dim);
+}
+
+.entryAmount {
+  color: var(--fg-dim);
 }

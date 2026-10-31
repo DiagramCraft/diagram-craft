@@ -63,6 +63,11 @@
 
 .value,
 .month {
+  color: var(--fg-dim);
   font-size: 10px;
   white-space: nowrap;
+}
+
+.total {
+  color: var(--fg-dim);
 }

@@ -61,7 +61,7 @@ const QueryField = ({
         style={{ width: '100%' }}
         onChange={v => onChange(v ?? '')}
       />
-      {status && <div className={`${configFormStyles.hint} dim`}>{status}</div>}
+      {status && <div className={configFormStyles.hint}>{status}</div>}
     </FormGrid.Row>
   );
 };
@@ -258,7 +258,7 @@ const LegacyAggregateStatConfigForm = ({ config, onChange }: AggregateStatConfig
       </FormGroup>
       <FormGroup label="Counts as met when" variant="simple">
         {!config.schema ? (
-          <div className={`${configFormStyles.hint} dim`}>Choose an entity type first.</div>
+          <div className={configFormStyles.hint}>Choose an entity type first.</div>
         ) : (
           <FilterRow
             condition={config.numeratorCondition ?? defaultCondition}

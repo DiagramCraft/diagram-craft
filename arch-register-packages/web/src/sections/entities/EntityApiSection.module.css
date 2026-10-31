@@ -62,7 +62,7 @@
 }
 
 .statusCurrent {
-  color: var(--success-fg);
+  color: var(--green);
 }
 
 .statusWarning {
@@ -70,7 +70,7 @@
 }
 
 .statusError {
-  color: var(--danger-fg);
+  color: var(--error-fg);
 }
 
 .statusNeutral {

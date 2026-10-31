@@ -89,5 +89,5 @@ export const ConformanceViolationsHeaderActions = ({
     { schemaId, status: 'active', limit: 1, offset: 0 },
     permissions.canViewSchemas && schemaId != null
   );
-  return <span className="dim mono">{violations.data?.total ?? ''}</span>;
+  return <span className={`${styles.total} mono`}>{violations.data?.total ?? ''}</span>;
 };

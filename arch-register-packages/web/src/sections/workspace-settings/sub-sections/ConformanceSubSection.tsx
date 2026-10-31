@@ -72,7 +72,7 @@ type Tab = 'checks' | 'violations' | 'runs';
 
 const RUN_STATUS_META: Record<ConformanceEvaluationRun['status'], { tone: string; label: string }> =
   {
-    succeeded: { tone: 'var(--success-fg, var(--green-9))', label: 'Succeeded' },
+    succeeded: { tone: 'var(--green)', label: 'Succeeded' },
     running: { tone: 'var(--accent-fg)', label: 'Running…' },
     failed: { tone: 'var(--error-fg)', label: 'Failed' }
   };

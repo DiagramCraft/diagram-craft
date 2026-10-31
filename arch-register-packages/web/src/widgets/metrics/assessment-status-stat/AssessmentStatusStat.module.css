@@ -32,6 +32,7 @@
 }
 
 .message {
+  color: var(--fg-dim);
   padding: 8px 0;
   font-size: 12px;
 }

@@ -9,7 +9,7 @@ import { CountByFieldWidgetConfig } from './types';
 
 const FETCH_LIMIT = 1000;
 
-const PALETTE = ['var(--accent-fg)', 'var(--green)', 'var(--warning-fg)', 'var(--text-muted)'];
+const PALETTE = ['var(--accent-fg)', 'var(--green)', 'var(--warning-fg)', 'var(--fg-secondary)'];
 
 type Props = {
   config: CountByFieldWidgetConfig;
@@ -33,15 +33,13 @@ export const CountByFieldWidget = ({ config }: Props) => {
   );
 
   if (!schema && schemas.length > 0) {
-    return (
-      <div className={`${rowStyles.emptyInline} dim`}>This widget is not fully configured.</div>
-    );
+    return <div className={rowStyles.emptyInline}>This widget is not fully configured.</div>;
   }
   if (isLoading) {
-    return <div className={`${rowStyles.emptyInline} dim`}>Loading…</div>;
+    return <div className={rowStyles.emptyInline}>Loading…</div>;
   }
   if (entities.length === 0) {
-    return <div className={`${rowStyles.emptyInline} dim`}>No entities.</div>;
+    return <div className={rowStyles.emptyInline}>No entities.</div>;
   }
 
   const colored = buckets.map((bucket, index) => ({

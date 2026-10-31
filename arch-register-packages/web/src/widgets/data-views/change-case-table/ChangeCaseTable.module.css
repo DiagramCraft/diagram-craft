@@ -6,6 +6,11 @@
 }
 
 .message {
+  color: var(--fg-dim);
   padding: 8px 12px;
   font-size: 12px;
+}
+
+.noRequester {
+  color: var(--fg-dim);
 }

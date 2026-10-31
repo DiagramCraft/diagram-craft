@@ -63,7 +63,7 @@ export const STATUS_META: Record<
 > = {
   active: { icon: TbAlertTriangle, dot: 'var(--error-fg)', label: 'Active' },
   acknowledged: { icon: TbEye, dot: 'var(--cmp-fg-disabled)', label: 'Acknowledged' },
-  resolved: { icon: TbCheck, dot: 'var(--success-fg, var(--green-9))', label: 'Resolved' },
+  resolved: { icon: TbCheck, dot: 'var(--green)', label: 'Resolved' },
   exempt: { icon: TbLock, dot: 'var(--accent-fg)', label: 'Exempt' }
 };
 

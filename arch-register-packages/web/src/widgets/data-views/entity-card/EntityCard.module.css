@@ -138,3 +138,7 @@ div[data-frame="true"][data-framed="true"] {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.unresolved {
+  color: var(--fg-dim);
+}

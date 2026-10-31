@@ -3,7 +3,7 @@
 }
 
 .usageGroupLabel {
-  color: var(--text-muted);
+  color: var(--fg-secondary);
   font-size: 10.5px;
   margin-bottom: 4px;
 }
@@ -21,7 +21,7 @@
 }
 
 .usageContext {
-  color: var(--text-muted);
+  color: var(--fg-secondary);
   margin-left: auto;
   font-size: 11px;
 }

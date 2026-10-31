@@ -342,12 +342,12 @@
 }
 
 .approvalStatePending {
-  color: var(--warning-strong, #a15c00);
+  color: var(--warning-fg);
   background: color-mix(in oklch, var(--warning, #f2c066) 20%, var(--panel-bg));
 }
 
 .approvalStateApproved {
-  color: var(--success-strong, #0a6b3f);
+  color: var(--green);
   background: color-mix(in oklch, var(--success, #77d39d) 18%, var(--panel-bg));
 }
 

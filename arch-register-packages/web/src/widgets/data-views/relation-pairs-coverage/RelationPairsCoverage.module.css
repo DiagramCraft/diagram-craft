@@ -1,0 +1,7 @@
+.endpoint {
+  color: var(--fg-dim);
+}
+
+.notApplicable {
+  color: var(--fg-dim);
+}

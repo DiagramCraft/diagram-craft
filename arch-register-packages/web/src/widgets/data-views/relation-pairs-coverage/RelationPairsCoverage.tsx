@@ -4,6 +4,7 @@ import { Table } from '../../../components/table/Table';
 import { useTableSort } from '../../../components/table/useTableSort';
 import { useWidgetFramed } from '../../shared/dashboard/WidgetFramed';
 import { type RelationPair } from './relationPairCoverageLogic';
+import styles from './RelationPairsCoverage.module.css';
 import { useRelationPairCoverage } from './useRelationPairCoverage';
 import { RelationPairsCoverageWidgetConfig } from './types';
 
@@ -72,11 +73,11 @@ export const RelationPairsCoverageWidget = ({
           sorted.map(pair => (
             <Table.Row key={pair.key}>
               <Table.NameCell title={pair.consumer.name} />
-              <Table.Cell className="dim">{pair.hub.name}</Table.Cell>
-              <Table.Cell className="dim">{pair.provider.name}</Table.Cell>
+              <Table.Cell className={styles.endpoint}>{pair.hub.name}</Table.Cell>
+              <Table.Cell className={styles.endpoint}>{pair.provider.name}</Table.Cell>
               <Table.Cell>
                 {!pair.coverageApplicable ? (
-                  <span className="dim">n/a (endpoint type)</span>
+                  <span className={styles.notApplicable}>n/a (endpoint type)</span>
                 ) : pair.hasCoverage ? (
                   <Chip tone="ghost">linked</Chip>
                 ) : (

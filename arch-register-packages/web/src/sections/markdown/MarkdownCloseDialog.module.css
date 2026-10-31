@@ -5,7 +5,7 @@
 
 .summary {
   margin: 0;
-  color: var(--text-color-secondary, #4b5563);
+  color: var(--fg-secondary);
 }
 
 .section {
@@ -20,7 +20,7 @@
 
 .sectionHelp {
   font-size: 12px;
-  color: var(--text-color-secondary, #6b7280);
+  color: var(--fg-secondary);
 }
 
 .list {
@@ -63,5 +63,5 @@
 
 .reason {
   font-size: 12px;
-  color: var(--text-color-secondary, #6b7280);
+  color: var(--fg-secondary);
 }

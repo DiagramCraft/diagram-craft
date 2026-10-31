@@ -82,7 +82,7 @@
 .headerText {
   font-weight: 500;
   font-size: 11px;
-  color: var(--base-fg);
+  color: var(--fg-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   white-space: nowrap;

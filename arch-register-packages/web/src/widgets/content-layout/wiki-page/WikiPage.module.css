@@ -4,6 +4,7 @@
 }
 
 .message {
+  color: var(--fg-dim);
   padding: 8px;
   font-size: 13px;
 }

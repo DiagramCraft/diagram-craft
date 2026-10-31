@@ -12,12 +12,12 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: var(--text-muted);
+  color: var(--fg-secondary);
   padding: 4px;
 }
 
 .copyLink:hover {
-  color: var(--text-primary);
+  color: var(--fg);
 }
 
 .badgeWithLabel {
@@ -91,7 +91,7 @@
 }
 
 .attributeLabel {
-  color: var(--text-muted);
+  color: var(--fg-secondary);
 }
 
 .attributeValue {
@@ -281,7 +281,7 @@
   font-size: 11px;
   background: var(--cmp-bg);
   cursor: pointer;
-  color: var(--text-primary);
+  color: var(--fg);
 }
 
 .childChip:hover {

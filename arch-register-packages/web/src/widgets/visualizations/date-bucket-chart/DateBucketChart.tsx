@@ -35,16 +35,16 @@ export const DateBucketChartHeaderActions = ({ config }: Props) => {
   const { buckets, isLoading, valid } = useDateBuckets(config);
   if (!valid || isLoading) return null;
   const total = buckets.reduce((sum, bucket) => sum + bucket.count, 0);
-  return <span className="dim mono">{total} in range</span>;
+  return <span className={`${styles.total} mono`}>{total} in range</span>;
 };
 
 /** Month-bucketed bar chart of a date field: record counts or a summed measure per month. */
 export const DateBucketChartWidget = ({ config }: Props) => {
   const { isLoading, valid, buckets } = useDateBuckets(config);
 
-  if (isLoading) return <div className={`${rowStyles.emptyInline} dim`}>Loading…</div>;
+  if (isLoading) return <div className={rowStyles.emptyInline}>Loading…</div>;
   if (!valid) {
-    return <div className={`${rowStyles.emptyInline} dim`}>This widget's query is not valid.</div>;
+    return <div className={rowStyles.emptyInline}>This widget's query is not valid.</div>;
   }
 
   const measured = !!config.measureFieldId;
@@ -64,10 +64,10 @@ export const DateBucketChartWidget = ({ config }: Props) => {
                   style={{ height: `${max > 0 ? Math.max(2, (100 * value) / max) : 2}%` }}
                 />
               </div>
-              <div className={`${styles.value} dim mono`}>
+              <div className={`${styles.value} mono`}>
                 {value > 0 ? (measured ? formatMeasured(value, bucket.currency) : value) : '—'}
               </div>
-              <div className={`${styles.month} dim mono`}>
+              <div className={`${styles.month} mono`}>
                 {MONTH_LABEL.format(bucket.start)}
                 {bucket.start.getMonth() === 0
                   ? ` ${String(bucket.start.getFullYear()).slice(2)}`

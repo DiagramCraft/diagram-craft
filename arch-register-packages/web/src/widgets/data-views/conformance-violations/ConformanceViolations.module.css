@@ -61,3 +61,7 @@
   font-size: 11px;
   color: var(--fg-tertiary);
 }
+
+.total {
+  color: var(--fg-dim);
+}

@@ -27,9 +27,9 @@ export const FieldMatrixWidget = ({ config }: Props) => {
     [data, config.rowFieldId, config.valueFieldId, config.rows, config.bands]
   );
 
-  if (isLoading) return <div className={`${rowStyles.emptyInline} dim`}>Loading…</div>;
+  if (isLoading) return <div className={rowStyles.emptyInline}>Loading…</div>;
   if (data?.ok === false) {
-    return <div className={`${rowStyles.emptyInline} dim`}>This widget's query is not valid.</div>;
+    return <div className={rowStyles.emptyInline}>This widget's query is not valid.</div>;
   }
 
   return (

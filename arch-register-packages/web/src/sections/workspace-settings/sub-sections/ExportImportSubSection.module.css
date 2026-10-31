@@ -185,7 +185,7 @@
 
 .inlineSuccess {
   font-size: 12px;
-  color: var(--success-fg, var(--green));
+  color: var(--green);
 }
 
 /* Warning note */
@@ -258,7 +258,7 @@
 }
 
 .previewStatusReady {
-  color: var(--success-fg, var(--green));
+  color: var(--green);
 }
 
 .previewStatusDependency {

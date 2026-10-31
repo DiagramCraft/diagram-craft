@@ -23,7 +23,7 @@ export const RENEWAL_WINDOW_COLOR: Record<RenewalWindow, string> = {
   next90: 'var(--cmp-fg-warning, #eab308)',
   next365: 'var(--cmp-fg-success, #22c55e)',
   later: 'var(--cmp-fg-success, #22c55e)',
-  none: 'var(--text-muted, #9ca3af)'
+  none: 'var(--fg-secondary)'
 };
 
 const addDays = (date: Date, days: number): string => {

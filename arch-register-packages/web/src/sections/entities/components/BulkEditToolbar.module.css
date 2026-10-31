@@ -42,7 +42,7 @@
   align-items: center;
   gap: 3px;
   background: var(--accent-fg);
-  color: var(--base-bg);
+  color: var(--inverse-fg);
   font-size: 11px;
   font-weight: 600;
   padding: 1px 7px 1px 5px;
@@ -99,7 +99,7 @@
   height: 17px;
   border-radius: 50%;
   background: var(--warning-fg);
-  color: var(--base-bg);
+  color: var(--inverse-fg);
   font-size: 10px;
   font-weight: 800;
   flex-shrink: 0;
@@ -211,8 +211,8 @@
   width: 15px;
   height: 15px;
   border-radius: 50%;
-  background: var(--success-fg, var(--accent-fg));
-  color: var(--base-bg);
+  background: var(--green);
+  color: var(--inverse-fg);
   flex-shrink: 0;
 }
 

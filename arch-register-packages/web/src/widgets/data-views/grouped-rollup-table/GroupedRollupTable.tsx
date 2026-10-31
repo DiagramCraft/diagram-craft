@@ -38,9 +38,9 @@ export const GroupedRollupTableWidget = ({ config }: Props) => {
     });
   }, [data, schemas, config.groupFieldId, config.valueFieldId]);
 
-  if (isLoading) return <div className={`${rowStyles.emptyInline} dim`}>Loading…</div>;
+  if (isLoading) return <div className={rowStyles.emptyInline}>Loading…</div>;
   if (data?.ok === false) {
-    return <div className={`${rowStyles.emptyInline} dim`}>This widget's query is not valid.</div>;
+    return <div className={rowStyles.emptyInline}>This widget's query is not valid.</div>;
   }
   const rows = result.rows.slice(0, config.limit ?? result.rows.length);
   const maxAmount = Math.max(...rows.map(row => row.amount), 0);
@@ -83,7 +83,7 @@ export const GroupedRollupTableWidget = ({ config }: Props) => {
             <Table.Cell numeric>{formatMeasured(row.amount, row.currency)}</Table.Cell>
             {config.showPercent && (
               <Table.Cell numeric>
-                <span className="dim mono tabular">
+                <span className={`${styles.percent} mono tabular`}>
                   {result.totalAmount > 0
                     ? ((row.amount / result.totalAmount) * 100).toFixed(1)
                     : '0.0'}

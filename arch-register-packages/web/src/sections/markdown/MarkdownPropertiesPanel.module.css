@@ -171,7 +171,7 @@
 
 .diffAdded {
   background: color-mix(in srgb, #22c55e 10%, transparent);
-  color: var(--success-fg, #15803d);
+  color: var(--green);
 }
 
 .diffMarker {

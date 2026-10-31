@@ -39,10 +39,10 @@ export const RatioBarListWidget = ({ config }: Props) => {
   );
 
   if (!schema && schemas.length > 0) {
-    return <div className={`${styles.emptyInline} dim`}>This widget is not fully configured.</div>;
+    return <div className={styles.emptyInline}>This widget is not fully configured.</div>;
   }
   if (isLoading) {
-    return <div className={`${styles.emptyInline} dim`}>Loading…</div>;
+    return <div className={styles.emptyInline}>Loading…</div>;
   }
 
   return (

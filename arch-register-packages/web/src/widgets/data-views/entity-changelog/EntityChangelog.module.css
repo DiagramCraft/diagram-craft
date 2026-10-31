@@ -61,7 +61,7 @@ div[data-frame="true"][data-framed="true"] {
 
 .op_create {
   background: color-mix(in srgb, var(--success-bg) 60%, transparent);
-  color: var(--success-fg);
+  color: var(--green);
 }
 .op_update {
   background: color-mix(in srgb, var(--accent-bg) 60%, transparent);
@@ -69,7 +69,7 @@ div[data-frame="true"][data-framed="true"] {
 }
 .op_delete {
   background: color-mix(in srgb, var(--danger-bg) 60%, transparent);
-  color: var(--danger-fg);
+  color: var(--error-fg);
 }
 
 .entityLink {

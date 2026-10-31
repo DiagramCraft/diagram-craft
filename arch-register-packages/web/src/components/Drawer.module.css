@@ -118,12 +118,12 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: var(--text-muted);
+  color: var(--fg-secondary);
   padding: 4px;
 }
 
 .close:hover {
-  color: var(--text-primary);
+  color: var(--fg);
 }
 
 .title {

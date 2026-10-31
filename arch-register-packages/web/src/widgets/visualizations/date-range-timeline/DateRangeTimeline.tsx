@@ -63,13 +63,13 @@ export const DateRangeTimelineWidget = ({ config }: Props) => {
   const dates = useMemo(() => positioned.flatMap(({ start, end }) => [start, end]), [positioned]);
   const timeline = useSnapshotTimeline({ dates, zoom: 'year', columnWidths: COLUMN_WIDTHS, today });
 
-  if (isLoading) return <div className={`${rowStyles.emptyInline} dim`}>Loading…</div>;
+  if (isLoading) return <div className={rowStyles.emptyInline}>Loading…</div>;
   if (data?.ok === false) {
-    return <div className={`${rowStyles.emptyInline} dim`}>This widget's query is not valid.</div>;
+    return <div className={rowStyles.emptyInline}>This widget's query is not valid.</div>;
   }
   if (positioned.length === 0) {
     return (
-      <div className={`${styles.empty} dim`}>
+      <div className={styles.empty}>
         {excludedCount > 0
           ? 'No records with both a start and end date to plot.'
           : 'Nothing to plot.'}
@@ -150,7 +150,7 @@ export const DateRangeTimelineWidget = ({ config }: Props) => {
       </SnapshotTimelineShell>
 
       {excludedCount > 0 && (
-        <div className={`${styles.caption} dim`}>
+        <div className={styles.caption}>
           {excludedCount} record{excludedCount === 1 ? '' : 's'} missing a start or end date — not
           shown here.
         </div>

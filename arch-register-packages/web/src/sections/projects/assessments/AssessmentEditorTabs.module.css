@@ -71,9 +71,9 @@
 
 .scopeWarning {
   padding: 8px 10px;
-  border: 1px solid color-mix(in oklch, var(--warn, orange) 35%, transparent);
+  border: 1px solid color-mix(in oklch, var(--warning-fg) 35%, transparent);
   border-radius: var(--r);
-  background: color-mix(in oklch, var(--warn, orange) 10%, transparent);
+  background: color-mix(in oklch, var(--warning-fg) 10%, transparent);
   color: var(--base-fg);
   font-size: 12px;
 }

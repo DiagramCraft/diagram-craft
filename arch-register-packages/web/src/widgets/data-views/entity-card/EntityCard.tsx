@@ -60,7 +60,7 @@ export const EntityCard = ({ config }: { config: EntityCardWidgetConfig }) => {
   const { data: entity, isLoading, isError } = useEntity(workspaceSlug, entityId, !unresolved);
 
   if (!entityId) return null;
-  if (unresolved) return <div className="dim">No item selected</div>;
+  if (unresolved) return <div className={styles.unresolved}>No item selected</div>;
 
   if (isLoading) {
     return (

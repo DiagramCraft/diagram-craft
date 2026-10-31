@@ -142,9 +142,7 @@ export const WorkflowsSubSection = ({ workspaceSlug }: { workspaceSlug: string }
                       <Chip
                         tone={row.config.reminders.enabled ? 'default' : 'ghost'}
                         dot={
-                          row.config.reminders.enabled
-                            ? 'var(--success-fg, #4caf78)'
-                            : 'var(--cmp-fg-disabled)'
+                          row.config.reminders.enabled ? 'var(--green)' : 'var(--cmp-fg-disabled)'
                         }
                       >
                         Reminders

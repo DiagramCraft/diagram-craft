@@ -4,6 +4,7 @@
 }
 
 .emptyInline {
+  color: var(--fg-dim);
   padding: 8px;
   font-size: 12px;
 }

@@ -195,7 +195,7 @@ export const EntitiesSidebar = ({
       configured.push({
         id: null,
         label: 'Unassigned',
-        color: 'var(--text-muted)',
+        color: 'var(--fg-secondary)',
         count: unassigned.count
       });
     }

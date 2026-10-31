@@ -106,6 +106,9 @@
   --fg-secondary: var(--base-fg-secondary);
   --fg-tertiary: var(--base-fg-tertiary);
   --fg-dim: var(--base-fg-dimmed);
+
+  /* Text on solid accent/status/neutral fills (badges, pills) */
+  --inverse-fg: var(--theme-dark-inverse-fg, var(--gray-1));
 }
 
 /*noinspection CssUnresolvedCustomProperty*/
@@ -184,6 +187,9 @@
   --fg-secondary: var(--base-fg-secondary);
   --fg-tertiary: var(--base-fg-tertiary);
   --fg-dim: var(--base-fg-dimmed);
+
+  /* Text on solid accent/status/neutral fills (badges, pills) */
+  --inverse-fg: var(--theme-light-inverse-fg, var(--gray-1));
 }
 
 /** This is to achieve nesting of surfaces */

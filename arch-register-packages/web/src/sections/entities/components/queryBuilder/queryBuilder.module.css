@@ -535,7 +535,7 @@
   align-items: center;
   gap: 6px;
   padding: 7px 12px;
-  color: var(--red-11, #c4314b);
+  color: var(--error-fg);
   font-size: 11.5px;
   border-top: 1px solid var(--panel-border);
 }

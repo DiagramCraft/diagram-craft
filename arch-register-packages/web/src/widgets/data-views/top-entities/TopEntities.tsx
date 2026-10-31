@@ -86,15 +86,15 @@ export const TopEntitiesWidget = ({ config }: Props) => {
   const shareTotal = ranked.reduce((sum, item) => sum + Math.max(item.value.amount, 0), 0);
 
   if (!hasConfig) {
-    return <div className={`${styles.emptyInline} dim`}>This widget is not fully configured.</div>;
+    return <div className={styles.emptyInline}>This widget is not fully configured.</div>;
   }
 
   if (isLoading || isLoadingRelations) {
-    return <div className={`${styles.emptyInline} dim`}>Loading…</div>;
+    return <div className={styles.emptyInline}>Loading…</div>;
   }
 
   if (ranked.length === 0) {
-    return <div className={`${styles.emptyInline} dim`}>No entities.</div>;
+    return <div className={styles.emptyInline}>No entities.</div>;
   }
 
   const goToCatalog = () =>

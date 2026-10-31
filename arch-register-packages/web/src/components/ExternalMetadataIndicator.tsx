@@ -52,7 +52,7 @@ const ExternalMetadataResultBody = ({
                 result.status === 'outdated'
                   ? { color: 'var(--warning-fg, #b8860b)' }
                   : result.status === 'failed'
-                    ? { color: 'var(--danger-fg, #c94a4a)' }
+                    ? { color: 'var(--error-fg)' }
                     : undefined
               }
             >

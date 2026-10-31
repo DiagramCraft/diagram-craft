@@ -221,7 +221,7 @@
   top: 34px;
   bottom: 0;
   width: 1px;
-  border-left: 1px dashed var(--warn, orange);
+  border-left: 1px dashed var(--warning-fg);
   opacity: 0.7;
   z-index: 2;
   pointer-events: auto;
@@ -243,11 +243,11 @@
   white-space: nowrap;
   font-size: 10px;
   font-weight: 500;
-  color: var(--warn, orange);
+  color: var(--warning-fg);
   background: var(--panel-bg);
   padding: 1px 5px;
   border-radius: var(--r);
-  border: 1px solid color-mix(in oklch, var(--warn, orange) 35%, transparent);
+  border: 1px solid color-mix(in oklch, var(--warning-fg) 35%, transparent);
   pointer-events: auto;
   z-index: 4;
 }

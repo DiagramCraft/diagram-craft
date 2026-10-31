@@ -73,7 +73,7 @@ export const TopEntitiesConfigForm = ({ config, onChange }: TopEntitiesConfigFor
       </FormGroup>
       <FormGroup label="Sort by field" variant="simple">
         {fieldOptions.length === 0 ? (
-          <div className={`${configFormStyles.hint} dim`}>
+          <div className={configFormStyles.hint}>
             {config.schema
               ? 'This entity type has no numeric fields.'
               : 'Choose an entity type first.'}

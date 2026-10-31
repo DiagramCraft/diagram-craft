@@ -58,7 +58,7 @@
   .eHiddenBadge {
     font-size: 10px;
     background: var(--base-fg-dimmed);
-    color: var(--base-bg);
+    color: var(--inverse-fg);
     border-radius: 999px;
     padding: 1px 5px;
     flex-shrink: 0;
