@@ -52,13 +52,13 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--base-fg-dimmed);
+  color: var(--panel-fg-dimmed);
   width: 16px;
   height: 16px;
 }
 
 .active .icon {
-  color: var(--base-fg);
+  color: var(--accent-fg);
 }
 
 .label {

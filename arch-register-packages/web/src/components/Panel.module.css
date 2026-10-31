@@ -1,0 +1,6 @@
+/** Bordered surface with the standard panel padding; the background comes from `.surface`. */
+.cPanel {
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  padding: 16px;
+}

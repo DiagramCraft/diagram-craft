@@ -3,6 +3,7 @@ import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
 import { ICON_MAP } from '../../components/TypeBadge';
+import { Panel } from '../../components/Panel';
 import { SCHEMA_ICONS } from '../../lib/schemaPresentation';
 import { CategorySelect } from './CategorySelect';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
@@ -44,7 +45,7 @@ export const SchemaEditorFormShell = ({
   const onIconChange = (value: string) => updateDraft(d => ({ ...d, icon: value }));
 
   return (
-    <div className={styles.editor}>
+    <Panel>
       <div className={styles.formRow}>
         <div>
           <div className={styles.formLabel}>Name</div>
@@ -120,6 +121,6 @@ export const SchemaEditorFormShell = ({
         </div>
       </div>
       {children}
-    </div>
+    </Panel>
   );
 };

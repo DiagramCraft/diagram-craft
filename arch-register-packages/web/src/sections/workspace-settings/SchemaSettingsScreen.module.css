@@ -4,13 +4,6 @@
   margin-bottom: 20px;
 }
 
-.editor {
-  background: var(--panel-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r-md);
-  padding: 16px;
-}
-
 .formRow {
   display: flex;
   flex-direction: row;
@@ -18,6 +11,10 @@
   gap: 12px;
   flex-wrap: wrap;
   margin-top: 12px;
+
+  &:first-child {
+    margin-top: 0;
+  }
 }
 
 .formRow > div {
@@ -43,7 +40,7 @@
 
 .formLabel {
   font-size: 11px;
-  color: var(--base-fg-dimmed);
+  color: var(--panel-fg-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 6px;
@@ -52,14 +49,13 @@
 .fieldsHead {
   display: flex;
   align-items: center;
-  margin-top: 8px;
 }
 
 .sectionLabel {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.6px;
-  color: var(--cmp-fg-disabled);
+  color: var(--panel-fg-tertiary);
   margin: 16px 0 8px;
   display: flex;
   align-items: center;
@@ -90,7 +86,7 @@
   align-items: center;
   justify-content: center;
   border-radius: var(--r);
-  color: var(--cmp-fg-disabled);
+  color: var(--base-fg-tertiary);
 }
 
 .iconBtn:hover {
@@ -126,7 +122,7 @@
 }
 
 .groupDescription {
-  color: var(--cmp-fg-disabled);
+  color: var(--panel-fg-tertiary);
   font-size: 11px;
   margin-top: 2px;
 }
@@ -231,7 +227,7 @@
 
 .templateSummary,
 .templateEmpty {
-  color: var(--cmp-fg-disabled);
+  color: var(--base-fg-dimmed);
   font-size: 11px;
 }
 
@@ -278,7 +274,7 @@
   align-items: center;
   justify-content: center;
   border-radius: var(--r);
-  color: var(--cmp-fg-disabled);
+  color: var(--panel-fg-tertiary);
 }
 
 .iconOption:hover {

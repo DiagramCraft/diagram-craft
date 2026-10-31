@@ -40,7 +40,7 @@
       }
 
       &:not([data-active]) {
-        color: var(--base-fg-dimmed);
+        color: var(--fg-tertiary);
 
         &:hover {
           color: var(--panel-fg);

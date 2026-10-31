@@ -125,11 +125,11 @@
 }
 
 .rowClickable:hover {
-  background: var(--cmp-bg);
+  background: var(--panel-bg);
 }
 
 .rowClickable:hover .stickyCol {
-  background: var(--cmp-bg);
+  background: var(--panel-bg);
 }
 
 .rowSelected {

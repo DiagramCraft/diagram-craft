@@ -18,6 +18,6 @@
 }
 
 .workspaceSlug {
-  color: var(--cmp-fg-disabled);
+  color: var(--base-fg-dimmed);
   font-size: 11px;
 }
