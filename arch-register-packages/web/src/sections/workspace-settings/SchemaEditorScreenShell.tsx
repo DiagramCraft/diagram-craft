@@ -3,7 +3,6 @@ import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { EmptyState } from '../../components/EmptyState';
 import { Title, type TitleBreadcrumbItem } from '../../components/Title';
 import { Page } from '../../components/Page';
-import styles from './SchemaSettingsScreen.module.css';
 
 type SchemaEditorScreenShellProps = {
   hasSelection: boolean;

@@ -7,7 +7,6 @@ import { resolveDocumentTypeColor } from '../../lib/schemaPresentation';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { DocumentTypeEditor } from './DocumentTypeEditor';
 import { DocumentTemplateEditor } from './DocumentTemplateEditor';
-import styles from './DocumentSettingsScreen.module.css';
 import { Page } from '../../components/Page';
 
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/documents');
