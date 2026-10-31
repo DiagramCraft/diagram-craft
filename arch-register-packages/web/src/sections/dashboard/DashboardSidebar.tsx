@@ -77,7 +77,7 @@ const FacetCheckboxRow = ({
     }
     active={checked}
     onClick={onToggle}
-    trailing={<span className="dim mono">{count}</span>}
+    trailing={<span className="mono">{count}</span>}
     hideIconSlot
   />
 );

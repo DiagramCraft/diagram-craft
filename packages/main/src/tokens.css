@@ -196,7 +196,7 @@
   --fg-tertiary: var(--panel-fg-tertiary);
   --fg-dim: var(--panel-fg-dimmed);
 
-  background-color: var(--panel-bg);
+  /*  background-color: var(--panel-bg);*/
 }
 
 .surface .surface,
@@ -206,7 +206,7 @@
   --fg-tertiary: var(--base-fg-tertiary);
   --fg-dim: var(--base-fg-dimmed);
 
-  background-color: var(--base-bg);
+  /*  background-color: var(--base-bg);*/
 }
 
 /* Debug sentinel to clearly see the limits of panel nesting */

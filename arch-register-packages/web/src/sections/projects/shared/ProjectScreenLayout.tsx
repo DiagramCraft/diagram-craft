@@ -85,7 +85,7 @@ export const ProjectScreenLayout = ({
         {error}
       </div>
 
-      {meta ? <div className={styles.meta}>{meta}</div> : null}
+      {meta ? <div className={'surface ' + styles.meta}>{meta}</div> : null}
       {toolbar}
       <div className={styles.screenBody}>{children}</div>
     </div>

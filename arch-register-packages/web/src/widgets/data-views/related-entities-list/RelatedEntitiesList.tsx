@@ -146,7 +146,7 @@ export const RelatedEntitiesListWidget = ({
             {(status || description) && (
               <div className={styles.meta}>
                 {status && <span>{status}</span>}
-                {description && <span>{description}</span>}
+                {description && <span className={styles.description}>{description}</span>}
               </div>
             )}
             {hasProgress(config) &&

@@ -300,7 +300,7 @@ const TreeNodeRow = ({
               findEntityDisplayField(column.id, item, schemaMap, displayFields) ?? column;
             return (
               <Table.Cell key={column.id}>
-                <span className="dim">{formatEntityDisplayValue(item, field) ?? '—'}</span>
+                {formatEntityDisplayValue(item, field) ?? '—'}
               </Table.Cell>
             );
           })}

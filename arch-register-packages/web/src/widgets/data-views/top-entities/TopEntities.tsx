@@ -11,6 +11,7 @@ import {
 } from '../../shared/data/fieldAggregation';
 import styles from '../../shared/dashboard/WidgetRowList.module.css';
 import { TopEntitiesWidgetConfig } from './types';
+import { TbArrowRight } from 'react-icons/tb';
 
 const FETCH_LIMIT = 500;
 
@@ -130,12 +131,9 @@ export const TopEntitiesWidget = ({ config }: Props) => {
       ))}
       {(config.showLink ?? true) && (
         <button type="button" className={styles.footer} onClick={goToCatalog}>
-          View in catalog
+          View in catalog <TbArrowRight size={12} />
         </button>
       )}
     </div>
   );
 };
-
-export const isDirection = (value: unknown): value is 'asc' | 'desc' =>
-  value === 'asc' || value === 'desc';

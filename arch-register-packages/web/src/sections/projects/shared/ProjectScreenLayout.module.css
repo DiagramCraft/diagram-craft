@@ -36,11 +36,11 @@
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.6px;
-  color: var(--cmp-fg-disabled);
+  color: var(--fg-tertiary);
 }
 
 .metaValue {
-  color: var(--base-fg-secondary);
+  color: var(--fg-secondary);
 }
 
 .screenBody {

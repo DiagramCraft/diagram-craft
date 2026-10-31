@@ -32,7 +32,7 @@ export const WidgetFrame = ({
 }: Props) => {
   const bare = variant === 'none';
   return (
-    <div className={bare ? styles.bare : styles.frame} data-tint={tint}>
+    <div className={bare ? styles.bare : styles.frame + ' surface'} data-tint={tint}>
       {variant === 'header' && (
         <div className={styles.header}>
           <div className={styles.headerTitle}>

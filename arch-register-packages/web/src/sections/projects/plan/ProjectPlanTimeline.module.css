@@ -31,7 +31,7 @@
   align-items: center;
   gap: 5px;
   font-size: 11px;
-  color: var(--base-fg-secondary);
+  color: var(--panel-fg-secondary);
 }
 
 .ptlLegDiamond {
@@ -58,7 +58,7 @@
 
 .ptlConfigMeta {
   font-size: 11px;
-  color: var(--cmp-fg-disabled);
+  color: var(--panel-fg-dimmed);
 }
 
 .ptlGrouping {
@@ -78,7 +78,7 @@
   padding: 0 8px;
   height: 24px;
   font-size: 11px;
-  color: var(--base-fg-secondary);
+  color: var(--panel-fg-secondary);
   background: none;
   border: 0;
   border-right: 1px solid var(--panel-border);
@@ -90,7 +90,7 @@
 }
 
 .ptlSegmented button:hover {
-  color: var(--base-fg);
+  color: var(--cmp-fg);
   background: var(--cmp-bg);
 }
 

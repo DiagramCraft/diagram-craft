@@ -69,7 +69,7 @@ export const ActivityFeedWidget = ({ config }: Props) => {
             <span className={styles.activityWho}>
               {entry.user_display_name ?? entry.user_id ?? 'Unknown'}
             </span>
-            <span className="dim"> {OPERATION_LABELS[entry.operation]} </span>
+            <span className={styles.activityOp}> {OPERATION_LABELS[entry.operation]} </span>
             <span className={styles.activityTarget}>{entry.entity_name}</span>
             <span className={styles.activityType}>
               {' '}

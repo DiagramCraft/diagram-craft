@@ -264,7 +264,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 340px;
-  color: var(--base-fg-dimmed);
+  color: var(--panel-fg-dimmed);
 }
 
 /* Actions */

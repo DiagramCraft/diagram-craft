@@ -21,6 +21,6 @@
 
 .eLabel {
   font-size: 11px;
-  color: var(--base-fg-dimmed);
+  color: var(--cmp-fg-tertiary);
   margin-right: 2px;
 }

@@ -217,15 +217,13 @@ const Cell = ({
   ...rest
 }: CellProps) => (
   <td
-    className={
-      cx(
-        styles.td,
-        alignClass(align, numeric),
-        sticky && styles.stickyCol,
-        className,
-        primary && styles.primary
-      ) + ' surface'
-    }
+    className={cx(
+      styles.td,
+      alignClass(align, numeric),
+      sticky && styles.stickyCol,
+      className,
+      primary && styles.primary
+    )}
     style={cellStyle(width, style)}
     onClick={interactive ? (onClick ?? stopClick) : onClick}
     {...rest}

@@ -226,7 +226,7 @@ export const TableView = ({
                 })}
               {activeDateField && !fieldIds.includes(activeDateField.id) && (
                 <Table.Cell>
-                  <span className="dim">
+                  <span>
                     {formatDate(
                       Array.isArray(activeDateValue)
                         ? (activeDateValue[0] as string | undefined)
