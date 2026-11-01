@@ -57,7 +57,8 @@ export const RING_BG = [
   'var(--cmp-bg)',
   'var(--panel-bg)',
   'var(--base-bg)',
-  'oklch(0.12 0.005 260)'
+  // Continues the gradient past --base-bg: darker in dark mode, lighter in light mode
+  'light-dark(color-mix(in oklch, var(--base-bg) 50%, white), color-mix(in oklch, var(--base-bg) 55%, black))'
 ];
 
 export const buildQuadrants = (values: Array<{ value: string; label: string }>): Quadrant[] => {

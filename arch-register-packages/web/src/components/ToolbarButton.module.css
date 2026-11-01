@@ -8,3 +8,8 @@
   border-color: var(--panel-border);
   background: var(--cmp-bg);
 }
+
+.toolbarButton[data-size="sm"][data-variant="default"]:not(:disabled),
+.toolbarButton[data-size="sm"][data-variant="secondary"]:not(:disabled) {
+  color: var(--cmp-fg);
+}
