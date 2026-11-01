@@ -49,10 +49,10 @@
   height: 18px;
   padding: 0 5px;
   background: var(--panel-bg);
-  border: 1px solid var(--cmp-border);
+  border: 1px solid var(--panel-border);
   border-radius: 3px;
   font-size: 10px;
-  color: var(--cmp-fg-disabled);
+  color: var(--panel-fg-dimmed);
   font-family: var(--font-mono);
 }
 
@@ -69,12 +69,12 @@
   align-items: center;
   justify-content: center;
   border-radius: var(--r);
-  color: var(--base-fg-dimmed);
+  color: var(--base-fg-secondary);
 }
 
 .notificationTrigger:hover {
   background: var(--cmp-bg);
-  color: var(--base-fg);
+  color: var(--cmp-fg);
 }
 
 .notificationBadge {
@@ -160,13 +160,13 @@
   padding: 0 12px;
   height: 28px;
   font-size: 10.5px;
-  color: var(--base-fg-dimmed);
+  color: var(--cmp-fg-secondary);
   white-space: nowrap;
   flex-shrink: 0;
 }
 
 .notificationAction:hover:not(:disabled) {
-  color: var(--base-fg);
+  color: var(--cmp-fg);
 }
 
 .notificationAction:disabled {
@@ -182,7 +182,7 @@
   border-bottom: 1px solid var(--cmp-border);
   font-size: 12.5px;
   font-weight: 600;
-  color: var(--base-fg);
+  color: var(--cmp-fg);
 }
 
 .notificationPanel {
@@ -220,7 +220,7 @@
   width: 100%;
   padding: 9px 14px;
   border-bottom: 1px solid var(--cmp-border);
-  color: var(--base-fg);
+  color: var(--cmp-fg);
   text-align: left;
   transition: background 80ms;
   cursor: pointer;
@@ -235,11 +235,11 @@
 }
 
 .notificationRowUnread {
-  background: color-mix(in oklch, var(--accent-fg) 5%, transparent);
+  background: color-mix(in oklch, var(--accent-chroma) 8%, transparent);
 }
 
 .notificationRowUnread:hover {
-  background: color-mix(in oklch, var(--accent-fg) 8%, var(--cmp-bg-hover));
+  background: color-mix(in oklch, var(--accent-chroma) 13%, var(--cmp-bg-hover));
 }
 
 .notificationRowMain {
@@ -250,7 +250,7 @@
 .notificationEntity {
   font-size: 12px;
   font-weight: 500;
-  color: var(--base-fg);
+  color: var(--cmp-fg);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -263,21 +263,21 @@
   gap: 4px;
   flex-wrap: wrap;
   font-size: 11px;
-  color: var(--cmp-fg-disabled);
+  color: var(--cmp-fg-tertiary);
 }
 
 .notificationSep {
-  color: var(--cmp-fg-disabled);
+  color: var(--cmp-fg-dimmed);
   opacity: 0.5;
 }
 
 .notificationOp {
-  color: var(--base-fg-secondary);
+  color: var(--cmp-fg-secondary);
 }
 
 .notificationWhen {
   font-size: 10.5px;
-  color: var(--cmp-fg-disabled);
+  color: var(--cmp-fg-tertiary);
   flex-shrink: 0;
   margin-top: 2px;
   white-space: nowrap;
@@ -290,7 +290,7 @@
   align-items: center;
   justify-content: center;
   border-radius: var(--r-sm);
-  color: var(--cmp-fg-disabled);
+  color: var(--cmp-fg-dimmed);
   flex-shrink: 0;
   opacity: 0;
   transition: opacity 80ms;
@@ -302,7 +302,7 @@
 
 .notificationClear:hover {
   background: var(--cmp-bg);
-  color: var(--base-fg);
+  color: var(--cmp-fg);
 }
 
 /* Watching list */
@@ -313,7 +313,7 @@
   align-items: center;
   justify-content: center;
   border-radius: var(--r-sm);
-  color: var(--cmp-fg-disabled);
+  color: var(--cmp-fg-dimmed);
   flex-shrink: 0;
   opacity: 0;
   transition: opacity 80ms;
@@ -325,7 +325,7 @@
 
 .watchingUnwatch:hover {
   background: var(--cmp-bg);
-  color: var(--base-fg);
+  color: var(--cmp-fg);
 }
 
 .notificationEmpty {
@@ -336,7 +336,7 @@
   padding: 32px 20px;
   text-align: center;
   font-size: 12px;
-  color: var(--cmp-fg-disabled);
+  color: var(--cmp-fg-dimmed);
   gap: 4px;
 }
 
@@ -361,7 +361,7 @@
   align-items: center;
   justify-content: center;
   font-size: 10px;
-  color: var(--base-fg);
+  color: var(--inverse-fg);
   margin-left: 4px;
   font-weight: 500;
   letter-spacing: 0.4px;
@@ -385,6 +385,7 @@
 
 .wsBtn:hover {
   background: var(--cmp-bg);
+  color: var(--cmp-fg);
 }
 
 .wsBadge {
@@ -392,7 +393,7 @@
   height: 18px;
   border-radius: var(--r-sm);
   background: linear-gradient(135deg, oklch(0.6 0.14 258), oklch(0.5 0.1 290));
-  color: var(--base-fg);
+  color: var(--inverse-fg);
   font-size: 9.5px;
   font-weight: 600;
   display: inline-flex;
@@ -438,18 +439,20 @@
   width: 100%;
   padding: 6px 8px;
   border-radius: var(--r);
-  color: var(--base-fg-secondary);
+  color: var(--cmp-fg-secondary);
   text-align: left;
 }
 
 .menuItem:hover {
   background: var(--cmp-bg-hover);
-  color: var(--base-fg);
+  color: var(--cmp-fg);
 }
 
-.menuItemActive {
-  background: var(--accent-bg);
-  color: var(--base-fg);
+.menuItemActive,
+.menuItemActive:hover {
+  background: color-mix(in oklch, var(--tint, var(--accent-chroma)) 13%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--tint, var(--accent-chroma)) 55%, transparent);
+  color: var(--cmp-fg);
 }
 
 .menuSep {
@@ -479,6 +482,7 @@
 .appswBtn:hover,
 .appswBtnOpen {
   background: var(--cmp-bg);
+  color: var(--cmp-fg);
 }
 
 .appswBtnStatic {
@@ -487,6 +491,7 @@
 
 .appswBtnStatic:hover {
   background: transparent;
+  color: var(--base-fg);
 }
 
 .appswBadge {
@@ -500,7 +505,7 @@
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.3px;
-  color: oklch(0.17 0.01 260);
+  color: var(--inverse-fg);
   background: var(--accent-chroma);
 }
 
@@ -564,12 +569,12 @@
   align-items: center;
   justify-content: center;
   background: var(--cmp-bg-hover);
-  color: var(--base-fg);
+  color: var(--cmp-fg);
 }
 
 .appswTileName {
   font-size: 12px;
-  color: var(--base-fg);
+  color: var(--cmp-fg);
   line-height: 1.35;
 }
 
@@ -597,7 +602,7 @@
   font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.4px;
-  color: var(--base-fg);
+  color: var(--inverse-fg);
   flex-shrink: 0;
 }
 
@@ -608,7 +613,7 @@
 .acctName {
   font-size: 12.5px;
   font-weight: 500;
-  color: var(--base-fg);
+  color: var(--cmp-fg);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -627,11 +632,11 @@
   display: flex;
   align-items: center;
   gap: 2px;
-  color: var(--base-fg-dimmed);
+  color: var(--base-fg-secondary);
 }
 
 .crumbs > svg {
-  color: var(--cmp-fg-disabled);
+  color: var(--base-fg-dimmed);
 }
 
 .crumb {
@@ -645,7 +650,7 @@
 
 .crumb:hover {
   background: var(--cmp-bg);
-  color: var(--base-fg);
+  color: var(--cmp-fg);
 }
 
 .crumbLast {
