@@ -109,6 +109,17 @@
 
   /* Text on solid accent/status/neutral fills (badges, pills) */
   --inverse-fg: var(--theme-dark-inverse-fg, var(--gray-1));
+
+  --orig-cmp-fg: var(--cmp-fg);
+  --orig-cmp-fg-secondary: var(--cmp-fg-secondary);
+  --orig-cmp-fg-tertiary: var(--cmp-fg-tertiary);
+  --orig-cmp-fg-disabled: var(--cmp-fg-disabled);
+  --orig-cmp-fg-dimmed: var(--cmp-fg-dimmed);
+  --orig-cmp-bg: var(--cmp-bg);
+  --orig-cmp-bg-hover: var(--cmp-bg-hover);
+  --orig-cmp-border: var(--cmp-border);
+  --orig-cmp-border-focus: var(--cmp-border-focus);
+  --orig-cmp-border-shadow-focus: var(--cmp-border-shadow-focus);
 }
 
 /*noinspection CssUnresolvedCustomProperty*/
@@ -190,9 +201,7 @@
 
   /* Text on solid accent/status/neutral fills (badges, pills) */
   --inverse-fg: var(--theme-light-inverse-fg, var(--gray-1));
-}
 
-[data-theme] {
   --orig-cmp-fg: var(--cmp-fg);
   --orig-cmp-fg-secondary: var(--cmp-fg-secondary);
   --orig-cmp-fg-tertiary: var(--cmp-fg-tertiary);
