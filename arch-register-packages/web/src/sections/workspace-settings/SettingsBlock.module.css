@@ -4,6 +4,12 @@
   border: 1px solid var(--panel-border);
   border-radius: var(--r-md);
   overflow: hidden;
+
+  --cmp-bg: var(--base-bg);
+  --cmp-fg: var(--base-fg);
+  --cmp-fg-secondary: var(--base-fg-secondary);
+  --cmp-fg-tertiary: var(--base-fg-tertiary);
+  --cmp-fg-dimmed: var(--base-fg-dimmed);
 }
 
 .head {

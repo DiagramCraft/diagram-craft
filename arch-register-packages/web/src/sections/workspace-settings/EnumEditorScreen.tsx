@@ -15,6 +15,7 @@ import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteCo
 import { ErrorDialog } from '@diagram-craft/app-components/ErrorDialog';
 import { EmptyState } from '../../components/EmptyState';
 import { Title } from '../../components/Title';
+import { Panel } from '../../components/Panel';
 import { Page } from '../../components/Page';
 import { useEnumDraft } from './useEnumDraft';
 
@@ -86,7 +87,7 @@ export const EnumEditorScreen = () => {
       />
 
       {selected || isNew ? (
-        <div>
+        <Panel>
           <div className={styles.editor}>
             <div className={styles.formRow}>
               <div>
@@ -154,7 +155,7 @@ export const EnumEditorScreen = () => {
                       }
                       options={
                         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                          <div style={{ display: 'flex', alignItems: 'center' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', fontSize: '11px' }}>
                             <Checkbox
                               value={opt.restricted}
                               disabled={!canEdit}
@@ -218,7 +219,7 @@ export const EnumEditorScreen = () => {
               </div>
             )}
           </div>
-        </div>
+        </Panel>
       ) : (
         <EmptyState
           title="No enum selected"

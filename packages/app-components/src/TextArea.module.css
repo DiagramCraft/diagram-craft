@@ -14,7 +14,7 @@
   line-height: 1;
 
   .eTextArea {
-    color: var(--panel-fg);
+    color: var(--cmp-fg);
     border: none;
     background: none;
     font-size: 11px;
