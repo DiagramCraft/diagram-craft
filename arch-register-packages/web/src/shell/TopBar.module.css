@@ -451,7 +451,8 @@
 .menuItemActive,
 .menuItemActive:hover {
   background: color-mix(in oklch, var(--tint, var(--accent-chroma)) 13%, transparent);
-  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--tint, var(--accent-chroma)) 55%, transparent);
+  box-shadow: inset 0 0 0 1px
+    color-mix(in oklch, var(--tint, var(--accent-chroma)) 55%, transparent);
   color: var(--cmp-fg);
 }
 
