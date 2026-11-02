@@ -50,7 +50,7 @@
 
 .count {
   margin-left: 0;
-  color: var(--base-fg-dimmed);
+  color: var(--panel-fg-dimmed);
   font-weight: 400;
 }
 

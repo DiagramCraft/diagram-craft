@@ -18,6 +18,7 @@ export const DIAGRAM_ENTITY_FILE_SELECT_SQL = `
     cm.company     AS file_metadata_company,
     cm.category    AS file_metadata_category,
     cm.keywords    AS file_metadata_keywords,
+    pf.entity_id   AS file_entity_id,
     p.id           AS project_id,
     p.public_id    AS project_public_id,
     p.name         AS project_name
@@ -36,9 +37,10 @@ export type DiagramEntityFileDbResult = {
   file_preview_svg: string | null;
   file_created_at: Date;
   file_updated_at: Date;
-  project_id: string;
-  project_public_id: string;
-  project_name: string;
+  file_entity_id: string | null;
+  project_id: string | null;
+  project_public_id: string | null;
+  project_name: string | null;
   file_comment_count: number;
   file_unresolved_comment_count: number;
   file_metadata_title: string | null;
@@ -57,9 +59,10 @@ export const diagramEntityFileMapper = (row: DatabaseRow): DiagramEntityFileDbRe
   file_preview_svg: row['file_preview_svg'] == null ? null : String(row['file_preview_svg']),
   file_created_at: databaseDate(row['file_created_at']),
   file_updated_at: databaseDate(row['file_updated_at']),
-  project_id: String(row['project_id']),
-  project_public_id: String(row['project_public_id']),
-  project_name: String(row['project_name']),
+  file_entity_id: row['file_entity_id'] == null ? null : String(row['file_entity_id']),
+  project_id: row['project_id'] == null ? null : String(row['project_id']),
+  project_public_id: row['project_public_id'] == null ? null : String(row['project_public_id']),
+  project_name: row['project_name'] == null ? null : String(row['project_name']),
   file_comment_count: Number(row['file_comment_count'] ?? 0),
   file_unresolved_comment_count: Number(row['file_unresolved_comment_count'] ?? 0),
   file_metadata_title:

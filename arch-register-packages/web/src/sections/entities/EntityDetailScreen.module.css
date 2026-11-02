@@ -291,6 +291,10 @@
   color: var(--cmp-fg-disabled);
 }
 
+.tertiary {
+  color: var(--cmp-fg-tertiary);
+}
+
 /* ── Future plans ──────────────────────────────────────────── */
 .futurePlanApply {
   display: inline-flex;

@@ -27,6 +27,8 @@ import { MetadataBlock } from './MetadataBlock';
 import { LinksBlock } from './LinksBlock';
 import { UnboundTypedRelationBlock } from './UnboundTypedRelationBlock';
 import { ProjectsBlock } from './ProjectsBlock';
+import { RelatedContentBlock } from './RelatedContentBlock';
+import { useRelatedDocumentContent } from '../../../hooks/useDocuments';
 import { DiagramsBlock } from './DiagramsBlock';
 import { useEntityFieldRenderers } from './useEntityFieldRenderers';
 import { useWorkspaceAuthorization } from '../../../auth/WorkspaceAuthorizationContext';
@@ -113,6 +115,8 @@ export const EntityOverviewLayout = ({
     relationSchemas
   });
 
+  const { data: relatedContent = [] } = useRelatedDocumentContent(workspaceSlug, entity._uid);
+
   const fieldsById = new Map((schema?.fields ?? []).map(field => [field.id, field]));
   const groupsById = new Map((schema?.groups ?? []).map(group => [group.id, group]));
   const relationSchemasById = new Map(relationSchemas.map(rs => [rs.id, rs]));
@@ -137,6 +141,7 @@ export const EntityOverviewLayout = ({
     }
     if (block.kind === 'projects') return entityProjects.length;
     if (block.kind === 'diagrams') return entityDiagramFiles.length;
+    if (block.kind === 'relatedContent') return relatedContent.length;
     return undefined;
   };
 
@@ -220,6 +225,15 @@ export const EntityOverviewLayout = ({
             key={block.id}
             workspaceSlug={workspaceSlug}
             entityDiagramFiles={entityDiagramFiles}
+          />
+        ];
+      }
+      if (block.kind === 'relatedContent') {
+        return [
+          <RelatedContentBlock
+            key={block.id}
+            workspaceSlug={workspaceSlug}
+            entityId={entity._uid}
           />
         ];
       }

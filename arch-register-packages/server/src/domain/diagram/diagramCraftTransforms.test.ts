@@ -257,13 +257,13 @@ describe('diagram craft transforms', () => {
     ]);
   });
 
-  it('keeps date fields in diagram craft schema output', () => {
+  it('exposes date fields as text in diagram craft schema output', () => {
     expect(
       toDiagramCraftField({ id: 'go_live', name: 'Go Live', type: 'date' } as never, [])
     ).toEqual({
       id: 'go_live',
       name: 'Go Live',
-      type: 'date'
+      type: 'text'
     });
   });
 

@@ -2,6 +2,7 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { runAuthorizedOperation } from '../operation';
 import {
+  canAccessNonProjectContent,
   canAccessProject,
   requireEntityAction,
   requireProjectAccess,
@@ -206,7 +207,9 @@ export const getEntityDiagramFiles = async (
       const projectOwners = new Map(
         (
           await Promise.all(
-            [...new Set(rows.map(row => row.project_id))].map(async projectId => [
+            [
+              ...new Set(rows.flatMap(row => (row.project_id !== null ? [row.project_id] : [])))
+            ].map(async projectId => [
               projectId,
               (await db.project.projects.getProject(ws, projectId))?.owner ?? null
             ])
@@ -214,6 +217,8 @@ export const getEntityDiagramFiles = async (
         ).filter((entry): entry is [string, string] => entry[1] !== null)
       );
       const accessibleRows = rows.filter(row => {
+        // Workspace- and entity-level diagrams have no project; they follow content access
+        if (row.project_id === null) return canAccessNonProjectContent(authCtx, 'read');
         const owner = projectOwners.get(row.project_id);
         return owner !== undefined && canAccessProject(authCtx, owner);
       });
@@ -221,6 +226,7 @@ export const getEntityDiagramFiles = async (
         file: {
           id: row.file_id,
           project_id: row.project_id,
+          entity_id: row.file_entity_id,
           path: row.file_path,
           name: row.file_name,
           size_bytes: row.file_size_bytes,
@@ -245,11 +251,10 @@ export const getEntityDiagramFiles = async (
                 }
               : null
         },
-        project: {
-          id: row.project_id,
-          public_id: row.project_public_id,
-          name: row.project_name
-        }
+        project:
+          row.project_id !== null && row.project_public_id !== null && row.project_name !== null
+            ? { id: row.project_id, public_id: row.project_public_id, name: row.project_name }
+            : null
       }));
     }
   });

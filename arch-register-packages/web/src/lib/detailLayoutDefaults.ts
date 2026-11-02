@@ -109,6 +109,13 @@ export const buildDefaultLayout = (
             collapsible: true,
             column: 2 as const,
             blocks: [{ id: 'diagrams', kind: 'diagrams' as const }]
+          },
+          {
+            id: 'relatedContent',
+            title: 'Related content',
+            collapsible: true,
+            column: 2 as const,
+            blocks: [{ id: 'relatedContent', kind: 'relatedContent' as const }]
           }
         ]
       }

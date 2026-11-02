@@ -633,7 +633,7 @@
   display: flex;
   align-items: center;
   gap: 2px;
-  color: var(--base-fg-secondary);
+  color: var(--base-fg-tertiary);
 }
 
 .crumbs > svg {

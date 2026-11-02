@@ -506,7 +506,6 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
             entitySchemaId: schema?.id ?? '',
             entityName: entity._name
           }}
-          relatedContentProps={{ workspaceId, entityId }}
           changeHistoryProps={{
             workspaceId,
             entityId,

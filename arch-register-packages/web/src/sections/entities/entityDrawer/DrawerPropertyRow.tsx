@@ -44,7 +44,15 @@ const DrawerRelationRecordCard = ({
   const refLookup = useEntitiesByIds(workspaceId, entityRelationIds);
 
   return (
-    <div style={{ marginBottom: 0, borderRadius: 6, padding: 8 }}>
+    <div
+      style={{
+        marginBottom: 0,
+        borderRadius: 6,
+        padding: 8,
+        border: '1px solid var(--cmp-border)',
+        background: 'var(--base-bg)'
+      }}
+    >
       <EntityNavigationLink publicId={otherEndpoint.id} className={relationStyles.relationName}>
         {otherEndpoint.name}
       </EntityNavigationLink>
@@ -79,7 +87,14 @@ const DrawerRelationRecordList = ({
   relationSchema: RelationSchema | undefined;
   workspaceId: string;
 }) => (
-  <>
+  <div
+    style={{
+      display: 'flex',
+      flexDirection: 'column',
+      background: 'var(--cmp-bg)',
+      gap: '0.25rem'
+    }}
+  >
     {records.map(record => (
       <DrawerRelationRecordCard
         key={record._uid}
@@ -89,7 +104,7 @@ const DrawerRelationRecordList = ({
         workspaceId={workspaceId}
       />
     ))}
-  </>
+  </div>
 );
 
 /**

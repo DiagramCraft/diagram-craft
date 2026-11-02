@@ -170,7 +170,7 @@ export const TypedRelationFieldEditor = ({
                     {otherEndpointInfo.name}
                   </span>
                   {!expanded && fieldSummaries.length > 0 && (
-                    <span className={sharedStyles.dim}> {fieldSummaries.join(' · ')}</span>
+                    <span className={sharedStyles.tertiary}> {fieldSummaries.join(' · ')}</span>
                   )}
                 </span>
               </button>

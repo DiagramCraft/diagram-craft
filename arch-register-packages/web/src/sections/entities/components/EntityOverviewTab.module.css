@@ -50,7 +50,7 @@
 
 .propLabel {
   font-size: 12px;
-  color: var(--base-fg-dimmed);
+  color: var(--panel-fg-tertiary);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -130,7 +130,7 @@
 }
 
 .metaPropLabel {
-  color: var(--cmp-fg-disabled);
+  color: var(--panel-fg-tertiary);
   font-size: 11px;
 }
 
@@ -264,7 +264,7 @@
 
 .groupDescription {
   font-size: 11px;
-  color: var(--cmp-fg-disabled);
+  color: var(--panel-fg-tertiary);
   margin: -4px 0 8px;
 }
 

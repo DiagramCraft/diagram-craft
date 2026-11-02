@@ -235,6 +235,20 @@ export const projectDiagramHref = (
 ) =>
   `/${encodeURIComponent(workspaceSlug)}/projects/${encodeURIComponent(projectId)}/diagrams/${encodeURIComponent(diagramId)}`;
 
+/** Href to a diagram, picked by the scope (project, entity or workspace) that owns it. */
+export const scopedDiagramHref = (
+  workspaceSlug: string,
+  file: { id: string; entity_id?: string | null },
+  project: { public_id: string } | null
+) => {
+  const ws = encodeURIComponent(workspaceSlug);
+  const id = encodeURIComponent(file.id);
+  if (project)
+    return projectDiagramHref(workspaceSlug, asProjectPublicId(project.public_id), file.id);
+  if (file.entity_id) return `/${ws}/entities/${encodeURIComponent(file.entity_id)}/diagrams/${id}`;
+  return `/${ws}/content/diagrams/${id}`;
+};
+
 /** Route to a markdown page, picked by the scope (project, entity or workspace) that owns it. */
 export const markdownFileRoute = (
   workspaceSlug: string,

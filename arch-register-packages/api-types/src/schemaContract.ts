@@ -382,7 +382,8 @@ export const layoutBlockKindSchema = z
     'links',
     'unboundTypedRelation',
     'projects',
-    'diagrams'
+    'diagrams',
+    'relatedContent'
   ])
   .describe('Kind of content a layout block places');
 

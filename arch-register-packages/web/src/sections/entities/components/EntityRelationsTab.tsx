@@ -247,13 +247,13 @@ const TypedRelationRow = ({
                 size={16}
               />
               <span className={styles.relationName}>{relation.entityName}</span>
-              <TbChevronRight size={10} className={sharedStyles.dim} />
+              <TbChevronRight size={10} className={sharedStyles.tertiary} />
               <Chip tone="ghost">{getRelationDisplayLabel(relation)}</Chip>
             </>
           ) : (
             <>
               <Chip tone="ghost">{getRelationDisplayLabel(relation)}</Chip>
-              <TbChevronRight size={10} className={sharedStyles.dim} />
+              <TbChevronRight size={10} className={sharedStyles.tertiary} />
               <TypeBadge
                 color={targetColor}
                 name={targetSchema?.name}
@@ -264,7 +264,7 @@ const TypedRelationRow = ({
             </>
           )}
         </span>
-        <span className={sharedStyles.dim}>{relation.entitySlug}</span>
+        <span className={sharedStyles.tertiary}>{relation.entitySlug}</span>
       </button>
     );
   }
@@ -329,13 +329,13 @@ const RelationRow = ({
               size={16}
             />
             <span className={styles.relationName}>{relation.entityName}</span>
-            <TbChevronRight size={10} className={sharedStyles.dim} />
+            <TbChevronRight size={10} className={sharedStyles.tertiary} />
             <Chip tone="ghost">{getRelationDisplayLabel(relation)}</Chip>
           </>
         ) : (
           <>
             <Chip tone="ghost">{getRelationDisplayLabel(relation)}</Chip>
-            <TbChevronRight size={10} className={sharedStyles.dim} />
+            <TbChevronRight size={10} className={sharedStyles.tertiary} />
             <TypeBadge
               color={targetColor}
               name={targetSchema?.name}
@@ -346,7 +346,7 @@ const RelationRow = ({
           </>
         )}
       </span>
-      <span className={sharedStyles.dim}>{relation.entitySlug}</span>
+      <span className={sharedStyles.tertiary}>{relation.entitySlug}</span>
     </EntityNavigationLink>
   );
 };

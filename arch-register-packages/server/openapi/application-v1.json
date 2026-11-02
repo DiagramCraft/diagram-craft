@@ -1724,7 +1724,8 @@
                                                 "links",
                                                 "unboundTypedRelation",
                                                 "projects",
-                                                "diagrams"
+                                                "diagrams",
+                                                "relatedContent"
                                               ],
                                               "type": "string",
                                               "description": "Kind of content a layout block places"
@@ -3461,7 +3462,8 @@
                                                 "links",
                                                 "unboundTypedRelation",
                                                 "projects",
-                                                "diagrams"
+                                                "diagrams",
+                                                "relatedContent"
                                               ],
                                               "type": "string",
                                               "description": "Kind of content a layout block places"
@@ -5246,7 +5248,8 @@
                                               "links",
                                               "unboundTypedRelation",
                                               "projects",
-                                              "diagrams"
+                                              "diagrams",
+                                              "relatedContent"
                                             ],
                                             "type": "string",
                                             "description": "Kind of content a layout block places"
@@ -7095,7 +7098,8 @@
                                               "links",
                                               "unboundTypedRelation",
                                               "projects",
-                                              "diagrams"
+                                              "diagrams",
+                                              "relatedContent"
                                             ],
                                             "type": "string",
                                             "description": "Kind of content a layout block places"
@@ -8840,7 +8844,8 @@
                                                 "links",
                                                 "unboundTypedRelation",
                                                 "projects",
-                                                "diagrams"
+                                                "diagrams",
+                                                "relatedContent"
                                               ],
                                               "type": "string",
                                               "description": "Kind of content a layout block places"
@@ -10654,7 +10659,8 @@
                                               "links",
                                               "unboundTypedRelation",
                                               "projects",
-                                              "diagrams"
+                                              "diagrams",
+                                              "relatedContent"
                                             ],
                                             "type": "string",
                                             "description": "Kind of content a layout block places"
@@ -69264,27 +69270,34 @@
                         "description": "Diagram file"
                       },
                       "project": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string",
-                            "description": "Project identifier"
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "Project identifier"
+                              },
+                              "public_id": {
+                                "type": "string",
+                                "description": "Public project identifier"
+                              },
+                              "name": {
+                                "type": "string",
+                                "description": "Project name"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "public_id",
+                              "name"
+                            ]
                           },
-                          "public_id": {
-                            "type": "string",
-                            "description": "Public project identifier"
-                          },
-                          "name": {
-                            "type": "string",
-                            "description": "Project name"
+                          {
+                            "type": "null"
                           }
-                        },
-                        "required": [
-                          "id",
-                          "public_id",
-                          "name"
                         ],
-                        "description": "Parent project information"
+                        "description": "Parent project information (null for workspace/entity-level diagrams)"
                       }
                     },
                     "required": [
