@@ -73,7 +73,7 @@
 }
 
 .queryFieldLabel {
-  color: var(--base-fg-dimmed);
+  color: var(--base-fg-tertiary);
 }
 
 .queryFieldValue {

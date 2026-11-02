@@ -21,8 +21,7 @@
   overflow: auto;
   position: relative;
   min-height: 0;
-  /* Same dimmed look as the "N entities" count in the header label. */
-  --tl-header-label-color: color-mix(in oklch, var(--base-fg-dimmed) 60%, transparent);
+  --tl-header-label-color: var(--base-fg-dimmed);
 }
 
 /* Header row (sticky) */

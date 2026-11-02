@@ -122,6 +122,7 @@
   font-size: 11px;
   color: var(--base-fg-dimmed);
   flex-shrink: 0;
+  margin-top: 2rem;
 }
 
 .legendNote {

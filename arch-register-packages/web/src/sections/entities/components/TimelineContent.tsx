@@ -157,7 +157,13 @@ export const TimelineContent = ({
         <>
           <div className={styles.headerRow}>
             <div className={`${styles.labelCol} ${styles.labelColHeader}`}>
-              <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', opacity: 0.6 }}>
+              <span
+                style={{
+                  fontSize: 10,
+                  fontFamily: 'var(--font-mono)',
+                  color: 'var(--base-fg-dimmed)'
+                }}
+              >
                 {`${rows.length} entities`}
               </span>
             </div>

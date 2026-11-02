@@ -175,7 +175,7 @@
   font-family: inherit;
   font-size: 12px;
   font-weight: 500;
-  color: var(--base-fg);
+  color: var(--base-fg-secondary);
   cursor: pointer;
   text-align: left;
   overflow: hidden;

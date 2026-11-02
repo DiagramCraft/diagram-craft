@@ -165,7 +165,7 @@
 .entityName {
   font-size: 12px;
   font-weight: 600;
-  color: var(--base-fg);
+  color: var(--base-fg-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

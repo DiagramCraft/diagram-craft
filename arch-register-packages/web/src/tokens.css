@@ -134,5 +134,9 @@ body {
 }
 
 :where(.ar-app) .dim {
-  color: var(--cmp-fg-disabled);
+  color: var(--fg-dimmed);
+}
+
+:where(.ar-app) .tertiary {
+  color: var(--fg-tertiary);
 }

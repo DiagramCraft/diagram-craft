@@ -308,7 +308,7 @@ const DrawerItem = ({
     );
   }
   if (item.item.kind === 'placeholder') {
-    return <span className="dim">{item.item.message}</span>;
+    return <span className="tertiary">{item.item.message}</span>;
   }
   if (item.item.kind === 'children') {
     return (
@@ -647,7 +647,7 @@ export const EntityDrawer = ({
         stacked={stacked}
         stackOffset={stackOffset}
         extraActions={<CopyDrawerLinkButton entityId={entityId} />}
-        eyebrow={<span className="dim mono">{entity._publicId}</span>}
+        eyebrow={<span className="mono">{entity._publicId}</span>}
         title={entity._name}
         footer={
           <Button
@@ -673,7 +673,7 @@ export const EntityDrawer = ({
       stacked={stacked}
       stackOffset={stackOffset}
       extraActions={<CopyDrawerLinkButton entityId={entityId} />}
-      eyebrow={<span className="dim mono">{entity._publicId}</span>}
+      eyebrow={<span className="mono">{entity._publicId}</span>}
       title={entity._name}
       badges={
         renderModel.badges.length > 0 || additionalBadges != null ? (

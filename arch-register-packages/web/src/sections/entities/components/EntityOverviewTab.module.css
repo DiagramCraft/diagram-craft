@@ -337,6 +337,10 @@
   line-height: 1.5;
 }
 
+.noPlannedChanges {
+  color: var(--panel-fg-tertiary);
+}
+
 /* Future plans */
 .futurePlan {
   padding: 8px;
