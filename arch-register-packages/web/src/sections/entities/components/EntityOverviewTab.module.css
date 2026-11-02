@@ -4,6 +4,12 @@
   grid-template-columns: 1.4fr 1fr;
   gap: 12px;
   padding: 16px 24px 32px;
+
+  --cmp-bg: var(--base-bg);
+  --cmp-fg: var(--base-fg);
+  --cmp-fg-secondary: var(--base-fg-secondary);
+  --cmp-fg-tertiary: var(--base-fg-tertiary);
+  --cmp-fg-dimmed: var(--base-fg-dimmed);
 }
 
 .propsPanel,
