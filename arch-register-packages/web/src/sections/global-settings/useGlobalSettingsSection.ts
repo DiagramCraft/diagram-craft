@@ -3,7 +3,7 @@ import { useAuthConfig } from '../../hooks/useAuthConfig';
 import { useWorkspaceAuthorization } from '../../auth/WorkspaceAuthorizationContext';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 
-export type GlobalSettingsSection = 'global-permissions' | 'users';
+export type GlobalSettingsSection = 'global-permissions' | 'users' | 'security-events';
 
 export const useGlobalSettingsSection = () => {
   const location = useLocation();
@@ -13,7 +13,9 @@ export const useGlobalSettingsSection = () => {
 
   const section: GlobalSettingsSection = location.pathname.endsWith('/users')
     ? 'users'
-    : 'global-permissions';
+    : location.pathname.endsWith('/security-events')
+      ? 'security-events'
+      : 'global-permissions';
   const canManageUsers =
     authConfig != null && authConfig.mode !== 'oidc' && hasGlobalPermission('admin_platform');
 

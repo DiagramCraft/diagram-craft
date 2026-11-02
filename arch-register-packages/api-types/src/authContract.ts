@@ -79,7 +79,12 @@ export const userSummarySchema = z.object({
   is_system_actor: z
     .boolean()
     .describe('Whether this is a system-managed actor, not a real user account'),
-  color: z.string().nullable().describe('User color preference (hex format)')
+  color: z.string().nullable().describe('User color preference (hex format)'),
+  locked_until: z
+    .string()
+    .nullable()
+    .optional()
+    .describe('ISO 8601 timestamp until which login is locked after repeated failures, if locked')
 });
 
 export const userDetailSchema = userSummarySchema.extend({
@@ -107,6 +112,26 @@ const managedUserUpdateSchema = z.object({
   is_active: z.boolean().optional().describe('Whether the account can sign in'),
   color: z.string().nullable().optional().describe('User color preference (hex format)')
 });
+
+const authEventTypeSchema = z.enum([
+  'login_success',
+  'login_failed',
+  'login_throttled',
+  'account_locked',
+  'account_unlocked'
+]);
+
+export const authEventSchema = z.object({
+  id: z.string().describe('Event identifier'),
+  event: authEventTypeSchema.describe('Security event type'),
+  user_id: z.string().nullable().describe('Related user identifier, if the account exists'),
+  username: z.string().nullable().describe('Username submitted or affected'),
+  ip: z.string().nullable().describe('Client IP address'),
+  created_at: z.string().describe('ISO 8601 event timestamp'),
+  metadata: z.record(z.string(), z.unknown()).describe('Additional event details')
+});
+
+export type AuthEvent = z.infer<typeof authEventSchema>;
 
 const globalRoleAssignmentSchema = z.object({
   user_id: z.string().describe('User identifier'),
@@ -307,6 +332,43 @@ export const authProtectedContract = oc.tag('Auth').router({
         })
       )
       .output(userDetailSchema),
+    unlockUser: oc
+      .route({
+        method: 'POST',
+        path: '/auth/users/{id}/unlock',
+        inputStructure: 'detailed',
+        summary: 'Unlock a user',
+        description:
+          'Clears the login lockout and failure counters for a local user. Only platform administrators can use this.',
+        tags: ['Auth']
+      })
+      .input(
+        z.object({
+          params: z.object({ id: z.string().regex(UUID_REGEX).describe('User identifier (UUID)') })
+        })
+      )
+      .output(userDetailSchema),
+    listEvents: oc
+      .route({
+        method: 'GET',
+        path: '/auth/events',
+        inputStructure: 'detailed',
+        summary: 'List authentication security events',
+        description:
+          'Lists login successes, failures, throttling and lockout events, newest first. Only platform administrators can use this.',
+        tags: ['Auth']
+      })
+      .input(
+        z.object({
+          query: z.object({
+            user_id: z.string().regex(UUID_REGEX).optional().describe('Filter by user (UUID)'),
+            event: authEventTypeSchema.optional().describe('Filter by event type'),
+            limit: z.coerce.number().int().min(1).max(200).optional().describe('Page size'),
+            offset: z.coerce.number().int().min(0).optional().describe('Page offset')
+          })
+        })
+      )
+      .output(z.array(authEventSchema)),
     deactivateUser: oc
       .route({
         method: 'DELETE',

@@ -22,8 +22,8 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  color: var(--base-fg);
-  font-size: 12px;
+  color: var(--base-fg-secondary);
+  font-size: 11px;
 }
 
 .activeRow label {

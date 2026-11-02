@@ -9,6 +9,9 @@
         - @id:ar.access.login Users can sign in through the configured local authentication flow and maintain an
           authenticated session.
 
+        - @id:ar.access.login-protection Local sign-in is protected by per-account lockout with growing lock
+          durations and per-IP limits; platform administrators can unlock accounts and review sign-in security events.
+
         - @id:ar.access.user-management Platform administrators can create, update, deactivate, reactivate, and
           change passwords for local user accounts when OIDC authentication is not enabled.
 

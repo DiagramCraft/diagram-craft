@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import styles from '../../shell/SidePanel.module.css';
 import { TreeRow } from '../../components/TreeRow';
-import { TbShieldLock, TbUsers } from 'react-icons/tb';
+import { TbShieldLock, TbShieldCheck, TbUsers } from 'react-icons/tb';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { SidebarGroupLabel, SidebarTitleHeader } from '../../components/sidebar/SidebarPrimitives';
 import { useGlobalSettingsSection } from './useGlobalSettingsSection';
@@ -30,6 +30,13 @@ const USERS_SETTINGS_ITEM: GlobalSettingsNavItem = {
   group: 'Administration'
 };
 
+const SECURITY_EVENTS_SETTINGS_ITEM: GlobalSettingsNavItem = {
+  id: 'security-events',
+  label: 'Security events',
+  icon: <TbShieldCheck size={12} />,
+  group: 'Administration'
+};
+
 export const GlobalSettingsSidebar = () => {
   const navigate = useNavigate();
   const ctx = useWorkspaceContext();
@@ -39,7 +46,7 @@ export const GlobalSettingsSidebar = () => {
   const groups = useMemo(() => {
     const g: Record<string, GlobalSettingsNavItem[]> = {};
     const sections = canManageUsers
-      ? [...GLOBAL_SETTINGS_SECTIONS, USERS_SETTINGS_ITEM]
+      ? [...GLOBAL_SETTINGS_SECTIONS, USERS_SETTINGS_ITEM, SECURITY_EVENTS_SETTINGS_ITEM]
       : GLOBAL_SETTINGS_SECTIONS;
     sections.forEach(s => {
       (g[s.group] ??= []).push(s);
@@ -65,7 +72,9 @@ export const GlobalSettingsSidebar = () => {
                     to:
                       s.id === 'users'
                         ? '/$workspaceSlug/settings/global/users'
-                        : '/$workspaceSlug/settings/global',
+                        : s.id === 'security-events'
+                          ? '/$workspaceSlug/settings/global/security-events'
+                          : '/$workspaceSlug/settings/global',
                     params: { workspaceSlug }
                   })
                 }

@@ -1,7 +1,10 @@
 import type {
   ApiTokenDbCreate,
   AuthDatabase,
+  AuthEventDbResult,
+  AuthEventListOptions,
   GlobalRole,
+  LoginThrottleKeyType,
   UserDbCreate,
   UserDbUpdate
 } from './authDatabase';
@@ -315,6 +318,99 @@ export class SqliteAuthDatabase extends SqliteDatabaseBase implements AuthDataba
       [workspace],
       authMappers.apiTokenAudit
     );
+  }
+
+  async getLoginThrottle(keyType: LoginThrottleKeyType, key: string) {
+    return this.get(
+      'SELECT * FROM login_throttle WHERE key_type = ? AND key = ?',
+      [keyType, key],
+      authMappers.loginThrottle
+    );
+  }
+
+  async incrementLoginFailure(
+    keyType: LoginThrottleKeyType,
+    key: string,
+    now: Date,
+    windowSeconds: number
+  ) {
+    const nowIso = now.toISOString();
+    const cutoff = new Date(now.getTime() - windowSeconds * 1000).toISOString();
+    const stale = 'COALESCE(locked_until, updated_at) < ?';
+    this.run(
+      `INSERT INTO login_throttle (key_type, key, failure_count, locked_until, updated_at)
+       VALUES (?, ?, 1, NULL, ?)
+       ON CONFLICT (key_type, key) DO UPDATE SET
+         failure_count = CASE WHEN ${stale} THEN 1 ELSE failure_count + 1 END,
+         locked_until = CASE WHEN ${stale} THEN NULL ELSE locked_until END,
+         updated_at = excluded.updated_at`,
+      [keyType, key, nowIso, cutoff, cutoff]
+    );
+    return (await this.getLoginThrottle(keyType, key))!;
+  }
+
+  async setLoginLockedUntil(keyType: LoginThrottleKeyType, key: string, lockedUntil: Date) {
+    this.run('UPDATE login_throttle SET locked_until = ? WHERE key_type = ? AND key = ?', [
+      lockedUntil.toISOString(),
+      keyType,
+      key
+    ]);
+  }
+
+  async clearLoginThrottle(keyType: LoginThrottleKeyType, key: string) {
+    this.run('DELETE FROM login_throttle WHERE key_type = ? AND key = ?', [keyType, key]);
+  }
+
+  async listActiveAccountLocks(now: Date) {
+    return this.all(
+      "SELECT * FROM login_throttle WHERE key_type = 'account' AND locked_until > ?",
+      [now.toISOString()],
+      authMappers.loginThrottle
+    );
+  }
+
+  async cleanupLoginThrottle(before: Date) {
+    this.run('DELETE FROM login_throttle WHERE COALESCE(locked_until, updated_at) < ?', [
+      before.toISOString()
+    ]);
+  }
+
+  async createAuthEvent(input: AuthEventDbResult) {
+    this.run(
+      'INSERT INTO auth_event (id, event, user_id, username, ip, created_at, metadata) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [
+        input.id,
+        input.event,
+        input.user_id,
+        input.username,
+        input.ip,
+        input.created_at.toISOString(),
+        JSON.stringify(input.metadata)
+      ]
+    );
+  }
+
+  async listAuthEvents(options: AuthEventListOptions) {
+    const clauses = ['1 = 1'];
+    const params: unknown[] = [];
+    if (options.userId != null) {
+      clauses.push('user_id = ?');
+      params.push(options.userId);
+    }
+    if (options.event != null) {
+      clauses.push('event = ?');
+      params.push(options.event);
+    }
+    params.push(options.limit, options.offset);
+    return this.all(
+      `SELECT * FROM auth_event WHERE ${clauses.join(' AND ')} ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?`,
+      params,
+      authMappers.authEvent
+    );
+  }
+
+  async cleanupAuthEvents(before: Date) {
+    this.run('DELETE FROM auth_event WHERE created_at < ?', [before.toISOString()]);
   }
 
   async listGlobalRoleAssignments(userId?: string) {

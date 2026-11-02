@@ -92,3 +92,15 @@ export const useDeactivateManagedUser = () => {
     }
   });
 };
+
+export const useUnlockManagedUser = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<UserDetail, Error, string>({
+    mutationFn: userId => orpcClient.authProtected.unlockUser({ params: { id: userId } }),
+    onSuccess: () => {
+      void invalidateUserQueries(queryClient);
+      void queryClient.invalidateQueries({ queryKey: ['auth-events'] });
+    }
+  });
+};

@@ -1,6 +1,9 @@
 import type {
   ApiTokenDbCreate,
   AuthDatabase,
+  AuthEventDbResult,
+  AuthEventListOptions,
+  LoginThrottleKeyType,
   UserDbCreate,
   GlobalRole,
   UserDbUpdate,
@@ -346,6 +349,98 @@ export class PostgresAuthDatabase extends PostgresDatabaseBase implements AuthDa
       ORDER BY created_at DESC, id DESC
     `;
     return mapDatabaseRows(rows, authMappers.apiTokenAudit);
+  }
+
+  async getLoginThrottle(keyType: LoginThrottleKeyType, key: string) {
+    const [row] = await this.sql<DatabaseRow[]>`
+      SELECT * FROM login_throttle WHERE key_type = ${keyType} AND key = ${key}
+    `;
+    return row ? authMappers.loginThrottle(row) : null;
+  }
+
+  async incrementLoginFailure(
+    keyType: LoginThrottleKeyType,
+    key: string,
+    now: Date,
+    windowSeconds: number
+  ) {
+    const cutoff = new Date(now.getTime() - windowSeconds * 1000);
+    try {
+      const [row] = await this.sql<DatabaseRow[]>`
+        INSERT INTO login_throttle (key_type, key, failure_count, locked_until, updated_at)
+        VALUES (${keyType}, ${key}, 1, NULL, ${now})
+        ON CONFLICT (key_type, key) DO UPDATE SET
+          failure_count = CASE
+            WHEN COALESCE(login_throttle.locked_until, login_throttle.updated_at) < ${cutoff}
+            THEN 1 ELSE login_throttle.failure_count + 1 END,
+          locked_until = CASE
+            WHEN COALESCE(login_throttle.locked_until, login_throttle.updated_at) < ${cutoff}
+            THEN NULL ELSE login_throttle.locked_until END,
+          updated_at = EXCLUDED.updated_at
+        RETURNING *
+      `;
+      return authMappers.loginThrottle(row!);
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async setLoginLockedUntil(keyType: LoginThrottleKeyType, key: string, lockedUntil: Date) {
+    await this.sql`
+      UPDATE login_throttle SET locked_until = ${lockedUntil}
+      WHERE key_type = ${keyType} AND key = ${key}
+    `;
+  }
+
+  async clearLoginThrottle(keyType: LoginThrottleKeyType, key: string) {
+    await this.sql`DELETE FROM login_throttle WHERE key_type = ${keyType} AND key = ${key}`;
+  }
+
+  async listActiveAccountLocks(now: Date) {
+    const rows = await this.sql<DatabaseRow[]>`
+      SELECT * FROM login_throttle WHERE key_type = 'account' AND locked_until > ${now}
+    `;
+    return mapDatabaseRows(rows, authMappers.loginThrottle);
+  }
+
+  async cleanupLoginThrottle(before: Date) {
+    await this.sql`
+      DELETE FROM login_throttle WHERE COALESCE(locked_until, updated_at) < ${before}
+    `;
+  }
+
+  async createAuthEvent(input: AuthEventDbResult) {
+    try {
+      await this.sql`
+        INSERT INTO auth_event (id, event, user_id, username, ip, created_at, metadata)
+        VALUES (
+          ${input.id},
+          ${input.event},
+          ${input.user_id},
+          ${input.username},
+          ${input.ip},
+          ${input.created_at},
+          ${this.json(input.metadata)}
+        )
+      `;
+    } catch (error) {
+      normalizePostgresError(error);
+    }
+  }
+
+  async listAuthEvents(options: AuthEventListOptions) {
+    const rows = await this.sql<DatabaseRow[]>`
+      SELECT * FROM auth_event
+      WHERE (${options.userId ?? null}::uuid IS NULL OR user_id = ${options.userId ?? null}::uuid)
+        AND (${options.event ?? null}::text IS NULL OR event = ${options.event ?? null}::text)
+      ORDER BY created_at DESC, id DESC
+      LIMIT ${options.limit} OFFSET ${options.offset}
+    `;
+    return mapDatabaseRows(rows, authMappers.authEvent);
+  }
+
+  async cleanupAuthEvents(before: Date) {
+    await this.sql`DELETE FROM auth_event WHERE created_at < ${before}`;
   }
 
   async listGlobalRoleAssignments(userId?: string) {

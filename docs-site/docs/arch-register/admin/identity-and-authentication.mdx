@@ -25,6 +25,38 @@ the identity provider manages sign-in credentials in that mode.
 Workspace administrators can manage membership and workspace roles separately. See [Teams and Members](teams-members)
 and [Roles and Permissions](roles-permissions).
 
+## Login Protection
+
+Local sign-in is protected against password guessing:
+
+- **Account lockout.** After 5 consecutive failed attempts for a username the account is locked for 1 minute. Each
+  further failure doubles the lock, up to 1 hour. A successful sign-in resets the counter, and failures older than
+  15 minutes stop counting.
+- **Per-IP limit.** A client IP that makes 20 failed attempts within 5 minutes is blocked for the rest of that window.
+- **Same response for every username.** Unknown usernames are throttled exactly like real ones, so the limits do not
+  reveal which accounts exist. Locked or blocked requests receive HTTP 429 with a `Retry-After` header, and a correct
+  password is also rejected while an account is locked.
+
+Platform administrators can end a lockout early from **Global Settings → Users** by choosing **Unlock sign-in** on a
+locked user. **Global Settings → Security events** lists sign-ins, failed attempts, rate limiting, lockouts and unlocks
+with the username and client IP. Events are kept for 90 days.
+
+Limits are stored in the database, so they apply across multiple server instances. When the server runs behind a
+reverse proxy or load balancer, set `TRUST_PROXY` to the number of proxies in front of it so the real client IP is used;
+otherwise every client appears to come from the proxy. Leave it unset when the server is exposed directly, because
+forwarded headers can then be spoofed.
+
+| Environment variable | Default | Purpose |
+| --- | --- | --- |
+| `LOGIN_MAX_FAILURES` | `5` | Consecutive failures before an account is locked |
+| `LOGIN_LOCKOUT_BASE_SECONDS` | `60` | First lock duration, doubled for each further failure |
+| `LOGIN_LOCKOUT_MAX_SECONDS` | `3600` | Maximum lock duration |
+| `LOGIN_FAILURE_WINDOW_SECONDS` | `900` | Failures older than this stop counting |
+| `LOGIN_IP_MAX_ATTEMPTS` | `20` | Failed attempts per client IP within the IP window |
+| `LOGIN_IP_WINDOW_SECONDS` | `300` | Length of the per-IP window |
+| `AUTH_EVENT_RETENTION_DAYS` | `90` | Retention for security events |
+| `TRUST_PROXY` | `0` | Number of trusted reverse proxies |
+
 ## Development-Only User Switcher
 
 The optional user-switcher toolbar is an experimental development tool. It bypasses normal sign-in and lets a developer
