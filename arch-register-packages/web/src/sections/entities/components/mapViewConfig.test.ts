@@ -24,6 +24,14 @@ describe('map view config normalization', () => {
     });
   });
 
+  it('round-trips displayMode and drops invalid values', () => {
+    const levels = [{ schemaId: 'a', columns: 3 }];
+    expect(normalizeMapConfig({ levelConfigs: levels, displayMode: 'table' }).displayMode).toBe(
+      'table'
+    );
+    expect(normalizeMapConfig({ levelConfigs: levels }).displayMode).toBeUndefined();
+  });
+
   it('returns the compatibility defaults for invalid or absent configs', () => {
     expect(normalizeMapConfig(undefined)).toEqual({
       levelConfigs: [

@@ -1118,6 +1118,10 @@
           branches while ancestors and configured descendants are included as structural context; recursive maps use
           only top-most entities as roots. Repeated terminal sources are deduplicated and collapsed duplicates are
           marked in the map with a count and hover detail.
+          A display toggle switches the map between nested boxes and an expandable tree table with one row per
+          entity following the same levels, hops and hidden levels; the table shows the chosen display fields and a
+          metric column with the same roll-up value (leaves show their own value), tinted with the box color, and
+          keeps search and overlay dimming and hide-missing. The mode is saved with the view and in embeds.
 
         - @id:ar.entity-views.explore Users can inspect entity data in the Relation columns view, a configurable side-by-side exploration view,
           using a per-column menu: each column can filter its outgoing relations (listed as source schema, predicate,

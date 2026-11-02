@@ -320,6 +320,10 @@ export const mapViewConfigSchema = z.object({
     .boolean()
     .optional()
     .describe('Whether the numeric metric gradient runs from its high end to its low end'),
+  displayMode: z
+    .enum(['boxes', 'table'])
+    .optional()
+    .describe('How the map hierarchy is displayed: nested boxes (default) or an expandable tree table'),
   metricConfig: z
     .unknown()
     .nullable()

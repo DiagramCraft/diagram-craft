@@ -273,3 +273,48 @@ export const useMapTraversal = ({
     renderTree
   };
 };
+
+export type MapTableRow = {
+  entry: RenderTreeNode;
+  depth: number;
+  /** Whether the row has visible (non-hidden-level) descendants, i.e. can be expanded. */
+  hasChildren: boolean;
+  /** Whether the row is a leaf in the underlying render tree (drives leaf-own-value display). */
+  isLeaf: boolean;
+};
+
+/** Children of `entry` as they appear on screen: hidden levels (below the first) are omitted and
+ *  their own children are spliced in, mirroring how the nested boxes skip them. */
+const visibleMapChildren = (
+  entry: RenderTreeNode,
+  levelConfigs: ReadonlyArray<{ hidden?: boolean }>
+): RenderTreeNode[] =>
+  entry.children.flatMap(child =>
+    child.levelIndex > 0 && levelConfigs[child.levelIndex]?.hidden
+      ? visibleMapChildren(child, levelConfigs)
+      : [child]
+  );
+
+/** Flattens the render tree into table rows in display order. Rows whose uid is in `collapsed`
+ *  keep their own row but hide their descendants. */
+export const flattenVisibleMapRows = (
+  tree: RenderTreeNode[],
+  levelConfigs: ReadonlyArray<{ hidden?: boolean }>,
+  collapsed: ReadonlySet<string>
+): MapTableRow[] => {
+  const rows: MapTableRow[] = [];
+  const walk = (entries: RenderTreeNode[], depth: number) => {
+    for (const entry of entries) {
+      const children = visibleMapChildren(entry, levelConfigs);
+      rows.push({
+        entry,
+        depth,
+        hasChildren: children.length > 0,
+        isLeaf: entry.children.length === 0
+      });
+      if (children.length > 0 && !collapsed.has(entry.node._uid)) walk(children, depth + 1);
+    }
+  };
+  walk(tree, 0);
+  return rows;
+};

@@ -6,7 +6,9 @@ import {
   buildTreeFromIncludedPaths,
   collectIncludedPathNodeIds,
   decodeMapIncludedPathsByRoot,
-  MAP_INCLUDE_PATH_PROJECTION_ALIAS
+  flattenVisibleMapRows,
+  MAP_INCLUDE_PATH_PROJECTION_ALIAS,
+  type RenderTreeNode
 } from './mapViewTraversal';
 
 const entity = (id: string, name: string) =>
@@ -112,5 +114,36 @@ describe('mapViewTraversal included-path building (#3040-map)', () => {
     const a = entity('a', 'Alpha');
     const tree = buildTreeFromIncludedPaths([b, a], new Map(), () => undefined);
     expect(tree.map(t => t.node._uid)).toEqual(['a', 'b']);
+  });
+});
+
+describe('flattenVisibleMapRows', () => {
+  const rt = (id: string, levelIndex: number, children: RenderTreeNode[] = []): RenderTreeNode => ({
+    node: { ...entity(id, id), _isMatch: true } as unknown as RenderTreeNode['node'],
+    levelIndex,
+    children
+  });
+  const levels = [{}, { hidden: true }, {}];
+  const tree = [rt('a', 0, [rt('h', 1, [rt('c1', 2), rt('c2', 2)])]), rt('b', 0)];
+
+  it('splices children of hidden levels into their parent', () => {
+    const rows = flattenVisibleMapRows(tree, levels, new Set());
+    expect(rows.map(r => [r.entry.node._uid, r.depth, r.hasChildren])).toEqual([
+      ['a', 0, true],
+      ['c1', 1, false],
+      ['c2', 1, false],
+      ['b', 0, false]
+    ]);
+  });
+
+  it('omits descendants of collapsed rows but keeps the row', () => {
+    const rows = flattenVisibleMapRows(tree, levels, new Set(['a']));
+    expect(rows.map(r => r.entry.node._uid)).toEqual(['a', 'b']);
+  });
+
+  it('marks render-tree leaves', () => {
+    const rows = flattenVisibleMapRows(tree, levels, new Set());
+    expect(rows.find(r => r.entry.node._uid === 'a')?.isLeaf).toBe(false);
+    expect(rows.find(r => r.entry.node._uid === 'b')?.isLeaf).toBe(true);
   });
 });

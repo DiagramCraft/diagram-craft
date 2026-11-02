@@ -8,6 +8,7 @@ export type MapConfig = {
   hideMissingMetricData?: boolean;
   colorScheme?: MapColorScheme;
   reverseColors?: boolean;
+  displayMode?: 'boxes' | 'table';
   fieldIds?: string[];
   metricConfig?: unknown;
 };
@@ -23,7 +24,8 @@ export const DEFAULT_MAP_CONFIG: MapConfig = {
   metricConfig: undefined,
   hideMissingMetricData: undefined,
   colorScheme: undefined,
-  reverseColors: undefined
+  reverseColors: undefined,
+  displayMode: undefined
 };
 
 export const normalizeMapConfig = (raw: unknown): MapConfig => {
@@ -44,7 +46,8 @@ export const normalizeMapConfig = (raw: unknown): MapConfig => {
       metricConfig: parsed.metricConfig,
       hideMissingMetricData: parsed.hideMissingMetricData,
       colorScheme: parsed.colorScheme,
-      reverseColors: parsed.reverseColors
+      reverseColors: parsed.reverseColors,
+      displayMode: parsed.displayMode
     };
   }
   return {
@@ -53,6 +56,7 @@ export const normalizeMapConfig = (raw: unknown): MapConfig => {
     metricConfig: parsed.metricConfig,
     hideMissingMetricData: parsed.hideMissingMetricData,
     colorScheme: parsed.colorScheme,
-    reverseColors: parsed.reverseColors
+    reverseColors: parsed.reverseColors,
+    displayMode: parsed.displayMode
   };
 };
