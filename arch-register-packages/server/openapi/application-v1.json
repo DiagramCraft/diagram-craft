@@ -104447,6 +104447,14 @@
                                     "type": "boolean",
                                     "description": "Whether the numeric metric gradient runs from its high end to its low end"
                                   },
+                                  "displayMode": {
+                                    "enum": [
+                                      "boxes",
+                                      "table"
+                                    ],
+                                    "type": "string",
+                                    "description": "How the map hierarchy is displayed: nested boxes (default) or an expandable tree table"
+                                  },
                                   "metricConfig": {
                                     "anyOf": [
                                       {},
@@ -111245,6 +111253,14 @@
                               "reverseColors": {
                                 "type": "boolean",
                                 "description": "Whether the numeric metric gradient runs from its high end to its low end"
+                              },
+                              "displayMode": {
+                                "enum": [
+                                  "boxes",
+                                  "table"
+                                ],
+                                "type": "string",
+                                "description": "How the map hierarchy is displayed: nested boxes (default) or an expandable tree table"
                               },
                               "metricConfig": {
                                 "anyOf": [
@@ -118441,6 +118457,14 @@
                                 "reverseColors": {
                                   "type": "boolean",
                                   "description": "Whether the numeric metric gradient runs from its high end to its low end"
+                                },
+                                "displayMode": {
+                                  "enum": [
+                                    "boxes",
+                                    "table"
+                                  ],
+                                  "type": "string",
+                                  "description": "How the map hierarchy is displayed: nested boxes (default) or an expandable tree table"
                                 },
                                 "metricConfig": {
                                   "anyOf": [
@@ -126163,6 +126187,14 @@
                                 "type": "boolean",
                                 "description": "Whether the numeric metric gradient runs from its high end to its low end"
                               },
+                              "displayMode": {
+                                "enum": [
+                                  "boxes",
+                                  "table"
+                                ],
+                                "type": "string",
+                                "description": "How the map hierarchy is displayed: nested boxes (default) or an expandable tree table"
+                              },
                               "metricConfig": {
                                 "anyOf": [
                                   {},
@@ -133353,6 +133385,14 @@
                                 "reverseColors": {
                                   "type": "boolean",
                                   "description": "Whether the numeric metric gradient runs from its high end to its low end"
+                                },
+                                "displayMode": {
+                                  "enum": [
+                                    "boxes",
+                                    "table"
+                                  ],
+                                  "type": "string",
+                                  "description": "How the map hierarchy is displayed: nested boxes (default) or an expandable tree table"
                                 },
                                 "metricConfig": {
                                   "anyOf": [

@@ -50,6 +50,7 @@ import { LabeledSelect } from '../../../components/LabeledSelect';
 import { MapLegend } from './MapLegend';
 import { computeHighlightedIds, NO_OVERLAY_ID, type MapOverlay } from './mapOverlays';
 import { MapConfigControls } from './MapConfigControls';
+import { MapTreeTable } from './MapTreeTable';
 import { MapTreeContent } from './MapTreeContent';
 import {
   buildIncludePathMapQuery,
@@ -820,6 +821,26 @@ export const NestedMapView = ({
         <EmptyState
           title="Map data could not be loaded"
           subtitle="Try again or adjust your search and filters."
+        />
+      ) : cfg.displayMode === 'table' ? (
+        <MapTreeTable
+          cfg={cfg}
+          filteredRenderTree={filteredRenderTree}
+          level1Items={level1Items}
+          schemaMap={schemaMap}
+          relationSchemas={relationSchemas}
+          linkedEntityIds={dimLinkedIds}
+          linkedEntityIdSet={dimLinkedIdSet}
+          selectedDisplayFields={selectedDisplayFields}
+          metricConfig={metricConfig}
+          metricSourceSchema={metricSourceSchema}
+          metricLabel={metricLabel}
+          resultsByBoxId={resultsByBoxId}
+          lifecycleStates={lifecycleStates}
+          boxStyle={boxStyle}
+          nameStyle={nameStyle}
+          metricRowsFor={metricRowsFor}
+          detailClick={detailClick}
         />
       ) : (
         <MapTreeContent

@@ -11,7 +11,14 @@ import {
 } from '@arch-register/api-types/metricContract';
 import type { PathStep } from '@arch-register/api-types/entityQueryIR';
 import type { FieldGroupAccess, FieldGroupAccessControl } from '@arch-register/permissions';
-import { TbArrowsExchange, TbChevronDown, TbEyeOff, TbTrash } from 'react-icons/tb';
+import {
+  TbArrowsExchange,
+  TbChevronDown,
+  TbEyeOff,
+  TbLayoutGrid,
+  TbTable,
+  TbTrash
+} from 'react-icons/tb';
 import styles from './NestedMapView.module.css';
 import type { PopoverActions } from '@diagram-craft/app-components/Popover';
 import { Popover } from '@diagram-craft/app-components/Popover';
@@ -494,6 +501,15 @@ export const MapConfigControls = ({
             />
             {mapTraversalError && <span className={styles.metricError}>{mapTraversalError}</span>}
           </div>
+
+          <ToolbarButton
+            variant={cfg.displayMode === 'table' ? 'primary' : undefined}
+            icon={cfg.displayMode === 'table' ? <TbLayoutGrid size={13} /> : <TbTable size={13} />}
+            title={cfg.displayMode === 'table' ? 'Show as boxes' : 'Show as table'}
+            aria-label={cfg.displayMode === 'table' ? 'Show as boxes' : 'Show as table'}
+            aria-pressed={cfg.displayMode === 'table'}
+            onClick={() => notify({ displayMode: cfg.displayMode === 'table' ? 'boxes' : 'table' })}
+          />
 
           {metricConfig && (
             <>
