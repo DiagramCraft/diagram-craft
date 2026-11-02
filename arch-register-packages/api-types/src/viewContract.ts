@@ -323,7 +323,9 @@ export const mapViewConfigSchema = z.object({
   displayMode: z
     .enum(['boxes', 'table'])
     .optional()
-    .describe('How the map hierarchy is displayed: nested boxes (default) or an expandable tree table'),
+    .describe(
+      'How the map hierarchy is displayed: nested boxes (default) or an expandable tree table'
+    ),
   metricConfig: z
     .unknown()
     .nullable()

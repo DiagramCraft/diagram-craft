@@ -822,28 +822,27 @@ export const NestedMapView = ({
           title="Map data could not be loaded"
           subtitle="Try again or adjust your search and filters."
         />
+      ) : cfg.displayMode === 'table' ? (
+        <MapTreeTable
+          cfg={cfg}
+          filteredRenderTree={filteredRenderTree}
+          level1Items={level1Items}
+          schemaMap={schemaMap}
+          relationSchemas={relationSchemas}
+          linkedEntityIds={dimLinkedIds}
+          linkedEntityIdSet={dimLinkedIdSet}
+          selectedDisplayFields={selectedDisplayFields}
+          metricConfig={metricConfig}
+          metricSourceSchema={metricSourceSchema}
+          metricLabel={metricLabel}
+          resultsByBoxId={resultsByBoxId}
+          lifecycleStates={lifecycleStates}
+          boxStyle={boxStyle}
+          nameStyle={nameStyle}
+          metricRowsFor={metricRowsFor}
+          detailClick={detailClick}
+        />
       ) : (
-        cfg.displayMode === 'table' ? (
-          <MapTreeTable
-            cfg={cfg}
-            filteredRenderTree={filteredRenderTree}
-            level1Items={level1Items}
-            schemaMap={schemaMap}
-            relationSchemas={relationSchemas}
-            linkedEntityIds={dimLinkedIds}
-            linkedEntityIdSet={dimLinkedIdSet}
-            selectedDisplayFields={selectedDisplayFields}
-            metricConfig={metricConfig}
-            metricSourceSchema={metricSourceSchema}
-            metricLabel={metricLabel}
-            resultsByBoxId={resultsByBoxId}
-            lifecycleStates={lifecycleStates}
-            boxStyle={boxStyle}
-            nameStyle={nameStyle}
-            metricRowsFor={metricRowsFor}
-            detailClick={detailClick}
-          />
-        ) : (
         <MapTreeContent
           cfg={cfg}
           filteredRenderTree={filteredRenderTree}
@@ -863,7 +862,6 @@ export const NestedMapView = ({
           boxHandlers={boxHandlers}
           detailClick={detailClick}
         />
-        )
       )}
 
       {metricConfig &&
