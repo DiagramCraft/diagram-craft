@@ -36,6 +36,7 @@ import {
   TableRowElement
 } from './PlateMarkdownEditorTable';
 import { SlashInputElement } from './PlateMarkdownEditorSlashCommands';
+import { WikiLinkInputPlugin, WikiLinkTriggerPlugin } from './PlateMarkdownEditorWikiLinkInput';
 
 const HEADING_TYPES = new Set(['h1', 'h2', 'h3']);
 const mdxDefinitions = getWidgetDefinitions('mdx');
@@ -92,6 +93,8 @@ export const editorPlugins = [
   DndPlugin,
   SlashPlugin,
   SlashInputPlugin.withComponent(SlashInputElement),
+  WikiLinkTriggerPlugin,
+  WikiLinkInputPlugin,
   HeadingBreakPlugin,
   createPlatePlugin({ key: 'p', node: { isElement: true } }).withComponent(PElement),
   createPlatePlugin({ key: 'h1', node: { isElement: true } }).withComponent(H1Element),
