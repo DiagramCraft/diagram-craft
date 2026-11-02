@@ -41,7 +41,14 @@ describe('buildDefaultLayout', () => {
     const layout = buildDefaultLayout(schema, []);
     expect(layout.tabs).toHaveLength(1);
     const panelIds = layout.tabs[0]!.panels.map(panel => panel.id);
-    expect(panelIds).toEqual(['properties', 'metadata', 'links', 'projects', 'diagrams', 'relatedContent']);
+    expect(panelIds).toEqual([
+      'properties',
+      'metadata',
+      'links',
+      'projects',
+      'diagrams',
+      'relatedContent'
+    ]);
 
     const propertiesPanel = layout.tabs[0]!.panels[0]!;
     expect(propertiesPanel.blocks.map(block => block.refId)).toEqual(['f1', 'f2']);
@@ -96,7 +103,13 @@ describe('buildDefaultLayout', () => {
     const panelsByColumn = (column: 1 | 2) =>
       layout.tabs[0]!.panels.filter(panel => panel.column === column).map(panel => panel.id);
     expect(panelsByColumn(1)).toEqual(['properties', 'group:g1']);
-    expect(panelsByColumn(2)).toEqual(['metadata', 'links', 'projects', 'diagrams', 'relatedContent']);
+    expect(panelsByColumn(2)).toEqual([
+      'metadata',
+      'links',
+      'projects',
+      'diagrams',
+      'relatedContent'
+    ]);
   });
 
   it('adds a panel per applicable unbound relation schema', () => {

@@ -208,9 +208,7 @@ export const getEntityDiagramFiles = async (
         (
           await Promise.all(
             [
-              ...new Set(
-                rows.flatMap(row => (row.project_id !== null ? [row.project_id] : []))
-              )
+              ...new Set(rows.flatMap(row => (row.project_id !== null ? [row.project_id] : [])))
             ].map(async projectId => [
               projectId,
               (await db.project.projects.getProject(ws, projectId))?.owner ?? null

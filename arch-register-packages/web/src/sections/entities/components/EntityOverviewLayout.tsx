@@ -230,7 +230,11 @@ export const EntityOverviewLayout = ({
       }
       if (block.kind === 'relatedContent') {
         return [
-          <RelatedContentBlock key={block.id} workspaceSlug={workspaceSlug} entityId={entity._uid} />
+          <RelatedContentBlock
+            key={block.id}
+            workspaceSlug={workspaceSlug}
+            entityId={entity._uid}
+          />
         ];
       }
       return [];

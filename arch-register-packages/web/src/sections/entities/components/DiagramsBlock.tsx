@@ -98,7 +98,9 @@ export const DiagramsBlock = ({
               <div className={styles.miniDiagramName}>
                 {file.content_metadata?.title ?? file.name}
               </div>
-              <div className={styles.miniDiagramSub}>{project?.name ?? (file.entity_id ? "Entity" : "Workspace")}</div>
+              <div className={styles.miniDiagramSub}>
+                {project?.name ?? (file.entity_id ? 'Entity' : 'Workspace')}
+              </div>
             </div>
           </a>
         </DiagramMetadataPopover>

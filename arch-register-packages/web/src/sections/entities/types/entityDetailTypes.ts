@@ -21,12 +21,7 @@ export type TabId =
 // Sidebar groups: each maps to a single sidebar entry whose page shows these as sub-tabs.
 // 'overview' is the fallback home tab id when a schema has no configurable detail layout tabs;
 // the entity detail screen also folds in the current schema's actual layout tab ids at runtime.
-export const HOME_TAB_IDS: readonly TabId[] = [
-  'overview',
-  'relations',
-  'conformance',
-  'changes'
-];
+export const HOME_TAB_IDS: readonly TabId[] = ['overview', 'relations', 'conformance', 'changes'];
 export const API_TAB_IDS: readonly TabId[] = ['api'];
 export const CONTEXT_TAB_IDS: readonly TabId[] = ['topology', 'graph', 'blast-radius'];
 export const COLLABORATION_TAB_IDS: readonly TabId[] = ['discussions'];

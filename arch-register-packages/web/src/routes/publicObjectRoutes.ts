@@ -243,7 +243,8 @@ export const scopedDiagramHref = (
 ) => {
   const ws = encodeURIComponent(workspaceSlug);
   const id = encodeURIComponent(file.id);
-  if (project) return projectDiagramHref(workspaceSlug, asProjectPublicId(project.public_id), file.id);
+  if (project)
+    return projectDiagramHref(workspaceSlug, asProjectPublicId(project.public_id), file.id);
   if (file.entity_id) return `/${ws}/entities/${encodeURIComponent(file.entity_id)}/diagrams/${id}`;
   return `/${ws}/content/diagrams/${id}`;
 };
