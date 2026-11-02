@@ -8,6 +8,7 @@ import {
   TbLink,
   TbLock,
   TbPlus,
+  TbFiles,
   TbSitemap,
   TbSquare,
   TbStack2,
@@ -55,7 +56,8 @@ const KIND_ICON: Record<LayoutBlockKind, React.ComponentType<{ size?: number }>>
   unboundTypedRelation: TbLink,
   links: TbExternalLink,
   projects: TbStack2,
-  diagrams: TbSitemap
+  diagrams: TbSitemap,
+  relatedContent: TbFiles
 };
 
 const moveItem = <T,>(items: T[], index: number, direction: -1 | 1): T[] => {
@@ -75,6 +77,7 @@ type Placed = {
   hasLinks: boolean;
   hasProjects: boolean;
   hasDiagrams: boolean;
+  hasRelatedContent: boolean;
 };
 
 const computePlaced = (layout: DetailLayoutConfig): Placed => {
@@ -84,7 +87,8 @@ const computePlaced = (layout: DetailLayoutConfig): Placed => {
     relationSchemaIds: new Set(),
     hasLinks: false,
     hasProjects: false,
-    hasDiagrams: false
+    hasDiagrams: false,
+    hasRelatedContent: false
   };
   for (const tab of layout.tabs) {
     for (const panel of tab.panels) {
@@ -97,6 +101,7 @@ const computePlaced = (layout: DetailLayoutConfig): Placed => {
         if (block.kind === 'links') placed.hasLinks = true;
         if (block.kind === 'projects') placed.hasProjects = true;
         if (block.kind === 'diagrams') placed.hasDiagrams = true;
+        if (block.kind === 'relatedContent') placed.hasRelatedContent = true;
       }
     }
   }
@@ -116,6 +121,7 @@ const blockLabel = (
   if (block.kind === 'links') return 'Links';
   if (block.kind === 'projects') return 'Projects';
   if (block.kind === 'diagrams') return 'Diagrams';
+  if (block.kind === 'relatedContent') return 'Related content';
   return '(unknown block)';
 };
 
@@ -628,6 +634,12 @@ export const SchemaLayoutEditor = ({
       options.other.push({ value: 'projects', label: 'Projects', kind: 'projects' });
     if (!placed.hasDiagrams)
       options.other.push({ value: 'diagrams', label: 'Diagrams', kind: 'diagrams' });
+    if (!placed.hasRelatedContent)
+      options.other.push({
+        value: 'relatedContent',
+        label: 'Related content',
+        kind: 'relatedContent'
+      });
     return options;
   };
 

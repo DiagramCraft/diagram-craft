@@ -10,7 +10,6 @@ export type TabId =
   | 'graph'
   | 'relations'
   | 'future-plans'
-  | 'related-content'
   | 'blast-radius'
   | 'assessments'
   | 'discussions'
@@ -25,7 +24,6 @@ export type TabId =
 export const HOME_TAB_IDS: readonly TabId[] = [
   'overview',
   'relations',
-  'related-content',
   'conformance',
   'changes'
 ];

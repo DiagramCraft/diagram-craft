@@ -27,7 +27,8 @@ const diagramEntityFileSchema = z.object({
       public_id: z.string().describe('Public project identifier'),
       name: z.string().describe('Project name')
     })
-    .describe('Parent project information')
+    .nullable()
+    .describe('Parent project information (null for workspace/entity-level diagrams)')
 });
 
 export const projectEntityContract = {

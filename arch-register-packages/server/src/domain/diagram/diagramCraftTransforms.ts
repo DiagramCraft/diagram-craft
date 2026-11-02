@@ -18,7 +18,7 @@ import {
 } from '../catalog/relationAccessControl';
 
 export type DiagramCraftSchemaField =
-  | Extract<SchemaField, { type: 'text' | 'longtext' | 'boolean' | 'date' | 'number' }>
+  | Extract<SchemaField, { type: 'text' | 'longtext' | 'boolean' | 'number' }>
   | (Extract<SchemaField, { type: 'select' }> & {
       options: Array<{ value: string; label: string }>;
     })
@@ -48,9 +48,11 @@ export const toDiagramCraftField = (
     case 'text':
     case 'longtext':
     case 'boolean':
-    case 'date':
     case 'number':
       return field;
+    case 'date':
+      // Diagram Craft has no date field type; dates are ISO strings, so expose them as text
+      return { ...field, type: 'text' };
     case 'select': {
       const e = enums.find(e => e.id === field.enumId);
       return {
@@ -183,6 +185,21 @@ export const toDiagramCraftRelationReferences = (
   );
 };
 
+// Diagram Craft only accepts primitives as data values, with references encoded as comma-separated
+// ID strings. Structured values (currency, duration, principal) have no schema field in the adapter
+// output, so they are dropped here; arrays of scalars are joined into the reference encoding.
+const normalizeDataValues = (data: Record<string, unknown>): Record<string, unknown> =>
+  Object.fromEntries(
+    Object.entries(data).flatMap(([key, value]): [string, unknown][] => {
+      if (Array.isArray(value)) {
+        return value.every(v => typeof v === 'string' || typeof v === 'number')
+          ? [[key, value.join(',')]]
+          : [];
+      }
+      return value === null || typeof value !== 'object' ? [[key, value]] : [];
+    })
+  );
+
 export const toDiagramCraftData = (
   row: Entity,
   schema: FieldGroupSchemaShape | null,
@@ -210,6 +227,6 @@ export const toDiagramCraftData = (
     _projectId: row.project_id,
     name: row.name,
     description: row.description,
-    ...filterLiveFieldGroups(authCtx, schema, { ...row.data, ...relationData })
+    ...normalizeDataValues(filterLiveFieldGroups(authCtx, schema, { ...row.data, ...relationData }))
   };
 };

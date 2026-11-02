@@ -132,7 +132,7 @@ export const RelationRecordCard = ({
             {expandable && (
               <TbChevronRight
                 size={10}
-                className={sharedStyles.dim}
+                className={sharedStyles.tertiary}
                 style={{
                   transform: expanded ? 'rotate(90deg)' : undefined,
                   transition: 'transform 0.1s ease'
@@ -146,10 +146,12 @@ export const RelationRecordCard = ({
             >
               {otherEndpoint.name}
             </EntityNavigationLink>
-            {!expanded && fieldSummaries.length > 0 && (
-              <span className={sharedStyles.dim}> {fieldSummaries.join(' · ')}</span>
-            )}
           </span>
+          {!expanded && fieldSummaries.length > 0 && (
+            <div className={styles.fieldSummary}>
+              <span className={sharedStyles.tertiary}> {fieldSummaries.join(' · ')}</span>
+            </div>
+          )}
         </div>
         {(onEdit || onDelete || !expandable) && (
           <div style={{ display: 'flex', gap: 4 }}>

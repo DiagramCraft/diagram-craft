@@ -6,7 +6,6 @@ import { EntityOverviewLayout } from './EntityOverviewLayout';
 import { EntityRelationsTab } from './EntityRelationsTab';
 import { EntityChangeHistoryTab } from './EntityChangeHistoryTab';
 import { EntityConformanceTab } from './EntityConformanceTab';
-import { EntityRelatedContentTab } from './EntityRelatedContentTab';
 import { HOME_TAB_IDS, type TabId } from '../types/entityDetailTypes';
 
 type Props = {
@@ -18,13 +17,12 @@ type Props = {
   canViewAudit: boolean;
   overviewProps: Omit<ComponentProps<typeof EntityOverviewLayout>, 'layout'>;
   relationsProps: ComponentProps<typeof EntityRelationsTab>;
-  relatedContentProps: ComponentProps<typeof EntityRelatedContentTab>;
   changeHistoryProps: ComponentProps<typeof EntityChangeHistoryTab>;
   conformanceProps: ComponentProps<typeof EntityConformanceTab>;
 };
 
 // Folds the schema's configurable detail-layout tabs (e.g. "Details", "Technical") into the same
-// top-level tab bar as the fixed Relations/Related content/Conformance/Change history tabs, rather than
+// top-level tab bar as the fixed Relations/Conformance/Change history tabs, rather than
 // nesting them inside a single "Overview" tab.
 export const EntityOverviewSection = ({
   tab,
@@ -35,7 +33,6 @@ export const EntityOverviewSection = ({
   canViewAudit,
   overviewProps,
   relationsProps,
-  relatedContentProps,
   changeHistoryProps,
   conformanceProps
 }: Props) => {
@@ -55,7 +52,6 @@ export const EntityOverviewSection = ({
             <Tabs.Trigger value="relations">
               Relations{relationCount > 0 ? ` (${relationCount})` : ''}
             </Tabs.Trigger>
-            <Tabs.Trigger value="related-content">Related content</Tabs.Trigger>
             {conformanceProps.canViewConformance && (
               <Tabs.Trigger value="conformance">
                 Conformance{activeViolationCount > 0 ? ` (${activeViolationCount})` : ''}
@@ -69,7 +65,6 @@ export const EntityOverviewSection = ({
         <EntityOverviewLayout {...overviewProps} layout={{ version: 1, tabs: [activeLayoutTab] }} />
       )}
       {tab === 'relations' && <EntityRelationsTab {...relationsProps} />}
-      {tab === 'related-content' && <EntityRelatedContentTab {...relatedContentProps} />}
       {tab === 'conformance' && <EntityConformanceTab {...conformanceProps} />}
       {tab === 'changes' && <EntityChangeHistoryTab {...changeHistoryProps} />}
     </>

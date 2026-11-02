@@ -1,6 +1,6 @@
 import type { DiagramEntityFile } from '@arch-register/api-types/projectEntityContract';
 import { DiagramMetadataPopover } from '../../../components/DiagramMetadataPopover';
-import { asProjectPublicId, projectDiagramHref } from '../../../routes/publicObjectRoutes';
+import { scopedDiagramHref } from '../../../routes/publicObjectRoutes';
 import styles from './EntityOverviewTab.module.css';
 
 /** Renders the diagrams an entity appears in. */
@@ -30,7 +30,7 @@ export const DiagramsBlock = ({
         >
           <a
             className={styles.miniDiagramRow}
-            href={projectDiagramHref(workspaceSlug, asProjectPublicId(project.public_id), file.id)}
+            href={scopedDiagramHref(workspaceSlug, file, project)}
           >
             <div className={styles.miniDiagramThumb}>
               <div className={styles.miniDiagramThumbGrid} />
@@ -98,7 +98,7 @@ export const DiagramsBlock = ({
               <div className={styles.miniDiagramName}>
                 {file.content_metadata?.title ?? file.name}
               </div>
-              <div className={styles.miniDiagramSub}>{project.name}</div>
+              <div className={styles.miniDiagramSub}>{project?.name ?? (file.entity_id ? "Entity" : "Workspace")}</div>
             </div>
           </a>
         </DiagramMetadataPopover>

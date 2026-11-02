@@ -1724,7 +1724,8 @@
                                                 "links",
                                                 "unboundTypedRelation",
                                                 "projects",
-                                                "diagrams"
+                                                "diagrams",
+                                                "relatedContent"
                                               ],
                                               "type": "string",
                                               "description": "Kind of content a layout block places"

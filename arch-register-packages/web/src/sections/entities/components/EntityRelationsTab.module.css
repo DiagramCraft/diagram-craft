@@ -71,6 +71,11 @@
   min-width: 0;
 }
 
+.fieldSummary {
+  margin-left: 1.1rem;
+  font-size: 10px;
+}
+
 .relationName {
   color: var(--base-fg);
   font-weight: 500;
