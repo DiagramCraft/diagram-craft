@@ -190,8 +190,8 @@ test.describe('diagram craft routes', () => {
           _owner: seedIds.teams.design,
           name: 'Frontend App',
           description: 'React single-page application served to end users.',
-          technology_releases: ['00000000-0000-0000-0006-000000000002'],
-          system: ['00000000-0000-0000-0002-000000000001']
+          technology_releases: '00000000-0000-0000-0006-000000000002',
+          system: '00000000-0000-0000-0002-000000000001'
         })
       ])
     );

@@ -3,7 +3,7 @@
   padding: 14px 16px;
   margin: 16px 24px 32px;
   background:
-    radial-gradient(circle at 1px 1px, oklch(0.24 0.005 260) 1px, transparent 1px) 0 0 / 16px 16px,
+    radial-gradient(circle at 1px 1px, var(--panel-border) 1px, transparent 1px) 0 0 / 16px 16px,
     var(--base-bg);
   border: 1px solid var(--panel-border);
   border-radius: var(--r-md);
