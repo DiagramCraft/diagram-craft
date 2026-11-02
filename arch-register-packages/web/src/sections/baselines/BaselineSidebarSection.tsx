@@ -78,12 +78,12 @@ export const BaselineSidebarSection = ({
       <SidebarGroupLabel>
         {kind === 'project' ? 'Project baselines' : 'Workspace baselines'}
       </SidebarGroupLabel>
-      {isLoading && <div className={`${styles.emptyState} dim`}>Loading baselines…</div>}
+      {isLoading && <div className={`${styles.emptyState} tertiary`}>Loading baselines…</div>}
       {!isLoading && error && (
-        <div className={`${styles.emptyState} dim`}>Could not load baselines.</div>
+        <div className={`${styles.emptyState} tertiary`}>Could not load baselines.</div>
       )}
       {!isLoading && !error && visibleBaselines.length === 0 && (
-        <div className={`${styles.emptyState} dim`}>No baselines yet.</div>
+        <div className={`${styles.emptyState} tertiary`}>No baselines yet.</div>
       )}
       {visibleBaselines.map(baseline => (
         <TreeRow

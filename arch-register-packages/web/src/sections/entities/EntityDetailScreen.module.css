@@ -344,7 +344,7 @@
 
 .etlLegItem {
   font-size: 10.5px;
-  color: var(--cmp-fg-disabled);
+  color: var(--panel-fg-dimmed);
   display: flex;
   align-items: center;
   gap: 4px;
@@ -388,7 +388,7 @@
 
 .etlConfigMeta {
   font-size: 11px;
-  color: var(--cmp-fg-disabled);
+  color: var(--panel-fg-dimmed);
 }
 
 .etlSep {
@@ -473,7 +473,7 @@
 
 .etlCornerLabel {
   font-size: 10px;
-  color: var(--cmp-fg-disabled);
+  color: var(--panel-fg-dimmed);
   font-family: var(--font-mono);
 }
 

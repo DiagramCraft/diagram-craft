@@ -446,7 +446,7 @@ export const EntitiesSidebar = ({
             )}
             <SidebarGroupLabel>Views</SidebarGroupLabel>
             {savedViews.filter(v => !v.isAdminView).length === 0 && (
-              <div className={`${styles.emptyState} dim`}>No saved views yet.</div>
+              <div className={`${styles.emptyState} tertiary`}>No saved views yet.</div>
             )}
             {savedViews
               .filter(v => !v.isAdminView)
@@ -470,10 +470,10 @@ export const EntitiesSidebar = ({
           <>
             <SidebarGroupLabel>Pinned</SidebarGroupLabel>
             {isPinnedEntitiesLoading && (
-              <div className={`${styles.emptyState} dim`}>Loading pinned entities…</div>
+              <div className={`${styles.emptyState} tertiary`}>Loading pinned entities…</div>
             )}
             {!isPinnedEntitiesLoading && pinnedEntities.length === 0 && (
-              <div className={`${styles.emptyState} dim`}>No pinned entities yet.</div>
+              <div className={`${styles.emptyState} tertiary`}>No pinned entities yet.</div>
             )}
             {pinnedEntities.map(entity => {
               const { schema, color } = resolveSchemaPresentation(schemas, entity.schema_id);
@@ -505,7 +505,7 @@ export const EntitiesSidebar = ({
               <>
                 <SidebarGroupLabel>Collections</SidebarGroupLabel>
                 {isCollectionsLoading && (
-                  <div className={`${styles.emptyState} dim`}>Loading collections…</div>
+                  <div className={`${styles.emptyState} tertiary`}>Loading collections…</div>
                 )}
                 {collections.map(collection => (
                   <TreeRow
