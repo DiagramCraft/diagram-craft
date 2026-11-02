@@ -51,13 +51,13 @@ export const ActivityFeedWidget = ({ config }: Props) => {
   };
 
   if (!canViewAudit) {
-    return <div className={`${styles.emptyInline} dim`}>You do not have access to activity.</div>;
+    return <div className={styles.emptyInline}>You do not have access to activity.</div>;
   }
 
   return (
     <div className={styles.activityList}>
       {activityLoading ? (
-        <div className={`${styles.emptyInline} dim`}>Loading activity...</div>
+        <div className={styles.emptyInline}>Loading activity...</div>
       ) : recentActivity.length > 0 ? (
         recentActivity.slice(0, limit).map(entry => (
           <button
@@ -69,7 +69,7 @@ export const ActivityFeedWidget = ({ config }: Props) => {
             <span className={styles.activityWho}>
               {entry.user_display_name ?? entry.user_id ?? 'Unknown'}
             </span>
-            <span className="dim"> {OPERATION_LABELS[entry.operation]} </span>
+            <span className={styles.activityOp}> {OPERATION_LABELS[entry.operation]} </span>
             <span className={styles.activityTarget}>{entry.entity_name}</span>
             <span className={styles.activityType}>
               {' '}
@@ -79,7 +79,7 @@ export const ActivityFeedWidget = ({ config }: Props) => {
           </button>
         ))
       ) : (
-        <div className={`${styles.emptyInline} dim`}>No recent activity.</div>
+        <div className={styles.emptyInline}>No recent activity.</div>
       )}
     </div>
   );

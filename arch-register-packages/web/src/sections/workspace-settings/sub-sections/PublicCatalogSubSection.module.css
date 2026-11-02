@@ -31,7 +31,7 @@
 }
 
 .muted {
-  color: var(--cmp-fg-disabled);
+  color: var(--panel-fg-tertiary);
   font-size: 12px;
 }
 

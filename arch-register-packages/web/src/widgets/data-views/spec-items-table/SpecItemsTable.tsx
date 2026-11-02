@@ -13,6 +13,7 @@ import { entitiesQuery } from '../../../queries/entities';
 import { stripEmptyGroups } from '../../../sections/entities/components/entityBrowserState';
 import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEntityDrawer';
 import { resolveEntityQuery } from '../entity-browser-embed/EntityBrowserEmbedFieldResolution';
+import styles from './SpecItemsTable.module.css';
 import { useWidgetFramed } from '../../shared/dashboard/WidgetFramed';
 import { specItemsEmptyLabel, specItemTone, specItemSortValue } from './specItemsTableLogic';
 import { SpecItemsTableWidgetConfig } from './types';
@@ -121,7 +122,7 @@ export const SpecItemsTableWidget = ({ config }: { config: SpecItemsTableWidgetC
                 title={row.item.path ?? row.item.channel ?? 'Unspecified resource'}
                 subtitle={row.item.identifier}
               />
-              <Table.Cell className="dim">{row.api.name}</Table.Cell>
+              <Table.Cell className={styles.apiName}>{row.api.name}</Table.Cell>
               <Table.Cell>{row.item.deprecated && <Chip tone="ghost">Deprecated</Chip>}</Table.Cell>
             </Table.Row>
           ))

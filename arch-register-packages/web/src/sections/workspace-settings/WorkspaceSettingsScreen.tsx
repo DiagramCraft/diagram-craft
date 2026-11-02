@@ -1,8 +1,8 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
-import styles from './WorkspaceSettingsScreen.module.css';
 import { getRouteApi } from '@tanstack/react-router';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { Title } from '../../components/Title';
+import { Page } from '../../components/Page';
 import { SectionActionsSlotContext } from './SectionActions';
 import { WorkspaceSettingsSectionHeader } from './WorkspaceSettingsSectionHeader';
 import { GeneralSubSection } from './sub-sections/GeneralSubSection';
@@ -70,21 +70,19 @@ export const WorkspaceSettingsScreen = () => {
     if (ctx.defaultSettingsSection) return null;
 
     return (
-      <div className={styles.screen}>
-        <div className={styles.head}>
-          <Title
-            breadcrumb={breadcrumb}
-            title="Workspace settings"
-            description="No settings are available for your current permissions."
-          />
-        </div>
-      </div>
+      <Page>
+        <Title
+          breadcrumb={breadcrumb}
+          title="Workspace settings"
+          description="No settings are available for your current permissions."
+        />
+      </Page>
     );
   }
 
   return (
     <SectionActionsSlotContext.Provider value={actionsSlot}>
-      <div className={styles.screen}>
+      <Page>
         <WorkspaceSettingsSectionHeader section={section} actionsRef={setActionsSlot} />
 
         {section === 'general' && <GeneralSubSection workspace={workspace} />}
@@ -148,7 +146,7 @@ export const WorkspaceSettingsScreen = () => {
         {section === 'public-catalog' && (
           <PublicCatalogSubSection workspaceSlug={workspaceSlug} schemas={ctx.schemas} />
         )}
-      </div>
+      </Page>
     </SectionActionsSlotContext.Provider>
   );
 };

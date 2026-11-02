@@ -385,7 +385,7 @@ export const RadarView = ({
                           style={
                             color
                               ? { background: color }
-                              : { border: '1px solid var(--base-fg-more-dim)' }
+                              : { border: '1px solid var(--base-fg-dimmed)' }
                           }
                         />
                         <span className={styles.ringOrderLabel}>{rv.label}</span>
@@ -518,7 +518,7 @@ export const RadarView = ({
                       <RadarBlip
                         key={blip.id}
                         blip={blip}
-                        color={quad?.color ?? 'var(--base-fg-more-dim)'}
+                        color={quad?.color ?? 'var(--base-fg-dimmed)'}
                         isHovered={activeId === blip.id}
                         isDimmed={!!activeId && activeId !== blip.id}
                         onClick={() => onEntityClick(blip.id)}
@@ -556,7 +556,7 @@ export const RadarView = ({
                               blip={blip}
                               quadColor={quad.color}
                               ringLabel={ring?.label ?? blip.ringValue}
-                              ringColor={ring?.color ?? 'var(--base-fg-more-dim)'}
+                              ringColor={ring?.color ?? 'var(--base-fg-dimmed)'}
                               isLinked={linkedEntityIds == null || linkedEntityIdSet.has(blip.id)}
                               active={activeId === blip.id}
                               onMouseEnter={() => hoverFromIndex(blip.id)}
@@ -671,7 +671,7 @@ const RadarGrid = ({
             style={
               {
                 fontSize: 9,
-                fill: 'var(--base-fg-more-dim)',
+                fill: 'var(--base-fg-dimmed)',
                 letterSpacing: 0.5,
                 textTransform: 'uppercase',
                 fontFamily: 'var(--font-mono)',
@@ -793,7 +793,7 @@ const BlipTooltip = ({
         </span>
         <span
           className={styles.tooltipName}
-          style={isLinked ? undefined : { color: 'var(--base-fg-more-dim)' }}
+          style={isLinked ? undefined : { color: 'var(--base-fg-dimmed)' }}
         >
           {blip.name}
         </span>
@@ -845,7 +845,7 @@ const LegendRow = ({
       </span>
       <span
         className={styles.legendRowName}
-        style={isLinked ? undefined : { color: 'var(--base-fg-more-dim)' }}
+        style={isLinked ? undefined : { color: 'var(--base-fg-dimmed)' }}
       >
         {blip.name}
       </span>

@@ -11,6 +11,7 @@ import {
 } from '../../shared/data/fieldAggregation';
 import styles from '../../shared/dashboard/WidgetRowList.module.css';
 import { TopEntitiesWidgetConfig } from './types';
+import { TbArrowRight } from 'react-icons/tb';
 
 const FETCH_LIMIT = 500;
 
@@ -85,15 +86,15 @@ export const TopEntitiesWidget = ({ config }: Props) => {
   const shareTotal = ranked.reduce((sum, item) => sum + Math.max(item.value.amount, 0), 0);
 
   if (!hasConfig) {
-    return <div className={`${styles.emptyInline} dim`}>This widget is not fully configured.</div>;
+    return <div className={styles.emptyInline}>This widget is not fully configured.</div>;
   }
 
   if (isLoading || isLoadingRelations) {
-    return <div className={`${styles.emptyInline} dim`}>Loading…</div>;
+    return <div className={styles.emptyInline}>Loading…</div>;
   }
 
   if (ranked.length === 0) {
-    return <div className={`${styles.emptyInline} dim`}>No entities.</div>;
+    return <div className={styles.emptyInline}>No entities.</div>;
   }
 
   const goToCatalog = () =>
@@ -130,12 +131,9 @@ export const TopEntitiesWidget = ({ config }: Props) => {
       ))}
       {(config.showLink ?? true) && (
         <button type="button" className={styles.footer} onClick={goToCatalog}>
-          View in catalog
+          View in catalog <TbArrowRight size={12} />
         </button>
       )}
     </div>
   );
 };
-
-export const isDirection = (value: unknown): value is 'asc' | 'desc' =>
-  value === 'asc' || value === 'desc';

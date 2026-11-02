@@ -34,7 +34,7 @@
 
 .pathTargetLabel {
   font-size: 10px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   white-space: nowrap;
 }
 
@@ -58,7 +58,7 @@
   background: transparent;
   border: none;
   border-radius: var(--r);
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   cursor: pointer;
 }
 
@@ -120,7 +120,7 @@
   height: 22px;
   padding: 0 8px;
   font-size: 11px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   background: transparent;
   border: 1px solid var(--panel-border);
   border-radius: var(--r);
@@ -177,12 +177,12 @@
 
 .statText {
   font-size: 11px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }
 
 .statLink {
   font-size: 11px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   background: transparent;
   border: none;
   padding: 0;
@@ -220,7 +220,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.4px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   background: var(--panel-bg);
   border-bottom: 1px solid var(--panel-border);
   white-space: nowrap;
@@ -275,7 +275,7 @@
 }
 
 .cellEmpty {
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   font-size: 11px;
 }
 
@@ -301,7 +301,7 @@
 }
 
 .pathArrow {
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }
 
 .pathNode {
@@ -330,7 +330,7 @@
   border: none;
   font-family: inherit;
   font-size: 11px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   cursor: pointer;
 }
 
@@ -371,7 +371,7 @@
 .pillProjects {
   margin-top: 3px;
   font-size: 10.5px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
 }
 
 /* Completion text - colour only, no chip */

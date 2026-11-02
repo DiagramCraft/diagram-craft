@@ -1,8 +1,8 @@
 import { SaveBarButtons } from '../SaveBarButtons';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
-import { Banner } from '../../../components/Banner';
+import { MutationError } from '../MutationError';
+import { SettingsBlock, SettingsBlockField } from '../SettingsBlock';
 import { ColorPicker } from '../../../components/ColorPicker';
 import { LoadingState } from '../../../components/LoadingState';
 import { useApplications, useUpdateApplication } from '../../../hooks/useApplications';
@@ -73,35 +73,32 @@ export const ApplicationGeneralCard = ({
   if (isLoading) return <LoadingState text="Loading application…" size="sm" />;
   if (!application) return null;
 
-  const error = updateApplication.error;
-
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', paddingTop: '1rem' }}>
-      {error && (
-        <Banner variant="error">
-          {error instanceof Error ? error.message : 'Failed to update the application.'}
-        </Banner>
-      )}
-
-      <FormElement label="Name" required>
-        <TextInput
-          value={draft.name}
-          onChange={value => setDraft(current => ({ ...current, name: value ?? '' }))}
-        />
-      </FormElement>
-      <FormElement label="Description">
-        <TextInput
-          value={draft.description}
-          onChange={value => setDraft(current => ({ ...current, description: value ?? '' }))}
-        />
-      </FormElement>
-      <FormElement label="Accent color">
-        <ColorPicker
-          value={draft.accentColor}
-          onChange={accentColor => setDraft(current => ({ ...current, accentColor }))}
-          size="small"
-        />
-      </FormElement>
-    </div>
+    <>
+      <MutationError error={updateApplication.error} />
+      <SettingsBlock title="Identity" description="How this application appears to members.">
+        <SettingsBlockField label="Name">
+          <TextInput
+            value={draft.name}
+            onChange={value => setDraft(current => ({ ...current, name: value ?? '' }))}
+            style={{ maxWidth: 340 }}
+          />
+        </SettingsBlockField>
+        <SettingsBlockField label="Description" align="top">
+          <TextInput
+            value={draft.description}
+            onChange={value => setDraft(current => ({ ...current, description: value ?? '' }))}
+            style={{ maxWidth: 540 }}
+          />
+        </SettingsBlockField>
+        <SettingsBlockField label="Accent color">
+          <ColorPicker
+            value={draft.accentColor}
+            onChange={accentColor => setDraft(current => ({ ...current, accentColor }))}
+            size="small"
+          />
+        </SettingsBlockField>
+      </SettingsBlock>
+    </>
   );
 };

@@ -5,7 +5,7 @@ import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { TbDownload, TbUpload, TbFileZip, TbAlertCircle, TbAlertTriangle } from 'react-icons/tb';
 import { orpcClient } from '../../../lib/orpcClient';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
-import { SettingsBlock, SettingsBlockField, SettingsBlockList } from '../SettingsBlock';
+import { SettingsBlock, SettingsBlockField } from '../SettingsBlock';
 import styles from './ExportImportSubSection.module.css';
 import { downloadBlob } from '../../../lib/browserDownload';
 import { DefinitionImportSubSection } from './DefinitionImportSubSection';
@@ -295,16 +295,18 @@ export const ExportImportSubSection = () => {
     }) ?? [];
 
   return (
-    <SettingsBlockList>
-      <Tabs.Root value={tab} onValueChange={v => setTab(v as 'export' | 'import' | 'definitions')}>
-        <Tabs.List>
-          <Tabs.Trigger value="export">Export</Tabs.Trigger>
-          <Tabs.Trigger value="import">Import</Tabs.Trigger>
-          <Tabs.Trigger value="definitions">Definition import</Tabs.Trigger>
-        </Tabs.List>
-      </Tabs.Root>
+    <Tabs.Root
+      autoHeight
+      value={tab}
+      onValueChange={v => setTab(v as 'export' | 'import' | 'definitions')}
+    >
+      <Tabs.List>
+        <Tabs.Trigger value="export">Export</Tabs.Trigger>
+        <Tabs.Trigger value="import">Import</Tabs.Trigger>
+        <Tabs.Trigger value="definitions">Definition import</Tabs.Trigger>
+      </Tabs.List>
 
-      {tab === 'export' && (
+      <Tabs.Content value="export">
         <SettingsBlock
           title="Export workspace"
           description="Download the selected workspace data as a ZIP archive."
@@ -437,9 +439,9 @@ export const ExportImportSubSection = () => {
             </div>
           </SettingsBlockField>
         </SettingsBlock>
-      )}
+      </Tabs.Content>
 
-      {tab === 'import' && (
+      <Tabs.Content value="import">
         <SettingsBlock
           title="Import workspace"
           description="Restore workspace data from a previously exported ZIP archive."
@@ -455,15 +457,14 @@ export const ExportImportSubSection = () => {
                 <div className={styles.inlineSuccess}>Import completed. Reloading…</div>
               )}
               <div className={styles.actionButtons}>
-                {!importSummary && importFile && (
-                  <Button
-                    onClick={handleImportParse}
-                    disabled={importStatus === 'parsing'}
-                    icon={<TbUpload size={13} />}
-                  >
-                    {importStatus === 'parsing' ? 'Parsing…' : 'Preview import'}
-                  </Button>
-                )}
+                <Button
+                  onClick={handleImportParse}
+                  disabled={importStatus === 'parsing' || !importFile || importSummary != null}
+                  icon={<TbUpload size={13} />}
+                >
+                  {importStatus === 'parsing' ? 'Parsing…' : 'Preview import'}
+                </Button>
+
                 {importSummary && (
                   <Button
                     onClick={handleImportExecute}
@@ -645,9 +646,11 @@ export const ExportImportSubSection = () => {
             </SettingsBlockField>
           )}
         </SettingsBlock>
-      )}
+      </Tabs.Content>
 
-      {tab === 'definitions' && <DefinitionImportSubSection />}
-    </SettingsBlockList>
+      <Tabs.Content value="definitions">
+        <DefinitionImportSubSection />
+      </Tabs.Content>
+    </Tabs.Root>
   );
 };

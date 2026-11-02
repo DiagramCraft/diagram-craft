@@ -1,7 +1,7 @@
 .icObjectGrid {
   scrollbar-gutter: stable;
   scrollbar-width: thin;
-  scrollbar-color: var(--base-fg-more-dim) var(--panel-bg);
+  scrollbar-color: var(--base-fg-dimmed) var(--panel-bg);
 
   overflow-y: scroll;
   overflow-x: hidden;

@@ -26,23 +26,29 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--base-fg);
+  color: var(--fg-secondary);
 }
 
 .rowMeta {
   margin-left: auto;
   font-size: 11px;
-  color: var(--cmp-fg-disabled);
+  color: var(--fg-tertiary);
   white-space: nowrap;
 }
 
 .footer {
   margin-top: auto;
-  padding: 3px 8px;
-  font-size: 11px;
+  padding: 3px 0;
+  font-size: 12px;
+  text-align: left;
+  color: var(--accent-fg);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .emptyInline {
+  color: var(--fg-dimmed);
   padding: 0;
   font-size: 12px;
 }
@@ -52,6 +58,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 11px;
+  color: var(--fg-tertiary);
 }
 
 /* Fixed columns (name | bar | value) so bars line up and share one width across rows. */
@@ -78,4 +85,8 @@
   display: block;
   height: 100%;
   background: var(--accent-fg);
+}
+
+.doneIcon {
+  color: var(--fg-dimmed);
 }

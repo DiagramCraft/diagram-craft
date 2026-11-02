@@ -73,7 +73,7 @@ export const SnapDetailPanel = ({
         )
       }
       title={
-        <span style={isLinked ? undefined : { color: 'var(--base-fg-more-dim)' }}>
+        <span style={isLinked ? undefined : { color: 'var(--base-fg-dimmed)' }}>
           {entity._name ?? entity._slug}
         </span>
       }
@@ -160,7 +160,7 @@ export const DetailPanel = ({
         )
       }
       title={
-        <span style={isLinked ? undefined : { color: 'var(--base-fg-more-dim)' }}>
+        <span style={isLinked ? undefined : { color: 'var(--base-fg-dimmed)' }}>
           {entity._name ?? entity._slug}
         </span>
       }

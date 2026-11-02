@@ -89,7 +89,7 @@ export const COLUMN_RENDERERS: Record<RenderType, ColumnRendererSpec> = {
     label: 'Plain',
     isApplicable: () => true,
     defaultConfig: () => ({ type: 'plain' }),
-    render: ({ text }) => <span className="dim">{text ?? '—'}</span>
+    render: ({ text }) => <span>{text ?? '—'}</span>
   },
   colorBand: {
     label: 'Color band',

@@ -36,7 +36,7 @@
 }
 
 .quoteStale {
-  border-left-color: var(--danger, #c23b3b);
+  border-left-color: var(--error-fg);
 }
 
 .staleBadge {
@@ -46,7 +46,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  color: var(--danger, #c23b3b);
+  color: var(--error-fg);
 }
 
 .resolvedBadge {
@@ -133,7 +133,7 @@
 }
 
 .textBtnDanger:hover {
-  color: var(--danger, #c23b3b);
+  color: var(--error-fg);
 }
 
 .replies {

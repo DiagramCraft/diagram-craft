@@ -85,7 +85,7 @@
 
       .styleAux {
         font-size: 0.625rem;
-        color: var(--base-fg-dim);
+        color: var(--base-fg-secondary);
       }
     }
   }

@@ -9,7 +9,7 @@
 }
 
 .root svg {
-  color: var(--cmp-fg-disabled);
+  color: var(--cmp-fg-tertiary);
   flex-shrink: 0;
 }
 
@@ -19,11 +19,11 @@
   background: transparent;
   border: 0;
   outline: 0;
-  color: var(--base-fg);
+  color: var(--cmp-fg);
 }
 
 .root input::placeholder {
-  color: var(--cmp-fg-disabled);
+  color: var(--cmp-fg-tertiary);
 }
 
 .md {
@@ -32,6 +32,15 @@
   height: 36px;
   background: var(--panel-bg);
   border-radius: var(--r-md);
+}
+
+.md svg,
+.md input::placeholder {
+  color: var(--panel-fg-tertiary);
+}
+
+.md input {
+  color: var(--panel-fg);
 }
 
 .md:focus-within {
@@ -51,7 +60,7 @@
   padding: 0 8px;
   background: var(--cmp-bg);
   border-radius: var(--r);
-  color: var(--base-fg-more-dim);
+  color: var(--cmp-fg-tertiary);
 }
 
 .sm:focus-within {
@@ -69,12 +78,12 @@
   width: 20px;
   height: 20px;
   border-radius: var(--r-sm);
-  color: var(--cmp-fg-disabled);
+  color: var(--cmp-fg-tertiary);
   background: transparent;
   flex-shrink: 0;
 }
 
 .clearBtn:hover {
   background: var(--cmp-bg-hover);
-  color: var(--base-fg);
+  color: var(--cmp-fg);
 }

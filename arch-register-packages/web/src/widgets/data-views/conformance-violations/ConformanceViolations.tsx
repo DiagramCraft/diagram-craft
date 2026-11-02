@@ -69,7 +69,7 @@ export const ConformanceViolationsWidget = ({
         </button>
       ))}
       {grouped.total > grouped.entities.length && (
-        <div className={`${styles.more} dim`}>
+        <div className={`${styles.more}`}>
           +{grouped.total - grouped.entities.length} more with gaps
         </div>
       )}
@@ -89,5 +89,5 @@ export const ConformanceViolationsHeaderActions = ({
     { schemaId, status: 'active', limit: 1, offset: 0 },
     permissions.canViewSchemas && schemaId != null
   );
-  return <span className="dim mono">{violations.data?.total ?? ''}</span>;
+  return <span className={`${styles.total} mono`}>{violations.data?.total ?? ''}</span>;
 };

@@ -5,7 +5,7 @@
   height: 100vh;
   width: 100vw;
   overflow: hidden;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   font-size: 13px;
 }
 
@@ -64,7 +64,7 @@
   padding: 0 3px;
   border-radius: 999px;
   background: var(--accent-fg);
-  color: var(--base-bg);
+  color: var(--inverse-fg);
   font-size: 8.5px;
   font-weight: 700;
   line-height: 1;

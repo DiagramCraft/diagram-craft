@@ -34,33 +34,31 @@ export const DangerZoneSubSection = ({ workspace }: { workspace: Workspace }) =>
   }, [workspace.id, canDelete, deleteWorkspaceMutation, navigate, workspaces]);
 
   return (
-    <div className={styles.blockList}>
-      <div className={styles.dangerCard}>
-        <div className={styles.dangerCardBody}>
-          <div className={styles.dangerCardTitle}>Delete workspace permanently</div>
-          <div className={styles.dangerCardText}>
-            This will permanently erase <strong>{workspace.name}</strong> — every project, entity,
-            diagram and integration. This cannot be undone.
-          </div>
-          <div className={styles.dangerCardControls}>
-            <div className={styles.fieldLabel}>Type the workspace name to confirm</div>
-            <TextInput
-              placeholder={workspace.name}
-              value={confirm}
-              onChange={value => setConfirm(value ?? '')}
-              style={{ maxWidth: 320, fontFamily: 'var(--mono)' }}
-            />
-          </div>
+    <div className={styles.dangerCard}>
+      <div className={styles.dangerCardBody}>
+        <div className={styles.dangerCardTitle}>Delete workspace permanently</div>
+        <div className={styles.dangerCardText}>
+          This will permanently erase <strong>{workspace.name}</strong> — every project, entity,
+          diagram and integration. This cannot be undone.
         </div>
-        <div className={styles.dangerCardActions}>
-          <Button
-            variant="danger"
-            disabled={!canDelete || deleteWorkspaceMutation.isPending}
-            onClick={handleDelete}
-          >
-            {deleteWorkspaceMutation.isPending ? 'Deleting...' : 'Delete workspace'}
-          </Button>
+        <div className={styles.dangerCardControls}>
+          <div className={styles.fieldLabel}>Type the workspace name to confirm</div>
+          <TextInput
+            placeholder={workspace.name}
+            value={confirm}
+            onChange={value => setConfirm(value ?? '')}
+            style={{ maxWidth: 320, fontFamily: 'var(--mono)' }}
+          />
         </div>
+      </div>
+      <div className={styles.dangerCardActions}>
+        <Button
+          variant="danger"
+          disabled={!canDelete || deleteWorkspaceMutation.isPending}
+          onClick={handleDelete}
+        >
+          {deleteWorkspaceMutation.isPending ? 'Deleting...' : 'Delete workspace'}
+        </Button>
       </div>
     </div>
   );

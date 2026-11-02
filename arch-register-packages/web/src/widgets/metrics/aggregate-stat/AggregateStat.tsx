@@ -84,7 +84,7 @@ const QueryStat = ({ config }: Props) => {
     );
   }
   if (matched.data?.ok !== true) {
-    return <div className={`${styles.message} dim`}>This widget's query is not valid.</div>;
+    return <div className={styles.message}>This widget's query is not valid.</div>;
   }
 
   const matchedCount = matched.data.total;

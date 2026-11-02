@@ -43,7 +43,7 @@ export const DocumentTypeVersionHistorySubSection = ({
   }
 
   return (
-    <div style={{ display: 'grid', gap: 12, padding: '16px 0' }}>
+    <div style={{ display: 'grid', gap: 12 }}>
       {versions.map(version => (
         <div
           key={version.version}

@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { BarList } from './BarList';
 
 const ratioColor = (effective: number, total: number): string => {
-  if (total === 0) return 'var(--base-fg-more-dim)';
+  if (total === 0) return 'var(--base-fg-dimmed)';
   const ratio = effective / total;
   return ratio < 0.5 ? '#e05252' : ratio < 1 ? '#e0a020' : '#3a5';
 };

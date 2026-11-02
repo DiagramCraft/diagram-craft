@@ -158,7 +158,7 @@ export const GovernanceCaseDrawer = ({
     <Drawer
       onClose={onClose}
       {...stackProps}
-      eyebrow={<span className="dim mono">{humanizeCaseKind(kase.status)}</span>}
+      eyebrow={<span className="tertiary mono">{humanizeCaseKind(kase.status)}</span>}
       title={caseKindLabel(kase.caseKind, kase.payload)}
       badges={
         <Chip tone="ghost" color={PRIORITY_TONE[priority]}>
@@ -240,7 +240,7 @@ export const GovernanceCaseDrawer = ({
           onClick={openDataset}
         >
           <span>{datasetEntity._name}</span>
-          <span className="dim mono">{datasetEntity._publicId}</span>
+          <span className="tertiary mono">{datasetEntity._publicId}</span>
         </button>
       ) : (
         <span className="dim">{`${capitalize(entityNoun)} unavailable.`}</span>

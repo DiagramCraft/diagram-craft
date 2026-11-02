@@ -59,7 +59,7 @@ export const BasicLight: Story = {
 const WithSupAndSubContent = () => {
   const [name, setName] = useState('');
   const [desc, setDesc] = useState('');
-  const labelStyle = { fontSize: 11, color: 'var(--base-fg-dim)', marginBottom: 4 };
+  const labelStyle = { fontSize: 11, color: 'var(--base-fg-secondary)', marginBottom: 4 };
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '6px 0' }}>
       <div style={{ display: 'flex', flexDirection: 'column' }}>

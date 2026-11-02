@@ -16,7 +16,7 @@
       content: "›";
 
       font-size: 13px;
-      color: var(--base-fg-more-dim);
+      color: var(--base-fg-dimmed);
       font-weight: 300;
       padding: 0 2px;
       flex-shrink: 0;

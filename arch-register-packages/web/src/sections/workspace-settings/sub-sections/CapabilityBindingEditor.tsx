@@ -21,6 +21,8 @@ import {
   useWorkspaceCapabilityConfigurations
 } from '../../../hooks/useWorkspaceConfig';
 import t from './CapabilityBindingEditor.module.css';
+import { Banner } from '../../../components/Banner';
+import { Stack } from '../../../components/Stack';
 
 /** A target-kind-agnostic view of the schemas a binding role can pick from and resolve fields on. */
 type BindingTarget = { id: string; name: string; fields: EntitySchema['fields'] };
@@ -176,10 +178,10 @@ export const CapabilityBindingEditor = ({
 
   const bindingRolesContent = (
     <>
-      <p className={t.mapIntro}>
+      <Banner variant="neutral">
         {definition.label} expects {bindingCount} schema binding{bindingCount === 1 ? '' : 's'}.
         Bind each to a schema in this workspace, then map its fields.
-      </p>
+      </Banner>
       <div className={t.map}>
         <div className={t.mapHead}>
           <span>Expected</span>
@@ -326,7 +328,7 @@ export const CapabilityBindingEditor = ({
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', paddingTop: '1rem' }}>
+    <Stack>
       {bindingRolesContent}
       {confirmDisableOpen && (
         <DeleteConfirmationDialog
@@ -339,6 +341,6 @@ export const CapabilityBindingEditor = ({
           onCancel={() => setConfirmDisableOpen(false)}
         />
       )}
-    </div>
+    </Stack>
   );
 };

@@ -33,6 +33,7 @@ import {
   type CheckType,
   type ConformanceCheckFormState
 } from './conformanceCheckEditorState';
+import { Banner } from '../../../components/Banner';
 import styles from './ConformanceSubSection.module.css';
 
 export type ConformanceCheckEditorProps = {
@@ -186,9 +187,9 @@ export const ConformanceCheckEditor = ({
       ]}
     >
       <div className={styles.form}>
-        <div className={styles.notice}>
+        <Banner variant="neutral">
           {CHECK_TYPE_META[form.type].label} — {CHECK_TYPE_META[form.type].description}
-        </div>
+        </Banner>
         <FormElement label="Name">
           <TextInput value={form.name} onChange={value => updateForm('name', value ?? '')} />
         </FormElement>
@@ -322,10 +323,10 @@ export const ConformanceCheckEditor = ({
 
         {form.type === 'ai_prompt' && (
           <>
-            <div className={`${styles.notice} ${!aiConfigured ? styles.warning : ''}`}>
+            <Banner variant={aiConfigured ? 'neutral' : 'warning'}>
               AI checks send only the selected fields and selected read-only tools to the configured
               workspace AI provider.
-            </div>
+            </Banner>
             <FormElement label="Conformance prompt">
               <textarea
                 className={styles.textarea}

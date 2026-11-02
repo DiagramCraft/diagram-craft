@@ -197,7 +197,7 @@ export const WorkspaceSettingsSidebar = ({
             <div className={styles.settingsWsBadge}>{workspace.short_code}</div>
             <div>
               <div className={styles.settingsWsName}>{workspace.name}</div>
-              <div className="dim" style={{ fontSize: 11 }}>
+              <div className={styles.settingsWsInfo}>
                 {entityCount} entities · {projects.length} projects
               </div>
             </div>

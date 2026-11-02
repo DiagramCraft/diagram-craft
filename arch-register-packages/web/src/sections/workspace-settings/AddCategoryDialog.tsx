@@ -32,7 +32,7 @@ export const AddCategoryDialog = ({
     <Dialog open={open} onClose={onCancel} title="Add category">
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <label style={{ fontSize: 12, color: 'var(--base-fg-more-dim)' }}>Name</label>
+          <label style={{ fontSize: 12, color: 'var(--base-fg-dimmed)' }}>Name</label>
           <input
             ref={inputRef}
             value={name}

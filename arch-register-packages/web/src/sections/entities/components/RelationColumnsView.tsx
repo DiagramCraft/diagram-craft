@@ -713,7 +713,7 @@ export const RelationColumnsView = ({
                                   <div
                                     className={styles.entityName}
                                     style={
-                                      isLinked ? undefined : { color: 'var(--base-fg-more-dim)' }
+                                      isLinked ? undefined : { color: 'var(--base-fg-dimmed)' }
                                     }
                                   >
                                     {entity.name ?? entity.slug}

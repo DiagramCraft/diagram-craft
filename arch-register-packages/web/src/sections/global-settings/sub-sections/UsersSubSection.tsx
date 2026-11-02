@@ -13,11 +13,11 @@ import { EmptyState } from '../../../components/EmptyState';
 import { LoadingState } from '../../../components/LoadingState';
 import { MemberAvatar } from '../../../components/MemberAvatar';
 import { SearchInput } from '../../../components/SearchInput';
+import { ViewControls } from '../../../components/ViewControls';
 import { UserStatusChip } from '../UserStatusChip';
 import { Table } from '../../../components/table/Table';
 import { getUserLabel } from '../../../utils/userLabel';
 import type { UserSummary } from '@arch-register/api-types/authContract';
-import styles from './UsersSubSection.module.css';
 
 export const UsersSubSection = ({
   createDialogOpen,
@@ -48,7 +48,7 @@ export const UsersSubSection = ({
 
   if (authConfig?.mode === 'oidc') {
     return (
-      <div className={styles.container}>
+      <div>
         <Banner variant="info">
           User management is unavailable while OIDC authentication is enabled.
         </Banner>
@@ -58,26 +58,14 @@ export const UsersSubSection = ({
 
   if (error) {
     return (
-      <div className={styles.container}>
+      <div>
         <Banner variant="error">Failed to load users.</Banner>
       </div>
     );
   }
 
   return (
-    <div className={styles.container}>
-      {!isLoading && users.length > 0 && (
-        <div className={styles.toolbar}>
-          <SearchInput
-            size="sm"
-            placeholder="Search by username, name, or email…"
-            value={query}
-            onChange={setQuery}
-            onClear={() => setQuery('')}
-          />
-        </div>
-      )}
-
+    <>
       {deactivateUser.error && (
         <Banner variant="error">
           {deactivateUser.error instanceof Error
@@ -86,86 +74,102 @@ export const UsersSubSection = ({
         </Banner>
       )}
 
-      {isLoading ? (
-        <LoadingState text="Loading users…" size="sm" />
-      ) : users.length === 0 ? (
-        <EmptyState compact title="No users have been created yet." />
-      ) : filteredUsers.length === 0 ? (
-        <EmptyState compact title="No users match this search." />
-      ) : (
-        <Table.Root>
-          <Table.Head>
-            <Table.Row>
-              <Table.HeaderCell style={{ minWidth: 260 }}>User</Table.HeaderCell>
-              <Table.HeaderCell>Provider</Table.HeaderCell>
-              <Table.HeaderCell>Status</Table.HeaderCell>
-              <Table.HeaderCell align="right" />
-            </Table.Row>
-          </Table.Head>
-          <Table.Body>
-            {filteredUsers.map(candidate => {
-              const isCurrentUser = candidate.id === currentUser?.id;
-              const canDeactivate =
-                candidate.is_active && !candidate.is_system_actor && !isCurrentUser;
-              return (
-                <Table.Row
-                  key={candidate.id}
-                  onClick={candidate.is_system_actor ? undefined : () => setEditingUser(candidate)}
-                >
-                  <Table.NameCell
-                    icon={
-                      <MemberAvatar
-                        name={candidate.display_name}
-                        email={candidate.email}
-                        userId={candidate.id}
-                        color={candidate.color}
-                      />
+      <div>
+        {!isLoading && users.length > 0 && (
+          <ViewControls variant="page">
+            <SearchInput
+              size="sm"
+              placeholder="Search by username, name, or email…"
+              value={query}
+              onChange={setQuery}
+              onClear={() => setQuery('')}
+            />
+          </ViewControls>
+        )}
+
+        {isLoading ? (
+          <LoadingState text="Loading users…" size="sm" />
+        ) : users.length === 0 ? (
+          <EmptyState compact title="No users have been created yet." />
+        ) : filteredUsers.length === 0 ? (
+          <EmptyState compact title="No users match this search." />
+        ) : (
+          <Table.Root>
+            <Table.Head>
+              <Table.Row>
+                <Table.HeaderCell style={{ minWidth: 260 }}>User</Table.HeaderCell>
+                <Table.HeaderCell>Provider</Table.HeaderCell>
+                <Table.HeaderCell>Status</Table.HeaderCell>
+                <Table.HeaderCell align="right" />
+              </Table.Row>
+            </Table.Head>
+            <Table.Body>
+              {filteredUsers.map(candidate => {
+                const isCurrentUser = candidate.id === currentUser?.id;
+                const canDeactivate =
+                  candidate.is_active && !candidate.is_system_actor && !isCurrentUser;
+                return (
+                  <Table.Row
+                    key={candidate.id}
+                    onClick={
+                      candidate.is_system_actor ? undefined : () => setEditingUser(candidate)
                     }
-                    title={candidate.display_name ?? candidate.user_id}
-                    subtitle={candidate.email ?? candidate.user_id}
-                  />
-                  <Table.Cell>
-                    <Chip tone="ghost">{candidate.auth_provider}</Chip>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <UserStatusChip
-                      isSystemActor={candidate.is_system_actor}
-                      isActive={candidate.is_active}
-                    />
-                  </Table.Cell>
-                  <Table.ActionsCell>
-                    <DropdownMenu
-                      trigger={
-                        <Table.DotsButton aria-label={`Actions for ${getUserLabel(candidate)}`} />
+                  >
+                    <Table.NameCell
+                      icon={
+                        <MemberAvatar
+                          name={candidate.display_name}
+                          email={candidate.email}
+                          userId={candidate.id}
+                          color={candidate.color}
+                        />
                       }
-                      items={
-                        [
-                          {
-                            label: 'Edit',
-                            icon: <TbEdit size={14} />,
-                            disabled: candidate.is_system_actor,
-                            onClick: () => setEditingUser(candidate)
-                          },
-                          ...(canDeactivate
-                            ? [
-                                {
-                                  label: 'Deactivate',
-                                  icon: <TbUserOff size={14} />,
-                                  danger: true,
-                                  onClick: () => setDeactivatingUser(candidate)
-                                }
-                              ]
-                            : [])
-                        ] satisfies MenuItem[]
-                      }
+                      title={candidate.display_name ?? candidate.user_id}
+                      subtitle={candidate.email ?? candidate.user_id}
                     />
-                  </Table.ActionsCell>
-                </Table.Row>
-              );
-            })}
-          </Table.Body>
-        </Table.Root>
-      )}
+                    <Table.Cell>
+                      <Chip tone="ghost">{candidate.auth_provider}</Chip>
+                    </Table.Cell>
+                    <Table.Cell>
+                      <UserStatusChip
+                        isSystemActor={candidate.is_system_actor}
+                        isActive={candidate.is_active}
+                      />
+                    </Table.Cell>
+                    <Table.ActionsCell>
+                      <DropdownMenu
+                        trigger={
+                          <Table.DotsButton aria-label={`Actions for ${getUserLabel(candidate)}`} />
+                        }
+                        items={
+                          [
+                            {
+                              label: 'Edit',
+                              icon: <TbEdit size={14} />,
+                              disabled: candidate.is_system_actor,
+                              onClick: () => setEditingUser(candidate)
+                            },
+                            ...(canDeactivate
+                              ? [
+                                  {
+                                    label: 'Deactivate',
+                                    icon: <TbUserOff size={14} />,
+                                    danger: true,
+                                    onClick: () => setDeactivatingUser(candidate)
+                                  }
+                                ]
+                              : [])
+                          ] satisfies MenuItem[]
+                        }
+                      />
+                    </Table.ActionsCell>
+                  </Table.Row>
+                );
+              })}
+            </Table.Body>
+          </Table.Root>
+        )}
+      </div>
 
       <UserDialog open={createDialogOpen} onClose={onCloseCreateDialog} />
       <UserDialog
@@ -189,6 +193,6 @@ export const UsersSubSection = ({
           });
         }}
       />
-    </div>
+    </>
   );
 };

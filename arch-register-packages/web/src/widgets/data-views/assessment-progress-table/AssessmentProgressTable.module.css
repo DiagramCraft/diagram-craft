@@ -10,6 +10,7 @@
 }
 
 .message {
+  color: var(--fg-dimmed);
   padding: 8px 0;
   font-size: 12px;
 }

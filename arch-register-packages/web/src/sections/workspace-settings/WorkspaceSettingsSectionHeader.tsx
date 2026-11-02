@@ -106,19 +106,17 @@ export const WorkspaceSettingsSectionHeader = ({
   const meta = SECTION_META[section] ?? SECTION_META['general']!;
 
   return (
-    <div className={styles.head}>
-      <Title
-        breadcrumb={[
-          {
-            label: 'Home',
-            onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
-          },
-          { label: 'Settings' }
-        ]}
-        title={meta.title}
-        description={meta.sub}
-        buttons={<div ref={actionsRef} className={styles.actions} />}
-      />
-    </div>
+    <Title
+      breadcrumb={[
+        {
+          label: 'Home',
+          onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
+        },
+        { label: 'Settings' }
+      ]}
+      title={meta.title}
+      description={meta.sub}
+      buttons={<div ref={actionsRef} className={styles.actions} />}
+    />
   );
 };

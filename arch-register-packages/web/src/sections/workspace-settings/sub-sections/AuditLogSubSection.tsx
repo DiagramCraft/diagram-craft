@@ -145,7 +145,7 @@ export const AuditLogSubSection = ({
   };
 
   return (
-    <div className={styles.blockList}>
+    <div>
       <ViewControls variant="page">
         <LabeledSelect
           label="Object type"

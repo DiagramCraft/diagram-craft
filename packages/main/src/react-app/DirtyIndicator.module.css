@@ -1,11 +1,11 @@
 .icDirtyIndicator {
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   display: flex;
   align-items: center;
 
   > button {
     padding: 1px 5px;
-    color: var(--base-fg-more-dim);
+    color: var(--base-fg-dimmed);
   }
 
   .eText {

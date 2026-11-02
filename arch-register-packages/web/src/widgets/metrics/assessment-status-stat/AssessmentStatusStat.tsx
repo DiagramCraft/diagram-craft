@@ -18,11 +18,9 @@ export const AssessmentStatusStatWidget = ({ config }: { config: AssessmentStatu
   const { schemaFound, summaries, isLoading } = useSchemaAssessmentSummaries(config.schemaName);
   const counts = useMemo(() => countByStatus(summaries), [summaries]);
 
-  if (isLoading) return <div className={`${styles.message} dim`}>Loading…</div>;
+  if (isLoading) return <div className={styles.message}>Loading…</div>;
   if (!schemaFound) {
-    return (
-      <div className={`${styles.message} dim`}>Entity type “{config.schemaName}” not found.</div>
-    );
+    return <div className={styles.message}>Entity type “{config.schemaName}” not found.</div>;
   }
 
   const count = counts[config.status];

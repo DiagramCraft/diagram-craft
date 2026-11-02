@@ -36,7 +36,7 @@ export const PathWalkerWidget = ({ config }: { config: PathWalkerWidgetConfig })
   );
 
   if (!rootSchema && schemas.length > 0) {
-    return <div className={`${styles.message} dim`}>This widget is not fully configured.</div>;
+    return <div className={styles.message}>This widget is not fully configured.</div>;
   }
 
   return (

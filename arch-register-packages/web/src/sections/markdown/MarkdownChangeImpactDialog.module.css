@@ -5,7 +5,7 @@
 
 .description {
   margin: 0;
-  color: var(--text-color-secondary, #4b5563);
+  color: var(--fg-secondary);
 }
 
 .field {

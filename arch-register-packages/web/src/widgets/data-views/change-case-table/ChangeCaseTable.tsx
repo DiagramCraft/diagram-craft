@@ -46,9 +46,7 @@ export const ChangeCaseTableWidget = ({ config }: { config: ChangeCaseTableConfi
   const rows = useMemo(() => filterByStatus(register.rows, status), [register.rows, status]);
 
   if (schemaId == null) {
-    return (
-      <div className={`${styles.message} dim`}>Entity type “{config.schemaName}” not found.</div>
-    );
+    return <div className={styles.message}>Entity type “{config.schemaName}” not found.</div>;
   }
 
   const showRisk = config.severity === 'due-date';
@@ -82,7 +80,7 @@ export const ChangeCaseTableWidget = ({ config }: { config: ChangeCaseTableConfi
               <Table.Row key={row.case.id} onClick={() => openCaseDrawer(row.case.id)}>
                 <Table.Cell>{caseKindLabel(row.case.caseKind, row.case.payload)}</Table.Cell>
                 <Table.NameCell title={row.entity._name} subtitle={row.entity._publicId} />
-                <Table.Cell className={row.requesterName == null ? 'dim' : undefined}>
+                <Table.Cell className={row.requesterName == null ? styles.noRequester : undefined}>
                   {row.requesterName ?? 'unknown'}
                 </Table.Cell>
                 {showRisk && (

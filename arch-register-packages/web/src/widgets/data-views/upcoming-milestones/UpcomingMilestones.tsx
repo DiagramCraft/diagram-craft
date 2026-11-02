@@ -32,17 +32,17 @@ export const UpcomingMilestonesWidget = () => {
   }, [milestones]);
 
   if (!projectId) {
-    return <div className={`${styles.emptyInline} dim`}>No project in context.</div>;
+    return <div className={styles.emptyInline}>No project in context.</div>;
   }
 
   if (isLoading) {
-    return <div className={`${styles.emptyInline} dim`}>Loading milestones...</div>;
+    return <div className={styles.emptyInline}>Loading milestones...</div>;
   }
 
   const items = [...(lastCompleted ? [lastCompleted] : []), ...upcoming];
 
   if (items.length === 0) {
-    return <div className={`${styles.emptyInline} dim`}>No milestones.</div>;
+    return <div className={styles.emptyInline}>No milestones.</div>;
   }
 
   const goToMilestones = () =>
@@ -57,7 +57,9 @@ export const UpcomingMilestonesWidget = () => {
     <div className={styles.list}>
       {items.map(milestone => (
         <button key={milestone.id} type="button" className={styles.row} onClick={goToMilestones}>
-          {milestone.status === 'complete' && <TbCircleCheck size={12} className="dim" />}
+          {milestone.status === 'complete' && (
+            <TbCircleCheck size={12} className={styles.doneIcon} />
+          )}
           <span className={styles.rowLabel}>{milestone.name}</span>
           <span className={styles.rowMeta}>{formatDate(milestone.target_date)}</span>
         </button>

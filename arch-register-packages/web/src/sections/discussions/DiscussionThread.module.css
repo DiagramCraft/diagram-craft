@@ -85,7 +85,7 @@
 }
 
 .textBtnDanger:hover {
-  color: var(--danger);
+  color: var(--error-fg);
 }
 
 .newTopic {

@@ -28,7 +28,7 @@
 .star.on,
 .star:hover,
 .star:hover ~ .star {
-  color: var(--warn, orange);
+  color: var(--warning-fg);
 }
 
 .star.on svg,

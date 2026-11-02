@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import styles from '../workspace-settings/WorkspaceSettingsScreen.module.css';
 import { useNavigate } from '@tanstack/react-router';
 import { TbPlus } from 'react-icons/tb';
 import { Title } from '../../components/Title';
+import { Page } from '../../components/Page';
 import { Button } from '@diagram-craft/app-components/Button';
 import { GlobalPermissionsSubSection } from './sub-sections/GlobalPermissionsSubSection';
 import { UsersSubSection } from './sub-sections/UsersSubSection';
@@ -47,33 +47,31 @@ export const GlobalSettingsScreen = () => {
   if (section === 'users' && (!authConfigLoaded || !canManageUsers)) return null;
 
   return (
-    <div className={styles.screen}>
-      <div className={styles.head}>
-        <Title
-          breadcrumb={[
-            {
-              label: 'Home',
-              onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
-            },
-            { label: 'Settings' }
-          ]}
-          title={meta.title}
-          description={meta.sub}
-          buttons={
-            <Button
-              variant="primary"
-              icon={<TbPlus size={12} />}
-              onClick={() =>
-                section === 'users'
-                  ? setUsersCreateDialogOpen(true)
-                  : setGlobalPermissionsAddDialogOpen(true)
-              }
-            >
-              {meta.buttonLabel}
-            </Button>
-          }
-        />
-      </div>
+    <Page>
+      <Title
+        breadcrumb={[
+          {
+            label: 'Home',
+            onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
+          },
+          { label: 'Settings' }
+        ]}
+        title={meta.title}
+        description={meta.sub}
+        buttons={
+          <Button
+            variant="primary"
+            icon={<TbPlus size={12} />}
+            onClick={() =>
+              section === 'users'
+                ? setUsersCreateDialogOpen(true)
+                : setGlobalPermissionsAddDialogOpen(true)
+            }
+          >
+            {meta.buttonLabel}
+          </Button>
+        }
+      />
 
       {section === 'users' ? (
         <UsersSubSection
@@ -86,6 +84,6 @@ export const GlobalSettingsScreen = () => {
           onCloseAddDialog={() => setGlobalPermissionsAddDialogOpen(false)}
         />
       )}
-    </div>
+    </Page>
   );
 };

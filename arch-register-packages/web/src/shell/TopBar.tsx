@@ -250,6 +250,7 @@ const WorkspaceSwitcher = ({
               type="button"
               key={w.id}
               className={`${styles.menuItem} ${w.id === current ? styles.menuItemActive : ''}`}
+              style={{ '--tint': w.color ?? 'var(--accent-chroma)' } as CSSProperties}
               onClick={() => {
                 onPick(w.id);
                 setOpen(false);

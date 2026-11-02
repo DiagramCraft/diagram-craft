@@ -104,15 +104,13 @@ export const RelatedEntitiesListWidget = ({
   ]);
 
   if (!schema && schemas.length > 0) {
-    return (
-      <div className={`${rowStyles.emptyInline} dim`}>This widget is not fully configured.</div>
-    );
+    return <div className={rowStyles.emptyInline}>This widget is not fully configured.</div>;
   }
   if (unresolved) {
-    return <div className={`${rowStyles.emptyInline} dim`}>No item selected</div>;
+    return <div className={rowStyles.emptyInline}>No item selected</div>;
   }
   if (target.isLoading || listed.isLoading || via.isLoading) {
-    return <div className={`${rowStyles.emptyInline} dim`}>Loading…</div>;
+    return <div className={rowStyles.emptyInline}>Loading…</div>;
   }
 
   const emptyMessage = config.emptyMessage ?? 'Nothing related.';
@@ -146,7 +144,7 @@ export const RelatedEntitiesListWidget = ({
             {(status || description) && (
               <div className={styles.meta}>
                 {status && <span>{status}</span>}
-                {description && <span>{description}</span>}
+                {description && <span className={styles.description}>{description}</span>}
               </div>
             )}
             {hasProgress(config) &&
@@ -166,7 +164,7 @@ export const RelatedEntitiesListWidget = ({
                   </span>
                 </div>
               ) : (
-                <span className="dim">—</span>
+                <span className={styles.none}>—</span>
               ))}
           </div>
         );

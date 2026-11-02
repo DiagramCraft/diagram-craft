@@ -28,14 +28,14 @@
 
 .title {
   margin: 0;
-  color: var(--base-text);
+  color: var(--fg);
   font-size: 1.25rem;
   font-weight: 700;
 }
 
 .message {
   margin: 0;
-  color: var(--base-text-secondary);
+  color: var(--fg-secondary);
   line-height: 1.5;
 }
 
@@ -44,7 +44,7 @@
   padding: 0.85rem 1rem;
   border-radius: 12px;
   background: color-mix(in srgb, var(--error-fg) 8%, transparent);
-  color: var(--base-text);
+  color: var(--fg);
   font-size: 0.92rem;
   line-height: 1.45;
   white-space: pre-wrap;

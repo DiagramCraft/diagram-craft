@@ -80,7 +80,7 @@ export const RelationDrawer = ({
   return (
     <Drawer
       onClose={onClose}
-      eyebrow={<span className="dim mono">{relationSchema?.name ?? 'Relation'}</span>}
+      eyebrow={<span className="mono">{relationSchema?.name ?? 'Relation'}</span>}
       title={relationLabel(relation)}
       badges={
         relation._lifecycle ? <Chip tone="ghost">{relation._lifecycle.name}</Chip> : undefined

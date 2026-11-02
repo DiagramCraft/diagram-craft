@@ -123,7 +123,7 @@ export const RelationTableWidget = ({ config }: { config: RelationTableWidgetCon
     }
     if (column.field.type === 'entityRelation') {
       const ids = relationIds(relation[column.field.id]);
-      if (ids.length === 0) return <span className="dim">—</span>;
+      if (ids.length === 0) return <span className={styles.empty}>—</span>;
       return (
         <div className={styles.chips}>
           {ids.map(id => {

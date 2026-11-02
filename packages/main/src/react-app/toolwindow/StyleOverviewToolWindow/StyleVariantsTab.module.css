@@ -31,6 +31,6 @@
   .eEmpty {
     padding: 1rem 0.75rem;
     font-size: 0.75rem;
-    color: var(--base-fg-dim);
+    color: var(--base-fg-secondary);
   }
 }

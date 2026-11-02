@@ -141,7 +141,7 @@ export const SnapBlock = ({
 
   const s = schemaMap.get(entity._schema.id);
   const barColor =
-    lifecycleStates.find(ls => ls.id === entity._lifecycle?.id)?.color ?? 'var(--base-fg-more-dim)';
+    lifecycleStates.find(ls => ls.id === entity._lifecycle?.id)?.color ?? 'var(--base-fg-dimmed)';
 
   const startD = getDateValue(entity, startFieldId);
   const endD = getDateValue(entity, endFieldId);
@@ -235,7 +235,7 @@ export const SnapBlock = ({
           )}
           <span
             className={styles.entityName}
-            style={isLinked ? undefined : { color: 'var(--base-fg-more-dim)' }}
+            style={isLinked ? undefined : { color: 'var(--base-fg-dimmed)' }}
           >
             {entity._name ?? entity._slug}
           </span>

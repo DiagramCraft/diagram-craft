@@ -12,7 +12,7 @@
   flex-direction: column;
   gap: 6px;
   min-height: 188px;
-  color: var(--base-fg-more-dim);
+  color: var(--base-fg-dimmed);
   border-style: dashed;
   background: transparent;
   font-size: 12px;

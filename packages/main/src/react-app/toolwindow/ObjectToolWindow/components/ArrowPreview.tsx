@@ -17,11 +17,11 @@ export const ArrowPreview = (props: Props) => {
         >
           <path
             d={props.start.path}
-            stroke={props.color ?? 'var(--base-fg-dim)'}
+            stroke={props.color ?? 'var(--base-fg-secondary)'}
             strokeWidth={1}
             fill={
               props.start.fill === 'fg'
-                ? (props.fg ?? 'var(--base-fg-dim)')
+                ? (props.fg ?? 'var(--base-fg-secondary)')
                 : props.start.fill === 'bg'
                   ? props.bg
                   : 'none'
@@ -41,11 +41,11 @@ export const ArrowPreview = (props: Props) => {
         >
           <path
             d={props.end.path}
-            stroke={props.color ?? 'var(--base-fg-dim)'}
+            stroke={props.color ?? 'var(--base-fg-secondary)'}
             strokeWidth={1}
             fill={
               props.end.fill === 'fg'
-                ? (props.fg ?? 'var(--base-fg-dim)')
+                ? (props.fg ?? 'var(--base-fg-secondary)')
                 : props.end.fill === 'bg'
                   ? props.bg
                   : 'none'
@@ -57,7 +57,7 @@ export const ArrowPreview = (props: Props) => {
         d={`M ${2 + (props.start?.shortenBy ?? 0)} 5 L ${
           props.width - 1 - (props.end?.shortenBy ?? 0)
         } 5`}
-        stroke={props.color ?? 'var(--base-fg-dim)'}
+        stroke={props.color ?? 'var(--base-fg-secondary)'}
         strokeWidth={'1'}
         style={{ cursor: 'move', fill: 'none' }}
         markerStart={props.start ? `url(#arrow_start_${props.type}_${id})` : undefined}

@@ -495,7 +495,7 @@ export const BubbleChartView = ({
                   x={MARGIN_LEFT + plotW / 2}
                   y={vbH - 10}
                   textAnchor="middle"
-                  style={{ fontSize: 11, fontWeight: 600, fill: 'var(--base-fg-more-dim)' }}
+                  style={{ fontSize: 11, fontWeight: 600, fill: 'var(--base-fg-dimmed)' }}
                 >
                   {xLabel}
                 </text>
@@ -504,7 +504,7 @@ export const BubbleChartView = ({
                   y={MARGIN_TOP + plotH / 2}
                   textAnchor="middle"
                   transform={`rotate(-90, 14, ${MARGIN_TOP + plotH / 2})`}
-                  style={{ fontSize: 11, fontWeight: 600, fill: 'var(--base-fg-more-dim)' }}
+                  style={{ fontSize: 11, fontWeight: 600, fill: 'var(--base-fg-dimmed)' }}
                 >
                   {yLabel}
                 </text>
@@ -566,7 +566,7 @@ export const BubbleChartView = ({
                         textAnchor="middle"
                         style={{
                           fontSize: 9,
-                          fill: 'var(--base-fg-dim)',
+                          fill: 'var(--base-fg-secondary)',
                           pointerEvents: 'none',
                           userSelect: 'none'
                         }}
@@ -608,7 +608,7 @@ export const BubbleChartView = ({
                       style={
                         linkedEntityIds == null || linkedEntityIdSet.has(activeBubble.id)
                           ? undefined
-                          : { color: 'var(--base-fg-more-dim)' }
+                          : { color: 'var(--base-fg-dimmed)' }
                       }
                     >
                       {activeBubble.name}

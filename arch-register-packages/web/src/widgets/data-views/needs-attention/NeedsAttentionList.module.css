@@ -46,6 +46,7 @@
   align-items: center;
   gap: 6px;
   font-size: 11px;
+  color: var(--fg-tertiary);
 }
 
 .priorityPill {

@@ -5,7 +5,7 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import type { SupportedCurrency } from '@arch-register/api-types/workspaceConfigContract';
 import { useUpdateSupportedCurrencies } from '../../../hooks/useWorkspaceConfig';
-import { SettingsBlock, SettingsBlockList } from '../SettingsBlock';
+import { SettingsBlock } from '../SettingsBlock';
 import { SectionActions } from '../SectionActions';
 import styles from './SupportedCurrenciesSubSection.module.css';
 
@@ -65,61 +65,59 @@ export const SupportedCurrenciesSubSection = ({
           onSave={save}
         />
       </SectionActions>
-      <SettingsBlockList>
-        <SettingsBlock
-          title="Supported currencies"
-          description="Currency fields accept codes in this list. Removing a code does not change existing values. The default currency is used when entering an amount without an explicit currency."
-        >
-          <div className={styles.fieldGrid}>
-            {items.map((currency, index) => (
-              <Fragment key={index}>
-                <input
-                  type="radio"
-                  name="default-currency"
-                  className={styles.defaultRadio}
-                  aria-label={`Use ${currency.code || 'this currency'} as default`}
-                  checked={currency.code !== '' && currency.code === defaultCode}
-                  disabled={currency.code === ''}
-                  onChange={() => setDefaultCode(currency.code)}
-                />
-                <TextInput
-                  value={currency.code}
-                  onChange={value => update(index, { code: (value ?? '').toUpperCase() })}
-                />
-                <TextInput
-                  value={currency.label}
-                  onChange={value => update(index, { label: value ?? '' })}
-                />
-                <Button
-                  onClick={() => remove(index)}
-                  variant={'danger'}
-                  style={{ marginLeft: '1rem' }}
-                >
-                  <TbTrash size={12} />
-                </Button>
+      <SettingsBlock
+        title="Supported currencies"
+        description="Currency fields accept codes in this list. Removing a code does not change existing values. The default currency is used when entering an amount without an explicit currency."
+      >
+        <div className={styles.fieldGrid}>
+          {items.map((currency, index) => (
+            <Fragment key={index}>
+              <input
+                type="radio"
+                name="default-currency"
+                className={styles.defaultRadio}
+                aria-label={`Use ${currency.code || 'this currency'} as default`}
+                checked={currency.code !== '' && currency.code === defaultCode}
+                disabled={currency.code === ''}
+                onChange={() => setDefaultCode(currency.code)}
+              />
+              <TextInput
+                value={currency.code}
+                onChange={value => update(index, { code: (value ?? '').toUpperCase() })}
+              />
+              <TextInput
+                value={currency.label}
+                onChange={value => update(index, { label: value ?? '' })}
+              />
+              <Button
+                onClick={() => remove(index)}
+                variant={'danger'}
+                style={{ marginLeft: '1rem' }}
+              >
+                <TbTrash size={12} />
+              </Button>
 
-                {index < items.length - 1 && (
-                  <div
-                    style={{
-                      gridColumn: '1 / 5',
-                      borderBottom: '1px dashed var(--panel-border)',
-                      marginBottom: '4px'
-                    }}
-                  />
-                )}
-              </Fragment>
-            ))}
-          </div>
-          <Button
-            icon={<TbPlus size={12} />}
-            onClick={() =>
-              setItems(current => [...current, { code: '', label: '', sort_order: current.length }])
-            }
-          >
-            Add currency
-          </Button>
-        </SettingsBlock>
-      </SettingsBlockList>
+              {index < items.length - 1 && (
+                <div
+                  style={{
+                    gridColumn: '1 / 5',
+                    borderBottom: '1px dashed var(--panel-border)',
+                    marginBottom: '4px'
+                  }}
+                />
+              )}
+            </Fragment>
+          ))}
+        </div>
+        <Button
+          icon={<TbPlus size={12} />}
+          onClick={() =>
+            setItems(current => [...current, { code: '', label: '', sort_order: current.length }])
+          }
+        >
+          Add currency
+        </Button>
+      </SettingsBlock>
     </>
   );
 };

@@ -14,7 +14,7 @@
   &[data-headless="true"] {
     background-color: var(--base-bg);
     padding: 10px 10px 10px 10px;
-    color: var(--base-fg-dim);
+    color: var(--base-fg-secondary);
     border-bottom: 1px solid var(--panel-border);
     font-size: 11px;
 

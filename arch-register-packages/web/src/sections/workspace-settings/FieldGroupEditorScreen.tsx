@@ -5,6 +5,8 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { Title } from '../../components/Title';
+import { Page } from '../../components/Page';
+import { Panel } from '../../components/Panel';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { FieldConfigList } from '../../components/FieldConfigList';
 import { EditorActionsMenu, EditorSaveButtons } from './EditorActionsMenu';
@@ -42,46 +44,45 @@ export const FieldGroupEditorScreen = () => {
   const editing = Boolean(selected || isNew);
 
   return (
-    <div className={styles.screen}>
-      <div className={styles.head}>
-        <Title
-          breadcrumb={[
-            {
-              label: 'Home',
-              onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
-            },
-            { label: 'Settings' }
-          ]}
-          eyebrow="Shared field group"
-          title={editing ? draft.name || 'New field group' : 'Shared fieldgroups'}
-          description={
-            editing
-              ? `${draft.fields.length} fields`
-              : 'Reusable field definitions included by multiple entity types.'
-          }
-          buttons={
-            canEdit && editing ? (
-              <EditorSaveButtons
-                canSave={draft.dirty && draft.name.trim() !== ''}
-                dirty={draft.dirty}
-                pending={draft.isSaving}
-                onSave={() => void draft.save()}
-                onCancel={draft.revert}
-              />
-            ) : undefined
-          }
-          menu={
-            canEdit && selected ? (
-              <EditorActionsMenu
-                deleteLabel="Delete fieldgroup"
-                onDelete={() => void draft.remove()}
-              />
-            ) : undefined
-          }
-        />
-      </div>
+    <Page>
+      <Title
+        breadcrumb={[
+          {
+            label: 'Home',
+            onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
+          },
+          { label: 'Settings' }
+        ]}
+        eyebrow="Shared field group"
+        title={editing ? draft.name || 'New field group' : 'Shared fieldgroups'}
+        description={
+          editing
+            ? `${draft.fields.length} fields`
+            : 'Reusable field definitions included by multiple entity types.'
+        }
+        buttons={
+          canEdit && editing ? (
+            <EditorSaveButtons
+              canSave={draft.dirty && draft.name.trim() !== ''}
+              dirty={draft.dirty}
+              pending={draft.isSaving}
+              onSave={() => void draft.save()}
+              onCancel={draft.revert}
+            />
+          ) : undefined
+        }
+        menu={
+          canEdit && selected ? (
+            <EditorActionsMenu
+              deleteLabel="Delete fieldgroup"
+              onDelete={() => void draft.remove()}
+            />
+          ) : undefined
+        }
+      />
+
       {editing ? (
-        <div className={styles.editor}>
+        <Panel>
           {draft.error && <div role="alert">{draft.error}</div>}
           <div className={styles.formRow}>
             <div>
@@ -142,10 +143,10 @@ export const FieldGroupEditorScreen = () => {
               />
             )}
           />
-        </div>
+        </Panel>
       ) : (
         <div className={styles.fieldsEmpty}>Select a fieldgroup or create a new one.</div>
       )}
-    </div>
+    </Page>
   );
 };

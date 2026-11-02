@@ -41,7 +41,7 @@
 
 .cornerLabel {
   font-size: 10px;
-  color: var(--cmp-fg-disabled, var(--text-muted));
+  color: var(--fg-dimmed);
   font-family: var(--font-mono);
 }
 
@@ -57,7 +57,7 @@
   align-items: center;
   padding: 0 8px;
   font-size: 10.5px;
-  color: var(--cmp-fg-disabled, var(--text-muted));
+  color: var(--fg-dimmed);
   border-right: 1px solid var(--panel-border);
   white-space: nowrap;
 }
@@ -164,11 +164,13 @@
 }
 
 .caption {
+  color: var(--fg-dimmed);
   font-size: 11px;
   padding: 10px 2px 0;
 }
 
 .empty {
+  color: var(--fg-dimmed);
   padding: 32px;
   text-align: center;
 }

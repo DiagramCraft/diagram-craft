@@ -61,12 +61,12 @@ export const UpcomingByDateWidget = ({ config }: Props) => {
   );
   const referenced = useEntitiesByIds(workspaceSlug, referencedIds);
 
-  if (isLoading) return <div className={`${rowStyles.emptyInline} dim`}>Loading…</div>;
+  if (isLoading) return <div className={rowStyles.emptyInline}>Loading…</div>;
   if (data?.ok === false) {
-    return <div className={`${rowStyles.emptyInline} dim`}>This widget's query is not valid.</div>;
+    return <div className={rowStyles.emptyInline}>This widget's query is not valid.</div>;
   }
   if (rows.length === 0) {
-    return <div className={`${rowStyles.emptyInline} dim`}>Nothing upcoming.</div>;
+    return <div className={rowStyles.emptyInline}>Nothing upcoming.</div>;
   }
 
   const sublabelOf = (record: Record<string, unknown>): string | undefined => {
@@ -99,7 +99,7 @@ export const UpcomingByDateWidget = ({ config }: Props) => {
           >
             <span className={styles.text}>
               <span className={rowStyles.rowLabel}>{String(record._name)}</span>
-              {sublabel && <span className={`${rowStyles.rowSub} dim`}>{sublabel}</span>}
+              {sublabel && <span className={`${rowStyles.rowSub}`}>{sublabel}</span>}
             </span>
             {value && (
               <span className={`${rowStyles.rowMeta} mono`}>

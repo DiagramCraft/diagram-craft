@@ -265,7 +265,7 @@ export const StylesheetsPanel = ({ stylesheets }: StylesheetsPanelProps) => {
   return (
     <>
       {groups.length === 0 ? (
-        <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--base-fg-dim)' }}>
+        <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--base-fg-secondary)' }}>
           No stylesheets found
         </div>
       ) : (

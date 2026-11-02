@@ -37,7 +37,7 @@ export const GovernanceSidebar = ({ workspaceSlug }: { workspaceSlug: string }) 
             label={s.label}
             active={scope === s.value}
             trailing={
-              counts[s.value] ? <span className="dim mono">{counts[s.value]}</span> : undefined
+              counts[s.value] ? <span className="tertiary mono">{counts[s.value]}</span> : undefined
             }
             onClick={() =>
               navigate({

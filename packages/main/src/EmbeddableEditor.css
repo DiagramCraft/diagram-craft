@@ -20,7 +20,7 @@
   background: transparent;
   border: 1px solid var(--panel-border);
   border-radius: var(--cmp-radius);
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   font-size: 12px;
   margin-left: 7px;
   margin-right: 15px;

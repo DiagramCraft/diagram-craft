@@ -22,7 +22,7 @@ export const CloneEntityDialog = ({ open, entityName, onConfirm, onCancel }: Pro
       A new entity named <b>{entityName} (copy)</b> will be created with the same properties and
       references as <b>{entityName}</b>.
     </p>
-    <p style={{ margin: '8px 0 0', color: 'var(--base-fg-more-dim)' }}>
+    <p style={{ margin: '8px 0 0', color: 'var(--base-fg-dimmed)' }}>
       Typed relations, change history and diagram memberships are not copied. You will be taken to
       the new entity afterwards.
     </p>

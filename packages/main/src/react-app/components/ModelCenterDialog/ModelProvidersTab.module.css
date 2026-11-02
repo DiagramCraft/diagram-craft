@@ -77,13 +77,13 @@
     justify-content: center;
     padding: 48px 24px;
     gap: 16px;
-    color: var(--base-fg-more-dim);
+    color: var(--base-fg-dimmed);
 
     p {
       margin: 0;
       font-size: 14px;
       font-weight: 500;
-      color: var(--base-fg-dim);
+      color: var(--base-fg-secondary);
     }
   }
 
@@ -145,7 +145,7 @@
       padding: 0;
 
       &:hover {
-        color: var(--base-fg-dim);
+        color: var(--base-fg-secondary);
         background: var(--cmp-bg);
       }
     }

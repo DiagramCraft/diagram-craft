@@ -1,7 +1,7 @@
 import { SaveBarButtons } from '../SaveBarButtons';
 import { MutationError } from '../MutationError';
 import { useState, useCallback } from 'react';
-import { SettingsBlock, SettingsBlockField, SettingsBlockList } from '../SettingsBlock';
+import { SettingsBlock, SettingsBlockField } from '../SettingsBlock';
 import { SectionActions } from '../SectionActions';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
@@ -102,101 +102,99 @@ export const GeneralSubSection = ({ workspace }: { workspace: Workspace }) => {
           onSave={handleSave}
         />
       </SectionActions>
-      <SettingsBlockList>
-        <MutationError error={updateWorkspaceMutation.error} />
-        <SettingsBlock title="Identity" description="How this workspace appears to members.">
-          <SettingsBlockField
-            label="Workspace name"
-            hint="Shown in the top-left switcher and on shared links."
-          >
-            <TextInput
-              value={name}
-              onChange={value => setName(value ?? '')}
-              style={{ maxWidth: 340 }}
-            />
-          </SettingsBlockField>
-
-          <SettingsBlockField label="URL slug">
-            <TextInput
-              value={slug}
-              onChange={value => setSlug(value ?? '')}
-              style={{ maxWidth: 340 }}
-            />
-          </SettingsBlockField>
-
-          <SettingsBlockField
-            label="Short code"
-            hint="Two-letter badge used in tight UI like the switcher."
-          >
-            <TextInput
-              value={shortCode}
-              onChange={value => setShortCode((value ?? '').toUpperCase().slice(0, 2))}
-              style={{ width: 80, fontFamily: 'var(--mono)' }}
-              maxLength={2}
-            />
-          </SettingsBlockField>
-
-          <SettingsBlockField label="Color" hint="Badge accent color in the workspace switcher.">
-            <ColorPicker
-              value={color}
-              onChange={v => setColor(v ?? SCHEMA_COLORS[0]!)}
-              size="small"
-            />
-          </SettingsBlockField>
-
-          <SettingsBlockField label="Description" align="top">
-            <TextArea
-              value={description}
-              onChange={value => setDescription(value ?? '')}
-              rows={5}
-              style={{ maxWidth: 540 }}
-            />
-          </SettingsBlockField>
-        </SettingsBlock>
-
-        <SettingsBlock
-          title="Date & time format"
-          description="How dates and times are displayed throughout this workspace."
+      <MutationError error={updateWorkspaceMutation.error} />
+      <SettingsBlock title="Identity" description="How this workspace appears to members.">
+        <SettingsBlockField
+          label="Workspace name"
+          hint="Shown in the top-left switcher and on shared links."
         >
-          <SettingsBlockField label="Date format">
-            <Select.Root
-              value={dateFormat}
-              onChange={value => setDateFormat((value as WorkspaceDateFormat) ?? dateFormat)}
-              style={{ width: '340px' }}
-            >
-              {WORKSPACE_DATE_FORMATS.map(preset => (
-                <Select.Item key={preset} value={preset}>
-                  {DATE_FORMAT_LABELS[preset]}
-                </Select.Item>
-              ))}
-            </Select.Root>
-          </SettingsBlockField>
+          <TextInput
+            value={name}
+            onChange={value => setName(value ?? '')}
+            style={{ maxWidth: 340 }}
+          />
+        </SettingsBlockField>
 
-          <SettingsBlockField label="Time format">
-            <Select.Root
-              value={timeFormat}
-              onChange={value => setTimeFormat((value as WorkspaceTimeFormat) ?? timeFormat)}
-              style={{ width: '340px' }}
-            >
-              {WORKSPACE_TIME_FORMATS.map(preset => (
-                <Select.Item key={preset} value={preset}>
-                  {TIME_FORMAT_LABELS[preset]}
-                </Select.Item>
-              ))}
-            </Select.Root>
-          </SettingsBlockField>
+        <SettingsBlockField label="URL slug">
+          <TextInput
+            value={slug}
+            onChange={value => setSlug(value ?? '')}
+            style={{ maxWidth: 340 }}
+          />
+        </SettingsBlockField>
 
-          <SettingsBlockField
-            label="Preview"
-            hint="How the current date and time render with these settings."
+        <SettingsBlockField
+          label="Short code"
+          hint="Two-letter badge used in tight UI like the switcher."
+        >
+          <TextInput
+            value={shortCode}
+            onChange={value => setShortCode((value ?? '').toUpperCase().slice(0, 2))}
+            style={{ width: 80, fontFamily: 'var(--mono)' }}
+            maxLength={2}
+          />
+        </SettingsBlockField>
+
+        <SettingsBlockField label="Color" hint="Badge accent color in the workspace switcher.">
+          <ColorPicker
+            value={color}
+            onChange={v => setColor(v ?? SCHEMA_COLORS[0]!)}
+            size="small"
+          />
+        </SettingsBlockField>
+
+        <SettingsBlockField label="Description" align="top">
+          <TextArea
+            value={description}
+            onChange={value => setDescription(value ?? '')}
+            rows={5}
+            style={{ maxWidth: 540 }}
+          />
+        </SettingsBlockField>
+      </SettingsBlock>
+
+      <SettingsBlock
+        title="Date & time format"
+        description="How dates and times are displayed throughout this workspace."
+      >
+        <SettingsBlockField label="Date format">
+          <Select.Root
+            value={dateFormat}
+            onChange={value => setDateFormat((value as WorkspaceDateFormat) ?? dateFormat)}
+            style={{ width: '340px' }}
           >
-            {formatDateTime(new Date(), '—', {
-              date_format: dateFormat,
-              time_format: timeFormat
-            })}
-          </SettingsBlockField>
-        </SettingsBlock>
-      </SettingsBlockList>
+            {WORKSPACE_DATE_FORMATS.map(preset => (
+              <Select.Item key={preset} value={preset}>
+                {DATE_FORMAT_LABELS[preset]}
+              </Select.Item>
+            ))}
+          </Select.Root>
+        </SettingsBlockField>
+
+        <SettingsBlockField label="Time format">
+          <Select.Root
+            value={timeFormat}
+            onChange={value => setTimeFormat((value as WorkspaceTimeFormat) ?? timeFormat)}
+            style={{ width: '340px' }}
+          >
+            {WORKSPACE_TIME_FORMATS.map(preset => (
+              <Select.Item key={preset} value={preset}>
+                {TIME_FORMAT_LABELS[preset]}
+              </Select.Item>
+            ))}
+          </Select.Root>
+        </SettingsBlockField>
+
+        <SettingsBlockField
+          label="Preview"
+          hint="How the current date and time render with these settings."
+        >
+          {formatDateTime(new Date(), '—', {
+            date_format: dateFormat,
+            time_format: timeFormat
+          })}
+        </SettingsBlockField>
+      </SettingsBlock>
     </>
   );
 };

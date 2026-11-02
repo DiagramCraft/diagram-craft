@@ -34,7 +34,7 @@
   }
 
   .eInput {
-    color: var(--panel-fg);
+    color: var(--cmp-fg);
     border: none;
     background: none;
     font-family: inherit;
@@ -52,7 +52,7 @@
   }
 
   .eSearchIcon {
-    color: var(--base-fg-more-dim);
+    color: var(--base-fg-dimmed);
     flex-shrink: 0;
   }
 

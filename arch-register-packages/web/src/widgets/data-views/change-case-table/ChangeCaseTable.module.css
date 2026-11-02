@@ -6,6 +6,11 @@
 }
 
 .message {
+  color: var(--fg-dimmed);
   padding: 8px 12px;
   font-size: 12px;
+}
+
+.noRequester {
+  color: var(--fg-dimmed);
 }

@@ -5,7 +5,8 @@ import * as FormElementStories from './FormElement.stories';
 
 # FormElement
 
-A wrapper component that provides consistent label styling and layout for form inputs. Use `FormElement` to wrap `TextInput`, `TextArea`, or `Select` components when you need a vertical label layout.
+A wrapper component that provides consistent label styling and layout for form inputs. Use `FormElement` to wrap
+`TextInput`, `TextArea`, or `Select` components when you need a vertical label layout.
 
 ## When to Use
 
@@ -61,25 +62,30 @@ Example of a complete form using multiple `FormElement` components.
 
 ## Accessibility
 
-`FormElement` is built on [base-ui's `Field`](https://base-ui.com/react/components/field) primitive and includes built-in accessibility features:
+`FormElement` is built on [base-ui's `Field`](https://base-ui.com/react/components/field) primitive and includes
+built-in accessibility features:
 
 - Uses a semantic `<label>` element associated with the input via `htmlFor`/`id`
 - Error messages have `role="alert"` for screen reader announcements
 - Hint and error messages are associated with their input via `aria-describedby`
 
-`FormElement` automatically generates and wires an `id` onto its single child element (and sets `aria-describedby` when a hint or error is present), so callers no longer need to manage `id`/`htmlFor` manually. Pass `htmlFor` explicitly only if you need to take over id association yourself (for example, to point at a nested input) — when passed, `FormElement` will not modify the child's props.
+`FormElement` automatically generates and wires an `id` onto its single child element (and sets `aria-describedby` when
+a hint or error is present), so callers no longer need to manage `id`/`htmlFor` manually. Pass `htmlFor` explicitly only
+if you need to take over id association yourself (for example, to point at a nested input) — when passed, `FormElement`
+will not modify the child's props.
 
 ## Styling
 
 The component uses CSS variables for theming:
 
 - `--base-fg` - Label text color
-- `--base-fg-dim` - Hint text color
+- `--base-fg-secondary` - Hint text color
 - `--cmp-fg-disabled` - Optional indicator and disabled text color
 
 ## Migration from Custom Labels
 
 ### Before
+
 ```tsx
 <div className={styles.field}>
   <label>Name <span className={styles.required}>*</span></label>
@@ -88,6 +94,7 @@ The component uses CSS variables for theming:
 ```
 
 ### After
+
 ```tsx
 <FormElement label="Name" required>
   <TextInput value={name} onChange={setName} />

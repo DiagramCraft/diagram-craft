@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { getRouteApi } from '@tanstack/react-router';
-import screenStyles from '../workspace-settings/WorkspaceSettingsScreen.module.css';
 import { Title } from '../../components/Title';
+import { Page } from '../../components/Page';
 import { useAuth } from '../../auth/AuthContext';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { SectionActionsSlotContext } from '../workspace-settings/SectionActions';
@@ -26,27 +26,25 @@ export const AccountSettingsScreen = () => {
 
   return (
     <SectionActionsSlotContext.Provider value={actionsSlot}>
-      <div className={screenStyles.screen}>
-        <div className={screenStyles.head}>
-          <Title
-            breadcrumb={[
-              {
-                label: 'Home',
-                onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
-              },
-              { label: 'Account settings' }
-            ]}
-            title={section.label}
-            description={section.description}
-            buttons={<div ref={setActionsSlot} style={{ display: 'contents' }} />}
-          />
-        </div>
+      <Page>
+        <Title
+          breadcrumb={[
+            {
+              label: 'Home',
+              onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
+            },
+            { label: 'Account settings' }
+          ]}
+          title={section.label}
+          description={section.description}
+          buttons={<div ref={setActionsSlot} style={{ display: 'contents' }} />}
+        />
 
         {section.id === 'profile' && <ProfileSubSection />}
         {section.id === 'appearance' && <AppearanceSubSection />}
         {section.id === 'notifications' && <NotificationPreferencesSubSection />}
         {section.id === 'api-tokens' && <ApiTokensSubSection />}
-      </div>
+      </Page>
     </SectionActionsSlotContext.Provider>
   );
 };

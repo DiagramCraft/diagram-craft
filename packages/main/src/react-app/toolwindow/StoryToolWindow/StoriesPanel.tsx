@@ -230,7 +230,7 @@ export const StoriesPanel = () => {
       style={{ padding: '0.25rem 0' }}
     >
       {stories.length === 0 && (
-        <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--base-fg-dim)' }}>
+        <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--base-fg-secondary)' }}>
           No stories yet. Create one to get started.
         </div>
       )}
@@ -266,7 +266,9 @@ export const StoriesPanel = () => {
               <Tree.Children>
                 {story.steps.length === 0 && (
                   <Tree.Node>
-                    <Tree.NodeLabel style={{ fontStyle: 'italic', color: 'var(--base-fg-dim)' }}>
+                    <Tree.NodeLabel
+                      style={{ fontStyle: 'italic', color: 'var(--base-fg-secondary)' }}
+                    >
                       No steps yet
                     </Tree.NodeLabel>
                   </Tree.Node>
@@ -308,7 +310,7 @@ export const StoriesPanel = () => {
                         ) : stepIndex === 0 ? (
                           <Tree.Node>
                             <Tree.NodeLabel
-                              style={{ fontStyle: 'italic', color: 'var(--base-fg-dim)' }}
+                              style={{ fontStyle: 'italic', color: 'var(--base-fg-secondary)' }}
                             >
                               No state recorded yet
                             </Tree.NodeLabel>
@@ -316,7 +318,7 @@ export const StoriesPanel = () => {
                         ) : (
                           <Tree.Node>
                             <Tree.NodeLabel
-                              style={{ fontStyle: 'italic', color: 'var(--base-fg-dim)' }}
+                              style={{ fontStyle: 'italic', color: 'var(--base-fg-secondary)' }}
                             >
                               No changes from previous step
                             </Tree.NodeLabel>

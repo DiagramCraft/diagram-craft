@@ -48,7 +48,7 @@ export const BlastRadiusConfigForm = ({
         />
       </FormGroup>
       <FormGroup label="Relation groups" supplementaryLabel="(optional)" variant="simple">
-        <div className={`${configFormStyles.hint} dim`}>
+        <div className={configFormStyles.hint}>
           Optional. Limit the radius to typed-relation fields and show one column per field.
         </div>
         {groups.map((group, index) => (

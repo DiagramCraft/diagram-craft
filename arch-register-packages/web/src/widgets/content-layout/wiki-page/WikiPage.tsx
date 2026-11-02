@@ -18,7 +18,7 @@ export const isInDashboardScope = (
   pageProjectId: string | null | undefined
 ) => (surface === 'project' ? !!projectId && pageProjectId === projectId : pageProjectId === null);
 
-const unavailable = <div className={`${styles.message} dim`}>This wiki page is unavailable.</div>;
+const unavailable = <div className={styles.message}>This wiki page is unavailable.</div>;
 
 export const WikiPageWidget = ({ config }: { config: WikiPageWidgetConfig }) => {
   const { workspaceSlug = '', projectId, dashboardSurface = 'workspace' } = useMdxContext();
@@ -43,8 +43,7 @@ export const WikiPageWidget = ({ config }: { config: WikiPageWidgetConfig }) => 
   ) {
     return unavailable;
   }
-  if (!content?.body.trim())
-    return <div className={`${styles.message} dim`}>This wiki page is empty.</div>;
+  if (!content?.body.trim()) return <div className={styles.message}>This wiki page is empty.</div>;
 
   return (
     <div className={`${styles.content} ${typography.articleTypography}`}>

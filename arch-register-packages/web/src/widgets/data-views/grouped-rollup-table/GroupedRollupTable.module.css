@@ -15,3 +15,7 @@
   background: var(--accent-fg);
   border-radius: 3px;
 }
+
+.percent {
+  color: var(--fg-dimmed);
+}

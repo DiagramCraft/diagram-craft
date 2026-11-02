@@ -85,7 +85,7 @@
 
     .eContent {
       overflow: hidden;
-      color: var(--base-fg-dim);
+      color: var(--base-fg-secondary);
       background-color: var(--base-bg);
       text-align: left;
       height: var(--accordion-panel-height);

@@ -5,7 +5,7 @@ export const LineEndIcon = (props: { className?: string }) => (
     height="32"
     viewBox="0 0 24 24"
     fill="none"
-    stroke="var(--base-fg-dim)"
+    stroke="var(--base-fg-secondary)"
     strokeWidth="1"
     strokeLinecap="round"
     strokeLinejoin="round"

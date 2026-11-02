@@ -39,7 +39,7 @@ import { deriveAssessmentOverview } from './assessmentDetailsViewModel';
 const ASSESSMENT_STATUS_COLOR: Record<Assessment['status'], string> = {
   draft: 'var(--cmp-fg-dim)',
   open: 'var(--green)',
-  closed: 'var(--warn, orange)',
+  closed: 'var(--warning-fg)',
   archived: 'var(--cmp-fg-disabled)'
 };
 

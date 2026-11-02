@@ -13,7 +13,7 @@ export const DiagramsBlock = ({
 }) =>
   entityDiagramFiles.length === 0 ? (
     <div className={styles.metaPropRow}>
-      <span className={styles.metaPropValue} style={{ color: 'var(--base-fg-more-dim)' }}>
+      <span className={styles.metaPropValue} style={{ color: 'var(--base-fg-dimmed)' }}>
         Not in any diagram
       </span>
     </div>
@@ -52,7 +52,7 @@ export const DiagramsBlock = ({
                     height="7"
                     rx="1"
                     fill="var(--cmp-bg)"
-                    stroke="var(--base-fg-more-dim)"
+                    stroke="var(--base-fg-dimmed)"
                     strokeWidth="0.7"
                   />
                   <rect
@@ -62,7 +62,7 @@ export const DiagramsBlock = ({
                     height="7"
                     rx="1"
                     fill="var(--cmp-bg)"
-                    stroke="var(--base-fg-more-dim)"
+                    stroke="var(--base-fg-dimmed)"
                     strokeWidth="0.7"
                   />
                   <rect
@@ -72,7 +72,7 @@ export const DiagramsBlock = ({
                     height="7"
                     rx="1"
                     fill="var(--cmp-bg)"
-                    stroke="var(--base-fg-more-dim)"
+                    stroke="var(--base-fg-dimmed)"
                     strokeWidth="0.7"
                   />
                   <rect

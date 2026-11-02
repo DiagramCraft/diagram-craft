@@ -86,7 +86,7 @@ export const CardsView = ({
               className={styles.cardName}
               style={
                 projectContext != null && !isEntityInProject(entity, projectContext.project.id)
-                  ? { color: 'var(--base-fg-more-dim)' }
+                  ? { color: 'var(--base-fg-dimmed)' }
                   : undefined
               }
             >

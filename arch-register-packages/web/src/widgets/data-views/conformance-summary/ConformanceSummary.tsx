@@ -23,10 +23,10 @@ export const ConformanceSummaryWidget = ({
   );
 
   if (!permissions.canViewSchemas) {
-    return <div className={`${styles.message} dim`}>You do not have access to conformance.</div>;
+    return <div className={styles.message}>You do not have access to conformance.</div>;
   }
   if (isLoading || !summary) {
-    return <div className={`${styles.message} dim`}>Loading conformance…</div>;
+    return <div className={styles.message}>Loading conformance…</div>;
   }
 
   return (

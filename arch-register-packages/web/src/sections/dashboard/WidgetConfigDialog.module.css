@@ -1,4 +1,5 @@
 .hint {
+  color: var(--fg-dimmed);
   font-size: 12px;
 }
 

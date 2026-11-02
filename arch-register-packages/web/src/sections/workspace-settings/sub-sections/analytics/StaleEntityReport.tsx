@@ -3,20 +3,19 @@ import { useEntities } from '../../../../hooks/useEntities';
 import { useWorkspaceAnalytics } from '../../../../hooks/useWorkspaceAnalytics';
 import { EntityNavigationLink } from '../../../../components/EntityNavigationLink';
 import styles from './WorkspaceAnalyticsScreen.module.css';
-import { AnalyticsTabs } from './AnalyticsTabs';
 import { formatDate } from '../../../../utils/dateFormat';
+import { ViewControls, ViewControlsSpacer } from '../../../../components/ViewControls';
+import { LabeledNumberInput } from '../../../../components/LabeledNumberInput';
+import { Button } from '@diagram-craft/app-components/Button';
 import { Table } from '../../../../components/table/Table';
 import { EmptyState } from '../../../../components/EmptyState';
 import { LoadingState } from '../../../../components/LoadingState';
 
 export const StaleEntityReport = ({
   workspaceSlug,
-  onSelectView,
   initialStaleAfterDays = 90
 }: {
   workspaceSlug: string;
-  /** Omit to hide the overview/stale tab switcher, e.g. when embedded as a standalone widget. */
-  onSelectView?: (view: 'overview' | 'stale') => void;
   initialStaleAfterDays?: number;
 }) => {
   const [thresholdInput, setThresholdInput] = useState(String(initialStaleAfterDays));
@@ -51,34 +50,26 @@ export const StaleEntityReport = ({
     return <EmptyState compact title="Stale entities could not be loaded." />;
 
   return (
-    <div className={styles.stack}>
-      {onSelectView && <AnalyticsTabs active="stale" onSelect={onSelectView} />}
-
-      <div className={styles.staleReportControls}>
-        <div className={styles.reportSub}>
+    <>
+      <ViewControls variant="tab" className={styles.staleReportControls}>
+        <span className={styles.reportSub}>
           {analytics.stale.totalCount} entities not changed in the last{' '}
           {analytics.stale.thresholdDays} days.
-        </div>
-        <label className={styles.staleLabel}>
-          Not changed in
-          <input
-            className={styles.thresholdInput}
-            type="number"
-            min={1}
-            max={3650}
-            step={1}
-            value={thresholdInput}
-            onChange={event => setThresholdInput(event.target.value)}
-            onKeyDown={event => {
-              if (event.key === 'Enter') applyThreshold();
-            }}
-          />
-          days
-        </label>
-        <button type="button" className={styles.applyButton} onClick={applyThreshold}>
+        </span>
+        <ViewControlsSpacer />
+        <LabeledNumberInput
+          label="Not changed in"
+          suffix="days"
+          min={1}
+          max={3650}
+          value={thresholdInput}
+          onChange={setThresholdInput}
+          onEnter={applyThreshold}
+        />
+        <Button onClick={applyThreshold} size={'sm'}>
           Apply
-        </button>
-      </div>
+        </Button>
+      </ViewControls>
 
       {isLoadingEntities ? (
         <LoadingState text="Loading entities…" size="sm" />
@@ -97,7 +88,11 @@ export const StaleEntityReport = ({
             {entities.map(entity => (
               <Table.Row key={entity._uid}>
                 <Table.Cell>
-                  <EntityNavigationLink publicId={entity._publicId} className={styles.linkButton}>
+                  <EntityNavigationLink
+                    publicId={entity._publicId}
+                    className={styles.linkButton}
+                    style={{ color: 'var(--panel-fg)' }}
+                  >
                     {entity._name}
                   </EntityNavigationLink>
                 </Table.Cell>
@@ -117,25 +112,18 @@ export const StaleEntityReport = ({
             {analytics.stale.totalCount}
           </span>
           <div>
-            <button
-              type="button"
-              className={styles.applyButton}
-              disabled={pageIndex === 0}
-              onClick={() => setPageIndex(index => index - 1)}
-            >
+            <Button disabled={pageIndex === 0} onClick={() => setPageIndex(index => index - 1)}>
               Prev
-            </button>
-            <button
-              type="button"
-              className={styles.applyButton}
+            </Button>
+            <Button
               disabled={(pageIndex + 1) * pageSize >= analytics.stale.totalCount}
               onClick={() => setPageIndex(index => index + 1)}
             >
               Next
-            </button>
+            </Button>
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };

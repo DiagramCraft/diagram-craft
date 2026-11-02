@@ -613,7 +613,7 @@ export const RelationMatrixView = ({
                           onClick={() => onEntityClick(col.publicId)}
                           style={
                             linkedEntityIds != null && !linkedEntityIdSet.has(col.id)
-                              ? { color: 'var(--base-fg-more-dim)' }
+                              ? { color: 'var(--base-fg-dimmed)' }
                               : undefined
                           }
                         >
@@ -653,7 +653,7 @@ export const RelationMatrixView = ({
                             className={styles.rowName}
                             style={
                               linkedEntityIds != null && !linkedEntityIdSet.has(row._uid)
-                                ? { color: 'var(--base-fg-more-dim)' }
+                                ? { color: 'var(--base-fg-dimmed)' }
                                 : undefined
                             }
                           >

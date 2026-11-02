@@ -11,6 +11,7 @@ import {
   resolveCapabilityFieldId
 } from '@arch-register/api-types/integrationCatalog';
 import { Button } from '@diagram-craft/app-components/Button';
+import { Banner } from '../../components/Banner';
 import { EmptyState } from '../../components/EmptyState';
 import { LoadingState } from '../../components/LoadingState';
 import { Chip } from '../../components/Chip';
@@ -186,19 +187,14 @@ const ApiMetadata = ({
         />
       </div>
       {selectionRequired && (
-        <div className={styles.sourceNotice}>
-          <TbAlertTriangle size={13} />
+        <Banner variant="warning" icon={<TbAlertTriangle size={13} />}>
           Multiple API sources are attached. Select a source and version to browse its catalog.
-        </div>
+        </Banner>
       )}
       {artifact?.diagnostic && (
-        <div className={`${styles.notice} ${styles.noticeError}`}>
-          <TbAlertTriangle size={13} />
-          <span>
-            <strong>{getArtifactStatusLabel(artifact.status)}:</strong>{' '}
-            {artifact.diagnostic.message}
-          </span>
-        </div>
+        <Banner variant="error" icon={<TbAlertTriangle size={13} />}>
+          <strong>{getArtifactStatusLabel(artifact.status)}:</strong> {artifact.diagnostic.message}
+        </Banner>
       )}
       {((artifact?.location?.length ?? 0) > 0 || entity._links.length > 0) && (
         <div className={styles.sourceActions}>
@@ -390,10 +386,9 @@ export const EntityApiSection = ({
         />
       )}
       {revisionsError && (
-        <div className={`${styles.notice} ${styles.noticeError}`}>
-          <TbAlertTriangle size={13} />
+        <Banner variant="error" icon={<TbAlertTriangle size={13} />}>
           One or more API source version histories could not be loaded. Retry the page to try again.
-        </div>
+        </Banner>
       )}
       <ApiContext
         entityName={entity._name ?? entity._slug}

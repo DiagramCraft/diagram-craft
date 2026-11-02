@@ -157,7 +157,13 @@ export const TimelineContent = ({
         <>
           <div className={styles.headerRow}>
             <div className={`${styles.labelCol} ${styles.labelColHeader}`}>
-              <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', opacity: 0.6 }}>
+              <span
+                style={{
+                  fontSize: 10,
+                  fontFamily: 'var(--font-mono)',
+                  color: 'var(--base-fg-dimmed)'
+                }}
+              >
                 {`${rows.length} entities`}
               </span>
             </div>
@@ -263,7 +269,7 @@ export const TimelineContent = ({
 
               const barColor =
                 lifecycleStates.find(ls => ls.id === e._lifecycle?.id)?.color ??
-                'var(--base-fg-more-dim)';
+                'var(--base-fg-dimmed)';
 
               let barLeft = 0;
               let barWidth = 0;
@@ -303,7 +309,7 @@ export const TimelineContent = ({
                       className={styles.entityName}
                       style={
                         linkedEntityIds != null && !linkedEntityIdSet.has(e._uid)
-                          ? { color: 'var(--base-fg-more-dim)' }
+                          ? { color: 'var(--base-fg-dimmed)' }
                           : undefined
                       }
                     >
@@ -398,7 +404,7 @@ export const TimelineContent = ({
                             style={{
                               left: barLeft,
                               width: Math.max(6, barRight - barLeft),
-                              background: project.color ?? 'var(--base-fg-more-dim)'
+                              background: project.color ?? 'var(--base-fg-dimmed)'
                             }}
                             title={`${project.name} · ${formatTimelineDate(project.start_date)} → ${formatTimelineDate(project.target_date)}`}
                           />

@@ -1,4 +1,3 @@
-import { SettingsPage } from '../SettingsBlock';
 import { useEffect, useMemo, useState } from 'react';
 import { TbBolt, TbEdit, TbPlus, TbTrash } from 'react-icons/tb';
 import type {
@@ -716,21 +715,22 @@ export const AutomationRulesSubSection = ({
   return (
     <>
       <SectionActions>
-        {tab === 'rules' && (
-          <Button variant="primary" icon={<TbPlus size={12} />} onClick={() => setEditor('new')}>
-            New rule
-          </Button>
-        )}
+        <Button
+          variant="primary"
+          icon={<TbPlus size={12} />}
+          onClick={() => setEditor('new')}
+          disabled={tab !== 'rules'}
+        >
+          New rule
+        </Button>
       </SectionActions>
-      <SettingsPage>
-        <Tabs.Root value={tab} onValueChange={v => setTab(v as AutomationTab)}>
-          <Tabs.List>
-            <Tabs.Trigger value="rules">Rules ({rules.length})</Tabs.Trigger>
-            <Tabs.Trigger value="runs">Runs</Tabs.Trigger>
-          </Tabs.List>
-        </Tabs.Root>
+      <Tabs.Root autoHeight value={tab} onValueChange={v => setTab(v as AutomationTab)}>
+        <Tabs.List>
+          <Tabs.Trigger value="rules">Rules ({rules.length})</Tabs.Trigger>
+          <Tabs.Trigger value="runs">Runs</Tabs.Trigger>
+        </Tabs.List>
 
-        {tab === 'rules' && (
+        <Tabs.Content value="rules">
           <QueryState
             isLoading={isLoading}
             error={error}
@@ -757,7 +757,7 @@ export const AutomationRulesSubSection = ({
                 <Table.Body>
                   {rules.map(rule => (
                     <Table.Row key={rule.id}>
-                      <Table.Cell>
+                      <Table.Cell primary>
                         <div>{rule.name}</div>
                         {rule.description && <div className={styles.muted}>{rule.description}</div>}
                       </Table.Cell>
@@ -802,15 +802,15 @@ export const AutomationRulesSubSection = ({
               </Table.Root>
             </div>
           </QueryState>
-        )}
+        </Tabs.Content>
 
-        {tab === 'runs' && (
+        <Tabs.Content value="runs">
           <QueryState
             isLoading={runsLoading}
             error={runsError}
             isEmpty={runs == null || runs.items.length === 0}
             subject="rule runs"
-            empty={{ compact: true, title: 'No automation rule runs yet.' }}
+            empty={{ title: 'No automation rule runs yet.' }}
           >
             <div className={styles.tableWrap}>
               <Table.Root layout="fixed">
@@ -856,29 +856,29 @@ export const AutomationRulesSubSection = ({
               </Table.Root>
             </div>
           </QueryState>
-        )}
+        </Tabs.Content>
+      </Tabs.Root>
 
-        <EditorDialog
-          rule={editor}
-          schemas={schemas}
-          relationSchemas={relationSchemas}
-          lifecycleStates={lifecycleStates}
-          pending={operations.create.isPending || operations.update.isPending}
-          error={(operations.create.error ?? operations.update.error) as Error | null}
-          onClose={() => setEditor(null)}
-          onSave={input => void save(input)}
-        />
-        <DeleteConfirmationDialog
-          open={deleteId != null}
-          title="Delete automation rule?"
-          message="Queued runs for this rule will still execute, but no new runs will be enqueued."
-          onCancel={() => setDeleteId(null)}
-          onConfirm={() => {
-            if (!deleteId) return;
-            void operations.remove.mutateAsync(deleteId).then(() => setDeleteId(null));
-          }}
-        />
-      </SettingsPage>
+      <EditorDialog
+        rule={editor}
+        schemas={schemas}
+        relationSchemas={relationSchemas}
+        lifecycleStates={lifecycleStates}
+        pending={operations.create.isPending || operations.update.isPending}
+        error={(operations.create.error ?? operations.update.error) as Error | null}
+        onClose={() => setEditor(null)}
+        onSave={input => void save(input)}
+      />
+      <DeleteConfirmationDialog
+        open={deleteId != null}
+        title="Delete automation rule?"
+        message="Queued runs for this rule will still execute, but no new runs will be enqueued."
+        onCancel={() => setDeleteId(null)}
+        onConfirm={() => {
+          if (!deleteId) return;
+          void operations.remove.mutateAsync(deleteId).then(() => setDeleteId(null));
+        }}
+      />
     </>
   );
 };

@@ -149,7 +149,7 @@ export const DocValueView = ({
   if (isEmpty(value)) return <span className="dim">—</span>;
   if (field.type === 'boolean') {
     return value ? (
-      <Chip icon={<TbCheck size={10} style={{ color: 'var(--success-fg, #2e9e5b)' }} />}>Yes</Chip>
+      <Chip icon={<TbCheck size={10} style={{ color: 'var(--green)' }} />}>Yes</Chip>
     ) : (
       <span className="dim">No</span>
     );

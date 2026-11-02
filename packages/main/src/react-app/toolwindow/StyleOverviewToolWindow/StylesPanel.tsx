@@ -81,7 +81,7 @@ const StyleContextMenu = <T extends StyleCombination | TextStyleCombination>({
 );
 
 const EmptyStyleComponent = () => (
-  <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--base-fg-dim)' }}>
+  <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--base-fg-secondary)' }}>
     No styles found
   </div>
 );

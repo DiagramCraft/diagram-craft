@@ -10,7 +10,7 @@
   border-radius: var(--r);
   border: 1px solid var(--panel-border);
   background: var(--cmp-bg);
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   cursor: pointer;
 
   &:hover {

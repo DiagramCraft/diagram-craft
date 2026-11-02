@@ -27,11 +27,11 @@
 }
 
 .pathNode {
-  color: var(--text-primary);
+  color: var(--fg);
 }
 
 .pathArrow {
-  color: var(--text-muted);
+  color: var(--fg-secondary);
 }
 
 /* ── Walker columns ───────────────────────────────────────────────────── */
@@ -94,7 +94,7 @@
   position: absolute;
   right: 6px;
   pointer-events: none;
-  color: var(--text-muted);
+  color: var(--fg-secondary);
 }
 
 .linkSelect {
@@ -105,7 +105,7 @@
   border-radius: 6px;
   padding: 3px 22px 3px 8px;
   font-size: 11px;
-  color: var(--text-primary);
+  color: var(--fg);
 }
 
 .columnHead {
@@ -116,7 +116,7 @@
   font-size: 10.5px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--text-muted);
+  color: var(--fg-secondary);
 }
 
 .count {
@@ -136,7 +136,7 @@
   border-radius: 6px;
   text-align: left;
   cursor: pointer;
-  color: var(--text-primary);
+  color: var(--fg);
 }
 
 .row:hover {
@@ -169,7 +169,7 @@
   margin-left: auto;
   padding-left: 6px;
   font-size: 10.5px;
-  color: var(--text-muted);
+  color: var(--fg-secondary);
   font-variant-numeric: tabular-nums;
 }
 
@@ -185,5 +185,5 @@
 .columnEmpty {
   padding: 8px;
   font-size: 11.5px;
-  color: var(--text-muted);
+  color: var(--fg-secondary);
 }

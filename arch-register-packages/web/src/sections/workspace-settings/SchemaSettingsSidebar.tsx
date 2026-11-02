@@ -255,7 +255,7 @@ export const SchemaSettingsSidebar = ({
                             })
                           }
                           tagColor={resolveSchemaColor(s, i)}
-                          trailing={<span className="dim mono">{s.fields.length}</span>}
+                          trailing={<span className="mono">{s.fields.length}</span>}
                         />
                       ))}
                     </>
@@ -277,7 +277,7 @@ export const SchemaSettingsSidebar = ({
                               search: { tab: 'enums', enumId: e.id }
                             })
                           }
-                          trailing={<span className="dim mono">{e.options.length}</span>}
+                          trailing={<span className="mono">{e.options.length}</span>}
                         />
                       ))}
                     </>
@@ -299,7 +299,7 @@ export const SchemaSettingsSidebar = ({
                               search: { tab: 'fieldgroups', fieldGroupId: fg.id }
                             })
                           }
-                          trailing={<span className="dim mono">{fg.fields.length}</span>}
+                          trailing={<span className="mono">{fg.fields.length}</span>}
                         />
                       ))}
                     </>
@@ -330,7 +330,7 @@ export const SchemaSettingsSidebar = ({
                             })
                           }
                           tagColor={resolveSchemaColor(s, i)}
-                          trailing={<span className="dim mono">{s.relation_count}</span>}
+                          trailing={<span className="mono">{s.relation_count}</span>}
                         />
                       ))}
                     </>

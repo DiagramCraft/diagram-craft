@@ -30,7 +30,7 @@ const action = (
     type="button"
     style={{
       fontSize: '10.5px',
-      color: 'var(--base-fg-more-dim)',
+      color: 'var(--base-fg-dimmed)',
       background: 'transparent',
       border: 'none',
       cursor: 'pointer',

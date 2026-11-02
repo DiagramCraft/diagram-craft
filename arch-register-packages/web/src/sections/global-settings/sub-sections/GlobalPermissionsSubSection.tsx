@@ -11,6 +11,7 @@ import { EmptyState } from '../../../components/EmptyState';
 import { LoadingState } from '../../../components/LoadingState';
 import { MemberAvatar } from '../../../components/MemberAvatar';
 import { SearchInput } from '../../../components/SearchInput';
+import { ViewControls } from '../../../components/ViewControls';
 import { Table } from '../../../components/table/Table';
 import { getUserLabel } from '../../../utils/userLabel';
 import { useAuthUsers, useUpdateUserGlobalRoles } from '../../../hooks/useGlobalRoles';
@@ -115,19 +116,7 @@ export const GlobalPermissionsSubSection = ({
   }
 
   return (
-    <div className={styles.container}>
-      {!isLoadingUsers && !isLoadingRoles && assignedUsers.length > 0 && (
-        <div className={styles.toolbar}>
-          <SearchInput
-            size="sm"
-            placeholder="Search by username, name, or email…"
-            value={query}
-            onChange={setQuery}
-            onClear={() => setQuery('')}
-          />
-        </div>
-      )}
-
+    <>
       {updateMutation.error && (
         <Banner variant="error">
           {updateMutation.error instanceof Error
@@ -136,73 +125,89 @@ export const GlobalPermissionsSubSection = ({
         </Banner>
       )}
 
-      {isLoadingUsers || isLoadingRoles ? (
-        <LoadingState text="Loading global role assignments…" size="sm" />
-      ) : assignedUsers.length === 0 ? (
-        <EmptyState compact title="No users currently have global roles." />
-      ) : filteredUsers.length === 0 ? (
-        <EmptyState compact title="No users match this search." />
-      ) : (
-        <Table.Root>
-          <Table.Head>
-            <Table.Row>
-              <Table.HeaderCell style={{ minWidth: 240 }}>User</Table.HeaderCell>
-              <Table.HeaderCell>Global roles</Table.HeaderCell>
-              <Table.HeaderCell>Status</Table.HeaderCell>
-              <Table.HeaderCell align="right" />
-            </Table.Row>
-          </Table.Head>
-          <Table.Body>
-            {filteredUsers.map(assignedUser => (
-              <Table.Row key={assignedUser.id} onClick={() => setSelectedUserId(assignedUser.id)}>
-                <Table.NameCell
-                  icon={
-                    <MemberAvatar
-                      name={assignedUser.display_name}
-                      email={assignedUser.email}
-                      userId={assignedUser.id}
-                      color={assignedUser.color}
-                    />
-                  }
-                  title={assignedUser.display_name ?? assignedUser.user_id}
-                  subtitle={assignedUser.email ?? assignedUser.user_id}
-                />
-                <Table.Cell>
-                  <RolesList roles={roleMap[assignedUser.id] ?? []} />
-                </Table.Cell>
-                <Table.Cell>
-                  <UserStatusChip
-                    isSystemActor={assignedUser.is_system_actor}
-                    isActive={assignedUser.is_active}
-                  />
-                </Table.Cell>
-                <Table.ActionsCell>
-                  <DropdownMenu
-                    trigger={
-                      <Table.DotsButton aria-label={`Actions for ${getUserLabel(assignedUser)}`} />
-                    }
-                    items={
-                      [
-                        {
-                          label: 'Edit',
-                          icon: <TbEdit size={14} />,
-                          onClick: () => setSelectedUserId(assignedUser.id)
-                        },
-                        {
-                          label: 'Remove all roles',
-                          icon: <TbUserMinus size={14} />,
-                          danger: true,
-                          onClick: () => setRemovingUserId(assignedUser.id)
-                        }
-                      ] satisfies MenuItem[]
-                    }
-                  />
-                </Table.ActionsCell>
+      <div>
+        {!isLoadingUsers && !isLoadingRoles && assignedUsers.length > 0 && (
+          <ViewControls variant="page">
+            <SearchInput
+              size="sm"
+              placeholder="Search by username, name, or email…"
+              value={query}
+              onChange={setQuery}
+              onClear={() => setQuery('')}
+            />
+          </ViewControls>
+        )}
+
+        {isLoadingUsers || isLoadingRoles ? (
+          <LoadingState text="Loading global role assignments…" size="sm" />
+        ) : assignedUsers.length === 0 ? (
+          <EmptyState compact title="No users currently have global roles." />
+        ) : filteredUsers.length === 0 ? (
+          <EmptyState compact title="No users match this search." />
+        ) : (
+          <Table.Root>
+            <Table.Head>
+              <Table.Row>
+                <Table.HeaderCell style={{ minWidth: 240 }}>User</Table.HeaderCell>
+                <Table.HeaderCell>Global roles</Table.HeaderCell>
+                <Table.HeaderCell>Status</Table.HeaderCell>
+                <Table.HeaderCell align="right" />
               </Table.Row>
-            ))}
-          </Table.Body>
-        </Table.Root>
-      )}
+            </Table.Head>
+            <Table.Body>
+              {filteredUsers.map(assignedUser => (
+                <Table.Row key={assignedUser.id} onClick={() => setSelectedUserId(assignedUser.id)}>
+                  <Table.NameCell
+                    icon={
+                      <MemberAvatar
+                        name={assignedUser.display_name}
+                        email={assignedUser.email}
+                        userId={assignedUser.id}
+                        color={assignedUser.color}
+                      />
+                    }
+                    title={assignedUser.display_name ?? assignedUser.user_id}
+                    subtitle={assignedUser.email ?? assignedUser.user_id}
+                  />
+                  <Table.Cell>
+                    <RolesList roles={roleMap[assignedUser.id] ?? []} />
+                  </Table.Cell>
+                  <Table.Cell>
+                    <UserStatusChip
+                      isSystemActor={assignedUser.is_system_actor}
+                      isActive={assignedUser.is_active}
+                    />
+                  </Table.Cell>
+                  <Table.ActionsCell>
+                    <DropdownMenu
+                      trigger={
+                        <Table.DotsButton
+                          aria-label={`Actions for ${getUserLabel(assignedUser)}`}
+                        />
+                      }
+                      items={
+                        [
+                          {
+                            label: 'Edit',
+                            icon: <TbEdit size={14} />,
+                            onClick: () => setSelectedUserId(assignedUser.id)
+                          },
+                          {
+                            label: 'Remove all roles',
+                            icon: <TbUserMinus size={14} />,
+                            danger: true,
+                            onClick: () => setRemovingUserId(assignedUser.id)
+                          }
+                        ] satisfies MenuItem[]
+                      }
+                    />
+                  </Table.ActionsCell>
+                </Table.Row>
+              ))}
+            </Table.Body>
+          </Table.Root>
+        )}
+      </div>
 
       {selectedUser && (
         <EditGlobalPermissionDialog
@@ -246,6 +251,6 @@ export const GlobalPermissionsSubSection = ({
           void saveRoles(removingUser.id, []).then(() => setRemovingUserId(null));
         }}
       />
-    </div>
+    </>
   );
 };

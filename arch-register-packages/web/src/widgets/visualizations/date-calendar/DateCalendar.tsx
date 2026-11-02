@@ -73,9 +73,9 @@ export const DateCalendarWidget = ({ config }: Props) => {
   );
   const sublabelOf = useRecordSublabels(records, sublabelFieldId);
 
-  if (isLoading) return <div className={`${rowStyles.emptyInline} dim`}>Loading…</div>;
+  if (isLoading) return <div className={rowStyles.emptyInline}>Loading…</div>;
   if (data?.ok === false) {
-    return <div className={`${rowStyles.emptyInline} dim`}>This widget's query is not valid.</div>;
+    return <div className={rowStyles.emptyInline}>This widget's query is not valid.</div>;
   }
 
   return (
@@ -90,7 +90,7 @@ export const DateCalendarWidget = ({ config }: Props) => {
           emphasized: !monthly && cell.current,
           label: <span className={styles.cellLabel}>{cell.label}</span>,
           headerRight: (
-            <span className={`${styles.cellLabel} dim mono tabular`}>
+            <span className={`${styles.cellLabel} mono tabular`}>
               {cell.total
                 ? cell.records.length === 0
                   ? '—'
@@ -100,7 +100,7 @@ export const DateCalendarWidget = ({ config }: Props) => {
           ),
           children:
             cell.records.length === 0 ? (
-              <div className={`${styles.empty} dim`}>Nothing due</div>
+              <div className={styles.empty}>Nothing due</div>
             ) : (
               <div className={styles.entries}>
                 {cell.records.map(record => {
@@ -121,15 +121,17 @@ export const DateCalendarWidget = ({ config }: Props) => {
                       style={{ '--tone': TONE_COLOR[tone] } as React.CSSProperties}
                       onClick={() => openEntityDrawer(String(record._publicId))}
                     >
-                      <span className="dim mono tabular">{date ? date.getDate() : '—'}</span>
+                      <span className={`${styles.dayNumber} mono tabular`}>
+                        {date ? date.getDate() : '—'}
+                      </span>
                       <span className={styles.entryMain}>
                         <span className={styles.entryName}>{sublabel ?? String(record._name)}</span>
                         {sublabel && (
-                          <span className={`${styles.entrySub} dim`}>{String(record._name)}</span>
+                          <span className={styles.entrySub}>{String(record._name)}</span>
                         )}
                       </span>
                       {value && (
-                        <span className="dim mono tabular">
+                        <span className={`${styles.entryAmount} mono tabular`}>
                           {formatMeasured(value.amount, value.currency)}
                         </span>
                       )}
@@ -141,7 +143,7 @@ export const DateCalendarWidget = ({ config }: Props) => {
         }))}
       />
       {(beyondCount > 0 || undatedCount > 0) && (
-        <div className={`${styles.caption} dim`}>
+        <div className={styles.caption}>
           {beyondCount > 0 && <span>{beyondCount} fall beyond this calendar. </span>}
           {undatedCount > 0 && <span>{undatedCount} have no date. </span>}
         </div>

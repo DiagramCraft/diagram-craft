@@ -224,7 +224,7 @@ export const HomeSidebar = ({
                     })
                   )
                 }
-                trailing={<span className="dim mono">{p.file_count}</span>}
+                trailing={p.file_count}
                 tagColor={p.color ?? undefined}
               />
             ))}
@@ -253,7 +253,7 @@ export const HomeSidebar = ({
                     search: { type: s.id }
                   })
                 }
-                trailing={<span className="dim mono">{s.entity_count}</span>}
+                trailing={s.entity_count}
                 tagColor={resolveSchemaColor(s, i)}
               />
             ))}

@@ -146,7 +146,7 @@ export const ExternalDataLinkDialog = (props: Props) => {
                   maxHeight: '100%',
                   scrollbarGutter: 'stable',
                   scrollbarWidth: 'thin',
-                  scrollbarColor: 'var(--base-fg-more-dim) var(--panel-bg)'
+                  scrollbarColor: 'var(--base-fg-dimmed) var(--panel-bg)'
                 }}
               >
                 {data?.map(item => (
@@ -234,7 +234,7 @@ export const ExternalDataLinkDialog = (props: Props) => {
               maxHeight: '100%',
               scrollbarGutter: 'stable',
               scrollbarWidth: 'thin',
-              scrollbarColor: 'var(--base-fg-more-dim) var(--panel-bg)'
+              scrollbarColor: 'var(--base-fg-dimmed) var(--panel-bg)'
             }}
           >
             {data?.map(item => (

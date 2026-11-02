@@ -5,7 +5,7 @@
 }
 
 .summary {
-  color: var(--cmp-fg-disabled);
+  color: var(--base-fg-tertiary);
   font-size: 12px;
   margin-bottom: 12px;
 }
@@ -57,7 +57,7 @@
   display: flex;
   gap: 7px;
   flex-wrap: wrap;
-  color: var(--cmp-fg-disabled);
+  color: var(--base-fg-tertiary);
   font-size: 11px;
 }
 
@@ -85,7 +85,7 @@
 
 .taskProposalMeta {
   margin-top: 7px;
-  color: var(--cmp-fg-disabled);
+  color: var(--base-fg-tertiary);
   font-size: 11px;
 }
 
@@ -93,7 +93,7 @@
   display: flex;
   gap: 6px;
   margin-top: 8px;
-  color: var(--base-fg-dim);
+  color: var(--base-fg-secondary);
   font-size: 11px;
   line-height: 1.4;
   overflow: hidden;
@@ -103,7 +103,7 @@
 
 .taskNoteLabel {
   flex-shrink: 0;
-  color: var(--cmp-fg-disabled);
+  color: var(--base-fg-secondary);
   font-weight: 600;
 }
 
