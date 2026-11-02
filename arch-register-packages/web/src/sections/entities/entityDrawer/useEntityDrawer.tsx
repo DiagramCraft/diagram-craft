@@ -1,11 +1,13 @@
 import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
+import type { ProjectFileSearchResult } from '@arch-register/api-types/searchContract';
 import type { EntityDrawerSearchParams } from '../../../routes/searchParams';
 
 export type EntityDrawerStackEntry =
   | { kind: 'entity'; entityId: string }
   | { kind: 'case'; caseId: string }
   | { kind: 'project'; projectId: string }
+  | { kind: 'content'; node: ProjectFileSearchResult }
   | { kind: 'plannedChange'; projectId: string; caseId: string; memberId: string };
 
 export type PlannedChangeRef = { projectId: string; caseId: string; memberId: string };
@@ -14,6 +16,7 @@ const sameEntry = (a: EntityDrawerStackEntry, b: EntityDrawerStackEntry): boolea
   if (a.kind === 'entity') return b.kind === 'entity' && a.entityId === b.entityId;
   if (a.kind === 'case') return b.kind === 'case' && a.caseId === b.caseId;
   if (a.kind === 'project') return b.kind === 'project' && a.projectId === b.projectId;
+  if (a.kind === 'content') return b.kind === 'content' && a.node.fileId === b.node.fileId;
   return b.kind === 'plannedChange' && a.memberId === b.memberId && a.caseId === b.caseId;
 };
 
@@ -24,6 +27,7 @@ export type EntityDrawerController = {
   openEntityDrawer: (entityId: string) => void;
   openCaseDrawer: (caseId: string) => void;
   openProjectDrawer: (projectId: string) => void;
+  openContentDrawer: (node: ProjectFileSearchResult) => void;
   openPlannedChangeDrawer: (ref: PlannedChangeRef) => void;
   backEntityDrawer: () => void;
   closeEntityDrawer: () => void;
@@ -98,6 +102,11 @@ export const EntityDrawerStackProvider = ({ children }: { children: ReactNode })
     [openEntry]
   );
 
+  const openContentDrawer = useCallback(
+    (node: ProjectFileSearchResult) => openEntry({ kind: 'content', node }),
+    [openEntry]
+  );
+
   const openPlannedChangeDrawer = useCallback(
     (ref: PlannedChangeRef) => {
       if (ref.projectId && ref.caseId && ref.memberId) openEntry({ kind: 'plannedChange', ...ref });
@@ -135,6 +144,7 @@ export const EntityDrawerStackProvider = ({ children }: { children: ReactNode })
         openEntityDrawer,
         openCaseDrawer,
         openProjectDrawer,
+        openContentDrawer,
         openPlannedChangeDrawer,
         backEntityDrawer,
         closeEntityDrawer: backEntityDrawer
@@ -179,6 +189,7 @@ export const useEntityDrawer = (): EntityDrawerController => {
     // Outside the workspace stack there is nowhere to host a case drawer; no-op.
     openCaseDrawer: () => {},
     openProjectDrawer: () => {},
+    openContentDrawer: () => {},
     openPlannedChangeDrawer: () => {},
     backEntityDrawer: closeEntityDrawer,
     closeEntityDrawer

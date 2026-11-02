@@ -30,6 +30,7 @@ import { AppErrorState } from '../components/AppErrorState';
 import { WorkspaceDetailLayout } from './WorkspaceDetailLayout';
 import { EntityDrawer } from '../sections/entities/entityDrawer/EntityDrawer';
 import { PlannedChangeDrawer } from '../sections/entities/entityDrawer/PlannedChangeDrawer';
+import { ContentNodeDrawer } from '../sections/search/ContentNodeDrawer';
 import { ProjectDrawer } from '../sections/projects/ProjectDrawer';
 import { GovernanceCaseDrawer } from '../sections/governance/GovernanceCaseDrawer';
 import {
@@ -579,6 +580,19 @@ const WorkspaceEntityDrawerStack = ({
               projectId={entry.projectId}
               caseId={entry.caseId}
               memberId={entry.memberId}
+              onClose={closeEntityDrawer}
+              active={active}
+              stacked
+              stackOffset={stackOffset}
+            />
+          );
+        }
+        if (entry.kind === 'content') {
+          return (
+            <ContentNodeDrawer
+              key={`content:${entry.node.fileId}`}
+              workspaceSlug={workspaceSlug}
+              node={entry.node}
               onClose={closeEntityDrawer}
               active={active}
               stacked

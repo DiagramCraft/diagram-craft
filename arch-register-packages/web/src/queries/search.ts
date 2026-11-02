@@ -2,7 +2,9 @@ import { queryOptions } from '@tanstack/react-query';
 import { orpcClient } from '../lib/orpcClient';
 import type { QueryClient } from '@tanstack/react-query';
 
-export type SearchTypes = Array<'projects' | 'files' | 'entities' | 'schemas' | 'relations'>;
+export type SearchTypes = Array<
+  'projects' | 'files' | 'wiki' | 'entities' | 'schemas' | 'relations'
+>;
 
 export const searchKeys = {
   all: ['search'] as const,
@@ -47,13 +49,13 @@ export const documentSearchQuery = (workspaceId: string, query: string) =>
       orpcClient.search.query(
         {
           params: { workspace: workspaceId },
-          query: { q: query, limitPerType: 8, types: 'files' }
+          query: { q: query, limitPerType: 8, types: 'wiki' }
         },
         { signal }
       ),
     enabled: !!workspaceId && !!query.trim(),
     staleTime: 2 * 60 * 1000,
-    select: data => data.files.filter(file => file.type === 'markdown')
+    select: data => data.wiki
   });
 
 export const invalidateWorkspaceSearches = (queryClient: QueryClient, workspaceId: string) =>

@@ -18,7 +18,14 @@ import { buildEntityViewPermissionScope } from '../catalog/db/entityPermissionSc
 
 const checker = new PermissionChecker();
 
-export const SEARCH_TYPES = ['projects', 'files', 'entities', 'schemas', 'relations'] as const;
+export const SEARCH_TYPES = [
+  'projects',
+  'files',
+  'wiki',
+  'entities',
+  'schemas',
+  'relations'
+] as const;
 type SearchType = (typeof SEARCH_TYPES)[number];
 
 const includesQuery = (value: unknown, query: string) =>
@@ -118,9 +125,10 @@ const searchWorkspaceForContext = async (
 
   const empty = {
     query: q,
-    totalCounts: { projects: 0, files: 0, entities: 0, schemas: 0, relations: 0 },
+    totalCounts: { projects: 0, files: 0, wiki: 0, entities: 0, schemas: 0, relations: 0 },
     projects: [],
     files: [],
+    wiki: [],
     entities: [],
     schemas: [],
     relations: []
@@ -129,14 +137,16 @@ const searchWorkspaceForContext = async (
 
   const normalizedQuery = q.toLowerCase();
 
+  const searchesContentNodes = types.includes('files') || types.includes('wiki');
+
   const [projects, schemas, entities, relations, relationSchemas] = await Promise.all([
-    types.includes('projects') || types.includes('files')
+    types.includes('projects') || searchesContentNodes
       ? db.project.projects.listProjects(ws)
       : Promise.resolve([]),
     types.includes('schemas') || types.includes('entities') || types.includes('relations')
       ? db.catalog.listSchemas(ws)
       : Promise.resolve([]),
-    types.includes('entities') || types.includes('files') || types.includes('relations')
+    types.includes('entities') || searchesContentNodes || types.includes('relations')
       ? listAllCatalogEntities(db, ws, {
           permissionScope: buildEntityViewPermissionScope(authCtx)
         })
@@ -205,7 +215,7 @@ const searchWorkspaceForContext = async (
     } | null;
   }> = [];
 
-  if (types.includes('files')) {
+  if (searchesContentNodes) {
     const projectFiles = await Promise.all(
       visibleProjects.map(async project => ({
         project,
@@ -331,6 +341,12 @@ const searchWorkspaceForContext = async (
     );
   }
 
+  const isWikiPage = (file: { type: string }) => file.type === 'markdown';
+  const wikiResults = types.includes('wiki') ? filesResults.filter(isWikiPage) : [];
+  const fileOnlyResults = types.includes('files')
+    ? filesResults.filter(file => !isWikiPage(file))
+    : [];
+
   const schemasById = new Map(schemas.map(schema => [schema.id, schema]));
 
   const entityMatches = types.includes('entities')
@@ -399,6 +415,8 @@ const searchWorkspaceForContext = async (
             relationId: relation.id,
             schemaId: relation.schema_id,
             schemaName: relation.schema_name,
+            schemaColor: relationSchemaById.get(relation.schema_id)?.color ?? null,
+            schemaIcon: relationSchemaById.get(relation.schema_id)?.icon ?? null,
             inEntityId: relation.in_entity_id,
             inEntityPublicId:
               entityById.get(relation.in_entity_id)?.public_id ?? relation.in_entity_id,
@@ -419,13 +437,15 @@ const searchWorkspaceForContext = async (
     query: q,
     totalCounts: {
       projects: projectMatches.length,
-      files: filesResults.length,
+      files: fileOnlyResults.length,
+      wiki: wikiResults.length,
       entities: entityMatches.length,
       schemas: schemaMatches.length,
       relations: relationMatches.length
     },
     projects: projectMatches.slice(0, limitPerType),
-    files: filesResults.slice(0, limitPerType),
+    files: fileOnlyResults.slice(0, limitPerType),
+    wiki: wikiResults.slice(0, limitPerType),
     entities: entityMatches.slice(0, limitPerType),
     schemas: schemaMatches.slice(0, limitPerType),
     relations: relationMatches.slice(0, limitPerType)

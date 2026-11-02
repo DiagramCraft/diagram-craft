@@ -362,7 +362,12 @@ export const EntityBrowserScreen = () => {
           ]}
           icon={
             !collectionId && typeSchema ? (
-              <TypeBadge color={typeColor} name={typeSchema.name} icon={typeSchema.icon} size={32} />
+              <TypeBadge
+                color={typeColor}
+                name={typeSchema.name}
+                icon={typeSchema.icon}
+                size={32}
+              />
             ) : undefined
           }
           title={activeSavedView?.name ?? typeName}

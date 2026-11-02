@@ -42,7 +42,7 @@ export const SearchScreen = () => {
     {
       q: trimmed,
       limitPerType: filter === 'all' ? 8 : 24,
-      types: filter === 'all' ? null : [filter]
+      types: filter === 'all' ? ['entities', 'projects', 'files', 'wiki', 'relations'] : [filter]
     },
     { enabled: trimmed !== '' }
   );
@@ -121,7 +121,7 @@ export const SearchScreen = () => {
         <SearchInput
           ref={inputRef}
           size="md"
-          placeholder="Search entities, diagrams, projects, schema…"
+          placeholder="Search entities, diagrams, projects, wiki…"
           value={localQ}
           onChange={handleInputChange}
           onClear={() => {
@@ -159,13 +159,13 @@ export const SearchScreen = () => {
             <EmptyState
               icon={<TbSearch size={18} />}
               title="Start searching"
-              subtitle="Search across entities, projects, diagrams, and schemas."
+              subtitle="Search across entities, projects, and diagrams."
             />
           ) : loading ? (
             <EmptyState
               icon={<TbSearch size={18} />}
               title="Searching…"
-              subtitle="Looking through projects, files, entities, and schemas."
+              subtitle="Looking through projects, files, and entities."
             />
           ) : totalResults === 0 ? (
             <EmptyState

@@ -190,7 +190,7 @@ export const validateAccountSettingsSearch = (
 // Search params
 const searchRouteSearchSchema = defineSearchParamSchema({
   q: stringCodec,
-  category: enumCodec(['all', 'entities', 'projects', 'files', 'schemas', 'relations'] as const)
+  category: enumCodec(['all', 'entities', 'projects', 'files', 'wiki', 'relations'] as const)
 });
 
 export type SearchRouteSearchParams = SearchParamsFromSchema<typeof searchRouteSearchSchema>;

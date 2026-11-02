@@ -1,10 +1,10 @@
-import { TbArrowsRightLeft, TbCode, TbDatabase, TbFolder, TbFolders } from 'react-icons/tb';
+import { TbArrowsRightLeft, TbBook, TbDatabase, TbFolder, TbFolders } from 'react-icons/tb';
 import type {
   ProjectFileSearchResult,
   SearchResponse
 } from '@arch-register/api-types/searchContract';
 
-export type SearchFilter = 'all' | 'entities' | 'projects' | 'files' | 'schemas' | 'relations';
+export type SearchFilter = 'all' | 'entities' | 'projects' | 'files' | 'wiki' | 'relations';
 export type SearchCategory = Exclude<SearchFilter, 'all'>;
 
 export type SearchRow = { kind: string; id: string; data: unknown };
@@ -21,15 +21,16 @@ export const CATEGORY_DEFS: Array<{ value: SearchFilter; label: string; icon: ty
     { value: 'entities', label: 'Entities', icon: TbDatabase },
     { value: 'projects', label: 'Projects', icon: TbFolders },
     { value: 'files', label: 'Diagrams', icon: TbFolder },
-    { value: 'schemas', label: 'Schemas', icon: TbCode },
+    { value: 'wiki', label: 'Wiki pages', icon: TbBook },
     { value: 'relations', label: 'Relations', icon: TbArrowsRightLeft }
   ];
 
 export const EMPTY_RESULTS: SearchResponse = {
   query: '',
-  totalCounts: { projects: 0, files: 0, entities: 0, schemas: 0, relations: 0 },
+  totalCounts: { projects: 0, files: 0, wiki: 0, entities: 0, schemas: 0, relations: 0 },
   projects: [],
   files: [],
+  wiki: [],
   entities: [],
   schemas: [],
   relations: []
@@ -58,11 +59,11 @@ export const buildSearchGroups = (results: SearchResponse, filter: SearchFilter)
       rows: results.files.map(file => ({ kind: 'file', id: file.fileId, data: file }))
     });
   }
-  if (filter === 'all' || filter === 'schemas') {
+  if (filter === 'all' || filter === 'wiki') {
     groups.push({
-      id: 'schemas',
-      label: 'Schemas',
-      rows: results.schemas.map(schema => ({ kind: 'schema', id: schema.schemaId, data: schema }))
+      id: 'wiki',
+      label: 'Wiki pages',
+      rows: results.wiki.map(page => ({ kind: 'wiki', id: page.fileId, data: page }))
     });
   }
   if (filter === 'all' || filter === 'relations') {
