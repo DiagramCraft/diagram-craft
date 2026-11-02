@@ -183,6 +183,10 @@
           supported currencies and the workspace's default currency, a preferred date and time display format,
           document types, templates, AI, analytics, audit, and other workspace settings.
 
+            - @id:ar.workspace.configuration.add-member Administrators can add a workspace member from one dialog by
+              either picking an existing user or, when they are a platform administrator and local authentication is
+              used, creating a new user, in both cases with a chosen role in a single action.
+
             - @id:ar.workspace.configuration.date-time-format Administrators can choose a workspace-wide date format
               (ISO, month name, or one of two slash/dot day-month orderings) and time format (12-hour or 24-hour) from
               the General settings screen, with a live preview of the current date/time. The preference applies
