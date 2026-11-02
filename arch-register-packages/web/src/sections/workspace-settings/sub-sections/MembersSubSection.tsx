@@ -318,8 +318,7 @@ const AddMemberDialog = ({
       : users;
 
   // Fall back to creating a user when nobody is left to pick
-  const effectiveMode =
-    canCreateUsers && !loading && selectableUsers.length === 0 ? 'new' : mode;
+  const effectiveMode = canCreateUsers && !loading && selectableUsers.length === 0 ? 'new' : mode;
   const isNew = canCreateUsers && effectiveMode === 'new';
 
   useEffect(() => {
@@ -466,11 +465,7 @@ const AddMemberDialog = ({
               <Button onClick={onClose} disabled={busy}>
                 Cancel
               </Button>
-              <Button
-                variant="primary"
-                onClick={() => void submit()}
-                disabled={!canSave || busy}
-              >
+              <Button variant="primary" onClick={() => void submit()} disabled={!canSave || busy}>
                 {busy ? 'Adding…' : isNew ? 'Create and add member' : 'Add member'}
               </Button>
             </div>

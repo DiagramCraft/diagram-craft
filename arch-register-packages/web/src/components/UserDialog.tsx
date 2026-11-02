@@ -2,7 +2,12 @@ import { useEffect, useState } from 'react';
 import type { UserDetail, UserSummary } from '@arch-register/api-types/authContract';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { Banner } from './Banner';
-import { emptyUserFormValues, normalizeEmail, UserFormFields, type UserFormValues } from './UserFormFields';
+import {
+  emptyUserFormValues,
+  normalizeEmail,
+  UserFormFields,
+  type UserFormValues
+} from './UserFormFields';
 import {
   useCreateManagedUser,
   useUpdateManagedUser,

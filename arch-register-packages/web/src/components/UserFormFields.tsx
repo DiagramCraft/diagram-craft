@@ -118,7 +118,9 @@ export const UserFormFields = ({
           />
           <span>Account is active</span>
         </label>
-        {isCurrentUser && <span className={styles.hint}>Your own account cannot be deactivated.</span>}
+        {isCurrentUser && (
+          <span className={styles.hint}>Your own account cannot be deactivated.</span>
+        )}
       </div>
 
       <FormElement label="Avatar color" required={false}>
