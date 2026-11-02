@@ -490,7 +490,7 @@
   border-radius: calc(var(--r-md) - 2px);
   border: none;
   background: transparent;
-  color: var(--cmp-fg-dimmed);
+  color: var(--base-fg-tertiary);
   cursor: pointer;
   transition:
     background 80ms,

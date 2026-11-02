@@ -1227,7 +1227,7 @@
         - @id:ar.projects.markdown Users can create and edit Markdown documents with links, backlinks, attachments,
           metadata, and revision history. Project editors can manage project-specific Markdown templates from the
           project home actions menu. Templates can target a document type or untyped Markdown. Users can link to another
-          wiki page from the text (toolbar or `/` menu); the link follows the page when it is renamed or moved, shows
+          wiki page from the text (toolbar, `/` menu, or by typing `[[` and picking a page); the link follows the page when it is renamed or moved, shows
           an unavailable state if the page is deleted or unreadable, and the linking page appears in the target's
           Backlinks under "Linked in text".
 
