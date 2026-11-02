@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
-import { TbEdit, TbUserOff } from 'react-icons/tb';
+import { TbEdit, TbLockOpen, TbUserOff } from 'react-icons/tb';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { useAuth } from '../../../auth/AuthContext';
 import { useAuthConfig } from '../../../hooks/useAuthConfig';
 import { useAuthUsers } from '../../../hooks/useGlobalRoles';
-import { useDeactivateManagedUser } from '../../../hooks/useUsers';
+import { useDeactivateManagedUser, useUnlockManagedUser } from '../../../hooks/useUsers';
 import { DropdownMenu, type MenuItem } from '../../../components/DropdownMenu';
 import { UserDialog } from '../../../components/UserDialog';
 import { Banner } from '../../../components/Banner';
@@ -30,6 +30,7 @@ export const UsersSubSection = ({
   const { data: authConfig } = useAuthConfig();
   const { data: users = [], isLoading, error } = useAuthUsers();
   const deactivateUser = useDeactivateManagedUser();
+  const unlockUser = useUnlockManagedUser();
   const [query, setQuery] = useState('');
   const [editingUser, setEditingUser] = useState<UserSummary | null>(null);
   const [deactivatingUser, setDeactivatingUser] = useState<UserSummary | null>(null);
@@ -66,6 +67,11 @@ export const UsersSubSection = ({
 
   return (
     <>
+      {unlockUser.error && (
+        <Banner variant="error">
+          {unlockUser.error instanceof Error ? unlockUser.error.message : 'Unable to unlock user.'}
+        </Banner>
+      )}
       {deactivateUser.error && (
         <Banner variant="error">
           {deactivateUser.error instanceof Error
@@ -106,6 +112,8 @@ export const UsersSubSection = ({
             <Table.Body>
               {filteredUsers.map(candidate => {
                 const isCurrentUser = candidate.id === currentUser?.id;
+                const isLocked =
+                  candidate.locked_until != null && new Date(candidate.locked_until) > new Date();
                 const canDeactivate =
                   candidate.is_active && !candidate.is_system_actor && !isCurrentUser;
                 return (
@@ -134,6 +142,7 @@ export const UsersSubSection = ({
                       <UserStatusChip
                         isSystemActor={candidate.is_system_actor}
                         isActive={candidate.is_active}
+                        lockedUntil={candidate.locked_until}
                       />
                     </Table.Cell>
                     <Table.ActionsCell>
@@ -149,6 +158,15 @@ export const UsersSubSection = ({
                               disabled: candidate.is_system_actor,
                               onClick: () => setEditingUser(candidate)
                             },
+                            ...(isLocked
+                              ? [
+                                  {
+                                    label: 'Unlock sign-in',
+                                    icon: <TbLockOpen size={14} />,
+                                    onClick: () => void unlockUser.mutateAsync(candidate.id)
+                                  }
+                                ]
+                              : []),
                             ...(canDeactivate
                               ? [
                                   {

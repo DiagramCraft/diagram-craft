@@ -464,3 +464,161 @@ test.describe('auth protected routes', () => {
     ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
   });
 });
+
+test.describe('login throttling', () => {
+  const wrongLogin = (
+    orpc: ReturnType<typeof createTestORPCClient>,
+    username: string,
+    password = 'wrong-password'
+  ) => orpc.auth.login({ body: { username, password } });
+
+  test('locks the account after repeated failures, even for the right password', async ({
+    server,
+    orpc
+  }) => {
+    const { password } = await createLocalUser(server.db, {
+      id: '00000000-0000-4000-8000-0000000000a1',
+      userId: 'throttle-user',
+      email: 'throttle@e2e.test'
+    });
+
+    for (let i = 0; i < 5; i++) {
+      await expect(wrongLogin(orpc, 'throttle-user')).rejects.toMatchObject({
+        code: 'UNAUTHORIZED'
+      });
+    }
+
+    await expect(wrongLogin(orpc, 'throttle-user', password)).rejects.toMatchObject({
+      code: 'TOO_MANY_REQUESTS',
+      data: { retry_after_seconds: expect.any(Number) }
+    });
+    // Signing in by email shares the same budget
+    await expect(wrongLogin(orpc, 'throttle@e2e.test', password)).rejects.toMatchObject({
+      code: 'TOO_MANY_REQUESTS'
+    });
+  });
+
+  test('throttles unknown usernames exactly like real ones', async ({ orpc }) => {
+    for (let i = 0; i < 5; i++) {
+      await expect(wrongLogin(orpc, 'no-such-user')).rejects.toMatchObject({
+        code: 'UNAUTHORIZED'
+      });
+    }
+    await expect(wrongLogin(orpc, 'no-such-user')).rejects.toMatchObject({
+      code: 'TOO_MANY_REQUESTS'
+    });
+  });
+
+  test('a successful login resets the failure counter', async ({ server, orpc }) => {
+    const { password } = await createLocalUser(server.db, {
+      id: '00000000-0000-4000-8000-0000000000a2',
+      userId: 'reset-user',
+      email: 'reset@e2e.test'
+    });
+
+    for (let round = 0; round < 3; round++) {
+      for (let i = 0; i < 4; i++) {
+        await expect(wrongLogin(orpc, 'reset-user')).rejects.toMatchObject({
+          code: 'UNAUTHORIZED'
+        });
+      }
+      await expect(wrongLogin(orpc, 'reset-user', password)).resolves.toMatchObject({
+        token_type: 'Bearer'
+      });
+    }
+  });
+
+  test('an inactive user with a wrong password is indistinguishable from a bad login', async ({
+    server,
+    orpc
+  }) => {
+    await createLocalUser(server.db, {
+      id: '00000000-0000-4000-8000-0000000000a3',
+      userId: 'inactive-throttle',
+      email: 'inactive-throttle@e2e.test',
+      is_active: false
+    });
+    await expect(wrongLogin(orpc, 'inactive-throttle')).rejects.toMatchObject({
+      code: 'UNAUTHORIZED',
+      message: 'Invalid username or password'
+    });
+  });
+
+  test('blocks an IP after too many failures across usernames', async ({ server }) => {
+    const previousLimit = process.env['LOGIN_IP_MAX_ATTEMPTS'];
+    const previousProxy = process.env['TRUST_PROXY'];
+    process.env['LOGIN_IP_MAX_ATTEMPTS'] = '3';
+    process.env['TRUST_PROXY'] = '1';
+    try {
+      const attempt = async (username: string) => {
+        const response = await fetch(`${server.baseUrl}/api/auth/login`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', 'x-forwarded-for': '203.0.113.7' },
+          body: JSON.stringify({ username, password: 'nope' })
+        });
+        return response;
+      };
+      for (const name of ['ip-a', 'ip-b', 'ip-c']) {
+        expect((await attempt(name)).status).toBe(401);
+      }
+      const blocked = await attempt('ip-d');
+      expect(blocked.status).toBe(429);
+      expect(Number(blocked.headers.get('retry-after'))).toBeGreaterThan(0);
+    } finally {
+      if (previousLimit === undefined) delete process.env['LOGIN_IP_MAX_ATTEMPTS'];
+      else process.env['LOGIN_IP_MAX_ATTEMPTS'] = previousLimit;
+      if (previousProxy === undefined) delete process.env['TRUST_PROXY'];
+      else process.env['TRUST_PROXY'] = previousProxy;
+    }
+  });
+
+  test('admins can unlock a user and review security events', async ({ server, orpc }) => {
+    const { password } = await createLocalUser(server.db, {
+      id: '00000000-0000-4000-8000-0000000000a4',
+      userId: 'unlock-user',
+      email: 'unlock@e2e.test'
+    });
+    for (let i = 0; i < 5; i++) {
+      await expect(wrongLogin(orpc, 'unlock-user')).rejects.toMatchObject({
+        code: 'UNAUTHORIZED'
+      });
+    }
+    await expect(wrongLogin(orpc, 'unlock-user', password)).rejects.toMatchObject({
+      code: 'TOO_MANY_REQUESTS'
+    });
+
+    const users = await orpc.authProtected.listUsers(undefined);
+    expect(users.find(u => u.user_id === 'unlock-user')?.locked_until).toEqual(expect.any(String));
+
+    await orpc.authProtected.unlockUser({ params: { id: '00000000-0000-4000-8000-0000000000a4' } });
+    await expect(wrongLogin(orpc, 'unlock-user', password)).resolves.toMatchObject({
+      token_type: 'Bearer'
+    });
+
+    const events = await orpc.authProtected.listEvents({
+      query: { user_id: '00000000-0000-4000-8000-0000000000a4' }
+    });
+    const types = events.map(e => e.event);
+    expect(types).toEqual(
+      expect.arrayContaining([
+        'login_failed',
+        'account_locked',
+        'login_throttled',
+        'account_unlocked',
+        'login_success'
+      ])
+    );
+  });
+
+  test('non-admins cannot unlock users or list events', async ({ server }) => {
+    const userId = '00000000-0000-4000-8000-0000000000a5';
+    await createLocalUser(server.db, { id: userId, userId: 'plain-throttle', email: 'p@e2e.test' });
+    const plain = createTestORPCClient(server.baseUrl, await makeAuthHeader(server.db, userId));
+    await expect(plain.authProtected.listEvents({ query: {} })).rejects.toMatchObject({
+      code: 'FORBIDDEN'
+    });
+    await expect(
+      plain.authProtected.unlockUser({ params: { id: TEST_ADMIN.id } })
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+  });
+});

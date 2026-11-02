@@ -102,7 +102,57 @@ export type ApiTokenAuditDbResult = {
   metadata: Record<string, unknown>;
 };
 
+export type LoginThrottleKeyType = 'account' | 'ip';
+
+export type LoginThrottleDbResult = {
+  key_type: LoginThrottleKeyType;
+  key: string;
+  failure_count: number;
+  locked_until: Date | null;
+  updated_at: Date;
+};
+
+export type AuthEventType =
+  | 'login_success'
+  | 'login_failed'
+  | 'login_throttled'
+  | 'account_locked'
+  | 'account_unlocked';
+
+export type AuthEventDbResult = {
+  id: string;
+  event: AuthEventType;
+  user_id: string | null;
+  username: string | null;
+  ip: string | null;
+  created_at: Date;
+  metadata: Record<string, unknown>;
+};
+
+export type AuthEventListOptions = {
+  userId?: string;
+  event?: AuthEventType;
+  limit: number;
+  offset: number;
+};
+
 export const authMappers = {
+  loginThrottle: (row: DatabaseRow): LoginThrottleDbResult => ({
+    key_type: String(row['key_type']) as LoginThrottleKeyType,
+    key: String(row['key']),
+    failure_count: Number(row['failure_count']),
+    locked_until: row['locked_until'] == null ? null : databaseDate(row['locked_until']),
+    updated_at: databaseDate(row['updated_at'])
+  }),
+  authEvent: (row: DatabaseRow): AuthEventDbResult => ({
+    id: String(row['id']),
+    event: row['event'] as AuthEventType,
+    user_id: row['user_id'] == null ? null : String(row['user_id']),
+    username: row['username'] == null ? null : String(row['username']),
+    ip: row['ip'] == null ? null : String(row['ip']),
+    created_at: databaseDate(row['created_at']),
+    metadata: parseDatabaseJson(row['metadata'], {}, 'auth_event.metadata')
+  }),
   user: (row: DatabaseRow): UserDbResult => ({
     id: String(row['id']),
     user_id: String(row['user_id']),
@@ -189,6 +239,29 @@ export type AuthDatabase = {
   updateApiTokenLastUsed(id: string, timestamp: Date): Promise<void>;
   createApiTokenAudit(input: ApiTokenAuditDbResult): Promise<ApiTokenAuditDbResult>;
   listApiTokenAudit(workspace: string): Promise<ApiTokenAuditDbResult[]>;
+
+  getLoginThrottle(
+    keyType: LoginThrottleKeyType,
+    key: string
+  ): Promise<LoginThrottleDbResult | null>;
+  /**
+   * Atomically increments the failure counter. The counter restarts at 1 when the last failure
+   * (or lock expiry, if later) is older than `windowSeconds`.
+   */
+  incrementLoginFailure(
+    keyType: LoginThrottleKeyType,
+    key: string,
+    now: Date,
+    windowSeconds: number
+  ): Promise<LoginThrottleDbResult>;
+  setLoginLockedUntil(keyType: LoginThrottleKeyType, key: string, lockedUntil: Date): Promise<void>;
+  clearLoginThrottle(keyType: LoginThrottleKeyType, key: string): Promise<void>;
+  listActiveAccountLocks(now: Date): Promise<LoginThrottleDbResult[]>;
+  cleanupLoginThrottle(before: Date): Promise<void>;
+
+  createAuthEvent(input: AuthEventDbResult): Promise<void>;
+  listAuthEvents(options: AuthEventListOptions): Promise<AuthEventDbResult[]>;
+  cleanupAuthEvents(before: Date): Promise<void>;
 
   listGlobalRoleAssignments(userId?: string): Promise<GlobalRoleAssignmentDbResult[]>;
   replaceGlobalRoleAssignments(

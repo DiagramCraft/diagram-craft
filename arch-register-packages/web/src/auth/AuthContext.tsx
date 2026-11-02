@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { AuthorizationDataProvider } from './AuthorizationDataContext';
 import type { User, GlobalPermission, GlobalRole, WorkspaceTeam, AuthBaseData } from './types';
+import { formatThrottledLoginMessage } from './loginThrottleMessage';
 import {
   clearAccessTokenExpiry,
   fetchWithAuthResponse,
@@ -49,7 +50,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const fetchCurrentUser = useCallback(
     async (retryOnUnauthorized = true): Promise<boolean> => {
       try {
-        const res = await fetchWithAuthResponse('/api/auth/me', undefined, { retryOnUnauthorized });
+        const res = await fetchWithAuthResponse('/api/auth/me', undefined, {
+          retryOnUnauthorized
+        });
 
         if (!res.ok) {
           clearAuthState();
@@ -116,6 +119,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         },
         { requiresAuth: false, retryOnUnauthorized: false }
       );
+
+      if (res.status === 429) {
+        const retryAfter = Number.parseInt(res.headers.get('Retry-After') ?? '', 10);
+        throw new Error(formatThrottledLoginMessage(Number.isNaN(retryAfter) ? null : retryAfter));
+      }
 
       if (!res.ok) {
         const error = await res.json().catch(() => ({ message: 'Login failed' }));

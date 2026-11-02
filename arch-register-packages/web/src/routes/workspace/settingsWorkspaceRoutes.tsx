@@ -156,6 +156,9 @@ export const createSettingsWorkspaceRoutes = <TParentRoute extends AnyRoute>(
 
   const globalSettingsRoute = createGlobalSettingsRoute('settings/global');
   const globalUsersSettingsRoute = createGlobalSettingsRoute('settings/global/users');
+  const globalSecurityEventsSettingsRoute = createGlobalSettingsRoute(
+    'settings/global/security-events'
+  );
 
   const schemaSettingsRoute = withWorkspaceShell(
     createRoute({
@@ -350,6 +353,7 @@ export const createSettingsWorkspaceRoutes = <TParentRoute extends AnyRoute>(
     schemaValidationRoute,
     globalSettingsRoute,
     globalUsersSettingsRoute,
+    globalSecurityEventsSettingsRoute,
     accountSettingsRoute,
     accountSectionRoute
   ] as const;

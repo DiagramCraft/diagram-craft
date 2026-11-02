@@ -38,6 +38,8 @@ export async function startTestServer(options: StartTestServerOptions = {}): Pro
 
   process.env['JWT_SECRET'] = 'e2e-test-secret-must-be-at-least-32-chars!!';
   process.env['AUTH_MODE'] = 'local';
+  // Keep the per-IP login budget out of the way of unrelated tests that share one client IP
+  process.env['LOGIN_IP_MAX_ATTEMPTS'] ??= '10000';
   process.env['STORAGE_BACKEND'] = 'fs';
   process.env['STORAGE_FS_BASE'] = join(tmpDir, 'storage');
 

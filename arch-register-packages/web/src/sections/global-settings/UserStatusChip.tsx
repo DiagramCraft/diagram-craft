@@ -1,13 +1,26 @@
 import { Chip } from '../../components/Chip';
+import { useDateTimeFormatPreference } from '../../hooks/useDateTimeFormatPreference';
+import { formatDateTime } from '../../utils/dateFormat';
 
 export const UserStatusChip = ({
   isSystemActor,
-  isActive
+  isActive,
+  lockedUntil
 }: {
   isSystemActor: boolean;
   isActive: boolean;
-}) =>
-  isSystemActor ? (
+  lockedUntil?: string | null;
+}) => {
+  const dateTimeFormatPreference = useDateTimeFormatPreference();
+  return isActive && !isSystemActor && lockedUntil != null && new Date(lockedUntil) > new Date() ? (
+    <Chip
+      tone="ghost"
+      dot="var(--error-fg)"
+      title={`Sign-in locked until ${formatDateTime(lockedUntil, '—', dateTimeFormatPreference)}`}
+    >
+      Locked
+    </Chip>
+  ) : isSystemActor ? (
     <Chip tone="ghost" dot="var(--cmp-fg-disabled)">
       System
     </Chip>
@@ -16,3 +29,4 @@ export const UserStatusChip = ({
       {isActive ? 'Active' : 'Inactive'}
     </Chip>
   );
+};

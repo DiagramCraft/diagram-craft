@@ -29,6 +29,14 @@ import { authProtectedContract, authPublicContract } from '@arch-register/api-ty
 import { createUserApiToken, listUserApiTokens, revokeUserApiToken } from './apiTokenOperations';
 import { issueTokenPair, revokeRefreshToken, rotateRefreshToken } from './refreshSessions';
 import { hashPassword } from '../../utils/password';
+import {
+  assertLoginAllowed,
+  getLoginAttemptContext,
+  recordLoginFailure,
+  recordLoginSuccess,
+  unlockAccount
+} from './loginThrottle';
+import { normalizeThrottleUsername } from './loginThrottlePolicy';
 
 const getAuthMode = () => process.env['AUTH_MODE'] ?? 'local';
 
@@ -74,27 +82,37 @@ export const authPublicORPCRouter = publicRouter.router({
         message: 'Username/password authentication is not enabled'
       });
 
-      let user = await context.db.auth.getUserByUserId(input.body.username);
-      if (!user && input.body.username.includes('@')) {
-        user = await context.db.auth.getUserByEmail(input.body.username);
+      const submittedUsername = input.body.username;
+      let user = await context.db.auth.getUserByUserId(submittedUsername);
+      if (!user && submittedUsername.includes('@')) {
+        user = await context.db.auth.getUserByEmail(submittedUsername);
       }
+
+      // Throttle on the canonical username when the account exists, so signing in by
+      // email or user id shares one budget; unknown names are throttled by what was typed.
+      const attempt = getLoginAttemptContext(
+        context.event,
+        user?.user_id ?? submittedUsername,
+        user?.id ?? null
+      );
+      await assertLoginAllowed(context.db.auth, context.event, attempt);
+
       const isValid = await verifyLoginPassword(user, input.body.password);
-      orpcAssert.present(user, { code: 'UNAUTHORIZED', message: 'Invalid username or password' });
-      orpcAssert.string(user.password_hash, {
-        code: 'UNAUTHORIZED',
-        message: 'Invalid username or password'
-      });
-      orpcAssert.true(user.auth_provider === 'local', {
-        code: 'UNAUTHORIZED',
-        message: 'Invalid username or password'
-      });
+      if (
+        user == null ||
+        typeof user.password_hash !== 'string' ||
+        user.auth_provider !== 'local' ||
+        !isValid
+      ) {
+        await recordLoginFailure(context.db.auth, attempt);
+        throw new ORPCError('UNAUTHORIZED', { message: 'Invalid username or password' });
+      }
       orpcAssert.true(user.is_active, {
         code: 'FORBIDDEN',
         message: 'User account is inactive'
       });
 
-      orpcAssert.true(isValid, { code: 'UNAUTHORIZED', message: 'Invalid username or password' });
-
+      await recordLoginSuccess(context.db.auth, attempt);
       await context.db.auth.updateUserLastLogin(user.id, new Date());
       const tokens = await issueTokenPair(context.db, user);
       setAuthCookies(
@@ -263,7 +281,14 @@ export const authProtectedORPCRouter = protectedRouter.router({
       requireInteractiveSession(context.event);
       const authCtx = await buildApiAuthCtx(context.db, GLOBAL_WS, context.event);
       requireGlobalPermission(authCtx, 'manage_workspace_roles');
+      const locks = new Map(
+        (await context.db.auth.listActiveAccountLocks(new Date())).map(lock => [
+          lock.key,
+          lock.locked_until
+        ])
+      );
       return (await context.db.auth.listUsers()).map(user => ({
+        locked_until: locks.get(normalizeThrottleUsername(user.user_id))?.toISOString() ?? null,
         id: user.id,
         user_id: user.user_id,
         email: user.email,
@@ -363,6 +388,31 @@ export const authProtectedORPCRouter = protectedRouter.router({
         return serializeUser(updatedUser);
       }
     ),
+
+    unlockUser: protectedRouter.authProtected.unlockUser.handler(async ({ input, context }) => {
+      requireInteractiveSession(context.event);
+      await requirePlatformAdmin(context.db, context.event);
+      requireUserManagementMode();
+
+      const target = await context.db.auth.getUser(input.params.id);
+      orpcAssert.present(target, { code: 'NOT_FOUND', message: 'User not found' });
+      const actor = context.event.context.user as UserDbResult;
+      await unlockAccount(context.db.auth, target, actor.id);
+      return serializeUser(target);
+    }),
+
+    listEvents: protectedRouter.authProtected.listEvents.handler(async ({ input, context }) => {
+      requireInteractiveSession(context.event);
+      await requirePlatformAdmin(context.db, context.event);
+
+      const events = await context.db.auth.listAuthEvents({
+        userId: input.query.user_id,
+        event: input.query.event,
+        limit: input.query.limit ?? 50,
+        offset: input.query.offset ?? 0
+      });
+      return events.map(e => ({ ...e, created_at: e.created_at.toISOString() }));
+    }),
 
     deactivateUser: protectedRouter.authProtected.deactivateUser.handler(
       async ({ input, context }) => {
