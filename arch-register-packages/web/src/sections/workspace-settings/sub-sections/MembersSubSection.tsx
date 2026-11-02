@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbPlus } from 'react-icons/tb';
 import { SectionActions } from '../SectionActions';
+import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
 import { Select } from '@diagram-craft/app-components/Select';
 import { Banner } from '../../../components/Banner';
 import { Chip } from '../../../components/Chip';
@@ -27,7 +28,13 @@ import styles from './MembersSubSection.module.css';
 import { EmptyState } from '../../../components/EmptyState';
 import { LoadingState } from '../../../components/LoadingState';
 import { WorkspaceRoleDefinition } from '@arch-register/api-types/workspaceContract';
-import { UserDialog } from '../../../components/UserDialog';
+import {
+  emptyUserFormValues,
+  normalizeEmail,
+  UserFormFields,
+  type UserFormValues
+} from '../../../components/UserFormFields';
+import { useCreateManagedUser } from '../../../hooks/useUsers';
 
 const TeamChip = ({ teamId, label }: { teamId: string; label: string }) => {
   const h = stableHue(teamId);
@@ -259,6 +266,13 @@ export const MembersSubSection = ({ workspaceSlug }: { workspaceSlug: string }) 
   );
 };
 
+type SelectableUser = {
+  id: string;
+  email: string | null;
+  display_name: string;
+  is_active: boolean;
+};
+
 const AddMemberDialog = ({
   open,
   users,
@@ -270,12 +284,7 @@ const AddMemberDialog = ({
   canCreateUsers
 }: {
   open: boolean;
-  users: Array<{
-    id: string;
-    email: string | null;
-    display_name: string;
-    is_active: boolean;
-  }>;
+  users: Array<SelectableUser>;
   loading: boolean;
   onClose: () => void;
   onSave: (userId: string, role: string) => Promise<void>;
@@ -283,131 +292,190 @@ const AddMemberDialog = ({
   roles: WorkspaceRoleDefinition[];
   canCreateUsers: boolean;
 }) => {
+  const createUser = useCreateManagedUser();
+  const resetCreateUser = createUser.reset;
+  const [mode, setMode] = useState<'existing' | 'new'>('existing');
   const [selectedUserId, setSelectedUserId] = useState('');
   const [selectedRole, setSelectedRole] = useState('viewer');
-  const [createdUser, setCreatedUser] = useState<{
-    id: string;
-    email: string | null;
-    display_name: string;
-    is_active: boolean;
-  } | null>(null);
-  const [createUserDialogOpen, setCreateUserDialogOpen] = useState(false);
+  const [newUser, setNewUser] = useState<UserFormValues>(emptyUserFormValues);
+  const [createdUser, setCreatedUser] = useState<SelectableUser | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
+    setMode('existing');
     setCreatedUser(null);
     setSelectedUserId('');
+    setNewUser(emptyUserFormValues);
+    setError(null);
+    resetCreateUser();
     setSelectedRole(roles.find(role => role.id === 'viewer')?.id ?? roles[0]?.id ?? '');
-  }, [open, roles]);
-
-  useEffect(() => {
-    if (open && !selectedUserId && users.length > 0) {
-      setSelectedUserId(users[0]!.id);
-    }
-  }, [open, selectedUserId, users]);
-
-  if (!open) return null;
+  }, [open, roles, resetCreateUser]);
 
   const selectableUsers =
     createdUser && !users.some(user => user.id === createdUser.id)
       ? [...users, createdUser]
       : users;
 
+  // Fall back to creating a user when nobody is left to pick
+  const effectiveMode =
+    canCreateUsers && !loading && selectableUsers.length === 0 ? 'new' : mode;
+  const isNew = canCreateUsers && effectiveMode === 'new';
+
+  useEffect(() => {
+    if (open && !selectedUserId && selectableUsers.length > 0) {
+      setSelectedUserId(selectableUsers[0]!.id);
+    }
+  }, [open, selectedUserId, selectableUsers]);
+
+  if (!open) return null;
+
+  const busy = isSaving || createUser.isPending;
+  const canSave = isNew
+    ? newUser.displayName.trim().length > 0 &&
+      newUser.userId.trim().length > 0 &&
+      newUser.password.length > 0 &&
+      !!selectedRole
+    : !!selectedUserId && !!selectedRole;
+
+  const submit = async () => {
+    if (!canSave || busy) return;
+    setError(null);
+    let userId = selectedUserId;
+    if (isNew) {
+      try {
+        const created = await createUser.mutateAsync({
+          user_id: newUser.userId.trim(),
+          email: normalizeEmail(newUser.email),
+          display_name: newUser.displayName.trim(),
+          password: newUser.password,
+          is_active: newUser.isActive,
+          color: newUser.color
+        });
+        userId = created.id;
+        // Keep the created user selectable so a failed role assignment can be retried
+        setCreatedUser({
+          id: created.id,
+          email: created.email,
+          display_name: created.display_name ?? '',
+          is_active: created.is_active
+        });
+        setSelectedUserId(created.id);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Unable to create user');
+        return;
+      }
+    }
+    try {
+      await onSave(userId, selectedRole);
+    } catch (e) {
+      if (isNew) setMode('existing');
+      setError(e instanceof Error ? e.message : 'Unable to add member');
+    }
+  };
+
+  const roleField = (
+    <div className={styles.field}>
+      <div className={styles.fieldLeft}>
+        <div className={styles.fieldLabel}>Role</div>
+        <div className={styles.fieldHint}>
+          Set the workspace role that will be stored on this membership.
+        </div>
+      </div>
+      <div className={styles.fieldRight}>
+        <Select.Root
+          value={selectedRole ?? undefined}
+          onChange={value => setSelectedRole(value ?? '')}
+          style={{ width: '100%' }}
+        >
+          {roles.map(role => (
+            <Select.Item key={role.id} value={role.id}>
+              {role.name}
+            </Select.Item>
+          ))}
+        </Select.Root>
+      </div>
+    </div>
+  );
+
   return (
     <Dialog open={open} onClose={onClose} title="Add workspace member">
       <div className={styles.dialogBody}>
+        {error && <Banner variant="error">{error}</Banner>}
         {loading ? (
           <EmptyState compact title="Loading users…" />
-        ) : selectableUsers.length === 0 ? (
-          <>
-            <EmptyState compact title="All existing users are already members of this workspace." />
-            {canCreateUsers && (
-              <div className={styles.dialogActions}>
-                <Button variant="secondary" onClick={() => setCreateUserDialogOpen(true)}>
-                  Create new user
-                </Button>
-              </div>
-            )}
-          </>
         ) : (
           <>
-            <div className={styles.field}>
-              <div className={styles.fieldLeft}>
-                <div className={styles.fieldLabel}>User</div>
-                <div className={styles.fieldHint}>
-                  Choose an existing user to add to this workspace.
+            {canCreateUsers && (
+              <ToggleButtonGroup.Root
+                type="single"
+                aria-label="User source"
+                value={isNew ? 'new' : 'existing'}
+                disabled={busy}
+                onChange={value => value && setMode(value as 'existing' | 'new')}
+              >
+                <ToggleButtonGroup.Item value="existing" disabled={selectableUsers.length === 0}>
+                  Existing user
+                </ToggleButtonGroup.Item>
+                <ToggleButtonGroup.Item value="new">New user</ToggleButtonGroup.Item>
+              </ToggleButtonGroup.Root>
+            )}
+            {selectableUsers.length === 0 && (
+              <EmptyState
+                compact
+                title="All existing users are already members of this workspace."
+              />
+            )}
+            {isNew ? (
+              <UserFormFields
+                values={newUser}
+                onChange={patch => setNewUser(prev => ({ ...prev, ...patch }))}
+                isSaving={busy}
+              />
+            ) : (
+              selectableUsers.length > 0 && (
+                <div className={styles.field}>
+                  <div className={styles.fieldLeft}>
+                    <div className={styles.fieldLabel}>User</div>
+                    <div className={styles.fieldHint}>
+                      Choose an existing user to add to this workspace.
+                    </div>
+                  </div>
+                  <div className={styles.fieldRight}>
+                    <Select.Root
+                      value={selectedUserId ?? undefined}
+                      onChange={value => setSelectedUserId(value ?? '')}
+                      style={{ width: '100%' }}
+                    >
+                      {selectableUsers.map(user => (
+                        <Select.Item key={user.id} value={user.id}>
+                          {getUserLabel(user)}
+                          {user.email && user.email !== getUserLabel(user)
+                            ? ` (${user.email})`
+                            : ''}
+                          {!user.is_active ? ' - inactive' : ''}
+                        </Select.Item>
+                      ))}
+                    </Select.Root>
+                  </div>
                 </div>
-              </div>
-              <div className={styles.fieldRight}>
-                <Select.Root
-                  value={selectedUserId ?? undefined}
-                  onChange={value => setSelectedUserId(value ?? '')}
-                  style={{ width: '100%' }}
-                >
-                  {selectableUsers.map(user => (
-                    <Select.Item key={user.id} value={user.id}>
-                      {getUserLabel(user)}
-                      {user.email && user.email !== getUserLabel(user) ? ` (${user.email})` : ''}
-                      {!user.is_active ? ' - inactive' : ''}
-                    </Select.Item>
-                  ))}
-                </Select.Root>
-              </div>
-            </div>
-            <div className={styles.field}>
-              <div className={styles.fieldLeft}>
-                <div className={styles.fieldLabel}>Role</div>
-                <div className={styles.fieldHint}>
-                  Set the workspace role that will be stored on this membership.
-                </div>
-              </div>
-              <div className={styles.fieldRight}>
-                <Select.Root
-                  value={selectedRole ?? undefined}
-                  onChange={value => setSelectedRole(value ?? '')}
-                  style={{ width: '100%' }}
-                >
-                  {roles.map(role => (
-                    <Select.Item key={role.id} value={role.id}>
-                      {role.name}
-                    </Select.Item>
-                  ))}
-                </Select.Root>
-              </div>
-            </div>
+              )
+            )}
+            {(isNew || selectableUsers.length > 0) && roleField}
             <div className={styles.dialogActions}>
-              {canCreateUsers && (
-                <Button variant="secondary" onClick={() => setCreateUserDialogOpen(true)}>
-                  Create new user
-                </Button>
-              )}
-              <Button onClick={onClose} disabled={isSaving}>
+              <Button onClick={onClose} disabled={busy}>
                 Cancel
               </Button>
               <Button
                 variant="primary"
-                onClick={() => void onSave(selectedUserId, selectedRole)}
-                disabled={!selectedUserId || isSaving}
+                onClick={() => void submit()}
+                disabled={!canSave || busy}
               >
-                {isSaving ? 'Adding…' : 'Add member'}
+                {busy ? 'Adding…' : isNew ? 'Create and add member' : 'Add member'}
               </Button>
             </div>
           </>
         )}
-        <UserDialog
-          open={createUserDialogOpen}
-          onClose={() => setCreateUserDialogOpen(false)}
-          onCreated={created => {
-            setCreatedUser({
-              id: created.id,
-              email: created.email,
-              display_name: created.display_name ?? '',
-              is_active: created.is_active
-            });
-            setSelectedUserId(created.id);
-            setCreateUserDialogOpen(false);
-          }}
-        />
       </div>
     </Dialog>
   );

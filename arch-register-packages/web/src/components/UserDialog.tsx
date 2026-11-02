@@ -1,10 +1,8 @@
 import { useEffect, useState } from 'react';
 import type { UserDetail, UserSummary } from '@arch-register/api-types/authContract';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
-import { FormElement } from '@diagram-craft/app-components/FormElement';
-import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Banner } from './Banner';
-import { ColorPicker } from './ColorPicker';
+import { emptyUserFormValues, normalizeEmail, UserFormFields, type UserFormValues } from './UserFormFields';
 import {
   useCreateManagedUser,
   useUpdateManagedUser,
@@ -22,11 +20,6 @@ export type UserDialogProps = {
   onUpdated?: (user: UserDetail) => void;
 };
 
-const normalizeEmail = (email: string) => {
-  const trimmed = email.trim();
-  return trimmed.length > 0 ? trimmed : null;
-};
-
 export const UserDialog = ({
   open,
   user = null,
@@ -40,23 +33,21 @@ export const UserDialog = ({
   const isEditing = user != null;
   const isSaving = createUser.isPending || updateUser.isPending;
 
-  const [userId, setUserId] = useState('');
-  const [email, setEmail] = useState('');
-  const [displayName, setDisplayName] = useState('');
-  const [password, setPassword] = useState('');
-  const [isActive, setIsActive] = useState(true);
-  const [color, setColor] = useState<string | null>(null);
+  const [values, setValues] = useState<UserFormValues>(emptyUserFormValues);
+  const { userId, email, displayName, password, isActive, color } = values;
   const resetCreateUser = createUser.reset;
   const resetUpdateUser = updateUser.reset;
 
   useEffect(() => {
     if (!open) return;
-    setUserId(user?.user_id ?? '');
-    setEmail(user?.email ?? '');
-    setDisplayName(user?.display_name ?? '');
-    setPassword('');
-    setIsActive(user?.is_active ?? true);
-    setColor(user?.color ?? null);
+    setValues({
+      userId: user?.user_id ?? '',
+      email: user?.email ?? '',
+      displayName: user?.display_name ?? '',
+      password: '',
+      isActive: user?.is_active ?? true,
+      color: user?.color ?? null
+    });
     resetCreateUser();
     resetUpdateUser();
   }, [open, resetCreateUser, resetUpdateUser, user]);
@@ -111,8 +102,6 @@ export const UserDialog = ({
   if (!open) return null;
 
   const title = isEditing ? `Edit ${user?.display_name ?? 'user'}` : 'Create user';
-  const passwordAvailable = !isEditing || user?.auth_provider === 'local';
-
   return (
     <Dialog
       open={open}
@@ -136,87 +125,14 @@ export const UserDialog = ({
           </Banner>
         )}
 
-        <div className={styles.fieldGrid}>
-          <FormElement
-            label="Username"
-            hint={
-              isEditing
-                ? 'The username cannot be changed.'
-                : 'Used to sign in with local authentication.'
-            }
-          >
-            <TextInput
-              value={userId}
-              onChange={value => setUserId(value ?? '')}
-              placeholder="jane.doe"
-              autoFocus={!isEditing}
-              disabled={isEditing || isSaving}
-            />
-          </FormElement>
-
-          <FormElement label="Display name">
-            <TextInput
-              value={displayName}
-              onChange={value => setDisplayName(value ?? '')}
-              placeholder="Jane Doe"
-              autoFocus={isEditing}
-              disabled={isSaving}
-            />
-          </FormElement>
-
-          <FormElement label="Email" required={false}>
-            <TextInput
-              value={email}
-              onChange={value => setEmail(value ?? '')}
-              placeholder="jane@example.com"
-              type="email"
-              disabled={isSaving}
-            />
-          </FormElement>
-
-          <FormElement label="Authentication provider">
-            <TextInput value={user?.auth_provider ?? 'local'} onChange={() => {}} disabled />
-          </FormElement>
-
-          {passwordAvailable ? (
-            <FormElement
-              label={isEditing ? 'Reset password' : 'Password'}
-              required={!isEditing}
-              hint={isEditing ? 'Leave blank to keep the current password.' : undefined}
-            >
-              <TextInput
-                value={password}
-                onChange={value => setPassword(value ?? '')}
-                placeholder={isEditing ? 'Leave blank to keep current password' : 'Password'}
-                type="password"
-                disabled={isSaving}
-              />
-            </FormElement>
-          ) : (
-            <div className={styles.providerNote}>
-              This account is managed by OIDC and does not have a local password.
-            </div>
-          )}
-        </div>
-
-        <div className={styles.activeRow}>
-          <label>
-            <input
-              type="checkbox"
-              checked={isActive}
-              onChange={event => setIsActive(event.target.checked)}
-              disabled={isSaving || isCurrentUser}
-            />
-            <span>Account is active</span>
-          </label>
-          {isCurrentUser && (
-            <span className={styles.hint}>Your own account cannot be deactivated.</span>
-          )}
-        </div>
-
-        <FormElement label="Avatar color" required={false}>
-          <ColorPicker value={color} onChange={setColor} disabled={isSaving} size="small" />
-        </FormElement>
+        <UserFormFields
+          values={values}
+          onChange={patch => setValues(prev => ({ ...prev, ...patch }))}
+          isEditing={isEditing}
+          isSaving={isSaving}
+          isCurrentUser={isCurrentUser}
+          authProvider={user?.auth_provider ?? 'local'}
+        />
       </div>
     </Dialog>
   );
