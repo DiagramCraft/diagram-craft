@@ -103,9 +103,10 @@ test.describe('search routes', () => {
     });
     expect(result).toEqual({
       query: '',
-      totalCounts: { projects: 0, files: 0, entities: 0, schemas: 0, relations: 0 },
+      totalCounts: { projects: 0, files: 0, wiki: 0, entities: 0, schemas: 0, relations: 0 },
       projects: [],
       files: [],
+      wiki: [],
       entities: [],
       schemas: [],
       relations: []
@@ -365,6 +366,7 @@ test.describe('search routes', () => {
     expect(allResults.totalCounts).toEqual({
       projects: 30,
       files: 1,
+      wiki: 0,
       entities: 0,
       schemas: 0,
       relations: 0
@@ -378,6 +380,7 @@ test.describe('search routes', () => {
     expect(filteredResults.totalCounts).toEqual({
       projects: 30,
       files: 0,
+      wiki: 0,
       entities: 0,
       schemas: 0,
       relations: 0
@@ -393,7 +396,7 @@ test.describe('search routes', () => {
     ).rejects.toMatchObject({
       code: 'BAD_REQUEST',
       message:
-        'types must be a comma-separated list of: projects, files, entities, schemas, relations'
+        'types must be a comma-separated list of: projects, files, wiki, entities, schemas, relations'
     });
   });
 

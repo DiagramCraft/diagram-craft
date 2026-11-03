@@ -9,7 +9,8 @@ const projectSearchResultSchema = z.object({
   id: z.string().describe('Project identifier'),
   name: z.string().describe('Project name'),
   description: z.string().describe('Project description'),
-  status: z.enum(['draft', 'active', 'complete', 'cancelled']).describe('Project status')
+  status: z.enum(['draft', 'active', 'complete', 'cancelled']).describe('Project status'),
+  color: z.string().nullable().describe('Project color (hex format)')
 });
 
 const fileSearchResultSchema = z.object({
@@ -53,6 +54,8 @@ const relationSearchResultSchema = z.object({
   relationId: z.string().describe('Relation instance identifier'),
   schemaId: z.string().describe('Relation schema identifier'),
   schemaName: z.string().describe('Relation schema name'),
+  schemaColor: z.string().nullable().describe('Relation schema color (hex format)'),
+  schemaIcon: z.string().nullable().describe('Relation schema icon identifier'),
   inEntityId: z.string().describe('Identifier of the entity at the "in" endpoint'),
   inEntityPublicId: z.string().describe('Public identifier of the entity at the "in" endpoint'),
   inEntityName: z.string().describe('Name of the entity at the "in" endpoint'),
@@ -77,6 +80,7 @@ const schemaSearchResultSchema = z.object({
 const searchTotalCountsSchema = z.object({
   projects: z.number().int().nonnegative().describe('Total matching projects before result limits'),
   files: z.number().int().nonnegative().describe('Total matching files before result limits'),
+  wiki: z.number().int().nonnegative().describe('Total matching wiki pages before result limits'),
   entities: z.number().int().nonnegative().describe('Total matching entities before result limits'),
   schemas: z.number().int().nonnegative().describe('Total matching schemas before result limits'),
   relations: z
@@ -92,7 +96,8 @@ const searchResponseSchema = z.object({
     'Total matching results by type before result limits'
   ),
   projects: z.array(projectSearchResultSchema).describe('Matching projects'),
-  files: z.array(fileSearchResultSchema).describe('Matching files (diagrams, markdown, etc.)'),
+  files: z.array(fileSearchResultSchema).describe('Matching files (diagrams and other files)'),
+  wiki: z.array(fileSearchResultSchema).describe('Matching wiki pages (markdown content)'),
   entities: z.array(entitySearchResultSchema).describe('Matching entities'),
   schemas: z.array(schemaSearchResultSchema).describe('Matching schemas'),
   relations: z.array(relationSearchResultSchema).describe('Matching relation instances')
@@ -130,7 +135,7 @@ export const searchContract = oc.tag('Search').router({
               .string()
               .optional()
               .describe(
-                'Comma-separated list of types to search (projects, files, entities, schemas, relations)'
+                'Comma-separated list of types to search (projects, files, wiki, entities, schemas, relations)'
               )
           })
         })

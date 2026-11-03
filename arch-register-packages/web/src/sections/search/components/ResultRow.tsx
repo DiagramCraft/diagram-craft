@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { TbArrowsRightLeft, TbCode, TbDatabase, TbFolder, TbFolders, TbHome } from 'react-icons/tb';
+import { TbBook, TbCode, TbDatabase, TbFolder, TbFolders, TbHome } from 'react-icons/tb';
 import { TypeBadge } from '../../../components/TypeBadge';
 import { Chip } from '../../../components/Chip';
 import { StatusChip } from '../../../components/StatusChip';
@@ -121,7 +121,7 @@ export const ResultRow = ({ row, q, onOpen, schemaMap, lifecycleStates }: Props)
         onOpen={onOpen}
         icon={
           <PlainIcon>
-            <TbFolders size={14} />
+            <TbFolders size={14} style={p.color ? { color: p.color } : undefined} />
           </PlainIcon>
         }
         title={<Hi s={p.name} q={q} />}
@@ -136,12 +136,13 @@ export const ResultRow = ({ row, q, onOpen, schemaMap, lifecycleStates }: Props)
     );
   }
 
-  if (row.kind === 'file') {
+  if (row.kind === 'file' || row.kind === 'wiki') {
+    const isWiki = row.kind === 'wiki';
     const f = row.data as ProjectFileSearchResult;
     const metadataSummary = getFileMetadataSummary(f, q);
     return (
       <DiagramMetadataPopover
-        type="diagram"
+        type={isWiki ? 'markdown' : 'diagram'}
         fallbackTitle={f.name}
         contentMetadata={f.content_metadata}
         commentCount={f.comment_count}
@@ -149,13 +150,9 @@ export const ResultRow = ({ row, q, onOpen, schemaMap, lifecycleStates }: Props)
       >
         <ResultRowShell
           onOpen={onOpen}
-          icon={
-            <PlainIcon>
-              <TbFolder size={14} />
-            </PlainIcon>
-          }
+          icon={<PlainIcon>{isWiki ? <TbBook size={14} /> : <TbFolder size={14} />}</PlainIcon>}
           title={<Hi s={f.content_metadata?.title ?? f.name} q={q} />}
-          chips={<Chip tone="ghost">Diagram</Chip>}
+          chips={<Chip tone="ghost">{isWiki ? 'Wiki page' : 'Diagram'}</Chip>}
           snippet={metadataSummary && <Hi s={metadataSummary} q={q} />}
           meta={
             <>
@@ -226,9 +223,12 @@ export const ResultRow = ({ row, q, onOpen, schemaMap, lifecycleStates }: Props)
       <ResultRowShell
         onOpen={onOpen}
         icon={
-          <PlainIcon>
-            <TbArrowsRightLeft size={14} />
-          </PlainIcon>
+          <TypeBadge
+            color={r.schemaColor ?? 'var(--accent-fg)'}
+            name={r.schemaName}
+            icon={r.schemaIcon ?? undefined}
+            size={22}
+          />
         }
         ariaLabel={`Search result: ${r.schemaName}`}
         title={

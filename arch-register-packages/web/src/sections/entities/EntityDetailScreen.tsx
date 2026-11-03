@@ -406,7 +406,10 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
                   schemaId: entity._schema.id
                 })
           }
-          onStartEdit={startEdit}
+          onStartEdit={() => {
+            if (tab !== defaultTabId) setTab(defaultTabId);
+            startEdit();
+          }}
           onDelete={handleDelete}
           onCancelEdit={cancelEdit}
           onSaveEdit={saveEdit}

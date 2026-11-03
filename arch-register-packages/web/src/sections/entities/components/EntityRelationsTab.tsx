@@ -264,7 +264,6 @@ const TypedRelationRow = ({
             </>
           )}
         </span>
-        <span className={sharedStyles.tertiary}>{relation.entitySlug}</span>
       </button>
     );
   }
@@ -346,7 +345,6 @@ const RelationRow = ({
           </>
         )}
       </span>
-      <span className={sharedStyles.tertiary}>{relation.entitySlug}</span>
     </EntityNavigationLink>
   );
 };

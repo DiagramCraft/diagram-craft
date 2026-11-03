@@ -22,7 +22,7 @@ export const Medium: Story = {
           value={value}
           onChange={setValue}
           onClear={() => setValue('')}
-          placeholder="Search entities, diagrams, projects, schema…"
+          placeholder="Search entities, diagrams, projects…"
         />
       </div>
     );

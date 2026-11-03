@@ -80,6 +80,9 @@
   color: var(--base-fg);
   font-weight: 500;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   text-decoration: none;
 }
 

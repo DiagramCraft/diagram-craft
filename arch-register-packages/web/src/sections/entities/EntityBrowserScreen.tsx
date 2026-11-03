@@ -1,6 +1,8 @@
 import { useMemo, useState, useCallback } from 'react';
 import { getRouteApi } from '@tanstack/react-router';
 import styles from './EntityBrowserScreen.module.css';
+import { TypeBadge } from '../../components/TypeBadge';
+import { resolveSchemaPresentation } from '../../lib/schemaPresentation';
 import { Title } from '../../components/Title';
 import { Button } from '@diagram-craft/app-components/Button';
 import { type MenuItem } from '../../components/DropdownMenu';
@@ -75,6 +77,7 @@ export const EntityBrowserScreen = () => {
     () => savedViews.find(savedView => savedView.id === search.viewId) ?? null,
     [savedViews, search.viewId]
   );
+  const { schema: typeSchema, color: typeColor } = resolveSchemaPresentation(schemas, typeFilter);
   const typeName = collectionId
     ? (collections.find(collection => collection.id === collectionId)?.name ?? 'Collection')
     : typeFilter
@@ -357,6 +360,16 @@ export const EntityBrowserScreen = () => {
               onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
             }
           ]}
+          icon={
+            !collectionId && typeSchema ? (
+              <TypeBadge
+                color={typeColor}
+                name={typeSchema.name}
+                icon={typeSchema.icon}
+                size={32}
+              />
+            ) : undefined
+          }
           title={activeSavedView?.name ?? typeName}
           titleTestId="entity-browser-title"
           chips={

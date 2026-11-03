@@ -67,10 +67,11 @@ describe('getFileContextLabel', () => {
 describe('search result transformations', () => {
   const results = {
     query: 'payments',
-    totalCounts: { entities: 12, projects: 30, files: 14, schemas: 6, relations: 9 },
+    totalCounts: { entities: 12, projects: 30, files: 14, wiki: 5, schemas: 6, relations: 9 },
     entities: [{ entityId: 'entity-1', publicId: 'APP-1' }],
     projects: [{ id: 'project-1' }],
     files: [{ fileId: 'file-1' }],
+    wiki: [{ fileId: 'wiki-1' }],
     schemas: [{ schemaId: 'schema-1' }],
     relations: [{ relationId: 'relation-1' }]
   } as unknown as SearchResponse;
@@ -80,7 +81,7 @@ describe('search result transformations', () => {
       'entities',
       'projects',
       'files',
-      'schemas',
+      'wiki',
       'relations'
     ]);
     expect(buildSearchGroups(results, 'files')).toEqual([
@@ -94,10 +95,11 @@ describe('search result transformations', () => {
 
   it('uses full category totals instead of the capped returned rows', () => {
     expect(getSearchCategoryCounts(results)).toEqual({
-      all: 71,
+      all: 76,
       entities: 12,
       projects: 30,
       files: 14,
+      wiki: 5,
       schemas: 6,
       relations: 9
     });
