@@ -88,7 +88,7 @@ export const EnumEditorScreen = () => {
 
       {selected || isNew ? (
         <Panel>
-          <div className={styles.editor}>
+          <div>
             <div className={styles.formRow}>
               <div>
                 <div className={styles.formLabel}>Name</div>

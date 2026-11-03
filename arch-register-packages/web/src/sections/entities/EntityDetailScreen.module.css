@@ -215,102 +215,12 @@
   margin-top: 0;
 }
 
-/* Metadata bar */
-.metaBar {
-  display: flex;
-  gap: 0;
-  padding: 0 24px;
-  margin-bottom: 4px;
-}
-
-.metaItem {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  font-size: 12px;
-  color: var(--base-fg-dimmed);
-  border-right: 1px solid var(--panel-border);
-}
-
-.metaItem:last-child {
-  border-right: 0;
-}
-
-.metaLabel {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--cmp-fg-disabled);
-  margin-right: 4px;
-}
-
-.metaValue {
-  color: var(--base-fg-secondary);
-}
-
-/* Metadata section - distinct visual treatment */
-.metaSection {
-  background: var(--base-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r-md);
-  padding: 10px 14px 12px;
-  margin-bottom: 12px;
-}
-
-.metaSectionLabel {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  color: var(--cmp-fg-disabled);
-  margin-bottom: 8px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.iconBtn {
-  width: 28px;
-  height: 28px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--r);
-  color: var(--base-fg-dimmed);
-  background: none;
-  border: none;
-  cursor: pointer;
-}
-
-.iconBtn:hover {
-  background: var(--cmp-bg);
-  color: var(--base-fg);
-}
-
 .dim {
   color: var(--cmp-fg-disabled);
 }
 
 .tertiary {
   color: var(--cmp-fg-tertiary);
-}
-
-/* ── Future plans ──────────────────────────────────────────── */
-.futurePlanApply {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 11px;
-  padding: 2px 8px;
-  border: 1px solid var(--accent-fg);
-  border-radius: 4px;
-  color: var(--accent-fg);
-  background: none;
-  cursor: pointer;
-}
-
-.futurePlanApply:hover {
-  background: color-mix(in oklch, var(--accent-fg) 10%, transparent);
 }
 
 /* ── Entity Timeline (etl) ──────────────────────────────────── */
@@ -893,35 +803,4 @@
   font-size: 10.5px;
   color: var(--cmp-fg-disabled);
   padding-top: 4px;
-}
-
-/* ── Conflict resolution ───────────────────────────────────── */
-.conflictList {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.conflictRow {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.conflictLabel {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--cmp-fg);
-}
-
-.conflictOption {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-}
-
-.conflictOptionLabel {
-  font-size: 12px;
-  color: var(--cmp-fg);
 }

@@ -446,7 +446,7 @@ export const ItemDetails = ({ item }: { item: ApiSpecificationItem }) => {
   const parameters = item.parameters.length > 0 ? formatJson(item.parameters) : null;
 
   return (
-    <div className={styles.itemDetails}>
+    <div>
       {item.description && <p className={styles.description}>{item.description}</p>}
       <div className={styles.detailGrid}>
         {parameters && <DetailBlock label="Parameters" value={parameters} />}

@@ -384,7 +384,7 @@ type GroupHeaderRowProps = { colSpan: number; children: ReactNode } & Omit<
 >;
 
 const GroupHeaderRow = ({ colSpan, children, className, ...rest }: GroupHeaderRowProps) => (
-  <tr className={cx(styles.groupHeaderRow, className)} {...rest}>
+  <tr className={className} {...rest}>
     <td className={styles.groupHeaderCell} colSpan={colSpan}>
       {children}
     </td>

@@ -673,7 +673,7 @@ export const RelationMatrixView = ({
                       return (
                         <td
                           key={ci}
-                          className={`${styles.cell}${filled ? ` ${styles.cellOn}` : ''}${hoveredCol === ci ? ` ${styles.cellColHover}` : ''}`}
+                          className={`${styles.cell}${hoveredCol === ci ? ` ${styles.cellColHover}` : ''}`}
                           onMouseEnter={() => setHoveredCol(ci)}
                           onMouseLeave={() => setHoveredCol(null)}
                         >

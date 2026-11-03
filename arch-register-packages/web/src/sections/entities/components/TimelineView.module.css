@@ -9,12 +9,6 @@
   color: var(--base-fg-dimmed);
 }
 
-.configMeta {
-  font-size: 11px;
-  color: var(--base-fg-dimmed);
-  white-space: nowrap;
-}
-
 /* Scroll area */
 .scrollWrap {
   flex: 1;

@@ -47,8 +47,7 @@
   background: var(--base-bg);
 }
 
-.diagramListHeadWithFolder,
-.diagramRowWithFolder {
+.diagramListHeadWithFolder {
   grid-template-columns: 1fr 120px 90px;
 }
 

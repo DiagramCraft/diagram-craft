@@ -14,31 +14,6 @@
   border-color: var(--accent-fg);
 }
 
-.pickerResults {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.pickerItem {
-  display: flex;
-  align-items: center;
-  padding: 5px 8px;
-  border-radius: var(--r-sm);
-  background: none;
-  border: none;
-  cursor: pointer;
-  text-align: left;
-  gap: 8px;
-  color: var(--base-fg);
-}
-
-.pickerItem:hover {
-  background: var(--cmp-bg);
-}
-
 .teamDot {
   width: 12px;
   height: 12px;
@@ -60,10 +35,4 @@
   font-size: 11px;
   color: var(--cmp-fg-disabled);
   white-space: nowrap;
-}
-
-.pickerHint {
-  font-size: 11px;
-  color: var(--cmp-fg-disabled);
-  padding: 2px 8px;
 }

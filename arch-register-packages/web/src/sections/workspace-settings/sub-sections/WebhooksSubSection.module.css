@@ -3,8 +3,7 @@
   flex-direction: column;
   gap: 16px;
 }
-.hint,
-.muted {
+.hint {
   color: var(--cmp-fg-tertiary);
   font-size: 11px;
 }

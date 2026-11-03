@@ -126,7 +126,6 @@
   font-size: 12px;
 }
 
-.diagramListHeadWithFolder,
 .diagramRowWithFolder {
   grid-template-columns: 1fr 120px 90px;
 }

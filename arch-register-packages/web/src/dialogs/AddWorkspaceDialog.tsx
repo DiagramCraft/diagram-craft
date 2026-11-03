@@ -131,7 +131,7 @@ const TemplateDependencyMappingSection = ({
           <div className={styles.dependencyMapping} key={dependency.id}>
             <div className={styles.dependencyMappingTitle}>{dependency.name}</div>
             <div className={styles.dependencyMappingDescription}>{dependency.description}</div>
-            <div className={styles.checkboxGroup}>
+            <div>
               {candidates.map(({ template, definition }) => {
                 const targetId = templateDefinitionKey(
                   definition.template_id,

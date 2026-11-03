@@ -324,7 +324,7 @@ export const RelationImportScreen = () => {
                 )}
               </span>
               {errorCount > 0 && (
-                <span className={styles.errorBadge}>
+                <span>
                   <TbAlertCircle size={12} /> {errorCount} error{errorCount !== 1 ? 's' : ''}
                 </span>
               )}
@@ -397,9 +397,9 @@ export const RelationImportScreen = () => {
                         </Table.Cell>
                         <Table.Cell>
                           {hasErrors ? (
-                            <span className={styles.errorList}>
+                            <span>
                               {row.errors.map((error, index) => (
-                                <span key={index} className={styles.errorItem}>
+                                <span key={index}>
                                   <TbAlertCircle size={10} /> {error}
                                 </span>
                               ))}

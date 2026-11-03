@@ -746,7 +746,7 @@ export const EntityDrawer = ({
             </div>
           );
           return (
-            <section className={styles.section} key={section.id}>
+            <section key={section.id}>
               {showTitle && section.collapsible ? (
                 <h3 className={styles.sectionHeading}>
                   <button

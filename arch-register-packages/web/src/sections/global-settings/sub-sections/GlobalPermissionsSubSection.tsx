@@ -101,7 +101,7 @@ export const GlobalPermissionsSubSection = ({
 
   if (error) {
     return (
-      <div className={styles.container}>
+      <div>
         <Banner variant="error">Failed to load users.</Banner>
       </div>
     );
@@ -109,7 +109,7 @@ export const GlobalPermissionsSubSection = ({
 
   if (rolesError) {
     return (
-      <div className={styles.container}>
+      <div>
         <Banner variant="error">Failed to load global role assignments.</Banner>
       </div>
     );

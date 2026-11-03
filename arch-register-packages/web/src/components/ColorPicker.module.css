@@ -48,25 +48,3 @@
     0 0 0 2px var(--base-bg),
     0 0 0 4px var(--accent-fg);
 }
-
-.clearButton {
-  align-self: flex-start;
-  padding: 4px 12px;
-  font-size: 12px;
-  background: var(--panel-bg);
-  border: 1px solid var(--cmp-border);
-  border-radius: 4px;
-  cursor: pointer;
-  color: var(--base-fg-dimmed);
-  transition: all 0.2s ease;
-}
-
-.clearButton:hover:not(:disabled) {
-  background: var(--cmp-bg);
-  color: var(--base-fg-secondary);
-}
-
-.clearButton:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}

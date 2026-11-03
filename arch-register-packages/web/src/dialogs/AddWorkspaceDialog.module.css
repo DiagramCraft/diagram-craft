@@ -1,18 +1,6 @@
 /* ── Dialog panel override ────────────────────────────────── */
 
-.dialogPanel {
-  width: 620px;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
 /* ── Title (override Dialog default) ──────────────────────── */
-
-.dialogPanel h2 {
-  margin: 14px 0 0 14px;
-}
 
 /* ── Body ───────────────────────────────────────────────────── */
 
@@ -86,53 +74,6 @@
 
 .mono {
   font-family: var(--font-mono);
-}
-
-.inputPrefix {
-  display: flex;
-  align-items: center;
-  background: var(--cmp-bg);
-  border: 1px solid var(--cmp-border);
-  border-radius: var(--r);
-  padding: 0 8px;
-  transition: border-color 0.15s;
-}
-
-.inputPrefix:focus-within {
-  border-color: var(--accent-fg);
-}
-
-.inputPrefixText {
-  color: var(--cmp-fg-disabled);
-  font-size: 12px;
-  font-family: var(--font-mono);
-  flex-shrink: 0;
-  padding-right: 4px;
-  border-right: 1px solid var(--panel-border);
-  margin-right: 6px;
-}
-
-.inputUnstyled {
-  background: transparent;
-  border: none;
-  padding: 5px 0;
-  flex: 1;
-}
-
-.inputUnstyled:focus {
-  border: none;
-  outline: none;
-}
-
-.slugOk {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  font-size: 11px;
-  color: var(--green);
-  font-family: var(--font-mono);
-  flex-shrink: 0;
-  padding-left: 6px;
 }
 
 /* ── Note box ───────────────────────────────────────────────── */
@@ -333,41 +274,3 @@
 }
 
 /* ── Footer ─────────────────────────────────────────────────── */
-
-.footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 10px 16px;
-  border-top: 1px solid var(--cmp-border);
-}
-
-.footerHints {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  font-size: 11px;
-  color: var(--cmp-fg-disabled);
-}
-
-.footerActions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.kbd {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 4px;
-  border: 1px solid var(--cmp-border);
-  border-radius: var(--r-sm);
-  background: var(--base-bg);
-  font-size: 10px;
-  color: var(--base-fg-dimmed);
-  font-family: var(--font-mono);
-}

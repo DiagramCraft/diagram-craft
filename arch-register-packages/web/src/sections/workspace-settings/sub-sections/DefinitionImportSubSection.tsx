@@ -367,7 +367,7 @@ export const DefinitionImportSubSection = () => {
                     </FormCheckboxList.Row>
                   ))}
                   {targets.length === 0 && (
-                    <div className={styles.note}>
+                    <div>
                       No destination {dependency.target_kind} definitions are available.
                     </div>
                   )}

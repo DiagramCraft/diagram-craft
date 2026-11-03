@@ -110,20 +110,3 @@
   min-height: 0;
   position: relative;
 }
-
-/* Shared action button */
-.actionBtn {
-  width: 22px;
-  height: 22px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--r);
-  color: var(--base-fg-dimmed);
-  flex-shrink: 0;
-}
-
-.actionBtn:hover {
-  background: var(--cmp-bg);
-  color: var(--base-fg);
-}

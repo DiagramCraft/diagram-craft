@@ -184,13 +184,6 @@
   flex: none;
 }
 
-.rendererCheckbox {
-  display: flex;
-  align-items: center;
-  font-size: 12px;
-  cursor: pointer;
-}
-
 .rendererOptionLabel {
   flex: 1;
   font-size: 12px;

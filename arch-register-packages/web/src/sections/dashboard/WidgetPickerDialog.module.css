@@ -108,12 +108,6 @@
   font-size: 12.5px;
 }
 
-.viewPickerActions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
 .search {
   width: 100%;
   box-sizing: border-box;

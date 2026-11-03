@@ -115,7 +115,7 @@ const Column = ({
       ) : (
         <div className={styles.depthGroups}>
           {depthGroups.map(([groupDepth, groupEntities]) => (
-            <div key={groupDepth} className={styles.depthGroup}>
+            <div key={groupDepth}>
               <div className={styles.depthLabel}>Depth {groupDepth}</div>
               <div className={styles.cardList}>
                 {groupEntities.map(entity => (

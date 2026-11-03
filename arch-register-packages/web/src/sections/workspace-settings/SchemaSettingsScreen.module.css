@@ -1,9 +1,5 @@
 /* Schema settings editor */
 
-.head {
-  margin-bottom: 20px;
-}
-
 .formRow {
   display: flex;
   flex-direction: row;

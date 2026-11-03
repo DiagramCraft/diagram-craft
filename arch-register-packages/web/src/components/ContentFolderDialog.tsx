@@ -101,7 +101,7 @@ export const ContentFolderDialog = ({
             Will be created inside <strong>{parentFolder}</strong>
           </div>
         )}
-        {error && <div className={styles.error}>{error}</div>}
+        {error && <div>{error}</div>}
       </form>
     </Dialog>
   );

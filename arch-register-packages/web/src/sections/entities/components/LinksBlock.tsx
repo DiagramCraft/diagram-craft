@@ -43,7 +43,6 @@ export const LinksBlock = ({ entity, editing, editLinks, setEditLinks }: LinksBl
           />
           <button
             type="button"
-            className={styles.iconBtn}
             onClick={() => setEditLinks(ls => ls.filter((_, j) => j !== i))}
           >
             <TbX size={12} />

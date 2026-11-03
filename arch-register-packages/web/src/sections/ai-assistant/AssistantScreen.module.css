@@ -28,24 +28,6 @@
   width: calc(100% - 24px) !important;
 }
 
-.collapseBtn {
-  width: 32px;
-  height: 32px;
-  flex-shrink: 0;
-  border-radius: var(--r);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--cmp-fg-disabled);
-  border: 1px solid transparent;
-}
-
-.collapseBtn:hover {
-  color: var(--base-fg);
-  background: var(--cmp-bg);
-  border-color: var(--cmp-border);
-}
-
 .historyScroll {
   flex: 1;
   overflow-y: auto;
@@ -214,23 +196,6 @@
   display: flex;
   align-items: center;
   gap: 12px;
-}
-
-.expandBtn {
-  width: 30px;
-  height: 30px;
-  border-radius: var(--r);
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--base-fg-dimmed);
-  border: 1px solid var(--cmp-border);
-}
-
-.expandBtn:hover {
-  color: var(--base-fg);
-  background: var(--cmp-bg);
 }
 
 .eyebrow {
@@ -562,10 +527,6 @@
   margin: 0;
 }
 
-.mdGap {
-  height: 7px;
-}
-
 .mdList {
   margin: 4px 0;
   padding-left: 0;
@@ -648,16 +609,6 @@ ol.mdList li::before {
   line-height: 1.5;
   color: var(--base-fg);
   white-space: pre;
-}
-
-.codeLang {
-  display: block;
-  font-size: 10px;
-  text-transform: uppercase;
-  color: var(--cmp-fg-disabled);
-  letter-spacing: 0.05em;
-  margin-bottom: 4px;
-  font-family: inherit;
 }
 
 .heading1 {
