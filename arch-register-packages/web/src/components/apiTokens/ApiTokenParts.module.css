@@ -8,47 +8,6 @@
   width: min(620px, calc(100vw - 32px));
 }
 
-.field {
-  display: grid;
-  grid-template-columns: 120px 1fr;
-  gap: 12px;
-  align-items: center;
-}
-
-.label {
-  color: var(--base-fg);
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.hint {
-  grid-column: 2;
-  margin-top: -6px;
-  color: var(--cmp-fg-disabled);
-  font-size: 11px;
-}
-
-.capabilityField {
-  display: grid;
-  grid-template-columns: 120px 1fr;
-  gap: 12px;
-  align-items: start;
-}
-
-.capabilityGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 9px 16px;
-}
-
-.capability {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--base-fg);
-  font-size: 12px;
-}
-
 .secretBox {
   display: flex;
   align-items: center;

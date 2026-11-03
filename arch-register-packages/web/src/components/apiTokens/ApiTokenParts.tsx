@@ -18,6 +18,9 @@ import { DropdownMenu, type MenuItem } from '../DropdownMenu';
 import { MutationError } from '../../sections/workspace-settings/MutationError';
 import { formatDate } from '../../utils/dateFormat';
 import { getWorkspaceCapabilityLabel } from '../../lib/workspaceCapabilityLabels';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
+import { FormGroup } from '../FormGroup';
+import { FormCheckboxList } from '../FormCheckboxList';
 import styles from './ApiTokenParts.module.css';
 
 const EDITOR_CAPABILITIES = [
@@ -110,8 +113,7 @@ export const TokenCreateDialog = ({
     >
       <div className={styles.form}>
         {workspaces && (
-          <label className={styles.field}>
-            <span className={styles.label}>Workspace</span>
+          <FormElement label="Workspace">
             <Select.Root
               value={workspace || undefined}
               onChange={value => setWorkspace(value ?? '')}
@@ -124,34 +126,36 @@ export const TokenCreateDialog = ({
                 </Select.Item>
               ))}
             </Select.Root>
-          </label>
+          </FormElement>
         )}
 
-        <label className={styles.field}>
-          <span className={styles.label}>Name</span>
+        <FormElement label="Name">
           <TextInput value={name} onChange={value => setName(value ?? '')} autoFocus />
-        </label>
+        </FormElement>
 
-        <label className={styles.field}>
-          <span className={styles.label}>Expires</span>
+        <FormElement
+          label="Expires"
+          required={false}
+          hint="Leave empty to use the one-year maximum lifetime."
+        >
           <DateInput value={expiresAt} onChange={value => setExpiresAt(value ?? '')} />
-          <span className={styles.hint}>Leave empty to use the one-year maximum lifetime.</span>
-        </label>
+        </FormElement>
 
-        <div className={styles.capabilityField}>
-          <div className={styles.label}>Editor capabilities</div>
-          <div className={styles.capabilityGrid}>
+        <FormGroup variant="simple" label="Editor capabilities">
+          <FormCheckboxList columns={2}>
             {EDITOR_CAPABILITIES.map(capability => (
-              <label className={styles.capability} key={capability}>
+              <FormCheckboxList.Row
+                key={capability}
+                label={getWorkspaceCapabilityLabel(capability)}
+              >
                 <Checkbox
                   value={capabilities.includes(capability)}
                   onChange={() => toggleCapability(capability)}
                 />
-                <span>{getWorkspaceCapabilityLabel(capability)}</span>
-              </label>
+              </FormCheckboxList.Row>
             ))}
-          </div>
-        </div>
+          </FormCheckboxList>
+        </FormGroup>
         <MutationError error={error} />
       </div>
     </Dialog>
