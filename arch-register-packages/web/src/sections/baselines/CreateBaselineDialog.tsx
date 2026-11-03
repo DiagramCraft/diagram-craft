@@ -14,8 +14,6 @@ import { ApiError } from '../../lib/http';
 import { toEffectiveAt, toLocalDate } from './baselineEffectiveDate';
 import styles from './CreateBaselineDialog.module.css';
 import { FormCheckboxList } from '../../components/FormCheckboxList';
-import { FormGroup } from '../../components/FormGroup';
-import { FormGrid } from '../../components/FormGrid';
 
 type Props = {
   open: boolean;

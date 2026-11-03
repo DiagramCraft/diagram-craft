@@ -404,7 +404,6 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
     onClose
   ]);
 
-  const activeTemplate = templates.find(t => t.id === templateId);
   const fromWs = workspaces.find(w => w.id === copyFrom);
   const toggleCrossCutting = (id: string, checked: boolean) =>
     setCrossCuttingTemplateIds(previous =>
