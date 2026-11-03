@@ -1,7 +1,4 @@
 /* Apply snapshot conflict dialog */
-.applySnapshotDateField {
-  margin-bottom: 4px;
-}
 
 .conflictList {
   display: flex;
@@ -19,13 +16,6 @@
   font-size: 11.5px;
   font-weight: 500;
   color: var(--base-fg);
-}
-
-.conflictOption {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
 }
 
 .conflictOptionLabel {

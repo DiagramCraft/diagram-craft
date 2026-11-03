@@ -9,7 +9,8 @@ import type {
 import { facetKindForField } from './dashboardFacetFields';
 import { useSchemas } from '../../hooks/useSchemas';
 import { useRelationSchemas } from '../../hooks/useRelationSchemas';
-import { DialogContent, DialogSection } from '../markdown/editor/BlockDialog';
+import { DialogContent } from '../markdown/editor/BlockDialog';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
 import {
   isFacetsConfigValid,
   isOptionsConfigValid,
@@ -165,7 +166,7 @@ export const DashboardSidebarConfigDialog = ({
       ]}
     >
       <DialogContent>
-        <DialogSection label="Sidebar type">
+        <FormElement label="Sidebar type">
           <select
             className={styles.selectInput}
             value={kind}
@@ -175,10 +176,10 @@ export const DashboardSidebarConfigDialog = ({
             <option value="facets">Facets (multi select)</option>
             <option value="options">Fixed options (single select)</option>
           </select>
-        </DialogSection>
+        </FormElement>
         {kind === 'options' ? (
           <>
-            <DialogSection label="Variable name">
+            <FormElement label="Variable name">
               <input
                 type="text"
                 className={styles.labelInput}
@@ -190,16 +191,16 @@ export const DashboardSidebarConfigDialog = ({
                 Referenced in widget config as <code>${optionsVariableName || '<name>'}</code>. It
                 is empty when nothing is selected.
               </div>
-            </DialogSection>
-            <DialogSection label="List label" required={false}>
+            </FormElement>
+            <FormElement label="List label" required={false}>
               <input
                 type="text"
                 className={styles.labelInput}
                 value={optionsItemLabel}
                 onChange={event => setOptionsItemLabel(event.currentTarget.value)}
               />
-            </DialogSection>
-            <DialogSection label="“All” row label" required={false}>
+            </FormElement>
+            <FormElement label="“All” row label" required={false}>
               <input
                 type="text"
                 className={styles.labelInput}
@@ -207,8 +208,8 @@ export const DashboardSidebarConfigDialog = ({
                 value={optionsAllLabel}
                 onChange={event => setOptionsAllLabel(event.currentTarget.value)}
               />
-            </DialogSection>
-            <DialogSection label="Options">
+            </FormElement>
+            <FormElement label="Options">
               <div className={styles.options}>
                 {options.map((option, index) => (
                   <div key={index} className={styles.options}>
@@ -257,11 +258,11 @@ export const DashboardSidebarConfigDialog = ({
                   Add option
                 </Button>
               </div>
-            </DialogSection>
+            </FormElement>
           </>
         ) : kind === 'facets' ? (
           <>
-            <DialogSection label="Schema">
+            <FormElement label="Schema">
               <select
                 className={styles.selectInput}
                 value={facetsSchemaName ? `${facetsSchemaKind}:${facetsSchemaName}` : ''}
@@ -283,8 +284,8 @@ export const DashboardSidebarConfigDialog = ({
                   ))}
                 </optgroup>
               </select>
-            </DialogSection>
-            <DialogSection label="Facets">
+            </FormElement>
+            <FormElement label="Facets">
               <div className={styles.options}>
                 {facets.map((facet, index) => (
                   <div key={index} className={styles.options}>
@@ -357,11 +358,11 @@ export const DashboardSidebarConfigDialog = ({
                 Each variable is referenced as <code>$&lt;name&gt;</code> and holds the comma-joined
                 selected ids.
               </div>
-            </DialogSection>
+            </FormElement>
           </>
         ) : (
           <>
-            <DialogSection label="Entity schema">
+            <FormElement label="Entity schema">
               <select
                 className={styles.selectInput}
                 value={schemaName}
@@ -374,8 +375,8 @@ export const DashboardSidebarConfigDialog = ({
                   </option>
                 ))}
               </select>
-            </DialogSection>
-            <DialogSection label="Variable name">
+            </FormElement>
+            <FormElement label="Variable name">
               <input
                 type="text"
                 className={styles.labelInput}
@@ -386,8 +387,8 @@ export const DashboardSidebarConfigDialog = ({
               <div className={styles.hint}>
                 Referenced in widget config as <code>${variableName || '<name>'}</code>.
               </div>
-            </DialogSection>
-            <DialogSection label="List label" required={false}>
+            </FormElement>
+            <FormElement label="List label" required={false}>
               <input
                 type="text"
                 className={styles.labelInput}
@@ -395,7 +396,7 @@ export const DashboardSidebarConfigDialog = ({
                 value={itemLabel}
                 onChange={event => setItemLabel(event.currentTarget.value)}
               />
-            </DialogSection>
+            </FormElement>
           </>
         )}
       </DialogContent>

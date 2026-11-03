@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@diagram-craft/app-components/Button';
+import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { TitleMenu } from '../../../components/TitleMenu';
-import { TbBookmark, TbFileText, TbPencil, TbStar } from 'react-icons/tb';
+import { TbBookmark, TbFileText, TbPencil, TbStar, TbTrash } from 'react-icons/tb';
 import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectCrudContract';
 import { ProjectMetaItem, ProjectScreenLayout } from '../shared/ProjectScreenLayout';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
@@ -10,7 +11,7 @@ import { useCreateProjectBaseline } from '../shared/CreateProjectBaselineDialog'
 import { MdxContext } from '../../markdown/MdxContext';
 import { DashboardGrid } from '../../dashboard/DashboardGrid';
 import { useProjectDashboard, useUpdateProjectDashboard } from '../../../hooks/useProjectDashboard';
-import { useUpdateProject } from '../../../hooks/useProjects';
+import { useDeleteProject, useUpdateProject } from '../../../hooks/useProjects';
 import { getErrorMessage } from '../../../lib/http';
 import { formatDate } from '../../../utils/dateFormat';
 import { ProjectSettingsForm } from './ProjectSettingsForm';
@@ -30,8 +31,10 @@ export const ProjectHome = ({ project, allFilesCount, folderCount }: Props) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingSettings, setIsEditingSettings] = useState(false);
   const [markdownTemplatesOpen, setMarkdownTemplatesOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [pinError, setPinError] = useState('');
   const updateProject = useUpdateProject(workspaceSlug);
+  const deleteProject = useDeleteProject(workspaceSlug);
   const baseline = useCreateProjectBaseline(project);
 
   const { data: dashboard, isLoading } = useProjectDashboard(workspaceSlug, project.id);
@@ -55,6 +58,15 @@ export const ProjectHome = ({ project, allFilesCount, folderCount }: Props) => {
         onError: err => setPinError(getErrorMessage(err, 'Could not update project status'))
       }
     );
+  };
+
+  const handleDelete = () => {
+    setConfirmDelete(false);
+    setPinError('');
+    deleteProject.mutate(project.id, {
+      onSuccess: () => navigate({ to: '/$workspaceSlug/projects', params: { workspaceSlug } }),
+      onError: err => setPinError(getErrorMessage(err, 'Could not delete project'))
+    });
   };
 
   return (
@@ -105,6 +117,13 @@ export const ProjectHome = ({ project, allFilesCount, folderCount }: Props) => {
                 label: 'Edit project',
                 icon: <TbPencil size={13} />,
                 onClick: () => setIsEditingSettings(true)
+              },
+              {
+                label: 'Delete project',
+                icon: <TbTrash size={13} />,
+                danger: true,
+                separatorBefore: true,
+                onClick: () => setConfirmDelete(true)
               }
             ]}
           />
@@ -150,7 +169,6 @@ export const ProjectHome = ({ project, allFilesCount, folderCount }: Props) => {
           teams={teams}
           onSaved={() => setIsEditingSettings(false)}
           onClose={() => setIsEditingSettings(false)}
-          onDelete={() => navigate({ to: '/$workspaceSlug/projects', params: { workspaceSlug } })}
         />
       )}
       {project.canEdit && (
@@ -161,6 +179,19 @@ export const ProjectHome = ({ project, allFilesCount, folderCount }: Props) => {
           onClose={() => setMarkdownTemplatesOpen(false)}
         />
       )}
+      <DeleteConfirmationDialog
+        open={confirmDelete}
+        title="Delete project?"
+        message={
+          <>
+            The project <b>{project.name}</b> and all its diagrams will be permanently deleted.
+          </>
+        }
+        detail="This can't be undone."
+        confirmLabel="Delete project"
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmDelete(false)}
+      />
       {baseline.element}
     </ProjectScreenLayout>
   );

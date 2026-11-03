@@ -3,7 +3,8 @@ import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 import type { DashboardWidgetWidgetDefinition, WidgetSurface } from '../../widgets/shared/types';
-import { DialogContent, DialogSection } from '../markdown/editor/BlockDialog';
+import { DialogContent } from '../markdown/editor/BlockDialog';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { getConfigDialogWidth } from '../../widgets/shared/configDialog';
 import { getWidgetDefinition, isValidComponentConfig } from '../../widgets/shared/widgetRegistry';
 import type { DashboardWidgetFrame } from '@arch-register/api-types/dashboardContract';
@@ -97,13 +98,13 @@ const WidgetConfigDialogContent = ({
                   context={{ mode: 'dashboard', surface }}
                 />
               ) : (
-                <DialogSection label="Options" required={false}>
+                <FormElement label="Options" required={false}>
                   <div className={styles.optionRow}>
                     <span className={styles.optionLabel}>
                       This widget has no configurable options.
                     </span>
                   </div>
-                </DialogSection>
+                </FormElement>
               )}
             </DialogContent>
           </Tabs.Content>

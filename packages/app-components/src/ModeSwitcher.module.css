@@ -41,7 +41,6 @@
       background: var(--_active-bg);
       color: var(--base-fg);
       border-color: var(--panel-border);
-      box-shadow: 0 1px 0 oklch(0 0 0 / 0.25);
     }
   }
 
@@ -53,7 +52,7 @@
 }
 
 :global(.light-theme) .cModeSwitcher {
-  --_active-bg: white;
+  --_active-bg: var(--panel-bg);
 }
 
 :global(.dark-theme) .cModeSwitcher {

@@ -10,7 +10,8 @@ import {
   filterSchemaFields
 } from '../../data-views/entity-card/EntityCard';
 import { EntityPicker } from '../../../components/EntityPicker';
-import { DialogContent, DialogSection } from '../../../sections/markdown/editor/BlockDialog';
+import { DialogContent } from '../../../sections/markdown/editor/BlockDialog';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
 import type { EntityFieldSlateElement } from './types';
 import styles from './EntityFieldDialog.module.css';
 
@@ -79,7 +80,7 @@ export const EntityFieldDialog = ({
       ]}
     >
       <DialogContent>
-        <DialogSection label="Entity">
+        <FormElement label="Entity">
           <EntityPicker
             selectedEntityId={selectedEntityId}
             selectedEntity={selectedEntity}
@@ -94,10 +95,10 @@ export const EntityFieldDialog = ({
               setSelectedField('');
             }}
           />
-        </DialogSection>
+        </FormElement>
 
         {selectedEntityId && (
-          <DialogSection label="Field">
+          <FormElement label="Field">
             <div className={styles.fieldList}>
               {STANDARD_FIELD_OPTIONS.map(opt => (
                 <label
@@ -130,7 +131,7 @@ export const EntityFieldDialog = ({
                 </label>
               ))}
             </div>
-          </DialogSection>
+          </FormElement>
         )}
       </DialogContent>
     </Dialog>

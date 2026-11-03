@@ -67,7 +67,6 @@ const EntityDrawerBadge = ({
       case 'targetLifecycle':
         return entity[resolved.badge.slot === 'lifecycle' ? '_lifecycle' : '_targetLifecycle'] ? (
           <span className={styles.badgeWithLabel}>
-            <span className={styles.badgeLabel}>{resolved.label}</span>
             <StatusChip
               value={
                 entity[resolved.badge.slot === 'lifecycle' ? '_lifecycle' : '_targetLifecycle']!.id
@@ -747,7 +746,7 @@ export const EntityDrawer = ({
             </div>
           );
           return (
-            <section className={styles.section} key={section.id}>
+            <section key={section.id}>
               {showTitle && section.collapsible ? (
                 <h3 className={styles.sectionHeading}>
                   <button

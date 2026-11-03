@@ -9,30 +9,6 @@
   z-index: 1000;
 }
 
-.saveButton {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.25rem 0.6rem;
-  border: 1px solid transparent;
-  border-radius: var(--cmp-radius, 4px);
-  background: var(--accent-9, #3b82f6);
-  color: white;
-  cursor: pointer;
-  font-size: 12px;
-  margin-right: 0.5rem;
-  transition: opacity 0.15s;
-}
-
-.saveButton:hover:not(:disabled) {
-  opacity: 0.9;
-}
-
-.saveButton:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 .loading,
 .error {
   display: flex;

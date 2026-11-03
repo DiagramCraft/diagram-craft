@@ -40,6 +40,8 @@ export const AddProjectDialog = ({
   );
   const canCreateWithoutOwner = canCreateProject(null);
 
+  const isValid = values.name.trim() !== '' && (canCreateWithoutOwner || values.owner !== '');
+
   useEffect(() => {
     if (open) {
       setValues({
@@ -75,7 +77,7 @@ export const AddProjectDialog = ({
         {
           label: createProjectMutation.isPending ? 'Creating...' : 'Create project',
           type: 'default',
-          disabled: createProjectMutation.isPending,
+          disabled: createProjectMutation.isPending || !isValid,
           onClick: () => {
             void handleSubmit();
           }

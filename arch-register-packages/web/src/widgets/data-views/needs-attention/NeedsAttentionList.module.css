@@ -53,10 +53,3 @@
   font-size: 10px;
   font-weight: 500;
 }
-
-.rowState {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 2px;
-}

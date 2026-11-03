@@ -1,4 +1,6 @@
 import { Dialog } from '@diagram-craft/app-components/Dialog';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
+import { Select } from '@diagram-craft/app-components/Select';
 import styles from './MarkdownChangeImpactDialog.module.css';
 import type { GovernanceInitiationField } from '@arch-register/api-types/governanceInitiationFields';
 import { GovernanceInitiationFields } from '../governance/GovernanceInitiationFields';
@@ -44,16 +46,15 @@ export const MarkdownChangeImpactDialog = ({
       <p className={styles.description}>
         Choose how this change should affect the document workflow.
       </p>
-      <label className={styles.field}>
-        <span>Change impact</span>
-        <select
+      <FormElement label="Change impact">
+        <Select.Root
           value={changeKind}
-          onChange={event => onChangeKind(event.target.value as 'minor' | 'major')}
+          onChange={value => onChangeKind((value ?? 'minor') as 'minor' | 'major')}
         >
-          <option value="minor">Minor — preserve pending approval</option>
-          <option value="major">Major — request target approval</option>
-        </select>
-      </label>
+          <Select.Item value="minor">Minor — preserve pending approval</Select.Item>
+          <Select.Item value="major">Major — request target approval</Select.Item>
+        </Select.Root>
+      </FormElement>
       <GovernanceInitiationFields
         fields={initiationFields}
         values={initiationFieldValues}

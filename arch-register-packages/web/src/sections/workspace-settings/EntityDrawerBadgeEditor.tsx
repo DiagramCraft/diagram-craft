@@ -1,5 +1,6 @@
 import { TbSquare, TbTag, TbTrash } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import type {
@@ -132,8 +133,7 @@ export const EntityDrawerBadgeEditor = ({
               <>
                 <hr className={layoutStyles.blockGroupDivider} />
                 <div className={styles.optionsEditor}>
-                  <label>
-                    <span>Field</span>
+                  <FormElement label="Field">
                     <Select.Root
                       value={badge.fieldId}
                       onChange={value => {
@@ -150,7 +150,7 @@ export const EntityDrawerBadgeEditor = ({
                         </Select.Item>
                       ))}
                     </Select.Root>
-                  </label>
+                  </FormElement>
                 </div>
               </>
             )}
@@ -158,8 +158,7 @@ export const EntityDrawerBadgeEditor = ({
               <>
                 <hr className={layoutStyles.blockGroupDivider} />
                 <div className={styles.optionsEditor}>
-                  <label>
-                    <span>Metadata field</span>
+                  <FormElement label="Metadata field">
                     <Select.Root
                       value={badge.slot}
                       onChange={value => {
@@ -176,7 +175,7 @@ export const EntityDrawerBadgeEditor = ({
                         </Select.Item>
                       ))}
                     </Select.Root>
-                  </label>
+                  </FormElement>
                 </div>
               </>
             )}

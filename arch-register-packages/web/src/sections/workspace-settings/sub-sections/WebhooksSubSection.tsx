@@ -8,6 +8,9 @@ import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
+import { FormGroup } from '../../../components/FormGroup';
+import { FormCheckboxList } from '../../../components/FormCheckboxList';
 import { Table } from '../../../components/table/Table';
 import { DropdownMenu, type MenuItem } from '../../../components/DropdownMenu';
 import { Chip } from '../../../components/Chip';
@@ -111,67 +114,62 @@ const EditorDialog = ({
       ]}
     >
       <div className={styles.form}>
-        <label className={styles.field}>
-          <span className={styles.label}>Endpoint URL</span>
+        <FormElement
+          label="Endpoint URL"
+          hint="HTTPS is required except for local development endpoints."
+        >
           <TextInput
             value={url}
             onChange={value => setUrl(value ?? '')}
             placeholder="https://example.com/webhook"
           />
-          <span className={styles.hint}>
-            HTTPS is required except for local development endpoints.
-          </span>
-        </label>
-        <div className={styles.field}>
-          <span className={styles.label}>Events</span>
-          <div className={styles.checks}>
+        </FormElement>
+        <FormGroup variant="simple" label="Events">
+          <FormCheckboxList columns={2}>
             {OPERATIONS.map(operation => (
-              <label className={styles.check} key={operation.value}>
+              <FormCheckboxList.Row key={operation.value} label={operation.label}>
                 <Checkbox
                   value={operations.includes(operation.value)}
                   onChange={() => setOperations(toggle(operations, operation.value))}
                 />
-                {operation.label}
-              </label>
+              </FormCheckboxList.Row>
             ))}
-          </div>
-        </div>
-        <div className={styles.field}>
-          <span className={styles.label}>Relation types</span>
-          <span className={styles.hint}>
+          </FormCheckboxList>
+        </FormGroup>
+        <FormGroup variant="simple" label="Relation types">
+          <div className={styles.hint}>
             No selection sends events for every relation type. Existing entity-only webhooks remain
             entity-only until relation types are enabled here.
-          </span>
-          <div className={styles.checks}>
+          </div>
+          <FormCheckboxList columns={2}>
             {relationSchemas.map(schema => (
-              <label className={styles.check} key={schema.id}>
+              <FormCheckboxList.Row key={schema.id} label={schema.name}>
                 <Checkbox
                   value={relationSchemaIds?.includes(schema.id) ?? false}
                   onChange={() => setRelationSchemaIds(toggle(relationSchemaIds ?? [], schema.id))}
                 />
-                {schema.name}
-              </label>
+              </FormCheckboxList.Row>
             ))}
-          </div>
-        </div>
-        <div className={styles.field}>
-          <span className={styles.label}>Entity types</span>
-          <span className={styles.hint}>No selection sends events for every entity type.</span>
-          <div className={styles.checks}>
+          </FormCheckboxList>
+        </FormGroup>
+        <FormGroup variant="simple" label="Entity types">
+          <div className={styles.hint}>No selection sends events for every entity type.</div>
+          <FormCheckboxList columns={2}>
             {schemas.map(schema => (
-              <label className={styles.check} key={schema.id}>
+              <FormCheckboxList.Row key={schema.id} label={schema.name}>
                 <Checkbox
                   value={schemaIds.includes(schema.id)}
                   onChange={() => setSchemaIds(toggle(schemaIds, schema.id))}
                 />
-                {schema.name}
-              </label>
+              </FormCheckboxList.Row>
             ))}
-          </div>
-        </div>
-        <label className={styles.check}>
-          <Checkbox value={enabled} onChange={value => setEnabled(value ?? false)} /> Enabled
-        </label>
+          </FormCheckboxList>
+        </FormGroup>
+        <FormCheckboxList>
+          <FormCheckboxList.Row label="Enabled">
+            <Checkbox value={enabled} onChange={value => setEnabled(value ?? false)} />
+          </FormCheckboxList.Row>
+        </FormCheckboxList>
         <MutationError error={error} />
       </div>
     </Dialog>

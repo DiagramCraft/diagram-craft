@@ -3,7 +3,6 @@
   flex-direction: column;
 }
 
-.actions,
 .summary {
   display: flex;
   flex-wrap: wrap;
@@ -143,7 +142,6 @@
   font-size: 12px;
 }
 
-.input,
 .textarea {
   min-width: 0;
   border: 1px solid var(--cmp-border);

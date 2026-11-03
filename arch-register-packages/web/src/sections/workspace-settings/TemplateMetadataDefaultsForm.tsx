@@ -36,33 +36,35 @@ export const TemplateMetadataDefaultsForm = ({
 
   return (
     <>
-      <div className={styles.sectionLabel}>Structured metadata defaults</div>
       {documentTypeId === UNTYPED ? (
-        <div className={styles.fieldEmpty}>Untyped Markdown has no metadata fields.</div>
+        <div></div>
       ) : selectedType ? (
-        <div className={styles.defaultsGrid}>
-          {fields.length === 0 ? (
-            <div className={styles.fieldEmpty}>This document type has no fields.</div>
-          ) : (
-            fields.map(field => (
-              <div key={field.id} className={styles.defaultRow}>
-                <div className={styles.defaultLabel}>
-                  <span>{field.name}</span>
-                  {field.requirement === 'optional' && (
-                    <span className={styles.optionalLabel}>(optional)</span>
-                  )}
+        <div>
+          <div className={styles.sectionLabel}>Structured metadata defaults</div>
+          <div className={styles.defaultsGrid}>
+            {fields.length === 0 ? (
+              <div className={styles.fieldEmpty}>This document type has no fields.</div>
+            ) : (
+              fields.map(field => (
+                <div key={field.id} className={styles.defaultRow}>
+                  <div className={styles.defaultLabel}>
+                    <span>{field.name}</span>
+                    {field.requirement === 'optional' && (
+                      <span className={styles.optionalLabel}>(optional)</span>
+                    )}
+                  </div>
+                  <TemplateDefaultInput
+                    field={field}
+                    value={defaults[field.id]}
+                    onChange={value => patchDefault(field.id, value)}
+                  />
                 </div>
-                <TemplateDefaultInput
-                  field={field}
-                  value={defaults[field.id]}
-                  onChange={value => patchDefault(field.id, value)}
-                />
-              </div>
-            ))
-          )}
+              ))
+            )}
+          </div>
         </div>
       ) : (
-        <div className={styles.fieldEmpty}>Select a document type to set field defaults.</div>
+        <div></div>
       )}
     </>
   );

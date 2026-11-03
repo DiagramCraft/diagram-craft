@@ -82,7 +82,8 @@ export const Dialog = ({
   buttons = [],
   footerLeft,
   className,
-  width
+  width,
+  scrollable
 }: Props) => {
   const portal = usePortal();
   const dialogContext = useDialogContext();
@@ -171,7 +172,11 @@ export const Dialog = ({
 
             <BaseUIAlertDialog.Description
               className={styles.eBody}
-              render={p => <div {...p}>{children}</div>}
+              render={p => (
+                <div {...p} data-scrollable={scrollable ? 'true' : undefined}>
+                  {children}
+                </div>
+              )}
             />
 
             {(footerLeft || buttons.length > 0) && (
@@ -202,6 +207,8 @@ type Props = {
   footerLeft?: ReactNode;
   className?: string;
   width?: string | number;
+  /** Scrolls the body vertically when the content exceeds the available height */
+  scrollable?: boolean;
 };
 
 /** Renders a single key badge, e.g. <Kbd>Esc</Kbd> */

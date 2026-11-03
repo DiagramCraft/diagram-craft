@@ -7,6 +7,11 @@
   flex-shrink: 0;
 }
 
+.panel.diffPanel {
+  /* Rendered inside the diff body, which bleeds out by 14px on each side (see compareBody) */
+  margin: 0 14px 18px;
+}
+
 .header {
   display: flex;
   align-items: center;
@@ -96,28 +101,6 @@
   align-items: center;
   gap: 6px;
   min-width: 0;
-}
-
-.aiIndicator {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 16px;
-  height: 16px;
-  border-radius: var(--r, 4px);
-  color: var(--accent-fg);
-}
-
-.aiIndicator:hover,
-.aiIndicator:focus-visible {
-  background: var(--panel-bg);
-}
-
-.aiFindingsList {
-  margin: 4px 0;
-  padding-left: 16px;
-  font-size: 11px;
 }
 
 .documentLink {

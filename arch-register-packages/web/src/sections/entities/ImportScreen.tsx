@@ -330,21 +330,18 @@ export const ImportScreen = () => {
                 return (
                   <>
                     {errorCount > 0 && (
-                      <span className={styles.errorBadge}>
+                      <span>
                         <TbAlertCircle size={12} /> {errorCount} error{errorCount !== 1 ? 's' : ''}
                       </span>
                     )}
                     {constraintCount > 0 && (
-                      <span className={styles.errorBadge}>
+                      <span>
                         <TbAlertCircle size={12} /> {constraintCount} constraint violation
                         {constraintCount !== 1 ? 's' : ''}
                       </span>
                     )}
                     {decisionCount > 0 && (
-                      <span
-                        className={styles.errorBadge}
-                        style={{ background: 'oklch(0.65 0.15 40 / 0.1)' }}
-                      >
+                      <span style={{ background: 'oklch(0.65 0.15 40 / 0.1)' }}>
                         <TbAlertCircle size={12} /> {decisionCount} decision
                         {decisionCount !== 1 ? 's' : ''} required
                       </span>
@@ -453,14 +450,14 @@ export const ImportScreen = () => {
                         <Table.Cell>
                           {r.errors.length > 0 ||
                           (r.constraintViolations && r.constraintViolations.length > 0) ? (
-                            <span className={styles.errorList}>
+                            <span>
                               {r.errors.map((err, i) => (
-                                <span key={i} className={styles.errorItem}>
+                                <span key={i}>
                                   <TbAlertCircle size={10} /> {err}
                                 </span>
                               ))}
                               {r.constraintViolations?.map((violation, i) => (
-                                <span key={`cv-${i}`} className={styles.errorItem}>
+                                <span key={`cv-${i}`}>
                                   <TbAlertCircle size={10} /> {violation.message}
                                 </span>
                               ))}

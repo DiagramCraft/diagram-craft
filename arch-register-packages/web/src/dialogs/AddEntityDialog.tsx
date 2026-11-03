@@ -319,8 +319,9 @@ export const AddEntityDialog = ({
     <Dialog
       open={open}
       onClose={onClose}
+      scrollable={true}
       title="New entity"
-      width="min(640px, calc(100vw - 48px))"
+      width="min(1024px, calc(100vw - 48px))"
       buttons={[
         { label: 'Cancel', type: 'cancel', onClick: onClose },
         {

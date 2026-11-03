@@ -4,6 +4,7 @@ import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Select } from '@diagram-craft/app-components/Select';
+import { FormCheckboxList } from '../../components/FormCheckboxList';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { Button } from '@diagram-craft/app-components/Button';
 import type { AiActionTestResult } from '@arch-register/api-types/projectDocumentAiContract';
@@ -17,7 +18,8 @@ import {
 import { testDocumentAiAction } from '../../hooks/useDocumentAiActions';
 import { SafeMarkdown } from '../../components/SafeMarkdown';
 import { DocumentPicker } from '../../components/DocumentPicker';
-import { DialogContent, DialogSection } from '../markdown/editor/BlockDialog';
+import { DialogContent } from '../markdown/editor/BlockDialog';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
 import styles from './AiActionDialog.module.css';
 
 const KIND_LABELS: Record<DocumentAiAction['kind'], string> = {
@@ -223,15 +225,15 @@ export const AiActionDialog = ({
             <Tabs.Content value="edit">
               <div className={styles.editContent}>
                 <div className={styles.formGrid}>
-                  <DialogSection label="Name">
+                  <FormElement label="Name">
                     <TextInput
                       value={draft.name}
                       onChange={value => setDraft({ ...draft, name: value ?? '' })}
                       placeholder="Action name"
                       style={{ width: '100%' }}
                     />
-                  </DialogSection>
-                  <DialogSection label="Type">
+                  </FormElement>
+                  <FormElement label="Type">
                     <Select.Root value={draft.kind} onChange={updateKind} style={{ width: '100%' }}>
                       {Object.entries(KIND_LABELS).map(([value, label]) => (
                         <Select.Item key={value} value={value}>
@@ -239,10 +241,10 @@ export const AiActionDialog = ({
                         </Select.Item>
                       ))}
                     </Select.Root>
-                  </DialogSection>
+                  </FormElement>
                 </div>
 
-                <DialogSection label="Prompt">
+                <FormElement label="Prompt">
                   <TextArea
                     value={draft.prompt}
                     onChange={value => setDraft({ ...draft, prompt: value ?? '' })}
@@ -250,12 +252,20 @@ export const AiActionDialog = ({
                     style={{ width: '100%' }}
                     placeholder="Instructions for the AI action"
                   />
-                </DialogSection>
+                </FormElement>
 
-                <DialogSection label="Available tools">
-                  <div className={styles.toolList}>
+                <FormElement label="Available tools">
+                  <FormCheckboxList>
                     {DOCUMENT_AI_READ_ONLY_TOOLS.map(tool => (
-                      <label key={tool.id} className={styles.toolRow}>
+                      <FormCheckboxList.Row
+                        key={tool.id}
+                        label={
+                          <span>
+                            <span className={styles.toolLabel}>{tool.label}</span>
+                            <span className={styles.toolDescription}>{tool.description}</span>
+                          </span>
+                        }
+                      >
                         <Checkbox
                           value={draft.tools?.includes(tool.id) ?? true}
                           onChange={value => {
@@ -266,21 +276,17 @@ export const AiActionDialog = ({
                             setDraft({ ...draft, tools: [...new Set(nextTools)] });
                           }}
                         />
-                        <span>
-                          <span className={styles.toolLabel}>{tool.label}</span>
-                          <span className={styles.toolDescription}>{tool.description}</span>
-                        </span>
-                      </label>
+                      </FormCheckboxList.Row>
                     ))}
-                  </div>
+                  </FormCheckboxList>
                   <div className={styles.hint}>
                     The selected tools are still limited by the initiating user&apos;s permissions.
                     Select none to run this action without architecture tools.
                   </div>
-                </DialogSection>
+                </FormElement>
 
                 {draft.kind === 'metadata_generator' && (
-                  <DialogSection label="Output field">
+                  <FormElement label="Output field">
                     {eligibleFields.length > 0 || draft.outputFieldId ? (
                       <Select.Root
                         value={draft.outputFieldId}
@@ -305,7 +311,7 @@ export const AiActionDialog = ({
                         Add a text, long text, boolean, date, number, or enum field first.
                       </div>
                     )}
-                  </DialogSection>
+                  </FormElement>
                 )}
 
                 <div className={styles.enabledRow}>
@@ -334,7 +340,7 @@ export const AiActionDialog = ({
                 </Button>
               </div>
 
-              <DialogSection label="Test document">
+              <FormElement label="Test document">
                 {!documentTypeId ? (
                   <div className={styles.hint}>
                     Save this document type before testing an action.
@@ -362,7 +368,7 @@ export const AiActionDialog = ({
                     onClearDocument={() => setSelectedDocument(null)}
                   />
                 )}
-              </DialogSection>
+              </FormElement>
 
               {(running || displayOutput.length > 0 || error || result) && (
                 <div className={styles.result}>

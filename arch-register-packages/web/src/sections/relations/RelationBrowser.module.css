@@ -27,15 +27,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-.entityLink {
-  color: inherit;
-  text-decoration: none;
-}
-
-.entityLink:hover {
-  text-decoration: underline;
-}
-
 .endpoint {
   display: flex;
   align-items: center;

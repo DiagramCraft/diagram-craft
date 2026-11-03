@@ -4,7 +4,8 @@ import type { TElement } from 'platejs';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
 import { ColorPicker } from '../../../components/ColorPicker';
-import { DialogContent, DialogSection } from '../../../sections/markdown/editor/BlockDialog';
+import { DialogContent } from '../../../sections/markdown/editor/BlockDialog';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
 import type { LabelSlateElement } from './types';
 import styles from './LabelDialog.module.css';
 
@@ -64,7 +65,7 @@ export const LabelDialog = ({
       ]}
     >
       <DialogContent>
-        <DialogSection label="Text">
+        <FormElement label="Text">
           <input
             type="text"
             className={styles.textInput}
@@ -73,11 +74,11 @@ export const LabelDialog = ({
             placeholder="e.g. Draft"
             autoFocus
           />
-        </DialogSection>
+        </FormElement>
 
-        <DialogSection label="Color">
+        <FormElement label="Color">
           <ColorPicker value={color} onChange={c => setColor(c ?? SCHEMA_COLORS[0]!)} />
-        </DialogSection>
+        </FormElement>
       </DialogContent>
     </Dialog>
   );

@@ -14,6 +14,8 @@ import {
   useEntityDrawerConfiguration,
   useUpdateEntityDrawerConfiguration
 } from '../../hooks/useWorkspaceConfig';
+import { Checkbox } from '@diagram-craft/app-components/Checkbox';
+import { FormCheckboxList } from '../../components/FormCheckboxList';
 import layoutStyles from './SchemaLayoutEditor.module.css';
 import styles from './EntityDrawerSettingsScreen.module.css';
 import { EntityDrawerBadgeEditor } from './EntityDrawerBadgeEditor';
@@ -204,18 +206,17 @@ export const EntityDrawerEditor = ({
 
   return (
     <>
-      <label className={layoutStyles.toggle}>
-        <input
-          type="checkbox"
-          className={layoutStyles.checkbox}
-          disabled={!canEdit}
-          checked
-          onChange={event => {
-            if (!event.target.checked) disableCustomLayout();
-          }}
-        />
-        Use a custom layout for the entity drawer
-      </label>
+      <FormCheckboxList>
+        <FormCheckboxList.Row label="Use a custom layout for the entity drawer">
+          <Checkbox
+            disabled={!canEdit}
+            value
+            onChange={checked => {
+              if (!checked) disableCustomLayout();
+            }}
+          />
+        </FormCheckboxList.Row>
+      </FormCheckboxList>
 
       <div className={styles.customHeader}>
         <div>

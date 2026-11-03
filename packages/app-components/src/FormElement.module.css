@@ -22,7 +22,7 @@
   }
 
   .eOptional {
-    color: var(--cmp-fg-disabled);
+    color: var(--fg-dimmed);
     font-weight: 400;
   }
 

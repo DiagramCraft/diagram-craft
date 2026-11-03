@@ -74,6 +74,7 @@ export const ProjectMarkdownTemplatesDialog = ({ open, project, workspaceId, onC
 
   const startNewTemplate = () => {
     resetTemplateForm();
+    setTemplateTypeId(UNTYPED);
     setIsCreating(true);
   };
 

@@ -139,12 +139,12 @@ export const DiagramCard = ({
           <span>{file.content_metadata?.title ?? file.name}</span>
           <div className={styles.diagramNameBadges}>
             {file.is_workspace_template && (
-              <span className={styles.templateBadge} title="Workspace template">
+              <span title="Workspace template">
                 <TbStar size={10} /> Workspace
               </span>
             )}
             {file.is_template && !file.is_workspace_template && (
-              <span className={styles.templateBadge} title="Project template">
+              <span title="Project template">
                 <TbStar size={10} /> Project
               </span>
             )}
@@ -204,12 +204,12 @@ export const DiagramRow = ({
         )}
         <span>{file.content_metadata?.title ?? file.name}</span>
         {file.is_workspace_template && (
-          <span className={styles.templateBadge} title="Workspace template">
+          <span title="Workspace template">
             <TbStar size={10} /> Workspace
           </span>
         )}
         {file.is_template && !file.is_workspace_template && (
-          <span className={styles.templateBadge} title="Project template">
+          <span title="Project template">
             <TbStar size={10} /> Project
           </span>
         )}

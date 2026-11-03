@@ -5,7 +5,8 @@ import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useContentFile } from '../../../hooks/useContentScope';
 import { DocumentPicker } from '../../../components/DocumentPicker';
-import { DialogContent, DialogSection } from '../../../sections/markdown/editor/BlockDialog';
+import { DialogContent } from '../../../sections/markdown/editor/BlockDialog';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
 import type { WikiLinkSlateElement } from './types';
 
 export const WikiLinkDialog = ({
@@ -59,14 +60,14 @@ export const WikiLinkDialog = ({
       ]}
     >
       <DialogContent>
-        <DialogSection label="Wiki page">
+        <FormElement label="Wiki page">
           <DocumentPicker
             selectedDocumentId={selectedNodeId}
             selectedDocument={selectedDocument}
             onSelectDocument={document => setSelectedNodeId(document.file.id)}
             onClearDocument={() => setSelectedNodeId('')}
           />
-        </DialogSection>
+        </FormElement>
       </DialogContent>
     </Dialog>
   );

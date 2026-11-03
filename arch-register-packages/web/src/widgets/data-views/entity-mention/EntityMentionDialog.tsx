@@ -5,7 +5,8 @@ import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useEntity } from '../../../hooks/useEntities';
 import { EntityPicker } from '../../../components/EntityPicker';
-import { DialogContent, DialogSection } from '../../../sections/markdown/editor/BlockDialog';
+import { DialogContent } from '../../../sections/markdown/editor/BlockDialog';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
 import type { EntityMentionSlateElement } from './types';
 
 export const EntityMentionDialog = ({
@@ -63,7 +64,7 @@ export const EntityMentionDialog = ({
       ]}
     >
       <DialogContent>
-        <DialogSection label="Entity">
+        <FormElement label="Entity">
           <EntityPicker
             selectedEntityId={selectedEntityId}
             selectedEntity={selectedEntity}
@@ -74,7 +75,7 @@ export const EntityMentionDialog = ({
               setSelectedEntityId('');
             }}
           />
-        </DialogSection>
+        </FormElement>
       </DialogContent>
     </Dialog>
   );

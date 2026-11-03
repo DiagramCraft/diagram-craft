@@ -1,4 +1,6 @@
 import { FormElement } from '@diagram-craft/app-components/FormElement';
+import { DateInput } from '@diagram-craft/app-components/DateInput';
+import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { MultiSelect, type MultiSelectItem } from '@diagram-craft/app-components/MultiSelect';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
@@ -131,11 +133,10 @@ export const EntityFieldInput = ({
       }
       if (field.type === 'date') {
         return (
-          <input
-            type="date"
+          <DateInput
             disabled={disabled}
             value={typeof item === 'string' ? item : ''}
-            onChange={event => update(event.target.value)}
+            onChange={next => update(next ?? '')}
             style={{ width: '100%' }}
           />
         );
@@ -147,14 +148,14 @@ export const EntityFieldInput = ({
             : {};
         return (
           <div style={{ display: 'flex', gap: 6 }}>
-            <input
-              type="number"
-              step="0.01"
+            <NumberInput
+              step={0.01}
+              numberOfDecimals={2}
               disabled={disabled}
               value={currencyValue.amount ?? ''}
-              onChange={event =>
+              onChange={amount =>
                 update({
-                  amount: event.target.value === '' ? undefined : Number(event.target.value),
+                  amount,
                   currency: currencyValue.currency ?? defaultCurrency ?? 'USD'
                 })
               }
@@ -186,16 +187,14 @@ export const EntityFieldInput = ({
       }
       if (field.type === 'number') {
         return (
-          <input
-            type="number"
-            step="1"
+          <NumberInput
+            step={1}
+            numberOfDecimals={0}
             min={field.min}
             max={field.max}
             disabled={disabled}
             value={typeof item === 'number' ? item : ''}
-            onChange={event =>
-              update(event.target.value === '' ? '' : Math.trunc(event.target.valueAsNumber))
-            }
+            onChange={next => update(next === undefined ? '' : Math.trunc(next))}
             style={{ width: '100%' }}
           />
         );
@@ -309,11 +308,10 @@ export const EntityFieldInput = ({
         hint={field.description}
         required={field.requirementLevel !== 'optional'}
       >
-        <input
-          type="date"
+        <DateInput
           disabled={disabled}
           value={typeof value === 'string' ? value : ''}
-          onChange={event => onChange(event.target.value)}
+          onChange={next => onChange(next ?? '')}
           style={{ width: '100%' }}
         />
       </FormElement>
@@ -344,14 +342,14 @@ export const EntityFieldInput = ({
         required={field.requirementLevel !== 'optional'}
       >
         <div style={{ display: 'flex', gap: 6 }}>
-          <input
-            type="number"
-            step="0.01"
+          <NumberInput
+            step={0.01}
+            numberOfDecimals={2}
             disabled={disabled}
             value={currencyValue.amount ?? ''}
-            onChange={event =>
+            onChange={amount =>
               onChange({
-                amount: event.target.value === '' ? undefined : Number(event.target.value),
+                amount,
                 currency: currencyValue.currency ?? defaultCurrency ?? 'USD'
               })
             }
@@ -387,14 +385,14 @@ export const EntityFieldInput = ({
         hint={field.description}
         required={field.requirementLevel !== 'optional'}
       >
-        <input
-          type="number"
-          step="1"
+        <NumberInput
+          step={1}
+          numberOfDecimals={0}
           min={field.min}
           max={field.max}
           disabled={disabled}
           value={typeof value === 'string' ? value : ''}
-          onChange={event => onChange(event.target.value)}
+          onChange={next => onChange(next === undefined ? '' : String(Math.trunc(next)))}
           style={{ width: '100%' }}
         />
       </FormElement>

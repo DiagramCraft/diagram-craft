@@ -152,40 +152,6 @@
   }
 }
 
-.toolbarBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  background: none;
-  border: none;
-  border-radius: var(--r-sm);
-  cursor: pointer;
-  color: var(--base-fg-secondary);
-  font-size: 13px;
-  transition:
-    background 0.08s,
-    color 0.08s;
-}
-
-.toolbarBtn:hover {
-  background: var(--cmp-bg);
-  color: var(--base-fg);
-}
-
-.toolbarBtnActive {
-  background: var(--accent-bg, var(--cmp-bg));
-  color: var(--accent-fg);
-}
-
-.toolbarDivider {
-  width: 1px;
-  height: 18px;
-  background: var(--panel-border);
-  margin: 0 2px;
-}
-
 /* th/td get their padding straight from the shared articleTypography rule —
    no override needed. The context menu handler lives on the th/td element
    itself (not this wrapper), so there's no need to zero the cell's own

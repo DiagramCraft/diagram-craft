@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
+import { FormCheckboxList } from '../../../components/FormCheckboxList';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TbAlertCircle, TbCheck, TbEye, TbLoader } from 'react-icons/tb';
@@ -322,17 +323,16 @@ export const DefinitionImportSubSection = () => {
               label={label}
               hint="Dependencies are added automatically during preview."
             >
-              <div className={styles.checkboxGroup}>
+              <FormCheckboxList>
                 {items.map(item => (
-                  <label className={styles.checkboxRow} key={item.id}>
+                  <FormCheckboxList.Row key={item.id} label={item.name}>
                     <Checkbox
                       value={selection[kind].includes(item.id)}
                       onChange={value => toggle(kind, item.id, value ?? false)}
                     />
-                    <span>{item.name}</span>
-                  </label>
+                  </FormCheckboxList.Row>
                 ))}
-              </div>
+              </FormCheckboxList>
             </SettingsBlockField>
           );
         })}
@@ -355,24 +355,21 @@ export const DefinitionImportSubSection = () => {
               <div className={styles.dependencyMapping} key={dependency.id}>
                 <div className={styles.dependencyMappingTitle}>{dependency.name}</div>
                 <div className={styles.dependencyMappingDescription}>{dependency.description}</div>
-                <div className={styles.checkboxGroup}>
+                <FormCheckboxList>
                   {targets.map(target => (
-                    <label className={styles.checkboxRow} key={target.id}>
+                    <FormCheckboxList.Row key={target.id} label={target.name}>
                       <Checkbox
                         value={selectedTargets.includes(target.id)}
                         onChange={value =>
                           toggleDependencyTarget(dependency.id, target.id, value ?? false)
                         }
                       />
-                      <span>{target.name}</span>
-                    </label>
+                    </FormCheckboxList.Row>
                   ))}
                   {targets.length === 0 && (
-                    <div className={styles.note}>
-                      No destination {dependency.target_kind} definitions are available.
-                    </div>
+                    <div>No destination {dependency.target_kind} definitions are available.</div>
                   )}
-                </div>
+                </FormCheckboxList>
                 <div className={styles.dependencyMappingRequirement}>
                   Select at least {dependency.min_targets} target
                   {dependency.min_targets === 1 ? '' : 's'}
@@ -399,13 +396,12 @@ export const DefinitionImportSubSection = () => {
             </>
           }
         >
-          <label className={styles.checkboxRow}>
+          <FormCheckboxList.Row label="Import dashboard layout">
             <Checkbox
               value={selection.dashboard}
               onChange={value => toggleDashboard(value ?? false)}
             />
-            <span>Import dashboard layout</span>
-          </label>
+          </FormCheckboxList.Row>
         </SettingsBlockField>
       )}
 
@@ -523,10 +519,12 @@ export const DefinitionImportSubSection = () => {
             </div>
           )}
           {preview.errors.length === 0 && preview.conflicts.length === 0 && (
-            <label className={styles.checkboxRow} style={{ marginTop: 12 }}>
+            <FormCheckboxList.Row
+              style={{ marginTop: 12 }}
+              label="I confirm that these definitions will be created in this workspace."
+            >
               <Checkbox value={confirmed} onChange={value => setConfirmed(value ?? false)} />
-              <span>I confirm that these definitions will be created in this workspace.</span>
-            </label>
+            </FormCheckboxList.Row>
           )}
         </SettingsBlockField>
       )}

@@ -128,29 +128,6 @@
   border-color: var(--accent-9);
 }
 
-.exitBtn:hover {
-  background: var(--accent-11);
-}
-
-.ghostBtn {
-  font-size: 11px;
-  padding: 2px 9px;
-  height: 22px;
-  border-radius: var(--r);
-  background: transparent;
-  border: 1px solid var(--cmp-border);
-  color: var(--base-fg-secondary);
-  white-space: nowrap;
-  transition:
-    background 80ms,
-    color 80ms;
-}
-
-.ghostBtn:hover {
-  background: var(--cmp-bg);
-  color: var(--cmp-fg);
-}
-
 .closeBtn {
   width: 22px;
   height: 22px;

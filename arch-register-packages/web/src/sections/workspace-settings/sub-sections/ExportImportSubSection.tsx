@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
+import { FormCheckboxList } from '../../../components/FormCheckboxList';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { TbDownload, TbUpload, TbFileZip, TbAlertCircle, TbAlertTriangle } from 'react-icons/tb';
 import { orpcClient } from '../../../lib/orpcClient';
@@ -328,18 +330,30 @@ export const ExportImportSubSection = () => {
             label="Include"
             hint="Select the data types to include in the export."
           >
-            <div className={styles.checkboxGroup}>
-              <label className={styles.checkboxRow}>
+            <FormCheckboxList>
+              <FormCheckboxList.Row
+                label={
+                  <>
+                    Configuration{' '}
+                    <span className={styles.checkboxHint}>lifecycle states, teams, roles</span>
+                  </>
+                }
+              >
                 <Checkbox
                   value={exportOptions.include_config}
                   onChange={v =>
                     setExportOptions(prev => ({ ...prev, include_config: v ?? false }))
                   }
                 />
-                <span>Configuration</span>
-                <span className={styles.checkboxHint}>lifecycle states, teams, roles</span>
-              </label>
-              <label className={styles.checkboxRow}>
+              </FormCheckboxList.Row>
+              <FormCheckboxList.Row
+                label={
+                  <>
+                    Relation schemas{' '}
+                    <span className={styles.checkboxHint}>typed relation definitions</span>
+                  </>
+                }
+              >
                 <Checkbox
                   value={exportOptions.include_relation_schemas}
                   onChange={v =>
@@ -349,94 +363,128 @@ export const ExportImportSubSection = () => {
                     }))
                   }
                 />
-                <span>Relation schemas</span>
-                <span className={styles.checkboxHint}>typed relation definitions</span>
-              </label>
-              <label className={styles.checkboxRow}>
+              </FormCheckboxList.Row>
+              <FormCheckboxList.Row
+                label={
+                  <>
+                    Schemas <span className={styles.checkboxHint}>entity types and fields</span>
+                  </>
+                }
+              >
                 <Checkbox
                   value={exportOptions.include_schemas}
                   onChange={v =>
                     setExportOptions(prev => ({ ...prev, include_schemas: v ?? false }))
                   }
                 />
-                <span>Schemas</span>
-                <span className={styles.checkboxHint}>entity types and fields</span>
-              </label>
-              <label className={styles.checkboxRow}>
+              </FormCheckboxList.Row>
+              <FormCheckboxList.Row
+                label={
+                  <>
+                    Relations <span className={styles.checkboxHint}>typed relation instances</span>
+                  </>
+                }
+              >
                 <Checkbox
                   value={exportOptions.include_relations}
                   onChange={v =>
                     setExportOptions(prev => ({ ...prev, include_relations: v ?? false }))
                   }
                 />
-                <span>Relations</span>
-                <span className={styles.checkboxHint}>typed relation instances</span>
-              </label>
-              <label className={styles.checkboxRow}>
+              </FormCheckboxList.Row>
+              <FormCheckboxList.Row
+                label={
+                  <>
+                    Entities <span className={styles.checkboxHint}>catalog data</span>
+                  </>
+                }
+              >
                 <Checkbox
                   value={exportOptions.include_entities}
                   onChange={v =>
                     setExportOptions(prev => ({ ...prev, include_entities: v ?? false }))
                   }
                 />
-                <span>Entities</span>
-                <span className={styles.checkboxHint}>catalog data</span>
-              </label>
-              <label className={styles.checkboxRow}>
+              </FormCheckboxList.Row>
+              <FormCheckboxList.Row
+                label={
+                  <>
+                    Projects <span className={styles.checkboxHint}>project metadata</span>
+                  </>
+                }
+              >
                 <Checkbox
                   value={exportOptions.include_projects}
                   onChange={v =>
                     setExportOptions(prev => ({ ...prev, include_projects: v ?? false }))
                   }
                 />
-                <span>Projects</span>
-                <span className={styles.checkboxHint}>project metadata</span>
-              </label>
-              <label className={styles.checkboxRow}>
+              </FormCheckboxList.Row>
+              <FormCheckboxList.Row
+                label={
+                  <>
+                    Content nodes <span className={styles.checkboxHint}>diagrams and markdown</span>
+                  </>
+                }
+              >
                 <Checkbox
                   value={exportOptions.include_content_nodes}
                   onChange={v =>
                     setExportOptions(prev => ({ ...prev, include_content_nodes: v ?? false }))
                   }
                 />
-                <span>Content nodes</span>
-                <span className={styles.checkboxHint}>diagrams and markdown</span>
-              </label>
-              <label className={styles.checkboxRow}>
+              </FormCheckboxList.Row>
+              <FormCheckboxList.Row
+                label={
+                  <>
+                    Typed documents{' '}
+                    <span className={styles.checkboxHint}>document types and templates</span>
+                  </>
+                }
+              >
                 <Checkbox
                   value={exportOptions.include_documents}
                   onChange={v =>
                     setExportOptions(prev => ({ ...prev, include_documents: v ?? false }))
                   }
                 />
-                <span>Typed documents</span>
-                <span className={styles.checkboxHint}>document types and templates</span>
-              </label>
-              <label className={styles.checkboxRow}>
+              </FormCheckboxList.Row>
+              <FormCheckboxList.Row
+                label={
+                  <>
+                    Applications{' '}
+                    <span className={styles.checkboxHint}>
+                      applications, dashboards and access policies
+                    </span>
+                  </>
+                }
+              >
                 <Checkbox
                   value={exportOptions.include_applications}
                   onChange={v =>
                     setExportOptions(prev => ({ ...prev, include_applications: v ?? false }))
                   }
                 />
-                <span>Applications</span>
-                <span className={styles.checkboxHint}>
-                  applications, dashboards and access policies
-                </span>
-              </label>
+              </FormCheckboxList.Row>
               {exportOptions.include_content_nodes && (
-                <label className={`${styles.checkboxRow} ${styles.checkboxRowNested}`}>
+                <FormCheckboxList.Row
+                  className={styles.checkboxRowNested}
+                  label={
+                    <>
+                      Include content files{' '}
+                      <span className={styles.checkboxHint}>actual diagram and document data</span>
+                    </>
+                  }
+                >
                   <Checkbox
                     value={exportOptions.include_content}
                     onChange={v =>
                       setExportOptions(prev => ({ ...prev, include_content: v ?? false }))
                     }
                   />
-                  <span>Include content files</span>
-                  <span className={styles.checkboxHint}>actual diagram and document data</span>
-                </label>
+                </FormCheckboxList.Row>
               )}
-            </div>
+            </FormCheckboxList>
           </SettingsBlockField>
         </SettingsBlock>
       </Tabs.Content>
@@ -602,45 +650,51 @@ export const ExportImportSubSection = () => {
             >
               <div className={styles.checkboxGroup}>
                 {importSummary.conflicts.map(conflict => (
-                  <label key={conflict.item_id} className={styles.checkboxRow}>
-                    <span>{conflict.item_name}</span>
-                    <select
-                      value={conflictResolutions[conflict.item_id]?.action ?? ''}
-                      onChange={event =>
-                        setConflictResolutions(previous => ({
-                          ...previous,
-                          [conflict.item_id]: {
-                            action: event.target.value as ConflictResolution['action']
-                          }
-                        }))
-                      }
-                      disabled={busy}
-                    >
-                      <option value="" disabled>
-                        Choose resolution
-                      </option>
-                      <option value="skip">Skip</option>
-                      {conflict.type !== 'relations' && <option value="merge">Merge</option>}
-                      <option value="overwrite">Overwrite</option>
-                      {conflict.type !== 'relations' && <option value="rename">Rename</option>}
-                    </select>
-                    {conflictResolutions[conflict.item_id]?.action === 'rename' && (
-                      <input
-                        value={conflictResolutions[conflict.item_id]?.new_name ?? ''}
+                  <FormElement
+                    key={conflict.item_id}
+                    label={conflict.item_name}
+                    htmlFor={`conflict-${conflict.item_id}`}
+                  >
+                    <div className={styles.conflictRow}>
+                      <select
+                        id={`conflict-${conflict.item_id}`}
+                        value={conflictResolutions[conflict.item_id]?.action ?? ''}
                         onChange={event =>
                           setConflictResolutions(previous => ({
                             ...previous,
                             [conflict.item_id]: {
-                              action: 'rename',
-                              new_name: event.target.value
+                              action: event.target.value as ConflictResolution['action']
                             }
                           }))
                         }
-                        placeholder="New name"
                         disabled={busy}
-                      />
-                    )}
-                  </label>
+                      >
+                        <option value="" disabled>
+                          Choose resolution
+                        </option>
+                        <option value="skip">Skip</option>
+                        {conflict.type !== 'relations' && <option value="merge">Merge</option>}
+                        <option value="overwrite">Overwrite</option>
+                        {conflict.type !== 'relations' && <option value="rename">Rename</option>}
+                      </select>
+                      {conflictResolutions[conflict.item_id]?.action === 'rename' && (
+                        <input
+                          value={conflictResolutions[conflict.item_id]?.new_name ?? ''}
+                          onChange={event =>
+                            setConflictResolutions(previous => ({
+                              ...previous,
+                              [conflict.item_id]: {
+                                action: 'rename',
+                                new_name: event.target.value
+                              }
+                            }))
+                          }
+                          placeholder="New name"
+                          disabled={busy}
+                        />
+                      )}
+                    </div>
+                  </FormElement>
                 ))}
               </div>
             </SettingsBlockField>

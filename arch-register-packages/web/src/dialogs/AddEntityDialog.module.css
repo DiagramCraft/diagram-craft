@@ -1,37 +1,9 @@
-.dialogPanel {
-  width: min(1040px, calc(100vw - 48px));
-  max-width: min(1040px, calc(100vw - 48px));
-}
-
 .form {
   display: flex;
   flex-direction: column;
   gap: 12px;
   max-height: 70vh;
-  overflow-y: auto;
-  overflow-x: hidden;
   min-width: 0;
-}
-
-/* Boolean checkbox field - still uses .field for custom layout */
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-
-.field label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: var(--base-fg);
-  cursor: pointer;
-}
-
-.field input[type="checkbox"] {
-  cursor: pointer;
 }
 
 .contentGrid {
@@ -62,19 +34,7 @@
   min-width: 0;
 }
 
-.actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 8px;
-}
-
 @media (max-width: 900px) {
-  .dialogPanel {
-    width: min(100vw - 32px, 1040px);
-    max-width: min(100vw - 32px, 1040px);
-  }
-
   .contentGrid {
     grid-template-columns: 1fr;
   }

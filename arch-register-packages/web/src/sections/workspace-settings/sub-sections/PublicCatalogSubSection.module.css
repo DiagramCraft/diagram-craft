@@ -20,10 +20,6 @@
   padding-right: 32px;
 }
 
-.rowSmall {
-  font-size: 12px;
-}
-
 .entryMenu {
   position: absolute;
   top: 6px;
@@ -38,12 +34,4 @@
 .error {
   color: var(--error-fg, #d55);
   font-size: 12px;
-}
-
-.labelMuted {
-  min-width: 80px;
-}
-
-.labelMutedSm {
-  min-width: 45px;
 }

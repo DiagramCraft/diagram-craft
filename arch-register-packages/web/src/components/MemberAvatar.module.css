@@ -4,7 +4,7 @@
 }
 
 .avatar {
-  color: var(--base-fg);
+  color: var(--inverse-fg);
   border-radius: 50%;
   display: inline-flex;
   align-items: center;

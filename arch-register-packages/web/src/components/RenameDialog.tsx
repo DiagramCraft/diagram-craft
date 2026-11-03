@@ -1,7 +1,7 @@
-import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
-import styles from '../shell/SidePanel.module.css';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { useAutoFocus } from '../hooks/useAutoFocus';
 
 export const RenameDialog = ({
@@ -29,40 +29,31 @@ export const RenameDialog = ({
     setName(currentName);
   }, [open, currentName]);
 
-  const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
+  const handleSubmit = () => {
     const trimmed = name.trim();
     if (trimmed) onRename(trimmed);
   };
 
   return (
-    <Dialog open={open} onClose={onCancel} title={`Rename ${entityType}`}>
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <label style={{ fontSize: 12, color: 'var(--base-fg-dimmed)' }}>Name</label>
-          <input
-            ref={inputRef}
-            value={name}
-            onChange={event => setName(event.target.value)}
-            style={{
-              fontSize: 13,
-              padding: '6px 8px',
-              background: 'var(--base-bg)',
-              border: '1px solid var(--cmp-border)',
-              borderRadius: 'var(--r)',
-              color: 'var(--base-fg)',
-              outline: 'none'
-            }}
-          />
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-          <button type="button" className={styles.renameBtn} onClick={onCancel}>
-            Cancel
-          </button>
-          <button type="submit" className={styles.renameBtnPrimary} disabled={!name.trim()}>
-            Rename
-          </button>
-        </div>
+    <Dialog
+      open={open}
+      onClose={onCancel}
+      title={`Rename ${entityType}`}
+      buttons={[
+        { label: 'Cancel', type: 'cancel', onClick: onCancel },
+        { label: 'Rename', type: 'default', disabled: !name.trim(), onClick: handleSubmit }
+      ]}
+    >
+      <form
+        onSubmit={event => {
+          event.preventDefault();
+          handleSubmit();
+        }}
+      >
+        <button type="submit" hidden />
+        <FormElement label="Name">
+          <TextInput ref={inputRef} value={name} onChange={value => setName(value ?? '')} />
+        </FormElement>
       </form>
     </Dialog>
   );

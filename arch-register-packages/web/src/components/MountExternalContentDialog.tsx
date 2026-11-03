@@ -161,7 +161,7 @@ export const MountExternalContentDialog = ({ workspaceId, open, mount, onClose }
             style={{ width: 100 }}
           />
         </FormElement>
-        {error && <div className={styles.error}>{error}</div>}
+        {error && <div>{error}</div>}
       </form>
     </Dialog>
   );
