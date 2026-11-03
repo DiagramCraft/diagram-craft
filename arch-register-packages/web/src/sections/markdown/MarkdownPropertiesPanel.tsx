@@ -241,7 +241,7 @@ export const MarkdownPropertiesDiffPanel = ({
     );
 
   return (
-    <div className={styles.panel}>
+    <div className={`${styles.panel} ${styles.diffPanel}`}>
       <div className={`${styles.header} ${styles.staticHeader}`}>
         <TbChevronRight
           size={10}

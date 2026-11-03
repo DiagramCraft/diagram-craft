@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { TbMessage, TbPencil, TbTrash } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
+import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import type {
   DiscussionObjectType,
@@ -42,13 +43,14 @@ const DiscussionComposer = ({
 
   return (
     <div className={compact ? styles.composerCompact : styles.composer}>
-      <textarea
-        className={styles.composerInput}
+      <TextArea
         autoFocus={autoFocus}
         placeholder={placeholder}
         value={value}
-        rows={2}
-        onChange={e => setValue(e.target.value)}
+        rows={4}
+        allowMaximize={false}
+        onChange={next => setValue(next ?? '')}
+        style={{ fontSize: '12px' }}
       />
       <div className={styles.composerRow}>
         <div className={styles.composerActions}>

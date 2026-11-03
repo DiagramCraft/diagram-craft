@@ -27,7 +27,7 @@
 }
 
 .badgeLabel {
-  color: var(--base-fg-dimmed);
+  color: var(--panel-fg-tertiary);
   font-size: 11px;
 }
 

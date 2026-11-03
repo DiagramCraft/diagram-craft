@@ -117,7 +117,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  color: var(--cmp-fg-dimmed);
+  color: var(--base-fg-dimmed);
   font-size: 11.5px;
 
   strong {

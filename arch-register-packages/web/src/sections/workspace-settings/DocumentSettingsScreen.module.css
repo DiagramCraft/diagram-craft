@@ -70,7 +70,7 @@
   text-transform: uppercase;
   letter-spacing: 0.6px;
   color: var(--panel-fg-tertiary);
-  margin: 16px 0 8px;
+  margin: 0 0 8px;
   display: flex;
   align-items: center;
   gap: 6px;

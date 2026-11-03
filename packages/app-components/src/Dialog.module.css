@@ -99,16 +99,25 @@
   }
 
   .eBody {
-    --cmp-bg: var(--gray-1);
+    --cmp-bg: var(--base-bg);
+    --cmp-bg-hover: var(--base-bg);
+    --cmp-fg: var(--base-fg);
+    --cmp-fg-secondary: var(--base-fg-secondary);
+    --cmp-fg-tertiary: var(--base-fg-tertiary);
+    --cmp-fg-dimmed: var(--base-fg-dimmed);
 
     flex: 1;
     min-height: 0;
-    overflow-y: auto;
     padding: 8px 16px;
     font-size: 12px;
     line-height: 1.5;
     color: var(--base-fg);
     position: relative;
+
+    &[data-scrollable='true'] {
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
   }
 
   .eFooter {
@@ -126,7 +135,7 @@
       align-items: center;
       gap: 14px;
       font-size: 11px;
-      color: var(--cmp-fg-dimmed);
+      color: var(--base-fg-dimmed);
       font-family: var(--font-mono, monospace);
     }
 
@@ -235,7 +244,7 @@
   border-radius: var(--cmp-radius, 3px);
   background: var(--base-bg);
   font-size: 10px;
-  color: var(--base-fg-dimmed, var(--cmp-fg-dimmed));
+  color: var(--base-fg-dimmed);
   font-family: var(--font-mono, monospace);
   line-height: 1;
 }

@@ -19,7 +19,6 @@
 .body {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
 }
 
 /* ── Identity layout ────────────────────────────────────────── */
@@ -72,7 +71,7 @@
 
 .badgeHint {
   font-size: 10px;
-  color: var(--cmp-fg-disabled);
+  color: var(--fg-dimmed);
   font-family: var(--font-mono);
 }
 
@@ -145,7 +144,7 @@
   margin-top: 8px;
   padding: 8px 10px;
   font-size: 11.5px;
-  color: var(--base-fg-dimmed);
+  color: var(--base-fg-tertiary);
   background: var(--base-bg);
   border: 1px dashed var(--cmp-border);
   border-radius: var(--r);
@@ -163,7 +162,6 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 5px;
-  margin-top: 10px;
 }
 
 .templateCard {
@@ -171,7 +169,7 @@
   flex-direction: column;
   gap: 3px;
   padding: 7px 10px;
-  background: var(--panel-bg);
+  background: var(--base-bg);
   border: 1px solid var(--panel-border);
   border-radius: var(--r-md);
   text-align: left;
@@ -200,9 +198,8 @@
 }
 
 .templateCardName {
-  color: var(--base-fg);
+  color: var(--base-fg-secondary);
   font-weight: 500;
-  font-size: 12.5px;
 }
 
 .templateCardCheck {
@@ -212,7 +209,7 @@
   align-items: center;
   justify-content: center;
   background: var(--accent-fg);
-  color: oklch(0.16 0.005 260);
+  color: var(--gray-1);
   border-radius: 999px;
   font-size: 9px;
   font-weight: 700;
@@ -221,7 +218,7 @@
 
 .templateCardDesc {
   font-size: 11.5px;
-  color: var(--base-fg-dimmed);
+  color: var(--base-fg-tertiary);
   line-height: 1.4;
 }
 
@@ -232,17 +229,16 @@
 }
 
 .crossCuttingSection {
-  margin-top: 14px;
 }
 
 .sectionLabel {
-  color: var(--base-fg);
+  color: var(--panel-fg-secondary);
   font-size: 12px;
   font-weight: 600;
 }
 
 .sectionHint {
-  color: var(--base-fg-dimmed);
+  color: var(--base-fg-tertiary);
   font-size: 11.5px;
   margin-top: 3px;
 }
@@ -288,7 +284,6 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-top: 10px;
 }
 
 .copyInclude {

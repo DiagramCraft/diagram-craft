@@ -74,12 +74,12 @@ export const DocumentTemplateEditor = ({
       setDirty(false);
     } else if (isNew) {
       setName('');
-      setDocumentTypeId(types.find(type => !type.archived)?.id ?? '');
+      setDocumentTypeId(UNTYPED);
       setBody('# {{title}}\n');
       setDefaults({});
       setDirty(true);
     }
-  }, [isNew, selected, types]);
+  }, [isNew, selected]);
 
   const selectedType = types.find(type => type.id === documentTypeId);
 

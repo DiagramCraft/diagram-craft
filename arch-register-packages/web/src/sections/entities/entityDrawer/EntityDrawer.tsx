@@ -67,7 +67,6 @@ const EntityDrawerBadge = ({
       case 'targetLifecycle':
         return entity[resolved.badge.slot === 'lifecycle' ? '_lifecycle' : '_targetLifecycle'] ? (
           <span className={styles.badgeWithLabel}>
-            <span className={styles.badgeLabel}>{resolved.label}</span>
             <StatusChip
               value={
                 entity[resolved.badge.slot === 'lifecycle' ? '_lifecycle' : '_targetLifecycle']!.id

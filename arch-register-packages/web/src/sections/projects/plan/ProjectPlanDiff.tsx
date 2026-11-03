@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import type { Project } from '@arch-register/api-types/projectCrudContract';
-import { Select } from '@diagram-craft/app-components/Select';
 import { EmptyState } from '../../../components/EmptyState';
+import { LabeledSelect } from '../../../components/LabeledSelect';
+import { ViewControls } from '../../../components/ViewControls';
 import { useChangeCasesByProject } from '../../../hooks/useChangeCases';
 import {
   buildProjectLandscapeDiffStates,
@@ -107,31 +108,28 @@ export const ProjectPlanDiff = ({
   const availableProjects = projects.filter(projectOption => projectOption.id !== project.id);
 
   const comparisonControls = (
-    <div className={styles.comparisonControls}>
-      <Select.Root
-        value={comparisonProjectId ?? ''}
-        onChange={value =>
-          setComparisonProjectId(value === NO_COMPARISON_PROJECT ? null : (value ?? null))
-        }
-        placeholder={
-          availableProjects.length > 0 ? 'Compare with another project' : 'No other projects'
-        }
-      >
-        <Select.Item value={NO_COMPARISON_PROJECT}>No project</Select.Item>
-        {availableProjects.map(projectOption => (
-          <Select.Item key={projectOption.id} value={projectOption.id}>
-            {projectOption.name}
-          </Select.Item>
-        ))}
-      </Select.Root>
-    </div>
+    <ViewControls variant="tab">
+      <LabeledSelect
+        label="Compare with"
+        value={comparisonProjectId ?? NO_COMPARISON_PROJECT}
+        onChange={value => setComparisonProjectId(value === NO_COMPARISON_PROJECT ? null : value)}
+        disabled={availableProjects.length === 0}
+        options={[
+          { value: NO_COMPARISON_PROJECT, label: 'No project' },
+          ...availableProjects.map(projectOption => ({
+            value: projectOption.id,
+            label: projectOption.name
+          }))
+        ]}
+      />
+    </ViewControls>
   );
 
   if (comparisonProjectId != null) {
     if (!comparisonProject || !targetDate || !comparisonTargetDate) {
       return (
         <div className={styles.wrap}>
-          <div className={styles.header}>{comparisonControls}</div>
+          {comparisonControls}
           <EmptyState
             title="No comparison date"
             subtitle="Both projects need a planned-change date or project end date to compare their future states."
@@ -143,7 +141,7 @@ export const ProjectPlanDiff = ({
     if (isComparisonLoading || !comparisonDiff) {
       return (
         <div className={styles.wrap}>
-          <div className={styles.header}>{comparisonControls}</div>
+          {comparisonControls}
           <div>Loading…</div>
         </div>
       );
@@ -151,12 +149,12 @@ export const ProjectPlanDiff = ({
 
     return (
       <div className={styles.wrap}>
+        {comparisonControls}
         <div className={styles.header}>
           <div className={styles.headerTitle}>
             Pending project changes compared to {comparisonProject.name} - last change planned for{' '}
             {formatDate(targetDate > comparisonTargetDate ? targetDate : comparisonTargetDate)}
           </div>
-          {comparisonControls}
         </div>
         <LandscapeDiffTable
           diff={comparisonDiff}
@@ -175,7 +173,7 @@ export const ProjectPlanDiff = ({
   if (!targetDate) {
     return (
       <div className={styles.wrap}>
-        <div className={styles.header}>{comparisonControls}</div>
+        {comparisonControls}
         <EmptyState
           title="No comparison date"
           subtitle="This project needs a planned-change date or project end date to compare against the current state."
@@ -185,17 +183,22 @@ export const ProjectPlanDiff = ({
   }
 
   if (isLoading || !diff) {
-    return <div className={styles.wrap}>Loading…</div>;
+    return (
+      <div className={styles.wrap}>
+        {comparisonControls}
+        <div>Loading…</div>
+      </div>
+    );
   }
 
   return (
     <div className={styles.wrap}>
+      {comparisonControls}
       <div className={styles.header}>
         <div className={styles.headerTitle}>
           Pending project changes compared to workspace - last change planned for{' '}
           {formatDate(targetDate)}
         </div>
-        {comparisonControls}
       </div>
 
       <LandscapeDiffTable

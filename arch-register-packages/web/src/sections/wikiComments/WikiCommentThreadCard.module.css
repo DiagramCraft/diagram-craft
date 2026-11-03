@@ -11,6 +11,12 @@
     box-shadow 100ms,
     border-color 100ms,
     opacity 100ms;
+
+  --cmp-bg: var(--base-bg);
+  --cmp-fg: var(--base-fg);
+  --cmp-fg-secondary: var(--base-fg-secondary);
+  --cmp-fg-tertiary: var(--base-fg-tertiary);
+  --cmp-fg-dimmed: var(--base-fg-dimmed);
 }
 
 .rootActive {
@@ -29,7 +35,7 @@
 .quote {
   font-size: 12px;
   line-height: 1.4;
-  color: var(--cmp-fg-disabled);
+  color: var(--panel-fg-tertiary);
   border-left: 2px solid var(--accent-fg);
   padding-left: 8px;
   cursor: pointer;
@@ -98,7 +104,7 @@
 .postWhen,
 .postEdited {
   font-size: 10px;
-  color: var(--cmp-fg-disabled);
+  color: var(--panel-fg-tertiary);
 }
 
 .postText {
@@ -123,8 +129,12 @@
   border: none;
   padding: 2px 0;
   font-size: 10.5px;
-  color: var(--cmp-fg-disabled);
+  color: var(--panel-fg-secondary);
   cursor: pointer;
+
+  svg {
+    color: var(--accent-fg);
+  }
 }
 
 .textBtn:hover,

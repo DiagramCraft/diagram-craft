@@ -42,8 +42,6 @@ export const toProjectRequestBody = (values: ProjectFormValues) => ({
   target_date: values.targetDate || null
 });
 
-const FULL_WIDTH = { width: '100%' };
-
 export const ProjectFormFields = ({
   values,
   onChange,
@@ -81,7 +79,6 @@ export const ProjectFormFields = ({
           value={values.name}
           onChange={value => set('name', value ?? '')}
           placeholder="e.g. Checkout Modernization"
-          style={FULL_WIDTH}
         />
       </FormElement>
       <FormElement label="Description" required={false}>
@@ -90,14 +87,12 @@ export const ProjectFormFields = ({
           onChange={value => set('description', value ?? '')}
           placeholder="What is this project about?"
           rows={3}
-          style={FULL_WIDTH}
         />
       </FormElement>
       <FormElement label="Status" required>
         <Select.Root
           value={values.status}
           onChange={value => set('status', (value as ProjectStatus | undefined) ?? 'active')}
-          style={FULL_WIDTH}
         >
           {PROJECT_STATUS_OPTIONS.map(option => (
             <Select.Item key={option.value} value={option.value}>
@@ -111,7 +106,6 @@ export const ProjectFormFields = ({
           value={values.owner}
           onChange={value => set('owner', value ?? '')}
           placeholder={allowNoOwner ? 'No owner' : 'Select owner'}
-          style={FULL_WIDTH}
         >
           {allowNoOwner && <Select.Item value="">No owner</Select.Item>}
           {owners.map(team => (
@@ -126,18 +120,10 @@ export const ProjectFormFields = ({
       </FormElement>
       <div style={{ display: 'flex', gap: 10 }}>
         <FormElement label="Start date" required={false} style={{ flex: 1 }}>
-          <DateInput
-            value={values.startDate}
-            onChange={value => set('startDate', value ?? '')}
-            style={FULL_WIDTH}
-          />
+          <DateInput value={values.startDate} onChange={value => set('startDate', value ?? '')} />
         </FormElement>
         <FormElement label="Target date" required={false} style={{ flex: 1 }}>
-          <DateInput
-            value={values.targetDate}
-            onChange={value => set('targetDate', value ?? '')}
-            style={FULL_WIDTH}
-          />
+          <DateInput value={values.targetDate} onChange={value => set('targetDate', value ?? '')} />
         </FormElement>
       </div>
       {error && <Banner variant="error">{error}</Banner>}

@@ -151,13 +151,6 @@ export const WikiCommentThreadCard = ({
         onDelete={() => onDelete(post.id)}
       />
 
-      <div className={styles.postActions}>
-        <button type="button" className={styles.textBtn} onClick={onResolve}>
-          <TbCheck size={11} />
-          {resolved ? 'Reopen' : 'Resolve'}
-        </button>
-      </div>
-
       {(replies.length > 0 || replyOpen) && (
         <div className={styles.replies}>
           {replies.map(reply => (
@@ -185,6 +178,25 @@ export const WikiCommentThreadCard = ({
           )}
         </div>
       )}
+
+      <div
+        className={styles.postActions}
+        style={{
+          borderTop: '1px solid var(--cmp-bg-hover)',
+          margin: '0.5rem -10px 0 -10px',
+          padding: '0.5rem 10px 0 10px'
+        }}
+      >
+        <button
+          type="button"
+          className={styles.textBtn}
+          onClick={onResolve}
+          style={{ marginLeft: 'auto' }}
+        >
+          <TbCheck size={11} />
+          {resolved ? 'Reopen' : 'Resolve'}
+        </button>
+      </div>
     </div>
   );
 };

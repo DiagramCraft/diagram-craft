@@ -13,6 +13,9 @@ import { useCreateBaseline } from '../../hooks/useBaselines';
 import { ApiError } from '../../lib/http';
 import { toEffectiveAt, toLocalDate } from './baselineEffectiveDate';
 import styles from './CreateBaselineDialog.module.css';
+import { FormCheckboxList } from '../../components/FormCheckboxList';
+import { FormGroup } from '../../components/FormGroup';
+import { FormGrid } from '../../components/FormGrid';
 
 type Props = {
   open: boolean;
@@ -101,7 +104,7 @@ export const CreateBaselineDialog = ({
       sub="Capture an immutable catalog snapshot for comparison and governance."
       width={520}
       buttons={[
-        { label: 'Cancel', type: 'secondary', onClick: onClose },
+        { label: 'Cancel', type: 'cancel', onClick: onClose },
         {
           label: createBaseline.isPending ? 'Capturing…' : 'Create baseline',
           type: 'default',
@@ -152,22 +155,24 @@ export const CreateBaselineDialog = ({
             ))}
           </Select.Root>
         </FormElement>
-        <div className={styles.options}>
-          <label className={styles.option}>
-            <Checkbox
-              value={includePlannedChanges}
-              onChange={value => setIncludePlannedChanges(value ?? false)}
-            />
-            Include planned changes
-          </label>
-          <label className={styles.option}>
-            <Checkbox
-              value={includeOverdueChanges}
-              onChange={value => setIncludeOverdueChanges(value ?? false)}
-            />
-            Include overdue changes
-          </label>
-        </div>
+
+        <FormElement label={'Scope'}>
+          <FormCheckboxList columns={2}>
+            <FormCheckboxList.Row label="Include planned changes">
+              <Checkbox
+                value={includePlannedChanges}
+                onChange={value => setIncludePlannedChanges(value ?? false)}
+              />
+            </FormCheckboxList.Row>
+            <FormCheckboxList.Row label="Include overdue changes">
+              <Checkbox
+                value={includeOverdueChanges}
+                onChange={value => setIncludeOverdueChanges(value ?? false)}
+              />
+            </FormCheckboxList.Row>
+          </FormCheckboxList>
+        </FormElement>
+
         {createError && <div className={styles.error}>{createError}</div>}
       </div>
     </Dialog>

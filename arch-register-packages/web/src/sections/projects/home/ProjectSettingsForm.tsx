@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
-import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import {
   ProjectFormFields,
   toProjectRequestBody,
   type ProjectFormValues
 } from '../../../components/ProjectFormFields';
-import { useUpdateProject, useDeleteProject } from '../../../hooks/useProjects';
+import { useUpdateProject } from '../../../hooks/useProjects';
 import { getErrorMessage } from '../../../lib/http';
 import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectCrudContract';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
@@ -17,7 +16,6 @@ type Props = {
   teams: WorkspaceTeam[];
   onSaved: () => void;
   onClose: () => void;
-  onDelete: () => void;
 };
 
 const toFormValues = (project: ProjectDetailData): ProjectFormValues => ({
@@ -30,20 +28,11 @@ const toFormValues = (project: ProjectDetailData): ProjectFormValues => ({
   targetDate: project.target_date ?? ''
 });
 
-export const ProjectSettingsForm = ({
-  project,
-  workspaceId,
-  teams,
-  onSaved,
-  onClose,
-  onDelete
-}: Props) => {
+export const ProjectSettingsForm = ({ project, workspaceId, teams, onSaved, onClose }: Props) => {
   const [values, setValues] = useState(() => toFormValues(project));
   const [error, setError] = useState('');
-  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const updateProject = useUpdateProject(workspaceId);
-  const deleteProject = useDeleteProject(workspaceId);
 
   useEffect(() => {
     setValues(toFormValues(project));
@@ -65,28 +54,12 @@ export const ProjectSettingsForm = ({
     );
   };
 
-  const doDelete = () => {
-    setConfirmDelete(false);
-    deleteProject.mutate(project.id, {
-      onSuccess: () => {
-        onDelete();
-        onSaved();
-      },
-      onError: err => setError(getErrorMessage(err))
-    });
-  };
-
   return (
     <Dialog
       open={true}
       onClose={onClose}
       title="Edit project"
       buttons={[
-        {
-          label: 'Delete project',
-          type: 'danger',
-          onClick: () => setConfirmDelete(true)
-        },
         { label: 'Cancel', type: 'cancel', onClick: onClose },
         {
           label: updateProject.isPending ? 'Saving...' : 'Save',
@@ -103,20 +76,6 @@ export const ProjectSettingsForm = ({
         error={error}
         owners={teams}
         allowNoOwner
-      />
-
-      <DeleteConfirmationDialog
-        open={confirmDelete}
-        title="Delete project?"
-        message={
-          <>
-            The project <b>{project.name}</b> and all its diagrams will be permanently deleted.
-          </>
-        }
-        detail="This can't be undone."
-        confirmLabel="Delete project"
-        onConfirm={doDelete}
-        onCancel={() => setConfirmDelete(false)}
       />
     </Dialog>
   );

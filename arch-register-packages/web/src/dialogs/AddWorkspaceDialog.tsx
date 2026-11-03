@@ -176,10 +176,6 @@ const CrossCuttingTemplateSection = ({
   onToggle: (id: string, checked: boolean) => void;
 }) => (
   <div className={styles.crossCuttingSection}>
-    <div className={styles.sectionLabel}>Cross-cutting concerns</div>
-    <div className={styles.sectionHint}>
-      Add reusable concerns to this workspace. You can select more than one.
-    </div>
     {templates.length === 0 ? (
       <div className={styles.note}>Loading available concerns…</div>
     ) : (
@@ -493,7 +489,7 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
                 />
               </FormElement>
 
-              <FormElement label="Color" required={false}>
+              <FormElement label="Color">
                 <ColorPicker
                   value={color}
                   onChange={v => setColor(v ?? SCHEMA_COLORS[0]!)}
@@ -503,11 +499,9 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
 
               <FormElement label="Description" required={false}>
                 <TextArea
-                  placeholder="What lives in this workspace? Who owns it?"
                   value={description}
                   onChange={value => setDescription(value ?? '')}
                   rows={3}
-                  style={{ width: '100%' }}
                   allowMaximize={false}
                 />
               </FormElement>
@@ -528,9 +522,13 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
 
           {mode === 'blank' && (
             <>
-              <div className={styles.note}>
-                Starts with no full model. You can still add cross-cutting concerns below.
+              <div>
+                <div className={styles.sectionLabel}>Cross-cutting concerns</div>
+                <div className={styles.sectionHint}>
+                  Add reusable concerns to this workspace. You can select more than one.
+                </div>
               </div>
+
               <CrossCuttingTemplateSection
                 templates={crossCuttingTemplates}
                 selected={crossCuttingTemplateIds}
@@ -549,6 +547,13 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
 
           {mode === 'template' && (
             <>
+              <div>
+                <div className={styles.sectionLabel}>Select template</div>
+                <div className={styles.sectionHint}>
+                  Create new workspace based on existing template
+                </div>
+              </div>
+
               <div className={styles.templateGrid}>
                 {templatesQuery.isPending && <div className={styles.note}>Loading templates…</div>}
                 {fullTemplates.map(t => (
@@ -569,12 +574,14 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
                   </button>
                 ))}
               </div>
-              {activeTemplate && (
-                <div className={styles.note}>
-                  <strong>{activeTemplate.name}</strong> seeds:{' '}
-                  {activeTemplate.entity_types.join(', ')}.
+
+              <div style={{ marginTop: '1rem' }}>
+                <div className={styles.sectionLabel}>Cross-cutting concerns</div>
+                <div className={styles.sectionHint}>
+                  Add reusable concerns to this workspace. You can select more than one.
                 </div>
-              )}
+              </div>
+
               <CrossCuttingTemplateSection
                 templates={crossCuttingTemplates}
                 selected={crossCuttingTemplateIds}
@@ -593,44 +600,53 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
           )}
 
           {mode === 'copy' && (
-            <div className={styles.copyPanel}>
-              <FormElement label="Copy from" required>
-                <Select.Root
-                  value={copyFrom ?? undefined}
-                  onChange={value => setCopyFrom(value ?? '')}
-                  placeholder={workspaces.length === 0 ? 'Loading…' : 'Select workspace'}
-                  style={{ width: '100%' }}
-                >
-                  {workspaces.map(ws => (
-                    <Select.Item key={ws.id} value={ws.id}>
-                      {ws.name}
-                    </Select.Item>
-                  ))}
-                </Select.Root>
-              </FormElement>
-              <FormElement label="Include" required={false}>
-                <div className={styles.copyInclude}>
-                  {COPY_PARTS.map(p => (
-                    <label key={p.id} className={styles.checkbox}>
-                      <input
-                        type="checkbox"
-                        checked={!!copyParts[p.id]}
-                        onChange={e =>
-                          setCopyParts(prev => ({ ...prev, [p.id]: e.target.checked }))
-                        }
-                      />
-                      {p.label}
-                    </label>
-                  ))}
+            <>
+              <div>
+                <div className={styles.sectionLabel}>Copy from existing workspace</div>
+                <div className={styles.sectionHint}>
+                  Create new workspace based on existing workspace
                 </div>
-              </FormElement>
-              {fromWs && (
-                <div className={styles.note}>
-                  Replicates the selected parts of <strong>{fromWs.name}</strong>. Changes won't
-                  sync back.
-                </div>
-              )}
-            </div>
+              </div>
+
+              <div className={styles.copyPanel}>
+                <FormElement label="Copy from" required>
+                  <Select.Root
+                    value={copyFrom ?? undefined}
+                    onChange={value => setCopyFrom(value ?? '')}
+                    placeholder={workspaces.length === 0 ? 'Loading…' : 'Select workspace'}
+                    style={{ width: '100%' }}
+                  >
+                    {workspaces.map(ws => (
+                      <Select.Item key={ws.id} value={ws.id}>
+                        {ws.name}
+                      </Select.Item>
+                    ))}
+                  </Select.Root>
+                </FormElement>
+                <FormElement label="Include" required={false}>
+                  <div className={styles.copyInclude}>
+                    {COPY_PARTS.map(p => (
+                      <label key={p.id} className={styles.checkbox}>
+                        <input
+                          type="checkbox"
+                          checked={!!copyParts[p.id]}
+                          onChange={e =>
+                            setCopyParts(prev => ({ ...prev, [p.id]: e.target.checked }))
+                          }
+                        />
+                        {p.label}
+                      </label>
+                    ))}
+                  </div>
+                </FormElement>
+                {fromWs && (
+                  <div className={styles.note}>
+                    Replicates the selected parts of <strong>{fromWs.name}</strong>. Changes won't
+                    sync back.
+                  </div>
+                )}
+              </div>
+            </>
           )}
         </FormGroup>
 
