@@ -367,9 +367,7 @@ export const DefinitionImportSubSection = () => {
                     </FormCheckboxList.Row>
                   ))}
                   {targets.length === 0 && (
-                    <div>
-                      No destination {dependency.target_kind} definitions are available.
-                    </div>
+                    <div>No destination {dependency.target_kind} definitions are available.</div>
                   )}
                 </FormCheckboxList>
                 <div className={styles.dependencyMappingRequirement}>

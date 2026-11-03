@@ -341,9 +341,7 @@ export const ImportScreen = () => {
                       </span>
                     )}
                     {decisionCount > 0 && (
-                      <span
-                        style={{ background: 'oklch(0.65 0.15 40 / 0.1)' }}
-                      >
+                      <span style={{ background: 'oklch(0.65 0.15 40 / 0.1)' }}>
                         <TbAlertCircle size={12} /> {decisionCount} decision
                         {decisionCount !== 1 ? 's' : ''} required
                       </span>
