@@ -1,6 +1,8 @@
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 import styles from '../shell/SidePanel.module.css';
 import { useAutoFocus } from '../hooks/useAutoFocus';
 
@@ -38,23 +40,9 @@ export const RenameDialog = ({
   return (
     <Dialog open={open} onClose={onCancel} title={`Rename ${entityType}`}>
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <label style={{ fontSize: 12, color: 'var(--base-fg-dimmed)' }}>Name</label>
-          <input
-            ref={inputRef}
-            value={name}
-            onChange={event => setName(event.target.value)}
-            style={{
-              fontSize: 13,
-              padding: '6px 8px',
-              background: 'var(--base-bg)',
-              border: '1px solid var(--cmp-border)',
-              borderRadius: 'var(--r)',
-              color: 'var(--base-fg)',
-              outline: 'none'
-            }}
-          />
-        </div>
+        <FormElement label="Name">
+          <TextInput ref={inputRef} value={name} onChange={value => setName(value ?? '')} />
+        </FormElement>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
           <button type="button" className={styles.renameBtn} onClick={onCancel}>
             Cancel

@@ -34,14 +34,6 @@
   margin-bottom: 12px;
 }
 
-.toggle {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 12px;
-  color: var(--panel-fg-secondary);
-}
-
 .sectionLabel {
   font-size: 11px;
   text-transform: uppercase;
@@ -352,33 +344,4 @@
 .menuItem:hover {
   background: var(--cmp-bg);
   color: var(--base-fg);
-}
-
-.checkbox {
-  appearance: none;
-  width: 14px;
-  height: 14px;
-  border: 1px solid var(--base-fg-dimmed);
-  border-radius: 3px;
-  background: transparent;
-  cursor: pointer;
-  position: relative;
-  flex-shrink: 0;
-}
-
-.checkbox:checked {
-  background: var(--accent-fg);
-  border-color: var(--accent-fg);
-}
-
-.checkbox:checked::after {
-  content: "";
-  position: absolute;
-  left: 4px;
-  top: 1px;
-  width: 4px;
-  height: 8px;
-  border: solid white;
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
 }

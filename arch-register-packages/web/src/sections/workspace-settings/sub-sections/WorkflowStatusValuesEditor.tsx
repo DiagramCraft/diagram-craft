@@ -1,4 +1,5 @@
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
+import { FormCheckboxList } from '../../../components/FormCheckboxList';
 import type { DocumentField } from '@arch-register/api-types/documentContract';
 import styles from './WorkflowsSubSection.module.css';
 
@@ -17,20 +18,21 @@ export const WorkflowStatusValuesEditor = ({
     <div className={styles.hint}>
       Select the enum values that require the shared approval policy.
     </div>
-    {options.map(option => (
-      <label className={styles.check} key={option.value}>
-        <Checkbox
-          value={statusValues.includes(option.value)}
-          onChange={checked =>
-            onChange(
-              checked
-                ? [...statusValues, option.value]
-                : statusValues.filter(value => value !== option.value)
-            )
-          }
-        />
-        {option.label}
-      </label>
-    ))}
+    <FormCheckboxList>
+      {options.map(option => (
+        <FormCheckboxList.Row key={option.value} label={option.label}>
+          <Checkbox
+            value={statusValues.includes(option.value)}
+            onChange={checked =>
+              onChange(
+                checked
+                  ? [...statusValues, option.value]
+                  : statusValues.filter(value => value !== option.value)
+              )
+            }
+          />
+        </FormCheckboxList.Row>
+      ))}
+    </FormCheckboxList>
   </div>
 );

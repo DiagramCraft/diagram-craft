@@ -1,5 +1,6 @@
 import { TbChevronDown, TbChevronUp, TbPlus, TbTrash } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
@@ -176,8 +177,7 @@ export const EntityDrawerItemEditor = ({
         <>
           <hr className={layoutStyles.blockGroupDivider} />
           <div className={styles.optionsEditor}>
-            <label>
-              <span>Field</span>
+            <FormElement label="Field">
               <Select.Root
                 value={item.fieldId}
                 onChange={value => {
@@ -203,7 +203,7 @@ export const EntityDrawerItemEditor = ({
                   </Select.Item>
                 ))}
               </Select.Root>
-            </label>
+            </FormElement>
           </div>
         </>
       )}
@@ -211,8 +211,7 @@ export const EntityDrawerItemEditor = ({
         <>
           <hr className={layoutStyles.blockGroupDivider} />
           <div className={styles.optionsEditor}>
-            <label>
-              <span>Metadata field</span>
+            <FormElement label="Metadata field">
               <Select.Root
                 value={item.slot}
                 onChange={value => {
@@ -232,7 +231,7 @@ export const EntityDrawerItemEditor = ({
                   </Select.Item>
                 ))}
               </Select.Root>
-            </label>
+            </FormElement>
           </div>
         </>
       )}
@@ -240,8 +239,7 @@ export const EntityDrawerItemEditor = ({
         <>
           <hr className={layoutStyles.blockGroupDivider} />
           <div className={styles.optionsEditor}>
-            <label>
-              <span>Child</span>
+            <FormElement label="Child">
               <Select.Root
                 value={`${item.childSchemaId}:${item.fieldId}`}
                 onChange={value => {
@@ -272,7 +270,7 @@ export const EntityDrawerItemEditor = ({
                   </Select.Item>
                 ))}
               </Select.Root>
-            </label>
+            </FormElement>
           </div>
         </>
       )}
@@ -292,8 +290,7 @@ export const EntityDrawerItemEditor = ({
             <>
               <hr className={layoutStyles.blockGroupDivider} />
               <div className={styles.optionsEditor}>
-                <label>
-                  <span>Slot</span>
+                <FormElement label="Slot">
                   <Select.Root
                     value={item.slotId}
                     onChange={value => {
@@ -321,10 +318,9 @@ export const EntityDrawerItemEditor = ({
                       </Select.Item>
                     ))}
                   </Select.Root>
-                </label>
+                </FormElement>
                 {optionFields.map(field => (
-                  <label key={field.id} title={field.description}>
-                    <span>{field.label}</span>
+                  <FormElement key={field.id} label={field.label} hint={field.description}>
                     <TextInput
                       value={
                         typeof options[field.id] === 'string'
@@ -336,10 +332,9 @@ export const EntityDrawerItemEditor = ({
                       onChange={value => setOptions({ ...options, [field.id]: value ?? '' })}
                       style={{ width: '100%' }}
                     />
-                  </label>
+                  </FormElement>
                 ))}
-                <label>
-                  <span>Advanced options (JSON)</span>
+                <FormElement label="Advanced options (JSON)">
                   <TextArea
                     aria-label={`${itemLabel(item, catalog, selectedSchema.id)} options`}
                     value={JSON.stringify(options, null, 2)}
@@ -353,7 +348,7 @@ export const EntityDrawerItemEditor = ({
                     rows={3}
                     style={{ width: '100%' }}
                   />
-                </label>
+                </FormElement>
               </div>
             </>
           );
@@ -384,8 +379,7 @@ export const EntityDrawerItemEditor = ({
             <>
               <hr className={layoutStyles.blockGroupDivider} />
               <div className={styles.optionsEditor}>
-                <label>
-                  <span>Field</span>
+                <FormElement label="Field">
                   <Select.Root
                     value={item.fieldId}
                     onChange={value => {
@@ -406,7 +400,7 @@ export const EntityDrawerItemEditor = ({
                       </Select.Item>
                     ))}
                   </Select.Root>
-                </label>
+                </FormElement>
                 {attributes.map((attribute, attributeIndex) => (
                   <span key={attributeIndex} className={layoutStyles.block}>
                     <Select.Root
@@ -480,8 +474,7 @@ export const EntityDrawerItemEditor = ({
         <>
           <hr className={layoutStyles.blockGroupDivider} />
           <div className={styles.optionsEditor}>
-            <label>
-              <span>Query</span>
+            <FormElement label="Query">
               <TextArea
                 aria-label={`${itemLabel(item, catalog, selectedSchema.id)} query text`}
                 value={item.queryText}
@@ -498,9 +491,8 @@ export const EntityDrawerItemEditor = ({
                 rows={2}
                 style={{ width: '100%' }}
               />
-            </label>
-            <label>
-              <span>Presentation</span>
+            </FormElement>
+            <FormElement label="Presentation">
               <Select.Root
                 value={item.presentation ?? 'list'}
                 onChange={value => {
@@ -518,7 +510,7 @@ export const EntityDrawerItemEditor = ({
                 <Select.Item value="list">List</Select.Item>
                 <Select.Item value="chips">Chips</Select.Item>
               </Select.Root>
-            </label>
+            </FormElement>
             {(item.fields ?? []).map((field, fieldIndex) => (
               <span key={fieldIndex} className={layoutStyles.block}>
                 <TextInput
@@ -614,8 +606,7 @@ export const EntityDrawerItemEditor = ({
         <>
           <hr className={layoutStyles.blockGroupDivider} />
           <div className={styles.optionsEditor}>
-            <label>
-              <span>Source</span>
+            <FormElement label="Source">
               <Select.Root
                 value={rollupSourceKey(item.fieldId, item.sourceSchemaId, item.traversal)}
                 onChange={value => {
@@ -648,9 +639,8 @@ export const EntityDrawerItemEditor = ({
                   </Select.Item>
                 ))}
               </Select.Root>
-            </label>
-            <label>
-              <span>Aggregation</span>
+            </FormElement>
+            <FormElement label="Aggregation">
               <Select.Root
                 value={item.aggregation}
                 onChange={value => {
@@ -678,9 +668,8 @@ export const EntityDrawerItemEditor = ({
                 <Select.Item value="avg">Average</Select.Item>
                 <Select.Item value="count">Count</Select.Item>
               </Select.Root>
-            </label>
-            <label>
-              <span>Format</span>
+            </FormElement>
+            <FormElement label="Format">
               <Select.Root
                 value={item.format}
                 disabled={item.aggregation === 'count'}
@@ -703,7 +692,7 @@ export const EntityDrawerItemEditor = ({
                 <Select.Item value="currency">Currency</Select.Item>
                 <Select.Item value="percent">Percent</Select.Item>
               </Select.Root>
-            </label>
+            </FormElement>
           </div>
         </>
       )}

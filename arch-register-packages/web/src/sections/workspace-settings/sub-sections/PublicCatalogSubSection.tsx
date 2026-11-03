@@ -2,6 +2,8 @@ import styles from './PublicCatalogSubSection.module.css';
 import { Banner } from '../../../components/Banner';
 import { LoadingState } from '../../../components/LoadingState';
 import { useEffect, useMemo, useState } from 'react';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
+import { FormCheckboxList } from '../../../components/FormCheckboxList';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbArrowDown, TbArrowUp, TbDots, TbTrash } from 'react-icons/tb';
 import { DropdownMenu, type MenuItem } from '../../../components/DropdownMenu';
@@ -420,7 +422,7 @@ export const PublicCatalogSubSection = ({
               key={schema.id}
               align="top"
               label={
-                <label className={styles.row}>
+                <FormCheckboxList.Row label={schema.name}>
                   <input
                     type="checkbox"
                     checked={fields != null}
@@ -433,8 +435,7 @@ export const PublicCatalogSubSection = ({
                       }))
                     }
                   />
-                  {schema.name}
-                </label>
+                </FormCheckboxList.Row>
               }
             >
               {fields && (
@@ -446,7 +447,7 @@ export const PublicCatalogSubSection = ({
                   }}
                 >
                   {schema.fields.map(field => (
-                    <label
+                    <FormCheckboxList.Row
                       key={field.id}
                       title={field.reason}
                       style={{
@@ -457,6 +458,11 @@ export const PublicCatalogSubSection = ({
                         opacity: field.selectable ? 1 : 0.6,
                         color: 'var(--panel-fg-secondary)'
                       }}
+                      label={
+                        <>
+                          {field.name} <span className={styles.muted}>({field.type})</span>
+                        </>
+                      }
                     >
                       <input
                         type="checkbox"
@@ -478,8 +484,7 @@ export const PublicCatalogSubSection = ({
                           }))
                         }
                       />
-                      {field.name} <span className={styles.muted}>({field.type})</span>
-                    </label>
+                    </FormCheckboxList.Row>
                   ))}
                 </div>
               )}
@@ -602,7 +607,7 @@ export const PublicCatalogSubSection = ({
               {override.mode === 'publish' && entity && schema && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingLeft: 8 }}>
                   <div className={styles.muted}>Fields for this entity</div>
-                  <label className={`${styles.row} ${styles.rowSmall}`}>
+                  <FormCheckboxList.Row label="Use the selected schema fields">
                     <input
                       type="radio"
                       name={`entity-fields-${index}`}
@@ -616,9 +621,8 @@ export const PublicCatalogSubSection = ({
                         }))
                       }
                     />
-                    Use the selected schema fields
-                  </label>
-                  <label className={`${styles.row} ${styles.rowSmall}`}>
+                  </FormCheckboxList.Row>
+                  <FormCheckboxList.Row label="Choose fields for this entity">
                     <input
                       type="radio"
                       name={`entity-fields-${index}`}
@@ -639,8 +643,7 @@ export const PublicCatalogSubSection = ({
                         }))
                       }
                     />
-                    Choose fields for this entity
-                  </label>
+                  </FormCheckboxList.Row>
                   {override.fieldIds != null && (
                     <div
                       style={{
@@ -651,10 +654,11 @@ export const PublicCatalogSubSection = ({
                       }}
                     >
                       {availableFields.map(field => (
-                        <label
+                        <FormCheckboxList.Row
                           key={field.id}
                           title={field.reason}
                           style={{ opacity: field.selectable ? 1 : 0.6, fontSize: 12 }}
+                          label={field.name}
                         >
                           <input
                             type="checkbox"
@@ -677,9 +681,8 @@ export const PublicCatalogSubSection = ({
                                 )
                               }))
                             }
-                          />{' '}
-                          {field.name}
-                        </label>
+                          />
+                        </FormCheckboxList.Row>
                       ))}
                     </div>
                   )}
@@ -878,32 +881,38 @@ export const PublicCatalogSubSection = ({
                 </div>
               </div>
               <div className={styles.row}>
-                <label className={`${styles.muted} ${styles.labelMuted}`}>Public path</label>
-                <TextInput
-                  value={page.publicPath}
-                  onChange={value =>
-                    setConfigValue(current => ({
-                      ...current,
-                      pages: current.pages.map((item, itemIndex) =>
-                        itemIndex === index ? { ...item, publicPath: value ?? '' } : item
-                      )
-                    }))
-                  }
-                  style={{ flex: '1 1 260px', maxWidth: 520 }}
-                />
-                <label className={`${styles.muted} ${styles.labelMutedSm}`}>Label</label>
-                <TextInput
-                  value={page.label ?? ''}
-                  onChange={value =>
-                    setConfigValue(current => ({
-                      ...current,
-                      pages: current.pages.map((item, itemIndex) =>
-                        itemIndex === index ? { ...item, label: value ?? undefined } : item
-                      )
-                    }))
-                  }
+                <FormElement label="Public path" style={{ flex: '1 1 260px', maxWidth: 520 }}>
+                  <TextInput
+                    value={page.publicPath}
+                    onChange={value =>
+                      setConfigValue(current => ({
+                        ...current,
+                        pages: current.pages.map((item, itemIndex) =>
+                          itemIndex === index ? { ...item, publicPath: value ?? '' } : item
+                        )
+                      }))
+                    }
+                    style={{ width: '100%' }}
+                  />
+                </FormElement>
+                <FormElement
+                  label="Label"
+                  required={false}
                   style={{ flex: '1 1 220px', maxWidth: 360 }}
-                />
+                >
+                  <TextInput
+                    value={page.label ?? ''}
+                    onChange={value =>
+                      setConfigValue(current => ({
+                        ...current,
+                        pages: current.pages.map((item, itemIndex) =>
+                          itemIndex === index ? { ...item, label: value ?? undefined } : item
+                        )
+                      }))
+                    }
+                    style={{ width: '100%' }}
+                  />
+                </FormElement>
               </div>
               {currentCandidate && !currentCandidate.selectable && (
                 <div className={styles.muted}>{currentCandidate.reason}</div>
@@ -1018,9 +1027,9 @@ export const PublicCatalogSubSection = ({
                     ))}
                   </Select.Root>
                 </div>
-                <label
-                  className={styles.row}
+                <FormCheckboxList.Row
                   title="Allow unauthenticated readers to download the source document"
+                  label="Expose raw source"
                 >
                   <input
                     type="checkbox"
@@ -1034,8 +1043,7 @@ export const PublicCatalogSubSection = ({
                       }))
                     }
                   />
-                  Expose raw source
-                </label>
+                </FormCheckboxList.Row>
               </div>
               {artifact && (
                 <div className={styles.muted}>Status: {artifact.status.replaceAll('_', ' ')}</div>

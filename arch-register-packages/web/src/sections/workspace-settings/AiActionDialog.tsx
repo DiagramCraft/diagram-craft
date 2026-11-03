@@ -4,6 +4,7 @@ import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Select } from '@diagram-craft/app-components/Select';
+import { FormCheckboxList } from '../../components/FormCheckboxList';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { Button } from '@diagram-craft/app-components/Button';
 import type { AiActionTestResult } from '@arch-register/api-types/projectDocumentAiContract';
@@ -253,9 +254,17 @@ export const AiActionDialog = ({
                 </DialogSection>
 
                 <DialogSection label="Available tools">
-                  <div className={styles.toolList}>
+                  <FormCheckboxList>
                     {DOCUMENT_AI_READ_ONLY_TOOLS.map(tool => (
-                      <label key={tool.id} className={styles.toolRow}>
+                      <FormCheckboxList.Row
+                        key={tool.id}
+                        label={
+                          <span>
+                            <span className={styles.toolLabel}>{tool.label}</span>
+                            <span className={styles.toolDescription}>{tool.description}</span>
+                          </span>
+                        }
+                      >
                         <Checkbox
                           value={draft.tools?.includes(tool.id) ?? true}
                           onChange={value => {
@@ -266,13 +275,9 @@ export const AiActionDialog = ({
                             setDraft({ ...draft, tools: [...new Set(nextTools)] });
                           }}
                         />
-                        <span>
-                          <span className={styles.toolLabel}>{tool.label}</span>
-                          <span className={styles.toolDescription}>{tool.description}</span>
-                        </span>
-                      </label>
+                      </FormCheckboxList.Row>
                     ))}
-                  </div>
+                  </FormCheckboxList>
                   <div className={styles.hint}>
                     The selected tools are still limited by the initiating user&apos;s permissions.
                     Select none to run this action without architecture tools.

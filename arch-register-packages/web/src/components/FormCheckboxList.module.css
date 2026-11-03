@@ -9,6 +9,12 @@
   gap: 12px;
 }
 
+.cFormCheckboxList[data-columns] {
+  display: grid;
+  grid-template-columns: repeat(var(--columns, 2), minmax(0, 1fr));
+  gap: 8px;
+}
+
 .eRow {
   display: flex;
   align-items: center;
