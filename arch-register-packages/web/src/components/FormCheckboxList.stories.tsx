@@ -21,11 +21,11 @@ const options = [
   { id: 'tags', label: 'Tags' }
 ];
 
-const FormCheckboxListExample = () => {
+const FormCheckboxListExample = ({ columns }: { columns?: number }) => {
   const [selectedIds, setSelectedIds] = useState(() => new Set(['owner', 'tags']));
 
   return (
-    <FormCheckboxList>
+    <FormCheckboxList columns={columns}>
       {options.map(option => (
         <FormCheckboxList.Row key={option.id} label={option.label}>
           <input
@@ -52,6 +52,15 @@ export const Default: Story = {
   render: () => (
     <div style={{ minWidth: 360 }}>
       <FormCheckboxListExample />
+    </div>
+  )
+};
+
+export const Columns: Story = {
+  args: { children: null },
+  render: () => (
+    <div style={{ minWidth: 360 }}>
+      <FormCheckboxListExample columns={2} />
     </div>
   )
 };
