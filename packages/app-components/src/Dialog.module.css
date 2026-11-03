@@ -114,7 +114,7 @@
     color: var(--base-fg);
     position: relative;
 
-    &[data-scrollable='true'] {
+    &[data-scrollable="true"] {
       overflow-x: hidden;
       overflow-y: auto;
     }
