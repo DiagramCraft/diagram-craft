@@ -21,13 +21,6 @@
   color: var(--base-fg);
 }
 
-.conflictOption {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-}
-
 .conflictOptionLabel {
   font-size: 12px;
   color: var(--base-fg-secondary);

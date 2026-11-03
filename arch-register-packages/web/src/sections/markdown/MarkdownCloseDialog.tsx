@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { Dialog, KbdHints } from '@diagram-craft/app-components/Dialog';
+import { FormCheckboxList } from '../../components/FormCheckboxList';
 import type { MarkdownCloseImpactSummary } from './markdownDiagramSession';
 import styles from './MarkdownCloseDialog.module.css';
 
@@ -83,36 +85,40 @@ export const MarkdownCloseDialog = ({
               Select which existing embedded diagrams to revert. Unselected diagrams will keep their
               current saved state.
             </div>
-            <ul className={styles.checklist}>
+            <FormCheckboxList>
               {summary.revertableDiagrams.map(diagram => (
-                <li key={diagram.diagramId} className={styles.checklistItem}>
-                  <label className={styles.checkboxRow}>
-                    <input
-                      type="checkbox"
-                      checked={selectedDiagramIds.includes(diagram.diagramId)}
-                      onChange={() => toggleDiagram(diagram.diagramId)}
-                    />
+                <FormCheckboxList.Row
+                  key={diagram.diagramId}
+                  label={
                     <span className={styles.checkboxText}>
                       <span>{diagram.name}</span>
                       <span className={styles.reason}>Safe to revert.</span>
                     </span>
-                  </label>
-                </li>
+                  }
+                >
+                  <Checkbox
+                    value={selectedDiagramIds.includes(diagram.diagramId)}
+                    onChange={() => toggleDiagram(diagram.diagramId)}
+                  />
+                </FormCheckboxList.Row>
               ))}
               {summary.nonRevertableDiagrams.map(diagram => (
-                <li key={diagram.diagramId} className={styles.checklistItem}>
-                  <label className={`${styles.checkboxRow} ${styles.checkboxRowDisabled}`}>
-                    <input type="checkbox" checked={false} disabled />
+                <FormCheckboxList.Row
+                  key={diagram.diagramId}
+                  className={styles.checkboxRowDisabled}
+                  label={
                     <span className={styles.checkboxText}>
                       <span>{diagram.name}</span>
                       <span className={styles.reason}>
                         {diagram.reason ? reasonText[diagram.reason] : ''}
                       </span>
                     </span>
-                  </label>
-                </li>
+                  }
+                >
+                  <Checkbox value={false} disabled onChange={() => undefined} />
+                </FormCheckboxList.Row>
               ))}
-            </ul>
+            </FormCheckboxList>
           </section>
         )}
       </div>

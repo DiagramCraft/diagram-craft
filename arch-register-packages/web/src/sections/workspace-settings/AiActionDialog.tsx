@@ -18,7 +18,8 @@ import {
 import { testDocumentAiAction } from '../../hooks/useDocumentAiActions';
 import { SafeMarkdown } from '../../components/SafeMarkdown';
 import { DocumentPicker } from '../../components/DocumentPicker';
-import { DialogContent, DialogSection } from '../markdown/editor/BlockDialog';
+import { DialogContent } from '../markdown/editor/BlockDialog';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
 import styles from './AiActionDialog.module.css';
 
 const KIND_LABELS: Record<DocumentAiAction['kind'], string> = {
@@ -224,15 +225,15 @@ export const AiActionDialog = ({
             <Tabs.Content value="edit">
               <div className={styles.editContent}>
                 <div className={styles.formGrid}>
-                  <DialogSection label="Name">
+                  <FormElement label="Name">
                     <TextInput
                       value={draft.name}
                       onChange={value => setDraft({ ...draft, name: value ?? '' })}
                       placeholder="Action name"
                       style={{ width: '100%' }}
                     />
-                  </DialogSection>
-                  <DialogSection label="Type">
+                  </FormElement>
+                  <FormElement label="Type">
                     <Select.Root value={draft.kind} onChange={updateKind} style={{ width: '100%' }}>
                       {Object.entries(KIND_LABELS).map(([value, label]) => (
                         <Select.Item key={value} value={value}>
@@ -240,10 +241,10 @@ export const AiActionDialog = ({
                         </Select.Item>
                       ))}
                     </Select.Root>
-                  </DialogSection>
+                  </FormElement>
                 </div>
 
-                <DialogSection label="Prompt">
+                <FormElement label="Prompt">
                   <TextArea
                     value={draft.prompt}
                     onChange={value => setDraft({ ...draft, prompt: value ?? '' })}
@@ -251,9 +252,9 @@ export const AiActionDialog = ({
                     style={{ width: '100%' }}
                     placeholder="Instructions for the AI action"
                   />
-                </DialogSection>
+                </FormElement>
 
-                <DialogSection label="Available tools">
+                <FormElement label="Available tools">
                   <FormCheckboxList>
                     {DOCUMENT_AI_READ_ONLY_TOOLS.map(tool => (
                       <FormCheckboxList.Row
@@ -282,10 +283,10 @@ export const AiActionDialog = ({
                     The selected tools are still limited by the initiating user&apos;s permissions.
                     Select none to run this action without architecture tools.
                   </div>
-                </DialogSection>
+                </FormElement>
 
                 {draft.kind === 'metadata_generator' && (
-                  <DialogSection label="Output field">
+                  <FormElement label="Output field">
                     {eligibleFields.length > 0 || draft.outputFieldId ? (
                       <Select.Root
                         value={draft.outputFieldId}
@@ -310,7 +311,7 @@ export const AiActionDialog = ({
                         Add a text, long text, boolean, date, number, or enum field first.
                       </div>
                     )}
-                  </DialogSection>
+                  </FormElement>
                 )}
 
                 <div className={styles.enabledRow}>
@@ -339,7 +340,7 @@ export const AiActionDialog = ({
                 </Button>
               </div>
 
-              <DialogSection label="Test document">
+              <FormElement label="Test document">
                 {!documentTypeId ? (
                   <div className={styles.hint}>
                     Save this document type before testing an action.
@@ -367,7 +368,7 @@ export const AiActionDialog = ({
                     onClearDocument={() => setSelectedDocument(null)}
                   />
                 )}
-              </DialogSection>
+              </FormElement>
 
               {(running || displayOutput.length > 0 || error || result) && (
                 <div className={styles.result}>

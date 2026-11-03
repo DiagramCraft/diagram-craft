@@ -1,6 +1,7 @@
 import { useEffect, useState, type Dispatch, type SetStateAction } from 'react';
 import { relationLabel } from '../../../lib/relationLabel';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
+import { FormCheckboxList } from '../../../components/FormCheckboxList';
 import { useEntity } from '../../../hooks/useEntities';
 import { useRelation } from '../../../hooks/useRelations';
 import { useRelationSchemas } from '../../../hooks/useRelationSchemas';
@@ -113,26 +114,34 @@ const ConflictList = ({ memberId, name, conflicts, choices, setChoices }: Confli
         {conflicts.map(c => (
           <div key={c.key} className={styles.conflictRow}>
             <div className={styles.conflictLabel}>{c.label}</div>
-            <label className={styles.conflictOption}>
+            <FormCheckboxList.Row
+              label={
+                <span className={styles.conflictOptionLabel}>
+                  Planned: {formatVal(c.proposedVal)}
+                </span>
+              }
+            >
               <input
                 type="radio"
                 name={`conflict-${memberId}-${c.key}`}
                 checked={(choices[c.key] ?? 'proposed') === 'proposed'}
                 onChange={() => setChoices(prev => ({ ...prev, [c.key]: 'proposed' }))}
               />
-              <span className={styles.conflictOptionLabel}>
-                Planned: {formatVal(c.proposedVal)}
-              </span>
-            </label>
-            <label className={styles.conflictOption}>
+            </FormCheckboxList.Row>
+            <FormCheckboxList.Row
+              label={
+                <span className={styles.conflictOptionLabel}>
+                  Current: {formatVal(c.currentVal)}
+                </span>
+              }
+            >
               <input
                 type="radio"
                 name={`conflict-${memberId}-${c.key}`}
                 checked={choices[c.key] === 'current'}
                 onChange={() => setChoices(prev => ({ ...prev, [c.key]: 'current' }))}
               />
-              <span className={styles.conflictOptionLabel}>Current: {formatVal(c.currentVal)}</span>
-            </label>
+            </FormCheckboxList.Row>
           </div>
         ))}
       </div>

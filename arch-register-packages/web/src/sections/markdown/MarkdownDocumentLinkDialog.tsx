@@ -3,7 +3,8 @@ import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useContentFile } from '../../hooks/useContentScope';
 import { DocumentPicker } from '../../components/DocumentPicker';
-import { DialogContent, DialogSection } from './editor/BlockDialog';
+import { DialogContent } from './editor/BlockDialog';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
 
 export const MarkdownDocumentLinkDialog = ({
   open,
@@ -43,14 +44,14 @@ export const MarkdownDocumentLinkDialog = ({
       ]}
     >
       <DialogContent>
-        <DialogSection label="Document">
+        <FormElement label="Document">
           <DocumentPicker
             selectedDocumentId={selectedDocumentId}
             selectedDocument={selectedDocument}
             onSelectDocument={document => setSelectedDocumentId(document.file.id)}
             onClearDocument={() => setSelectedDocumentId('')}
           />
-        </DialogSection>
+        </FormElement>
       </DialogContent>
     </Dialog>
   );
