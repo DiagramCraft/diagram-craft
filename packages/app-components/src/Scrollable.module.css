@@ -67,6 +67,14 @@
     }
   }
 
+  &[data-variant="compact"] {
+    .eContent {
+      gap: 0;
+      padding-block: 0;
+      padding-left: 0;
+      padding-right: 0;
+    }
+  }
   .eScrollbar {
     display: flex;
     justify-content: center;

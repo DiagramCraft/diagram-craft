@@ -73,7 +73,10 @@ export const WorkflowEscalationEditor = ({
               onChange={fallbackUserIds => onChange({ ...escalation, fallbackUserIds })}
             />
           </FormElement>
-          <FormElement label="Fallback teams">
+          <FormElement
+            label="Fallback teams"
+            hint={'Workspace admins are used if no target resolves.'}
+          >
             <PrincipalPicker
               workspaceSlug={workspaceSlug}
               kind="team"
@@ -81,7 +84,6 @@ export const WorkflowEscalationEditor = ({
               onChange={fallbackTeamIds => onChange({ ...escalation, fallbackTeamIds })}
             />
           </FormElement>
-          <div className={styles.hint}>Workspace admins are used if no target resolves.</div>
         </WorkflowBlock>
       </div>
     )}
