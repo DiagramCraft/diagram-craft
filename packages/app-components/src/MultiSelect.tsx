@@ -36,10 +36,7 @@ export const MultiSelect = (props: Props) => {
     if (props.isIndeterminate) return;
     setInputValue(value);
     if (props.onInputChange) {
-      props.onInputChange(
-        value,
-        eventDetails?.event as unknown as ChangeEvent<HTMLInputElement>
-      );
+      props.onInputChange(value, eventDetails?.event as unknown as ChangeEvent<HTMLInputElement>);
     }
   };
 

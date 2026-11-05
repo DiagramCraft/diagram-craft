@@ -15,7 +15,6 @@ import { FormGroup } from '../../../components/FormGroup';
 import { Button } from '@diagram-craft/app-components/Button';
 import styles from '../../../components/FilterBuilder.module.css';
 import scopeStyles from './AssessmentScopeFilterBuilder.module.css';
-import { EmptyState } from '../../../components/EmptyState';
 import type { FieldGroupAccess, FieldGroupAccessControl } from '@arch-register/permissions';
 
 const customFieldType = (field: EntitySchema['fields'][number]): FieldDef['type'] => {

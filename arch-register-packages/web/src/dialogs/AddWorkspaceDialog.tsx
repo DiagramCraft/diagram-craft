@@ -105,7 +105,7 @@ const TemplateDependencyMappingSection = ({
 }) => {
   if (dependencies.length === 0) return null;
   return (
-    <div className={styles.crossCuttingSection}>
+    <div>
       <div className={styles.sectionLabel}>Resolve template dependencies</div>
       <div className={styles.sectionHint}>
         Select the workspace definitions that should satisfy each selected concern. Every required
@@ -175,7 +175,7 @@ const CrossCuttingTemplateSection = ({
   selected: string[];
   onToggle: (id: string, checked: boolean) => void;
 }) => (
-  <div className={styles.crossCuttingSection}>
+  <div>
     {templates.length === 0 ? (
       <div className={styles.note}>Loading available concerns…</div>
     ) : (
