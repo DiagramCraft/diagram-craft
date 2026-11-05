@@ -67,7 +67,11 @@
   --accent-fg-dimmed: var(--theme-dark-accent-fg-dimmed, var(--blue-6));
   --accent-fg-hover: var(--theme-dark-accent-fg-hover, var(--blue-12));
   --accent-border: var(--theme-dark-accent-border, var(--blue-6));
+
   --accent-chroma: var(--theme-dark-accent-chroma, var(--blue-9));
+
+  --accent-bg-inverse: var(--theme-dark-accent-bg-inverse, var(--blue-10));
+  --accent-fg-inverse: var(--theme-dark-accent-fg-inverse, var(--blue-1));
 
   --cmp-fg: var(--theme-dark-cmp-fg, var(--gray-12));
   --cmp-fg-secondary: var(--theme-dark-cmp-fg-secondary, var(--gray-11));
@@ -159,7 +163,11 @@
   --accent-fg-dimmed: var(--theme-light-accent-fg-dimmed, var(--blue-6));
   --accent-fg-hover: var(--theme-light-accent-fg-hover, var(--blue-12));
   --accent-border: var(--theme-light-accent-border, var(--blue-6));
+
   --accent-chroma: var(--theme-light-accent-chroma, var(--blue-9));
+
+  --accent-bg-inverse: var(--theme-light-accent-bg-dark, var(--blue-11));
+  --accent-fg-inverse: var(--theme-light-accent-fg-inverse, var(--gray-1));
 
   --cmp-fg: var(--theme-light-cmp-fg, var(--gray-12));
   --cmp-fg-secondary: var(--theme-dark-cmp-fg-secondary, var(--gray-11));

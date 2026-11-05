@@ -58,7 +58,7 @@
   .eBody {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 0.5rem;
   }
 
   &[data-variant="simple"] {
@@ -70,36 +70,18 @@
     }
   }
 
-  &[data-variant="border"] {
-    --cmp-bg: var(--gray-2);
-
-    background: var(--base-bg);
-    border: 1px solid var(--cmp-border);
-    border-radius: 8px;
-    padding: 10px 12px;
-
-    .eHead {
-      gap: 6px;
-      padding-bottom: 8px;
-      margin-bottom: 8px;
-      border-bottom: 1px solid var(--cmp-border);
-
-      .eIcon {
-        color: var(--base-fg-secondary);
-      }
-
-      .eTextIcon {
-        color: var(--base-fg-dimmed);
-      }
-
-      .eAction {
-        margin-left: auto;
-      }
-    }
-  }
-
   &[data-variant="section"] {
-    padding: 11px 0;
+    padding: 6px 0;
+    &:first-child {
+      padding-top: 0;
+    }
+    &:last-child {
+      padding-bottom: 0;
+    }
+
+    & ~ .cFormGroup {
+      padding-top: 0;
+    }
 
     .eHead {
       gap: 8px;

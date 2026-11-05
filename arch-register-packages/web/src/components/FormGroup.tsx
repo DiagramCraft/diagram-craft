@@ -2,7 +2,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import styles from './FormGroup.module.css';
 
 export type FormGroupProps = {
-  variant: 'border' | 'section' | 'simple';
+  variant: 'section' | 'simple';
   label: string;
   supplementaryLabel?: string;
   icon?: ReactNode;

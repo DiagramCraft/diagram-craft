@@ -13,7 +13,7 @@ const meta = {
   argTypes: {
     variant: {
       control: { type: 'inline-radio' },
-      options: ['border', 'section', 'simple']
+      options: ['section', 'simple']
     }
   }
 } satisfies Meta<typeof FormGroup>;
@@ -22,7 +22,6 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-const borderArgs = { variant: 'border', label: '', children: null } as const;
 const sectionArgs = { variant: 'section', label: '', children: null } as const;
 
 const action = (
@@ -43,7 +42,7 @@ const action = (
 );
 
 export const Default: Story = {
-  args: borderArgs,
+  args: sectionArgs,
   render: ({ variant }) => (
     <div style={{ minWidth: 360 }}>
       <FormGroup variant={variant} label="Properties">
@@ -59,7 +58,7 @@ export const Default: Story = {
 };
 
 export const WithIcon: Story = {
-  args: borderArgs,
+  args: sectionArgs,
   render: ({ variant }) => (
     <div style={{ minWidth: 360 }}>
       <FormGroup variant={variant} label="Metadata" icon={<TbInfoCircle size={12} />}>
@@ -75,7 +74,7 @@ export const WithIcon: Story = {
 };
 
 export const WithAction: Story = {
-  args: borderArgs,
+  args: sectionArgs,
   render: ({ variant }) => (
     <div style={{ minWidth: 360 }}>
       <FormGroup variant={variant} label="People" icon={<TbUsers size={12} />} action={action}>
@@ -87,26 +86,13 @@ export const WithAction: Story = {
   )
 };
 
-export const SectionWithStep: Story = {
+export const WithStep: Story = {
   args: sectionArgs,
   render: ({ variant }) => (
     <div style={{ minWidth: 360 }}>
       <FormGroup variant={variant} label="Identity" icon={1}>
         <FormElement label="Name" required>
           <TextInput placeholder="e.g. Acme Platform" value="" onChange={() => {}} />
-        </FormElement>
-      </FormGroup>
-    </div>
-  )
-};
-
-export const SectionWithIconAndAction: Story = {
-  args: sectionArgs,
-  render: ({ variant }) => (
-    <div style={{ minWidth: 360 }}>
-      <FormGroup variant={variant} label="People" icon={<TbUsers size={12} />} action={action}>
-        <FormElement label="Member" required>
-          <TextInput placeholder="username" value="" onChange={() => {}} />
         </FormElement>
       </FormGroup>
     </div>

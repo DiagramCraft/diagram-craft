@@ -14,6 +14,7 @@ export type PrincipalPickerProps = {
   onChange: (values: string[]) => void;
   /** Optional cap on how many principals can be selected. */
   maxValues?: number;
+  disabled?: boolean;
 };
 
 type PrincipalItem = MultiSelectItem & { email?: string | null; color?: string | null };
@@ -30,7 +31,8 @@ export const PrincipalPicker = ({
   kind,
   values,
   onChange,
-  maxValues
+  maxValues,
+  disabled
 }: PrincipalPickerProps) => {
   const [query, setQuery] = useState('');
   const trimmed = query.trim();
@@ -78,6 +80,7 @@ export const PrincipalPicker = ({
       selectedValues={values}
       selectedItems={selectedItems}
       availableItems={availableItems}
+      disabled={disabled}
       filterLocally={false}
       maxSuggestions={SEARCH_LIMIT}
       loading={enabled && isLoading}

@@ -11,6 +11,8 @@ import {
   defaultOpForField,
   type FieldDef
 } from '../../../components/FilterBuilder';
+import { FormGroup } from '../../../components/FormGroup';
+import { Button } from '@diagram-craft/app-components/Button';
 import styles from '../../../components/FilterBuilder.module.css';
 import scopeStyles from './AssessmentScopeFilterBuilder.module.css';
 import { EmptyState } from '../../../components/EmptyState';
@@ -126,41 +128,37 @@ export const AssessmentScopeFilterBuilder = ({
   const clearAll = () => onChange([]);
 
   return (
-    <div className={scopeStyles.panel}>
-      <div className={scopeStyles.header}>
-        <div>
-          <div className={scopeStyles.title}>Filter Conditions</div>
-        </div>
-        <div className={scopeStyles.actions}>
+    <FormGroup
+      label={'Filter Conditions'}
+      variant={'section'}
+      action={
+        <>
           {conditions.length > 0 && (
-            <button type="button" className={styles.addFilter} onClick={clearAll}>
+            <Button size="xs" variant="danger" onClick={clearAll}>
               Clear all
-            </button>
+            </Button>
           )}
-          <button
-            type="button"
-            className={styles.addFilter}
-            onClick={addCondition}
-            disabled={fields.length === 0}
-          >
+          <Button size="xs" onClick={addCondition} disabled={fields.length === 0}>
             <TbPlus size={11} />
             Add filter
-          </button>
+          </Button>
+        </>
+      }
+    >
+      <div className={scopeStyles.panel}>
+        <div className={styles.rows}>
+          {conditions.length === 0 && <div className={styles.empty}>No filter conditions</div>}
+          {conditions.map((condition, index) => (
+            <FilterRow
+              key={index}
+              condition={condition}
+              fields={fields}
+              onUpdate={updates => updateCondition(index, updates)}
+              onRemove={() => removeCondition(index)}
+            />
+          ))}
         </div>
       </div>
-
-      <div className={styles.rows}>
-        {conditions.length === 0 && <EmptyState compact title="No filter conditions." />}
-        {conditions.map((condition, index) => (
-          <FilterRow
-            key={index}
-            condition={condition}
-            fields={fields}
-            onUpdate={updates => updateCondition(index, updates)}
-            onRemove={() => removeCondition(index)}
-          />
-        ))}
-      </div>
-    </div>
+    </FormGroup>
   );
 };

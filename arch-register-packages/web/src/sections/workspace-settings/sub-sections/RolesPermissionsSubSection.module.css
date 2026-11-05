@@ -131,100 +131,6 @@
   gap: 12px;
 }
 
-.dialogField {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.dialogLabel {
-  font-size: 12px;
-  color: var(--base-fg-dimmed);
-}
-
-.requiredMark {
-  font-size: 13px;
-  font-weight: 600;
-  color: color-mix(in oklch, var(--error-fg) 80%, var(--base-fg-dimmed));
-  margin-left: 2px;
-  vertical-align: middle;
-}
-
-.dialogInput,
-.dialogTextarea {
-  width: 100%;
-  box-sizing: border-box;
-  border: 1px solid var(--cmp-border);
-  background: var(--base-bg);
-  color: var(--base-fg);
-  border-radius: 6px;
-  padding: 8px 10px;
-  outline: none;
-}
-
-.dialogInput:focus,
-.dialogTextarea:focus {
-  box-shadow: var(--cmp-border-shadow-focus);
-}
-
-.dialogTextarea {
-  min-height: 72px;
-  resize: vertical;
-}
-
-.colorPickerWrap {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.capSection {
-  display: flex;
-  flex-direction: column;
-}
-
-.capSectionHead {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
-}
-
-.capSectionTitle {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--base-fg);
-}
-
-.capCount {
-  font-size: 11px;
-  color: var(--base-fg-dimmed);
-  padding: 1px 7px;
-  border: 1px solid var(--cmp-border);
-  border-radius: 999px;
-}
-
-.capSelectAll {
-  margin-left: auto;
-  font-size: 11.5px;
-  color: var(--accent-fg);
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 2px 4px;
-}
-
-.capSelectAll:hover {
-  text-decoration: underline;
-}
-
-.capNote {
-  font-size: 11.5px;
-  color: var(--cmp-fg-disabled);
-  margin: 0 0 10px;
-  line-height: 1.4;
-}
-
 .capabilityList {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -262,16 +168,15 @@
   align-items: center;
   gap: 8px;
   min-width: 0;
-  font-size: 12px;
+  font-size: 11px;
   color: var(--base-fg-secondary);
-  padding: 6px 6px;
-  border-radius: 6px;
+  padding: 3px 3px;
   cursor: pointer;
   transition: background 70ms;
 }
 
 .capName {
-  font-size: 12.5px;
+  font-size: 11px;
   color: var(--base-fg-secondary);
   transition: color 70ms;
 }
