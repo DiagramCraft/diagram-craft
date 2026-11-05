@@ -11,7 +11,7 @@ import { ColorPicker } from '../../../components/ColorPicker';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { DropdownMenu } from '../../../components/DropdownMenu';
 import { MemberAvatar, stableHue } from '../../../components/MemberAvatar';
-import { UserGroupPicker } from '../../../components/UserGroupPicker';
+import { PrincipalPicker } from '../../../components/PrincipalPicker';
 import { getUserLabel } from '../../../utils/userLabel';
 import type {
   TeamAssignmentInfo,
@@ -410,6 +410,7 @@ export const TeamsSubSection = ({ workspaceSlug }: { workspaceSlug: string }) =>
       />
 
       <AddMembersDialog
+        workspaceSlug={workspaceSlug}
         open={addMembersTeam != null}
         teamName={addMembersTeam?.name ?? ''}
         existingUserIds={addMembersTeam?.assignments.map(a => a.user_id) ?? []}
@@ -555,6 +556,7 @@ const TeamDialog = ({
 };
 
 const AddMembersDialog = ({
+  workspaceSlug,
   open,
   teamName,
   existingUserIds,
@@ -565,6 +567,7 @@ const AddMembersDialog = ({
   isSaving,
   canCreateUsers
 }: {
+  workspaceSlug: string;
   open: boolean;
   teamName: string;
   existingUserIds: string[];
@@ -646,11 +649,12 @@ const AddMembersDialog = ({
             })}
 
             {availableUsers.length > 0 && (
-              <UserGroupPicker
+              <PrincipalPicker
+                workspaceSlug={workspaceSlug}
                 kind="user"
+                values={[]}
                 excludeIds={[...existingUserIds, ...pickedUserIds]}
-                onSelect={item => pickUser(item.id)}
-                placeholder="Search people to add…"
+                onChange={ids => ids.forEach(pickUser)}
               />
             )}
             {availableUsers.length === 0 && assignments.length === 0 && (

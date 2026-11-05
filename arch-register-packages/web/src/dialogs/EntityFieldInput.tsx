@@ -5,16 +5,14 @@ import { MultiSelect, type MultiSelectItem } from '@diagram-craft/app-components
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
-import { TbX } from 'react-icons/tb';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { EntitySummary } from '@arch-register/api-types/entityContract';
 import { MultiValueEditor } from '../components/MultiValueEditor';
 import { isMultiValuedScalarField } from '../lib/scalarFieldValues';
 import { selectableEnumOptions } from '../utils/enumOptions';
-import { Chip } from '../components/Chip';
 import { DurationInput } from '../components/DurationInput';
-import { UserGroupPicker } from '../components/UserGroupPicker';
-import { usePrincipalLabel } from '../hooks/usePrincipalLabel';
+import { PrincipalPicker } from '../components/PrincipalPicker';
+import { useWorkspaceContext } from '../layouts/WorkspaceContext';
 
 export const EntityFieldInput = ({
   field,
@@ -438,35 +436,11 @@ const PrincipalInput = ({
   onChange: (value: unknown) => void;
   disabled?: boolean;
 }) => {
-  const resolveLabel = usePrincipalLabel();
+  const { workspaceSlug } = useWorkspaceContext();
   const principal = (typeof value === 'object' && value !== null ? value : {}) as PrincipalValue;
   const kind: 'user' | 'team' = principal?.principal_type === 'team' ? 'team' : 'user';
 
-  if (principal?.principal_id) {
-    return (
-      <Chip tone="ghost">
-        <span>{resolveLabel(principal) ?? principal.principal_id}</span>
-        {!disabled && (
-          <button
-            type="button"
-            aria-label="Clear"
-            onClick={() => onChange(undefined)}
-            style={{
-              marginLeft: 4,
-              border: 'none',
-              background: 'none',
-              cursor: 'pointer',
-              padding: 0
-            }}
-          >
-            <TbX size={10} />
-          </button>
-        )}
-      </Chip>
-    );
-  }
-
-  if (disabled) return <span>—</span>;
+  if (disabled && !principal?.principal_id) return <span>—</span>;
 
   return (
     <div style={{ display: 'flex', gap: 6 }}>
@@ -479,10 +453,15 @@ const PrincipalInput = ({
         <Select.Item value="user">User</Select.Item>
         <Select.Item value="team">Team</Select.Item>
       </Select.Root>
-      <UserGroupPicker
+      <PrincipalPicker
+        workspaceSlug={workspaceSlug}
         kind={kind}
-        onSelect={item => onChange({ principal_type: item.kind, principal_id: item.id })}
-        placeholder={kind === 'user' ? 'Search users…' : 'Search teams…'}
+        maxValues={1}
+        disabled={disabled}
+        values={principal?.principal_id ? [principal.principal_id] : []}
+        onChange={ids =>
+          onChange(ids[0] ? { principal_type: kind, principal_id: ids[0] } : undefined)
+        }
       />
     </div>
   );
