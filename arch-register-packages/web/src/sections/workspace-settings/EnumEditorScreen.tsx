@@ -1,14 +1,13 @@
 import { getRouteApi } from '@tanstack/react-router';
 import styles from './SchemaSettingsScreen.module.css';
 import { EditorActionsMenu, EditorSaveButtons } from './EditorActionsMenu';
-import { TbPlus, TbDots } from 'react-icons/tb';
-import { Button } from '@diagram-craft/app-components/Button';
+import { TbDots } from 'react-icons/tb';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { Menu } from '@diagram-craft/app-components/Menu';
 import { FieldConfig } from '../../components/FieldConfig';
-import { FieldConfigList } from '../../components/FieldConfigList';
+import { ListEditor } from '../../components/ListEditor';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { CategorySelect } from './CategorySelect';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
@@ -17,9 +16,9 @@ import { EmptyState } from '../../components/EmptyState';
 import { Title } from '../../components/Title';
 import { Panel } from '../../components/Panel';
 import { Page } from '../../components/Page';
+import { Stack } from '../../components/Stack';
 import { useEnumDraft } from './useEnumDraft';
-
-const OPTIONS_LIST_ID = 'enum-options';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
 
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/schemas');
 
@@ -88,137 +87,120 @@ export const EnumEditorScreen = () => {
 
       {selected || isNew ? (
         <Panel>
-          <div>
-            <div className={styles.formRow}>
-              <div>
-                <div className={styles.formLabel}>Name</div>
-                <TextInput
-                  value={name}
-                  readOnly={!canEdit}
-                  onChange={value => {
-                    setName(value ?? '');
-                  }}
-                />
-              </div>
-            </div>
+          <Stack>
+            <FormElement label={'Name'}>
+              <TextInput
+                value={name}
+                readOnly={!canEdit}
+                onChange={value => {
+                  setName(value ?? '');
+                }}
+              />
+            </FormElement>
 
-            <div className={styles.formRow}>
-              <div>
-                <div className={styles.formLabel}>Category</div>
-                <CategorySelect
-                  value={categoryId}
-                  categories={categories}
-                  disabled={!canEdit}
-                  onChange={value => {
-                    setCategoryId(value);
-                  }}
-                />
-              </div>
-            </div>
+            <FormElement label={'Category'}>
+              <CategorySelect
+                value={categoryId}
+                categories={categories}
+                disabled={!canEdit}
+                onChange={value => {
+                  setCategoryId(value);
+                }}
+              />
+            </FormElement>
 
-            <div className={styles.fieldsHead}>
-              <div className={styles.sectionLabel}>Options</div>
-              {canEdit && (
-                <Button variant="ghost" icon={<TbPlus size={11} />} onClick={addOption}>
-                  Add option
-                </Button>
-              )}
-            </div>
-
-            {options.length > 0 ? (
-              <div className={styles.fieldsTable}>
-                <FieldConfigList
-                  items={options}
-                  getId={opt => opt.originalValue ?? `new-${options.indexOf(opt)}`}
-                  listId={OPTIONS_LIST_ID}
-                  onReorder={reorderOptions}
-                  renderItem={(opt, i, drag) => (
-                    <FieldConfig
-                      dragHandleRef={drag.ref}
-                      menu={
-                        canEdit ? (
-                          <MenuButton.Root>
-                            <MenuButton.Trigger
-                              element={
-                                <button type="button" className={styles.iconBtn}>
-                                  <TbDots size={13} />
-                                </button>
-                              }
-                            />
-                            <MenuButton.Menu>
-                              <Menu.Item type="danger" onClick={() => removeOption(i)}>
-                                Remove option
-                              </Menu.Item>
-                            </MenuButton.Menu>
-                          </MenuButton.Root>
-                        ) : undefined
-                      }
-                      options={
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', fontSize: '11px' }}>
-                            <Checkbox
-                              value={opt.restricted}
-                              disabled={!canEdit}
-                              label="Restricted / sensitive"
-                              onChange={value => updateOption(i, { restricted: value ?? false })}
-                            />
-                          </div>
-                          {opt.retired && (
-                            <div style={{ display: 'flex', alignItems: 'center' }}>
-                              <Checkbox
-                                value={opt.retired}
-                                disabled={!canEdit}
-                                label="Retired"
-                                onChange={value => {
-                                  const retired = value ?? false;
-                                  updateOption(i, {
-                                    retired,
-                                    ...(retired ? {} : { pendingRemoval: false })
-                                  });
-                                }}
-                              />
-                            </div>
-                          )}
+            <ListEditor
+              label="Options"
+              items={options}
+              getId={opt => opt.originalValue ?? `new-${options.indexOf(opt)}`}
+              addLabel="Add option"
+              emptyMessage={'No options defined yet. Click "Add option" to get started.'}
+              layout="bare"
+              reorder="drag"
+              disabled={!canEdit}
+              onAdd={addOption}
+              onMove={reorderOptions}
+              renderItem={(opt, { index: i, dragRef }) => (
+                <FieldConfig
+                  dragHandleRef={dragRef}
+                  menu={
+                    canEdit ? (
+                      <MenuButton.Root>
+                        <MenuButton.Trigger
+                          element={
+                            <button type="button" className={styles.iconBtn}>
+                              <TbDots size={13} />
+                            </button>
+                          }
+                        />
+                        <MenuButton.Menu>
+                          <Menu.Item type="danger" onClick={() => removeOption(i)}>
+                            Remove option
+                          </Menu.Item>
+                        </MenuButton.Menu>
+                      </MenuButton.Root>
+                    ) : undefined
+                  }
+                  options={
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', fontSize: '11px' }}>
+                        <Checkbox
+                          value={opt.restricted}
+                          disabled={!canEdit}
+                          label="Restricted / sensitive"
+                          onChange={value => updateOption(i, { restricted: value ?? false })}
+                        />
+                      </div>
+                      {opt.retired && (
+                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                          <Checkbox
+                            value={opt.retired}
+                            disabled={!canEdit}
+                            label="Retired"
+                            onChange={value => {
+                              const retired = value ?? false;
+                              updateOption(i, {
+                                retired,
+                                ...(retired ? {} : { pendingRemoval: false })
+                              });
+                            }}
+                          />
                         </div>
-                      }
-                    >
-                      <FieldConfig.Cell label="Value" mono flexBasis={180}>
-                        <TextInput
-                          value={opt.value}
-                          readOnly={!canEdit || opt.originalValue !== undefined}
-                          placeholder="value"
-                          style={{ width: '100%' }}
-                          onChange={value => updateOption(i, { value: value ?? '' })}
-                        />
-                      </FieldConfig.Cell>
-                      <FieldConfig.Cell label="Label" flexBasis={200}>
-                        <TextInput
-                          value={opt.label}
-                          readOnly={!canEdit}
-                          placeholder="label"
-                          style={{ width: '100%' }}
-                          onChange={value => updateOption(i, { label: value ?? '' })}
-                        />
-                      </FieldConfig.Cell>
-                      <FieldConfig.Cell label="Description" flexBasis={260}>
-                        <TextInput
-                          value={opt.description ?? ''}
-                          readOnly={!canEdit}
-                          placeholder="optional description"
-                          style={{ width: '100%' }}
-                          onChange={value => updateOption(i, { description: value ?? null })}
-                        />
-                      </FieldConfig.Cell>
-                    </FieldConfig>
-                  )}
-                />
-              </div>
-            ) : (
-              <div className={styles.fieldsEmpty}>
-                No options defined yet. Click "Add option" to get started.
-              </div>
-            )}
-          </div>
+                      )}
+                    </div>
+                  }
+                >
+                  <FieldConfig.Cell label="Value" mono flexBasis={180}>
+                    <TextInput
+                      value={opt.value}
+                      readOnly={!canEdit || opt.originalValue !== undefined}
+                      placeholder="value"
+                      style={{ width: '100%' }}
+                      onChange={value => updateOption(i, { value: value ?? '' })}
+                    />
+                  </FieldConfig.Cell>
+                  <FieldConfig.Cell label="Label" flexBasis={200}>
+                    <TextInput
+                      value={opt.label}
+                      readOnly={!canEdit}
+                      placeholder="label"
+                      style={{ width: '100%' }}
+                      onChange={value => updateOption(i, { label: value ?? '' })}
+                    />
+                  </FieldConfig.Cell>
+                  <FieldConfig.Cell label="Description" flexBasis={260}>
+                    <TextInput
+                      value={opt.description ?? ''}
+                      readOnly={!canEdit}
+                      placeholder="optional description"
+                      style={{ width: '100%' }}
+                      onChange={value => updateOption(i, { description: value ?? null })}
+                    />
+                  </FieldConfig.Cell>
+                </FieldConfig>
+              )}
+            />
+          </Stack>
         </Panel>
       ) : (
         <EmptyState

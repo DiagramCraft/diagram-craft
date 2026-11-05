@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ReactNode, RefCallback } from 'react';
 import { useId } from 'react';
 import { TbGripVertical, TbPlus, TbTrash } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
@@ -7,27 +7,51 @@ import { FormGroup } from './FormGroup';
 import { useListEditor, type ListEditorApi } from './useListEditor';
 import styles from './ListEditor.module.css';
 
+const noopDragRef: RefCallback<HTMLElement> = () => undefined;
+
 export type ListEditorItemContext<T> = {
   index: number;
+  /** Ref for a drag handle. A no-op unless the list is draggable and enabled, so it is always safe to attach. */
+  dragRef: RefCallback<HTMLElement>;
   update: (patch: Partial<T>) => void;
   replace: (item: T) => void;
   remove: () => void;
 };
 
-export type ListEditorProps<T> = {
-  items: T[];
+type ControlledProps<T> = {
+  /** Controlled mode: the list edits the array itself */
   onChange: (items: T[]) => void;
+  createItem: () => T;
   /** Row key. Omit when items have no stable id (or an editable one); keys are then tracked internally. */
   getId?: (item: T) => string;
-  createItem: () => T;
+  onAdd?: never;
+  onMove?: never;
+  onRemove?: never;
+};
+
+type OperationsProps<T> = {
+  /** Operations mode: the owner applies add, move and remove itself (e.g. domain logic, grouped lists) */
+  onAdd: () => void;
+  onMove: (fromIndex: number, toIndex: number) => void;
+  onRemove?: (item: T, index: number) => void;
+  getId: (item: T) => string;
+  onChange?: never;
+  createItem?: never;
+};
+
+type BaseProps<T> = {
+  items: T[];
   addLabel: string;
   /** Section label. When set, the list is wrapped in a FormGroup with the add button as its action; otherwise the add button sits below the list */
   label?: string;
   supplementaryLabel?: string;
   /** Shown when there are no items */
   emptyMessage?: string;
-  /** `row` is compact with controls inline; `card` gives each item room for a multi-line form */
-  layout?: 'row' | 'card';
+  /**
+   * `row` is compact with controls inline; `card` gives each item room for a multi-line form;
+   * `bare` renders `renderItem` as is, for items that bring their own handle, menu and box.
+   */
+  layout?: 'row' | 'card' | 'bare';
   reorder?: 'drag' | 'none';
   disabled?: boolean;
   canRemove?: (item: T, index: number) => boolean;
@@ -46,12 +70,12 @@ export type ListEditorProps<T> = {
   removeLabel?: string;
 };
 
+export type ListEditorProps<T> = BaseProps<T> & (ControlledProps<T> | OperationsProps<T>);
+
 export const ListEditor = <T,>(props: ListEditorProps<T>) => {
   const {
     items,
-    onChange,
     getId,
-    createItem,
     addLabel,
     label,
     supplementaryLabel,
@@ -71,7 +95,19 @@ export const ListEditor = <T,>(props: ListEditorProps<T>) => {
   } = props;
 
   const listId = useId();
-  const list = useListEditor(items, onChange, getId);
+  const base = useListEditor(items, props.onChange ?? (() => undefined), getId);
+  const list: ListEditorApi<T> = props.onAdd
+    ? {
+        ...base,
+        append: () => props.onAdd?.(),
+        move: (from, to) => props.onMove?.(from, to),
+        remove: index => {
+          const item = items[index];
+          if (item !== undefined) props.onRemove?.(item, index);
+        }
+      }
+    : base;
+  const add = () => (props.onAdd ? props.onAdd() : base.append(props.createItem()));
   const entries = items.map((item, index) => ({
     key: list.keys[index] ?? String(index),
     item,
@@ -80,7 +116,7 @@ export const ListEditor = <T,>(props: ListEditorProps<T>) => {
 
   const addButton =
     !disabled && (maxItems === undefined || items.length < maxItems) ? (
-      <Button size="xs" icon={<TbPlus size={11} />} onClick={() => list.append(createItem())}>
+      <Button size="xs" icon={<TbPlus size={11} />} onClick={add}>
         {addLabel}
       </Button>
     ) : null;
@@ -95,7 +131,10 @@ export const ListEditor = <T,>(props: ListEditorProps<T>) => {
       item={entry.item}
       index={entry.index}
       disabled={disabled}
-      removable={canRemove ? canRemove(entry.item, entry.index) : true}
+      removable={
+        (props.onAdd ? props.onRemove !== undefined : true) &&
+        (canRemove ? canRemove(entry.item, entry.index) : true)
+      }
       removeLabel={removeLabel}
       itemClassName={itemClassName}
       onItemClick={onItemClick}
@@ -148,7 +187,7 @@ export const ListEditor = <T,>(props: ListEditorProps<T>) => {
 };
 
 const ListEditorItem = <T,>(props: {
-  layout: 'row' | 'card';
+  layout: 'row' | 'card' | 'bare';
   list: ListEditorApi<T>;
   item: T;
   index: number;
@@ -165,10 +204,13 @@ const ListEditorItem = <T,>(props: {
   const { list, index, item } = props;
   const ctx: ListEditorItemContext<T> = {
     index,
+    dragRef: props.dragRef ?? noopDragRef,
     update: patch => list.update(index, patch),
     replace: next => list.replace(index, next),
     remove: () => list.remove(index)
   };
+
+  if (props.layout === 'bare') return <>{props.renderItem(item, ctx)}</>;
 
   return (
     <div
