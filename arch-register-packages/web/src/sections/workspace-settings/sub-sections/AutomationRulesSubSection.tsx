@@ -31,6 +31,7 @@ import {
   useAutomationRules,
   type AutomationRuleInput
 } from '../../../hooks/useAutomationRules';
+import { ListEditor } from '../../../components/ListEditor';
 import styles from './AutomationRulesSubSection.module.css';
 import { useRelationSchemas } from '../../../hooks/useRelationSchemas';
 
@@ -233,13 +234,11 @@ const defaultActionFor = (kind: ActionKind): AutomationAction => {
 const ConditionRow = ({
   condition,
   fields,
-  onChange,
-  onRemove
+  onChange
 }: {
   condition: AutomationCondition;
   fields: FieldOption[];
   onChange: (next: AutomationCondition) => void;
-  onRemove: () => void;
 }) => {
   const numeric = isNumericComparableField(fields.find(f => f.id === condition.field));
   const availableOperators = numeric
@@ -289,7 +288,6 @@ const ConditionRow = ({
           numeric={NUMERIC_OPERATORS.includes(condition.operator)}
         />
       )}
-      <Button variant="ghost" size="xs" icon={<TbTrash size={13} />} onClick={onRemove} />
     </div>
   );
 };
@@ -297,31 +295,24 @@ const ConditionRow = ({
 const ActionRow = ({
   action,
   fields,
-  onChange,
-  onRemove
+  onChange
 }: {
   action: AutomationAction;
   fields: FieldOption[];
   onChange: (next: AutomationAction) => void;
-  onRemove: () => void;
 }) => (
   <div className={styles.section}>
-    <div className={styles.sectionHead}>
-      <Select.Root
-        value={action.kind}
-        onChange={value => onChange(defaultActionFor((value as ActionKind) ?? 'create_audit_note'))}
-        style={{ width: 220 }}
-      >
-        {Object.entries(ACTION_LABELS).map(([value, label]) => (
-          <Select.Item key={value} value={value}>
-            {label}
-          </Select.Item>
-        ))}
-      </Select.Root>
-      <Button variant="ghost" size="xs" icon={<TbTrash size={13} />} onClick={onRemove}>
-        Remove
-      </Button>
-    </div>
+    <Select.Root
+      value={action.kind}
+      onChange={value => onChange(defaultActionFor((value as ActionKind) ?? 'create_audit_note'))}
+      style={{ width: 220 }}
+    >
+      {Object.entries(ACTION_LABELS).map(([value, label]) => (
+        <Select.Item key={value} value={value}>
+          {label}
+        </Select.Item>
+      ))}
+    </Select.Root>
 
     {action.kind === 'create_audit_note' && (
       <TextInput
@@ -613,55 +604,29 @@ const EditorDialog = ({
           </div>
         )}
 
-        <div className={styles.field}>
-          <span className={styles.label}>Conditions (all must match)</span>
-          <div className={styles.rowList}>
-            {conditions.map((condition, index) => (
-              <ConditionRow
-                // eslint-disable-next-line react/no-array-index-key
-                key={index}
-                condition={condition}
-                fields={availableFields}
-                onChange={next => setConditions(conditions.map((c, i) => (i === index ? next : c)))}
-                onRemove={() => setConditions(conditions.filter((_, i) => i !== index))}
-              />
-            ))}
-          </div>
-          <Button
-            variant="secondary"
-            size="xs"
-            icon={<TbPlus size={12} />}
-            onClick={() =>
-              setConditions([...conditions, { field: '', operator: 'equals', value: '' }])
-            }
-          >
-            Add condition
-          </Button>
-        </div>
+        <ListEditor
+          label="Conditions (all must match)"
+          items={conditions}
+          onChange={setConditions}
+          createItem={(): AutomationCondition => ({ field: '', operator: 'equals', value: '' })}
+          addLabel="Add condition"
+          layout="card"
+          renderItem={(condition, { replace }) => (
+            <ConditionRow condition={condition} fields={availableFields} onChange={replace} />
+          )}
+        />
 
-        <div className={styles.field}>
-          <span className={styles.label}>Actions</span>
-          <div className={styles.rowList}>
-            {actions.map((action, index) => (
-              <ActionRow
-                // eslint-disable-next-line react/no-array-index-key
-                key={index}
-                action={action}
-                fields={availableFields}
-                onChange={next => setActions(actions.map((a, i) => (i === index ? next : a)))}
-                onRemove={() => setActions(actions.filter((_, i) => i !== index))}
-              />
-            ))}
-          </div>
-          <Button
-            variant="secondary"
-            size="xs"
-            icon={<TbPlus size={12} />}
-            onClick={() => setActions([...actions, defaultActionFor('create_audit_note')])}
-          >
-            Add action
-          </Button>
-        </div>
+        <ListEditor
+          label="Actions"
+          items={actions}
+          onChange={setActions}
+          createItem={() => defaultActionFor('create_audit_note')}
+          addLabel="Add action"
+          layout="card"
+          renderItem={(action, { replace }) => (
+            <ActionRow action={action} fields={availableFields} onChange={replace} />
+          )}
+        />
 
         <label className={styles.check}>
           <Checkbox value={enabled} onChange={value => setEnabled(value ?? false)} /> Enabled

@@ -1,10 +1,9 @@
 import { SaveBarButtons } from '../SaveBarButtons';
-import { Fragment, useEffect, useState } from 'react';
-import { TbPlus, TbTrash } from 'react-icons/tb';
-import { Button } from '@diagram-craft/app-components/Button';
+import { useEffect, useState } from 'react';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import type { SupportedCurrency } from '@arch-register/api-types/workspaceConfigContract';
 import { useUpdateSupportedCurrencies } from '../../../hooks/useWorkspaceConfig';
+import { ListEditor } from '../../../components/ListEditor';
 import { SettingsBlock } from '../SettingsBlock';
 import { SectionActions } from '../SectionActions';
 import styles from './SupportedCurrenciesSubSection.module.css';
@@ -38,11 +37,16 @@ export const SupportedCurrenciesSubSection = ({
     setItems(current => current.map((item, i) => (i === index ? { ...item, ...patch } : item)));
   };
 
-  const remove = (index: number) => {
-    if (items[index]?.code === defaultCode) {
-      setDefaultCode(items.find((item, i) => i !== index && item.code)?.code ?? '');
+  // Adds and removals come through here; when the default's row is removed, fall back to the first remaining code
+  const handleListChange = (next: SupportedCurrency[]) => {
+    if (
+      next.length < items.length &&
+      defaultCode !== '' &&
+      !next.some(item => item.code === defaultCode)
+    ) {
+      setDefaultCode(next.find(item => item.code)?.code ?? '');
     }
-    setItems(current => current.filter((_, i) => i !== index));
+    setItems(next);
   };
 
   const save = async () => {
@@ -69,9 +73,13 @@ export const SupportedCurrenciesSubSection = ({
         title="Supported currencies"
         description="Currency fields accept codes in this list. Removing a code does not change existing values. The default currency is used when entering an amount without an explicit currency."
       >
-        <div className={styles.fieldGrid}>
-          {items.map((currency, index) => (
-            <Fragment key={index}>
+        <ListEditor
+          items={items}
+          onChange={handleListChange}
+          createItem={() => ({ code: '', label: '', sort_order: items.length })}
+          addLabel="Add currency"
+          renderItem={(currency, { index }) => (
+            <div className={styles.currencyRow}>
               <input
                 type="radio"
                 name="default-currency"
@@ -89,34 +97,9 @@ export const SupportedCurrenciesSubSection = ({
                 value={currency.label}
                 onChange={value => update(index, { label: value ?? '' })}
               />
-              <Button
-                onClick={() => remove(index)}
-                variant={'danger'}
-                style={{ marginLeft: '1rem' }}
-              >
-                <TbTrash size={12} />
-              </Button>
-
-              {index < items.length - 1 && (
-                <div
-                  style={{
-                    gridColumn: '1 / 5',
-                    borderBottom: '1px dashed var(--panel-border)',
-                    marginBottom: '4px'
-                  }}
-                />
-              )}
-            </Fragment>
-          ))}
-        </div>
-        <Button
-          icon={<TbPlus size={12} />}
-          onClick={() =>
-            setItems(current => [...current, { code: '', label: '', sort_order: current.length }])
-          }
-        >
-          Add currency
-        </Button>
+            </div>
+          )}
+        />
       </SettingsBlock>
     </>
   );

@@ -3,7 +3,6 @@ import type { DashboardWidget } from '@arch-register/api-types/dashboardContract
 import {
   createTab,
   createTabsConfigSchema,
-  moveItem,
   resolveActiveTabId,
   tabsWidgetConfigSchema
 } from './tabsLogic';
@@ -53,11 +52,6 @@ describe('tabs config schema', () => {
 });
 
 describe('helpers', () => {
-  it('moveItem swaps neighbours and ignores out-of-range moves', () => {
-    expect(moveItem([1, 2, 3], 1, -1)).toEqual([2, 1, 3]);
-    expect(moveItem([1, 2, 3], 0, -1)).toEqual([1, 2, 3]);
-  });
-
   it('resolveActiveTabId falls back to the first tab', () => {
     const tabs = [createTab([], 'A'), createTab([], 'B')];
     expect(resolveActiveTabId(tabs, tabs[1]!.id)).toBe(tabs[1]!.id);

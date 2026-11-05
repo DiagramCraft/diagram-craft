@@ -28,16 +28,9 @@
   box-shadow: 0 0 0 2px var(--accent-fg);
 }
 
-.addRow {
-  padding-top: 8px;
-}
-
-.fieldGrid {
-  gap: 14px;
-  grid-row-gap: 6px;
+.stateRow {
   display: grid;
-  grid-template-columns: 1fr auto auto;
-  margin-top: 6px;
-  margin-bottom: 16px;
+  grid-template-columns: 1fr auto;
+  gap: 14px;
   align-items: center;
 }

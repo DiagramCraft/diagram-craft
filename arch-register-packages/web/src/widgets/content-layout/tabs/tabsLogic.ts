@@ -53,14 +53,6 @@ export const tabsWidgetConfigSchema = createTabsConfigSchema();
 export type TabsWidgetConfig = z.infer<typeof tabsWidgetConfigSchema>;
 export type TabsWidgetTab = TabsWidgetConfig['tabs'][number];
 
-export const moveItem = <T>(items: T[], index: number, delta: -1 | 1): T[] => {
-  const target = index + delta;
-  if (target < 0 || target >= items.length) return items;
-  const next = [...items];
-  [next[index], next[target]] = [next[target]!, next[index]!];
-  return next;
-};
-
 /** Returns the active tab id, falling back to the first tab when the requested one is missing. */
 export const resolveActiveTabId = (tabs: TabsWidgetTab[], requested: unknown): string | undefined =>
   tabs.find(tab => tab.id === requested)?.id ?? tabs[0]?.id;

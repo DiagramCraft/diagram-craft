@@ -1,5 +1,6 @@
 import type { Dispatch, SetStateAction } from 'react';
-import { TbExternalLink, TbPlus, TbX } from 'react-icons/tb';
+import { TbExternalLink } from 'react-icons/tb';
+import { ListEditor } from '../../../components/ListEditor';
 import type { EntityRecord, EntitySummary } from '@arch-register/api-types/entityContract';
 import styles from './EntityOverviewTab.module.css';
 
@@ -14,45 +15,36 @@ type LinksBlockProps = {
 export const LinksBlock = ({ entity, editing, editLinks, setEditLinks }: LinksBlockProps) =>
   editing ? (
     <div className={styles.linksEdit}>
-      {editLinks.map((l, i) => (
-        <div key={i} className={styles.linkRow}>
-          <input
-            className={styles.inputInline}
-            value={l.type ?? ''}
-            onChange={e =>
-              setEditLinks(ls => ls.map((x, j) => (j === i ? { ...x, type: e.target.value } : x)))
-            }
-            placeholder="Type"
-            style={{ width: 70, flex: 'none' }}
-          />
-          <input
-            className={styles.inputInline}
-            value={l.title}
-            onChange={e =>
-              setEditLinks(ls => ls.map((x, j) => (j === i ? { ...x, title: e.target.value } : x)))
-            }
-            placeholder="Title"
-          />
-          <input
-            className={styles.inputInline}
-            value={l.url}
-            onChange={e =>
-              setEditLinks(ls => ls.map((x, j) => (j === i ? { ...x, url: e.target.value } : x)))
-            }
-            placeholder="URL"
-          />
-          <button type="button" onClick={() => setEditLinks(ls => ls.filter((_, j) => j !== i))}>
-            <TbX size={12} />
-          </button>
-        </div>
-      ))}
-      <button
-        type="button"
-        className={styles.addLinkBtn}
-        onClick={() => setEditLinks(ls => [...ls, { url: '', title: '', type: '' }])}
-      >
-        <TbPlus size={11} /> Add link
-      </button>
+      <ListEditor
+        items={editLinks}
+        onChange={setEditLinks}
+        createItem={() => ({ url: '', title: '', type: '' })}
+        addLabel="Add link"
+        removeLabel="Remove link"
+        renderItem={(l, { update }) => (
+          <div className={styles.linkRow}>
+            <input
+              className={styles.inputInline}
+              value={l.type ?? ''}
+              onChange={e => update({ type: e.target.value })}
+              placeholder="Type"
+              style={{ width: 70, flex: 'none' }}
+            />
+            <input
+              className={styles.inputInline}
+              value={l.title}
+              onChange={e => update({ title: e.target.value })}
+              placeholder="Title"
+            />
+            <input
+              className={styles.inputInline}
+              value={l.url}
+              onChange={e => update({ url: e.target.value })}
+              placeholder="URL"
+            />
+          </div>
+        )}
+      />
     </div>
   ) : (
     entity._links.map((l, i) => (
