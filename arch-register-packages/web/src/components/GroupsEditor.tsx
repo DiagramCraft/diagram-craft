@@ -104,13 +104,16 @@ export const GroupsEditor = ({
   );
 };
 
+// Stable default: a fresh `[]` per render would re-run the reset effect below on every keystroke
+const NO_SHARED_GROUPS: SharedFieldGroup[] = [];
+
 export const GroupDialog = ({
   open,
   onClose,
   onSave,
   group,
   groups,
-  sharedGroups = [],
+  sharedGroups = NO_SHARED_GROUPS,
   onAddSharedGroup
 }: {
   open: boolean;

@@ -45,6 +45,8 @@ type BaseProps<T> = {
   /** Section label. When set, the list is wrapped in a FormGroup with the add button as its action; otherwise the add button sits below the list */
   label?: string;
   supplementaryLabel?: string;
+  /** Disables the add button while keeping it visible, e.g. when there is nothing to create an item from */
+  addDisabled?: boolean;
   /** Shown when there are no items */
   emptyMessage?: string;
   /**
@@ -77,6 +79,7 @@ export const ListEditor = <T,>(props: ListEditorProps<T>) => {
     items,
     getId,
     addLabel,
+    addDisabled = false,
     label,
     supplementaryLabel,
     emptyMessage,
@@ -116,7 +119,7 @@ export const ListEditor = <T,>(props: ListEditorProps<T>) => {
 
   const addButton =
     !disabled && (maxItems === undefined || items.length < maxItems) ? (
-      <Button size="xs" icon={<TbPlus size={11} />} onClick={add}>
+      <Button size="xs" icon={<TbPlus size={11} />} onClick={add} disabled={addDisabled}>
         {addLabel}
       </Button>
     ) : null;
