@@ -19,8 +19,8 @@ import type { RelationSchema } from '@arch-register/api-types/relationSchemaCont
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
 import type { RelationRecordDraft } from '@arch-register/api-types/entityContract';
 import { TypedRelationFieldEditor } from './TypedRelationFieldEditor';
-import { MultiValueEditor } from '../../../components/MultiValueEditor';
-import { isMultiValuedScalarField } from '../../../lib/scalarFieldValues';
+import { ListEditor } from '../../../components/ListEditor';
+import { isMultiValuedScalarField, scalarValues } from '../../../lib/scalarFieldValues';
 import type { TypedRelationFieldEditState } from '../../../lib/entityEditState';
 import { selectableEnumOptions } from '../../../utils/enumOptions';
 import { asPrincipal, renderEntityFieldDisplayValue } from './entityFieldDisplay';
@@ -256,10 +256,13 @@ export const PropertyRow = ({
         );
       };
       return (
-        <MultiValueEditor
-          value={editValue}
+        <ListEditor
+          items={scalarValues(editValue)}
           onChange={onChange}
-          createValue={() =>
+          addLabel="Add value"
+          removeLabel="Remove value"
+          reorder="drag"
+          createItem={() =>
             field.type === 'boolean'
               ? false
               : field.type === 'currency'
@@ -270,7 +273,7 @@ export const PropertyRow = ({
                     ? ''
                     : ''
           }
-          renderItem={renderItem}
+          renderItem={(item, ctx) => renderItem(item, ctx.index, ctx.replace)}
         />
       );
     }
