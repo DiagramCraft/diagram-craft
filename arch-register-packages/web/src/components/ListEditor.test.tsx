@@ -22,6 +22,9 @@ type Extra = Partial<
     | 'removeLabel'
     | 'layout'
     | 'renderFooter'
+    | 'reorder'
+    | 'header'
+    | 'addControl'
   >
 >;
 
@@ -126,5 +129,29 @@ describe('ListEditor', () => {
 
   test('operations mode renders the add button', () => {
     expect(renderOperations()).toContain('Add item');
+  });
+
+  test('header="none" skips the section wrapper and puts the add button below', () => {
+    const labelled = render({ label: 'Things' });
+    const none = render({ label: 'Things', header: 'none' });
+    expect(labelled).toContain('Things');
+    expect(none).not.toContain('Things');
+    expect(none).toContain('Add item');
+  });
+
+  test('addControl replaces the default add button', () => {
+    const html = render({ addControl: <button type="button">Custom add</button> });
+    expect(html).toContain('Custom add');
+    expect(html).not.toContain('Add item');
+  });
+
+  test('addControl is hidden when disabled', () => {
+    expect(
+      render({ addControl: <button type="button">Custom add</button>, disabled: true })
+    ).not.toContain('Custom add');
+  });
+
+  test('addControl={false} shows no add control', () => {
+    expect(render({ addControl: false })).not.toContain('Add item');
   });
 });

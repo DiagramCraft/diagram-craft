@@ -22,11 +22,9 @@ import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { AssessmentScopeFilterBuilder } from './AssessmentScopeFilterBuilder';
 import { AssessmentFieldRow, FIELD_TYPE_OPTIONS } from './AssessmentFieldRow';
 import type { AssessmentEditorController } from './assessmentEditorState';
-import { FieldConfigList } from '../../../components/FieldConfigList';
+import { GroupedListEditor } from '../../../components/GroupedListEditor';
 import styles from './AssessmentEditorTabs.module.css';
 import sharedStyles from './assessment-editor-shared.module.css';
-
-const UNGROUPED_LIST_ID = '__ungrouped__';
 
 export const AssessmentEditorTabs = ({
   editor,
@@ -260,83 +258,58 @@ export const AssessmentFieldsTab = ({ editor }: { editor: AssessmentEditorContro
             No fields yet — add a Rating, Select, or Notes field above.
           </div>
         ) : (
-          <div className={styles.fieldsList}>
-            <FieldConfigList
-              items={editor.ungroupedFields}
-              getId={field => actions.fieldKey(field.id)}
-              listId={UNGROUPED_LIST_ID}
-              onReorder={(from, to) =>
-                actions.reorderFields(
-                  editor.ungroupedFields.map(field => field.id),
-                  from,
-                  to
-                )
-              }
-              renderItem={(field, _index, drag) => (
-                <AssessmentFieldRow
-                  field={field}
-                  groups={draft.groups}
-                  onUpdate={changes => actions.updateField(field.id, changes)}
-                  onRemove={() => actions.removeField(field.id)}
-                  dragHandleRef={drag.ref}
-                />
-              )}
-            />
-            {draft.groups.map(group => (
-              <div className={styles.groupSection} key={group.id}>
-                <div className={styles.groupHeader}>
-                  <div>
-                    <div className={styles.groupName}>{group.name}</div>
-                    {group.description && (
-                      <div className={styles.groupDescription}>{group.description}</div>
-                    )}
-                  </div>
-                  <div className={styles.groupActions}>
-                    {fieldMenu(group.id)}
-                    <Button
-                      variant="ghost"
-                      icon={<TbEdit size={12} />}
-                      onClick={() => actions.openEditGroup(group)}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      icon={<TbTrash size={12} />}
-                      onClick={() => actions.removeGroup(group.id)}
-                    >
-                      Delete
-                    </Button>
-                  </div>
+          <GroupedListEditor
+            className={styles.fieldsList}
+            groupClassName={styles.groupSection}
+            items={draft.fields}
+            groups={draft.groups}
+            getGroupId={field => field.groupId}
+            getId={field => actions.fieldKey(field.id)}
+            onMove={(bucket, from, to) =>
+              actions.reorderFields(
+                bucket.map(field => field.id),
+                from,
+                to
+              )
+            }
+            renderGroupHeader={group => (
+              <div className={styles.groupHeader}>
+                <div>
+                  <div className={styles.groupName}>{group.name}</div>
+                  {group.description && (
+                    <div className={styles.groupDescription}>{group.description}</div>
+                  )}
                 </div>
-                {(editor.fieldsByGroup.get(group.id) ?? []).length > 0 ? (
-                  <FieldConfigList
-                    items={editor.fieldsByGroup.get(group.id) ?? []}
-                    getId={field => actions.fieldKey(field.id)}
-                    listId={group.id}
-                    onReorder={(from, to) =>
-                      actions.reorderFields(
-                        (editor.fieldsByGroup.get(group.id) ?? []).map(field => field.id),
-                        from,
-                        to
-                      )
-                    }
-                    renderItem={(field, _index, drag) => (
-                      <AssessmentFieldRow
-                        field={field}
-                        groups={draft.groups}
-                        onUpdate={changes => actions.updateField(field.id, changes)}
-                        onRemove={() => actions.removeField(field.id)}
-                        dragHandleRef={drag.ref}
-                      />
-                    )}
-                  />
-                ) : (
-                  <div className={styles.groupEmpty}>No fields in this group.</div>
-                )}
+                <div className={styles.groupActions}>
+                  {fieldMenu(group.id)}
+                  <Button
+                    variant="ghost"
+                    icon={<TbEdit size={12} />}
+                    onClick={() => actions.openEditGroup(group)}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    icon={<TbTrash size={12} />}
+                    onClick={() => actions.removeGroup(group.id)}
+                  >
+                    Delete
+                  </Button>
+                </div>
               </div>
-            ))}
-          </div>
+            )}
+            renderEmpty={() => <div className={styles.groupEmpty}>No fields in this group.</div>}
+            renderItem={(field, ctx) => (
+              <AssessmentFieldRow
+                field={field}
+                groups={draft.groups}
+                onUpdate={changes => actions.updateField(field.id, changes)}
+                onRemove={() => actions.removeField(field.id)}
+                dragHandleRef={ctx.dragRef}
+              />
+            )}
+          />
         )}
 
         <GroupDialog

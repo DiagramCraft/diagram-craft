@@ -205,7 +205,7 @@ export const DashboardSidebarConfigDialog = ({
               createItem={() => ({ value: '', label: '' })}
               addLabel="Add option"
               layout="card"
-              reorder="drag"
+              reorder="drag+buttons"
               renderItem={(option, { update }) => (
                 <div className={styles.options}>
                   <TextInput
@@ -249,7 +249,7 @@ export const DashboardSidebarConfigDialog = ({
               createItem={(): DashboardFacetConfig => ({ fieldId: '', variableName: '' })}
               addLabel="Add facet"
               layout="card"
-              reorder="drag"
+              reorder="drag+buttons"
               renderItem={(facet, { update }) => (
                 <div className={styles.options}>
                   <Select.Root

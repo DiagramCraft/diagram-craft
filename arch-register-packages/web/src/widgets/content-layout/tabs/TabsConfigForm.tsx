@@ -35,7 +35,7 @@ export const TabsConfigForm = ({ config, onChange, context }: FormProps) => {
             return tab;
           }}
           addLabel="Add tab"
-          reorder="drag"
+          reorder="drag+buttons"
           canRemove={() => config.tabs.length > 1}
           removeLabel="Remove tab"
           itemClassName={tab =>

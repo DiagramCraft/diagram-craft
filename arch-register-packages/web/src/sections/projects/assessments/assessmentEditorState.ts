@@ -86,8 +86,6 @@ export type AssessmentEditorController = {
   previewCount: number;
   previewLoading: boolean;
   showScopeWarning: boolean;
-  ungroupedFields: AssessmentField[];
-  fieldsByGroup: Map<string, AssessmentField[]>;
   recurrence: AssessmentRecurrence;
   responseWindowDaysNumber: number | null;
   canSave: boolean;
@@ -421,16 +419,6 @@ export const useAssessmentEditorController = ({
     setIsDirty(false);
   };
 
-  const groupIds = new Set(draft.groups.map(group => group.id));
-  const ungroupedFields = draft.fields.filter(
-    field => !field.groupId || !groupIds.has(field.groupId)
-  );
-  const fieldsByGroup = new Map<string, AssessmentField[]>();
-  for (const group of draft.groups) fieldsByGroup.set(group.id, []);
-  for (const field of draft.fields) {
-    if (field.groupId && groupIds.has(field.groupId)) fieldsByGroup.get(field.groupId)!.push(field);
-  }
-
   const recurrence = getAssessmentRecurrence(draft);
   const responseWindowDaysNumber = getResponseWindowDaysNumber(draft.responseWindowDays);
 
@@ -447,8 +435,6 @@ export const useAssessmentEditorController = ({
     previewCount,
     previewLoading,
     showScopeWarning,
-    ungroupedFields,
-    fieldsByGroup,
     recurrence,
     responseWindowDaysNumber,
     canSave: canSaveAssessmentDraft(draft),
