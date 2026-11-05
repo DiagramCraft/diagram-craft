@@ -1,6 +1,6 @@
 .pickerInput {
   width: 100%;
-  font-size: 13px;
+  font-size: 11px;
   padding: 5px 8px;
   background: var(--base-bg);
   border: 1px solid var(--panel-border);
@@ -22,13 +22,15 @@
 }
 
 .pickerName {
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 500;
   flex: 1;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: var(--cmp-fg-secondary);
+  margin-left: 0.25rem;
 }
 
 .pickerEmail {

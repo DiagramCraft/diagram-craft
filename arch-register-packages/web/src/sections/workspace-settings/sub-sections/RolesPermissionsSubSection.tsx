@@ -2,6 +2,9 @@ import { Banner } from '../../../components/Banner';
 import { useMemo, useState, Fragment, useEffect } from 'react';
 import { SectionActions } from '../SectionActions';
 import { Button } from '@diagram-craft/app-components/Button';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
+import { TextArea } from '@diagram-craft/app-components/TextArea';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TbPlus } from 'react-icons/tb';
 import { WORKSPACE_CAPABILITY_GROUPS } from '@arch-register/permissions';
 import {
@@ -20,6 +23,7 @@ import { ColorPicker } from '../../../components/ColorPicker';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { Dialog, KbdHints } from '@diagram-craft/app-components/Dialog';
 import { FormGroup } from '../../../components/FormGroup';
+import { CapabilityGroup } from './CapabilityGroup';
 import { Table } from '../../../components/table/Table';
 import { useWorkspaceMembers } from '../../../hooks/useWorkspaceMembers';
 import {
@@ -348,6 +352,7 @@ const RoleEditorDialog = ({
           ]}
         />
       }
+      scrollable={true}
       buttons={[
         { label: 'Cancel', type: 'cancel', onClick: onClose },
         {
@@ -359,68 +364,41 @@ const RoleEditorDialog = ({
       ]}
     >
       <div className={styles.dialogBody}>
-        <label className={styles.dialogField}>
-          <span className={styles.dialogLabel}>
-            Name{' '}
-            <span className={styles.requiredMark} title="Required">
-              *
-            </span>
-          </span>
-          <input
-            className={styles.dialogInput}
+        <FormElement label="Name" required>
+          <TextInput
             value={draft.name}
-            onChange={event => setDraft(current => ({ ...current, name: event.target.value }))}
+            onChange={value => setDraft(current => ({ ...current, name: value ?? '' }))}
             disabled={pending}
           />
-        </label>
-        <label className={styles.dialogField}>
-          <span className={styles.dialogLabel}>
-            Description{' '}
-            <span className={styles.requiredMark} title="Required">
-              *
-            </span>
-          </span>
-          <textarea
-            className={styles.dialogTextarea}
+        </FormElement>
+        <FormElement label="Description" required>
+          <TextArea
             value={draft.description}
-            onChange={event =>
-              setDraft(current => ({ ...current, description: event.target.value }))
+            onChange={value => setDraft(current => ({ ...current, description: value ?? '' }))}
+            rows={3}
+            disabled={pending}
+          />
+        </FormElement>
+        <FormElement label="Role color" required={false}>
+          <ColorPicker
+            value={draft.tone}
+            onChange={color =>
+              setDraft(current => ({ ...current, tone: color ?? 'var(--accent-fg)' }))
             }
             disabled={pending}
+            size="small"
           />
-        </label>
-        <label className={styles.dialogField}>
-          <span className={styles.dialogLabel}>Role color</span>
-          <div className={styles.colorPickerWrap}>
-            <ColorPicker
-              value={draft.tone}
-              onChange={color =>
-                setDraft(current => ({ ...current, tone: color ?? 'var(--accent-fg)' }))
-              }
-              disabled={pending}
-              size="small"
-            />
-          </div>
-        </label>
+        </FormElement>
 
-        <div className={styles.capSection}>
-          <div className={styles.capSectionHead}>
-            <span className={styles.capSectionTitle}>Capabilities</span>
-            <span className={styles.capCount}>
-              {selectedCount} of {ALL_CAPS.length}
-            </span>
-            <button
-              type="button"
-              className={styles.capSelectAll}
-              onClick={toggleAll}
-              disabled={pending}
-            >
+        <FormGroup
+          variant="section"
+          label="Capabilities"
+          action={
+            <Button onClick={toggleAll} disabled={pending} size={'xs'}>
               {allSelected ? 'Clear all' : 'Select all'}
-            </button>
-          </div>
-          <p className={styles.capNote}>
-            Optional — leave everything unchecked to create a no-access placeholder role.
-          </p>
+            </Button>
+          }
+        >
           <div className={styles.capabilityList}>
             {WORKSPACE_CAPABILITY_GROUPS.map(group => {
               const groupCapIds = group.caps.map(c => c.id);
@@ -428,8 +406,7 @@ const RoleEditorDialog = ({
               const groupAllOn = groupSelectedCount === groupCapIds.length;
               const GroupIcon = CAPABILITY_GROUP_ICONS[group.label];
               return (
-                <FormGroup
-                  variant="border"
+                <CapabilityGroup
                   key={group.label}
                   label={group.label}
                   icon={GroupIcon ? <GroupIcon size={12} /> : undefined}
@@ -465,11 +442,11 @@ const RoleEditorDialog = ({
                       <span className={styles.capRowId}>{cap.id}</span>
                     </label>
                   ))}
-                </FormGroup>
+                </CapabilityGroup>
               );
             })}
           </div>
-        </div>
+        </FormGroup>
 
         {errorMessage && <div className={styles.dialogError}>{errorMessage}</div>}
       </div>

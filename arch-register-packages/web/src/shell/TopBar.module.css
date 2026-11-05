@@ -85,8 +85,8 @@
   height: 13px;
   padding: 0 3px;
   border-radius: 999px;
-  background: var(--accent-fg);
-  color: var(--inverse-fg);
+  background: var(--accent-bg-inverse);
+  color: var(--accent-fg-inverse);
   font-size: 8.5px;
   font-weight: 700;
   line-height: 1;

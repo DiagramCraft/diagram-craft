@@ -3,7 +3,7 @@
  *  | Item [1..*] - .eItem
  */
 :global(.cToggleButtonGroup) {
-  padding: 0;
+  padding: 2px;
   border-radius: var(--cmp-radius);
   background-color: var(--cmp-bg);
   border: 1px solid var(--cmp-border);
@@ -13,11 +13,11 @@
 
   .eItem {
     flex: 0 0 auto;
-    color: var(--cmp-fg);
+    color: var(--cmp-fg-tertiary);
     background-color: transparent;
-    height: 23px;
+    height: 19px;
     padding: 0 5px;
-    border-radius: 4px;
+    border-radius: var(--cmp-radius);
     display: inline-flex;
     font-size: 11px;
     line-height: 1;
@@ -31,14 +31,17 @@
     }
 
     &[data-pressed] {
-      background-color: var(--accent-bg);
-      color: var(--accent-fg);
+      background-color: var(--accent-bg-inverse);
+      color: var(--accent-fg-inverse);
     }
 
     &:hover,
     &[data-hover="true"] {
-      background-color: var(--accent-bg);
-      color: var(--accent-fg);
+      color: var(--cmp-fg);
+
+      &[data-pressed] {
+        color: var(--accent-bg);
+      }
     }
 
     &:focus,
@@ -46,6 +49,11 @@
       position: relative;
       outline: none;
       box-shadow: var(--cmp-border-shadow-focus);
+
+      &:hover,
+      &[data-hover="true"] {
+        box-shadow: none;
+      }
     }
 
     &:disabled {

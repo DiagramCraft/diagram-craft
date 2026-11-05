@@ -5,6 +5,7 @@ import styles from './Scrollable.module.css';
 type ScrollableProps = {
   children?: React.ReactNode;
   maxHeight?: React.CSSProperties['maxHeight'];
+  variant?: 'default' | 'compact';
 } & React.ComponentPropsWithoutRef<typeof ScrollArea.Root>;
 
 export const Scrollable = ({
@@ -12,6 +13,7 @@ export const Scrollable = ({
   className,
   style,
   maxHeight,
+  variant,
   ...props
 }: ScrollableProps) => {
   const rootStyle = maxHeight === undefined ? style : { ...style, maxHeight };
@@ -21,6 +23,7 @@ export const Scrollable = ({
       {...props}
       className={className ? `${styles.cScrollable} ${className}` : styles.cScrollable}
       style={rootStyle}
+      data-variant={variant ?? 'default'}
     >
       <ScrollArea.Viewport className={styles.eViewport}>
         <ScrollArea.Content className={styles.eContent}>{children}</ScrollArea.Content>

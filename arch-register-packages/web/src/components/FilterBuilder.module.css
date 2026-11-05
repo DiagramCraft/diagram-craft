@@ -49,6 +49,12 @@
 }
 
 /* ── Filter rows ── */
+.empty {
+  color: var(--panel-fg-tertiary);
+  font-size: 11px;
+  padding: 8px;
+}
+
 .rows {
   display: flex;
   flex-direction: column;

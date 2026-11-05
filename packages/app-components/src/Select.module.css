@@ -61,7 +61,14 @@
 
   &:disabled {
     color: var(--cmp-fg-disabled);
-    border-color: transparent;
+    border-color: var(--gray-3);
+    background: repeating-linear-gradient(
+      -45deg,
+      var(--cmp-bg),
+      var(--cmp-bg) 6px,
+      color-mix(in srgb, var(--cmp-fg-disabled) 7%, var(--cmp-bg) 90%) 8px,
+      color-mix(in srgb, var(--cmp-fg-disabled) 7%, var(--cmp-bg) 90%) 7px
+    );
   }
 }
 

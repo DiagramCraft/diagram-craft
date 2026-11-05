@@ -1,4 +1,4 @@
-import React, { ChangeEvent, useState } from 'react';
+import React, { ChangeEvent, ReactNode, useState } from 'react';
 import { Combobox as BaseUICombobox } from '@base-ui/react/combobox';
 import { PropsUtils } from '@diagram-craft/utils/propsUtils';
 import { extractDataAttributes } from './utils';
@@ -16,10 +16,11 @@ export const MultiSelect = (props: Props) => {
   const [inputValue, setInputValue] = useState('');
 
   // Filter available items based on input and exclude already selected items
+  const filterLocally = props.filterLocally ?? true;
   const filteredItems = props.availableItems
     .filter(
       item =>
-        item.label.toLowerCase().includes(inputValue.toLowerCase()) &&
+        (!filterLocally || item.label.toLowerCase().includes(inputValue.toLowerCase())) &&
         !props.selectedValues.includes(item.value)
     )
     .slice(0, props.maxSuggestions ?? 10);
@@ -34,8 +35,8 @@ export const MultiSelect = (props: Props) => {
   const handleInputValueChange = (value: string, eventDetails: { event?: Event }) => {
     if (props.isIndeterminate) return;
     setInputValue(value);
-    if (eventDetails?.event && props.onInputChange) {
-      props.onInputChange(value, eventDetails.event as unknown as ChangeEvent<HTMLInputElement>);
+    if (props.onInputChange) {
+      props.onInputChange(value, eventDetails?.event as unknown as ChangeEvent<HTMLInputElement>);
     }
   };
 
@@ -74,8 +75,15 @@ export const MultiSelect = (props: Props) => {
 
   // Get label for selected value
   const getItemLabel = (value: string) => {
-    return props.availableItems.find(item => item.value === value)?.label ?? value;
+    return (
+      props.selectedItems?.find(item => item.value === value)?.label ??
+      props.availableItems.find(item => item.value === value)?.label ??
+      value
+    );
   };
+
+  const showStatus =
+    inputValue.trim().length > 0 && (props.loading || props.emptyMessage !== undefined);
 
   // If indeterminate, render a simplified disabled version
   if (props.isIndeterminate) {
@@ -110,6 +118,7 @@ export const MultiSelect = (props: Props) => {
       inputValue={inputValue}
       onInputValueChange={handleInputValueChange}
       multiple={true}
+      filter={filterLocally ? undefined : null}
       disabled={props.disabled}
     >
       <div
@@ -145,8 +154,8 @@ export const MultiSelect = (props: Props) => {
           </div>
         </div>
 
-        {/* Suggestions dropdown - only show when there are items */}
-        {filteredItems.length > 0 && (
+        {/* Suggestions dropdown - only show when there are items (or a status message) */}
+        {(filteredItems.length > 0 || showStatus) && (
           <BaseUICombobox.Portal container={portal}>
             <BaseUICombobox.Positioner
               className={styles.cMultiSelectPositioner}
@@ -155,6 +164,11 @@ export const MultiSelect = (props: Props) => {
               sideOffset={2}
             >
               <BaseUICombobox.Popup className={styles.cMultiSelectSuggestions}>
+                {filteredItems.length === 0 && (
+                  <div className={styles.eStatus}>
+                    {props.loading ? 'Searching…' : props.emptyMessage}
+                  </div>
+                )}
                 <BaseUICombobox.List>
                   {filteredItems.map(item => (
                     <BaseUICombobox.Item
@@ -162,7 +176,7 @@ export const MultiSelect = (props: Props) => {
                       value={item.value}
                       className={styles.eSuggestion}
                     >
-                      {item.label}
+                      {props.renderItem ? props.renderItem(item) : item.label}
                     </BaseUICombobox.Item>
                   ))}
                 </BaseUICombobox.List>
@@ -180,6 +194,14 @@ type Props = {
   availableItems: MultiSelectItem[];
   onSelectionChange: (values: string[]) => void;
   onInputChange?: (value: string, ev: ChangeEvent<HTMLInputElement>) => void;
+  /** Items for chips of selected values that may not be in availableItems (e.g. async search) */
+  selectedItems?: MultiSelectItem[];
+  /** Set to false when availableItems is already filtered (e.g. server-side search) */
+  filterLocally?: boolean;
+  loading?: boolean;
+  /** Shown when there is input but no matches */
+  emptyMessage?: string;
+  renderItem?: (item: MultiSelectItem) => ReactNode;
   maxSuggestions?: number;
   allowCustomValues?: boolean;
   isIndeterminate?: boolean;

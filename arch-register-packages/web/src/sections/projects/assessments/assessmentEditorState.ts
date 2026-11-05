@@ -55,7 +55,7 @@ export type AssessmentEditorActions = {
   onRecurrenceTypeChange: (value: string | undefined) => void;
   onRecurrenceIntervalChange: (value: string) => void;
   onResponseWindowDaysChange: (value: string) => void;
-  toggleScope: (id: string) => void;
+  setScope: (ids: string[]) => void;
   onScopeConditionsChange: (conditions: FilterCondition[]) => void;
   addField: (type: AssessmentField['type'], groupId?: string) => void;
   updateField: (id: string, changes: Partial<AssessmentField>) => void;
@@ -67,8 +67,7 @@ export type AssessmentEditorActions = {
   closeGroupDialog: () => void;
   saveGroup: (group: AssessmentGroup) => void;
   removeGroup: (groupId: string) => void;
-  addTeam: (id: string) => void;
-  removeTeam: (id: string) => void;
+  setTeams: (ids: string[]) => void;
   selectTemplate: (value: string | undefined) => void;
   applyPendingTemplate: () => void;
   cancelPendingTemplate: () => void;
@@ -253,14 +252,9 @@ export const useAssessmentEditorController = ({
       }));
     },
     onResponseWindowDaysChange: value => updateDraft('responseWindowDays', value),
-    toggleScope: id => {
+    setScope: ids => {
       markDirty();
-      setDraft(current => ({
-        ...current,
-        scope: current.scope.includes(id)
-          ? current.scope.filter(scopeId => scopeId !== id)
-          : [...current.scope, id]
-      }));
+      setDraft(current => ({ ...current, scope: ids }));
     },
     onScopeConditionsChange: conditions => updateDraft('scopeConditions', conditions),
     addField: (type, groupId) => {
@@ -371,21 +365,9 @@ export const useAssessmentEditorController = ({
         )
       }));
     },
-    addTeam: id => {
+    setTeams: ids => {
       markDirty();
-      setDraft(current => ({
-        ...current,
-        assignedTeamIds: current.assignedTeamIds.includes(id)
-          ? current.assignedTeamIds
-          : [...current.assignedTeamIds, id]
-      }));
-    },
-    removeTeam: id => {
-      markDirty();
-      setDraft(current => ({
-        ...current,
-        assignedTeamIds: current.assignedTeamIds.filter(teamId => teamId !== id)
-      }));
+      setDraft(current => ({ ...current, assignedTeamIds: ids }));
     },
     selectTemplate: value => {
       const nextTemplateId = value ?? START_FROM_SCRATCH;

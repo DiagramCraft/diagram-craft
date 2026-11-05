@@ -1,19 +1,25 @@
 import { Button } from '@diagram-craft/app-components/Button';
+import { DateInput } from '@diagram-craft/app-components/DateInput';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
+import { MultiSelect } from '@diagram-craft/app-components/MultiSelect';
 import { Menu } from '@diagram-craft/app-components/Menu';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { Select } from '@diagram-craft/app-components/Select';
+import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
+import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { usePortal } from '@diagram-craft/app-components/PortalContext';
 import { TbEdit, TbPlus, TbTrash } from 'react-icons/tb';
 import type { Assessment } from '@arch-register/api-types/assessmentContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { TypeBadge } from '../../../components/TypeBadge';
+import { Stack } from '../../../components/Stack';
+import { FormGroup } from '../../../components/FormGroup';
 import { GroupDialog } from '../../../components/GroupsEditor';
-import { UserGroupPicker } from '../../../components/UserGroupPicker';
+import { PrincipalPicker } from '../../../components/PrincipalPicker';
+import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { AssessmentScopeFilterBuilder } from './AssessmentScopeFilterBuilder';
-import { PickedTeamChips } from '../../../components/PickedTeamChips';
 import { AssessmentFieldRow, FIELD_TYPE_OPTIONS } from './AssessmentFieldRow';
 import type { AssessmentEditorController } from './assessmentEditorState';
 import { FieldConfigList } from '../../../components/FieldConfigList';
@@ -38,19 +44,19 @@ export const AssessmentEditorTabs = ({
       <Tabs.Trigger value="advanced">Advanced</Tabs.Trigger>
     </Tabs.List>
 
-    <Tabs.Content value="basic-info">
+    <Tabs.Content value="basic-info" style={{ minHeight: '22rem' }}>
       <AssessmentBasicInfoTab editor={editor} />
     </Tabs.Content>
-    <Tabs.Content value="assignment">
+    <Tabs.Content value="assignment" style={{ minHeight: '22rem' }}>
       <AssessmentAssignmentTab editor={editor} />
     </Tabs.Content>
-    <Tabs.Content value="scope">
+    <Tabs.Content value="scope" style={{ minHeight: '22rem' }}>
       <AssessmentScopeTab editor={editor} schemas={schemas} />
     </Tabs.Content>
-    <Tabs.Content value="fields">
+    <Tabs.Content value="fields" style={{ minHeight: '22rem' }}>
       <AssessmentFieldsTab editor={editor} />
     </Tabs.Content>
-    <Tabs.Content value="advanced">
+    <Tabs.Content value="advanced" style={{ minHeight: '22rem' }}>
       <AssessmentAdvancedTab editor={editor} />
     </Tabs.Content>
   </Tabs.Root>
@@ -59,18 +65,33 @@ export const AssessmentEditorTabs = ({
 export const AssessmentBasicInfoTab = ({ editor }: { editor: AssessmentEditorController }) => {
   const { draft, assessmentTypes, actions } = editor;
   return (
-    <>
-      <div className={styles.section}>
-        <div className={styles.sectionLabel}>Description</div>
-        <TextInput
-          value={draft.description}
-          onChange={value => actions.onDescriptionChange(value ?? '')}
-          placeholder="Explain the purpose of this assessment"
-          style={{ width: '100%' }}
-        />
+    <Stack>
+      <div style={{ display: 'flex', gap: '1rem' }}>
+        <FormElement label="Status">
+          <div style={{ width: 160 }}>
+            <Select.Root value={draft.status} onChange={value => actions.onStatusChange(value)}>
+              {(['draft', 'open', 'closed', 'archived'] as Assessment['status'][]).map(status => (
+                <Select.Item key={status} value={status}>
+                  {status[0]!.toUpperCase() + status.slice(1)}
+                </Select.Item>
+              ))}
+            </Select.Root>
+          </div>
+        </FormElement>
+        <FormElement label="Assessment type">
+          <ToggleButtonGroup.Root
+            type="single"
+            value={draft.mode}
+            onChange={value => {
+              if (value) actions.onModeChange(value as Assessment['mode']);
+            }}
+          >
+            <ToggleButtonGroup.Item value="fields">Fields</ToggleButtonGroup.Item>
+            <ToggleButtonGroup.Item value="confirm">Confirm only</ToggleButtonGroup.Item>
+          </ToggleButtonGroup.Root>
+        </FormElement>
       </div>
-      <div className={styles.section}>
-        <div className={styles.sectionLabel}>Assessment type</div>
+      <FormElement label="Assessment type" required={false}>
         <div style={{ width: 280 }}>
           <Select.Root
             value={draft.assessmentTypeId}
@@ -84,80 +105,55 @@ export const AssessmentBasicInfoTab = ({ editor }: { editor: AssessmentEditorCon
             ))}
           </Select.Root>
         </div>
-      </div>
-      <div className={styles.section}>
-        <div className={styles.sectionLabel}>Status</div>
-        <div style={{ width: 160 }}>
-          <Select.Root value={draft.status} onChange={value => actions.onStatusChange(value)}>
-            {(['draft', 'open', 'closed', 'archived'] as Assessment['status'][]).map(status => (
-              <Select.Item key={status} value={status}>
-                {status[0]!.toUpperCase() + status.slice(1)}
-              </Select.Item>
-            ))}
-          </Select.Root>
-        </div>
-      </div>
-      <div className={styles.section}>
-        <div className={styles.sectionLabel}>Completion mode</div>
-        <div className={styles.sectionHint}>
-          Either fill in one or more fields per entity, or simply confirm the existing entity data
-          is accurate.
-        </div>
-        <div className={styles.fieldAddButtons}>
-          <Button
-            variant={draft.mode === 'fields' ? 'primary' : 'secondary'}
-            onClick={() => actions.onModeChange('fields')}
-          >
-            Fields
-          </Button>
-          <Button
-            variant={draft.mode === 'confirm' ? 'primary' : 'secondary'}
-            onClick={() => actions.onModeChange('confirm')}
-          >
-            Confirm only
-          </Button>
-        </div>
-      </div>
-    </>
+      </FormElement>
+      <FormElement label="Description" required={false}>
+        <TextArea
+          value={draft.description}
+          onChange={value => actions.onDescriptionChange(value ?? '')}
+          placeholder="Explain the purpose of this assessment"
+          rows={3}
+          style={{ width: '100%' }}
+        />
+      </FormElement>
+    </Stack>
   );
 };
 
 export const AssessmentAssignmentTab = ({ editor }: { editor: AssessmentEditorController }) => {
-  const { draft, teamLabels, actions } = editor;
+  const { workspaceSlug } = useWorkspaceContext();
+  const { draft, actions } = editor;
   return (
-    <>
-      <div className={styles.section}>
-        <div className={styles.sectionLabel}>Assigned teams (optional)</div>
-        <div className={styles.sectionHint}>
-          {draft.status === 'draft'
-            ? 'Assigned teams get a governance inbox task to acknowledge this assessment once it opens.'
-            : 'Assigned teams and the due date are locked once an assessment is open. Close and reopen it as draft to change them.'}
+    <Stack>
+      {draft.status !== 'draft' && (
+        <div className={styles.hint}>
+          Assigned teams and the due date are locked once an assessment is open. Close and reopen it
+          as draft to change them.
         </div>
-        <PickedTeamChips
-          ids={draft.assignedTeamIds}
-          getLabel={id => teamLabels.get(id)}
-          onRemove={actions.removeTeam}
+      )}
+
+      <FormElement
+        label="Assigned teams"
+        required={false}
+        hint={
+          'Assigned teams get a governance inbox task to acknowledge this assessment once it opens.'
+        }
+      >
+        <PrincipalPicker
+          workspaceSlug={workspaceSlug}
+          kind="team"
+          values={draft.assignedTeamIds}
+          onChange={actions.setTeams}
+          disabled={draft.status !== 'draft'}
         />
-        {draft.status === 'draft' && (
-          <UserGroupPicker
-            kind="team"
-            excludeIds={draft.assignedTeamIds}
-            onSelect={item => actions.addTeam(item.id)}
-            placeholder="Search teams to add…"
-          />
-        )}
-      </div>
-      <div className={styles.section}>
-        <div className={styles.sectionLabel}>Due date (optional)</div>
-        <input
-          className={styles.dateInput}
-          type="date"
+      </FormElement>
+      <FormElement label="Due date" required={false}>
+        <DateInput
           value={draft.dueAt}
           disabled={draft.status !== 'draft'}
-          onChange={event => actions.onDueAtChange(event.target.value)}
+          onChange={value => actions.onDueAtChange(value ?? '')}
         />
-      </div>
-    </>
+      </FormElement>
+    </Stack>
   );
 };
 
@@ -170,24 +166,29 @@ export const AssessmentScopeTab = ({
 }) => {
   const { draft, lifecycleStates, teams, getFieldGroupAccess, actions } = editor;
   return (
-    <div className={styles.section}>
-      <div className={styles.sectionHint}>Which entity types does this assessment apply to?</div>
-      <div className={styles.scopeGrid}>
-        {schemas.map(schema => {
-          const on = draft.scope.includes(schema.id);
-          return (
-            <button
-              key={schema.id}
-              type="button"
-              className={`${styles.scopeChip} ${on ? styles.scopeChipOn : ''}`}
-              onClick={() => actions.toggleScope(schema.id)}
-            >
-              <TypeBadge color={schema.color ?? '#888'} icon={schema.icon} size={16} />
-              <span>{schema.name}</span>
-            </button>
-          );
-        })}
-      </div>
+    <Stack>
+      <FormGroup variant={'section'} label={'Scope'}>
+        <FormElement label="Entity types" hint="Which entity types does this assessment apply to?">
+          <MultiSelect
+            selectedValues={draft.scope}
+            availableItems={schemas.map(schema => ({ value: schema.id, label: schema.name }))}
+            maxSuggestions={schemas.length}
+            onSelectionChange={actions.setScope}
+            placeholder="Select entity types..."
+            renderItem={item => {
+              const schema = schemas.find(candidate => candidate.id === item.value);
+              return (
+                <>
+                  <TypeBadge color={schema?.color ?? '#888'} icon={schema?.icon} size={16} />
+                  <span style={{ marginLeft: '0.35rem' }}>{item.label}</span>
+                </>
+              );
+            }}
+            style={{ width: '100%' }}
+          />
+        </FormElement>
+      </FormGroup>
+
       <AssessmentScopeFilterBuilder
         conditions={draft.scopeConditions}
         onChange={conditions => actions.onScopeConditionsChange(conditions)}
@@ -197,20 +198,23 @@ export const AssessmentScopeTab = ({
         teams={teams}
         getFieldGroupAccess={getFieldGroupAccess}
       />
-      <div className={styles.scopePreview}>
-        {draft.scope.length === 0
-          ? 'No entity types selected.'
-          : editor.previewLoading
-            ? 'Counting matching entities...'
-            : `${editor.previewCount} matching entit${editor.previewCount === 1 ? 'y' : 'ies'}`}
-      </div>
+
+      <FormGroup variant={'section'} label={'Results'}>
+        <div className={styles.scopePreview}>
+          {draft.scope.length === 0
+            ? 'No entity types selected.'
+            : editor.previewLoading
+              ? 'Counting matching entities...'
+              : `${editor.previewCount} matching entit${editor.previewCount === 1 ? 'y' : 'ies'}`}
+        </div>
+      </FormGroup>
       {editor.showScopeWarning && (
         <div className={styles.scopeWarning}>
           Changing scope may add or remove entities from this assessment. Existing responses are
           kept.
         </div>
       )}
-    </div>
+    </Stack>
   );
 };
 
@@ -222,7 +226,7 @@ export const AssessmentFieldsTab = ({ editor }: { editor: AssessmentEditorContro
     <MenuButton.Root>
       <MenuButton.Trigger
         element={
-          <Button variant={groupId ? 'ghost' : undefined} icon={<TbPlus size={11} />}>
+          <Button size="xs" variant={groupId ? 'ghost' : undefined} icon={<TbPlus size={11} />}>
             {groupId ? 'Add field' : 'Field'}
           </Button>
         }
@@ -238,19 +242,19 @@ export const AssessmentFieldsTab = ({ editor }: { editor: AssessmentEditorContro
   );
 
   return (
-    <>
-      <div className={styles.section}>
-        <div className={styles.sectionRow}>
-          <div className={styles.sectionLabel}>
-            Fields{draft.fields.length > 0 ? ` (${draft.fields.length})` : ''}
-          </div>
-          <div className={styles.fieldAddButtons}>
-            <Button icon={<TbPlus size={11} />} onClick={actions.openNewGroup}>
+    <Stack>
+      <FormGroup
+        label="Fields"
+        variant={'section'}
+        action={
+          <>
+            <Button size="xs" icon={<TbPlus size={11} />} onClick={actions.openNewGroup}>
               Group
             </Button>
             {fieldMenu()}
-          </div>
-        </div>
+          </>
+        }
+      >
         {draft.fields.length === 0 && draft.groups.length === 0 ? (
           <div className={styles.fieldsEmpty}>
             No fields yet — add a Rating, Select, or Notes field above.
@@ -334,36 +338,39 @@ export const AssessmentFieldsTab = ({ editor }: { editor: AssessmentEditorContro
             ))}
           </div>
         )}
-      </div>
-      <GroupDialog
-        open={editor.groupDialogOpen}
-        onClose={actions.closeGroupDialog}
-        onSave={actions.saveGroup}
-        group={editor.editingGroup}
-        groups={draft.groups}
-      />
-    </>
+
+        <GroupDialog
+          open={editor.groupDialogOpen}
+          onClose={actions.closeGroupDialog}
+          onSave={actions.saveGroup}
+          group={editor.editingGroup}
+          groups={draft.groups}
+        />
+      </FormGroup>
+    </Stack>
   );
 };
 
 export const AssessmentAdvancedTab = ({ editor }: { editor: AssessmentEditorController }) => {
   const { draft, actions } = editor;
   return (
-    <div className={styles.section}>
-      <div className={styles.sectionLabel}>Recurrence</div>
-      <div className={styles.sectionHint}>
-        The interval sets when each new response cycle opens. The response window sets its due date.
-      </div>
-      <div style={{ width: 160 }}>
-        <Select.Root
+    <Stack>
+      <FormElement
+        label="Recurrence"
+        hint="The interval sets when each new response cycle opens. The response window sets its due date."
+      >
+        <ToggleButtonGroup.Root
+          type="single"
           value={draft.recurrenceType}
-          onChange={value => actions.onRecurrenceTypeChange(value)}
+          onChange={value => {
+            if (value) actions.onRecurrenceTypeChange(value);
+          }}
         >
-          <Select.Item value="none">One-off (no recurrence)</Select.Item>
-          <Select.Item value="weekly">Weekly</Select.Item>
-          <Select.Item value="monthly">Monthly</Select.Item>
-        </Select.Root>
-      </div>
+          <ToggleButtonGroup.Item value="none">One-off</ToggleButtonGroup.Item>
+          <ToggleButtonGroup.Item value="weekly">Weekly</ToggleButtonGroup.Item>
+          <ToggleButtonGroup.Item value="monthly">Monthly</ToggleButtonGroup.Item>
+        </ToggleButtonGroup.Root>
+      </FormElement>
       {draft.recurrenceType !== 'none' && (
         <div className={sharedStyles.editorTopRow}>
           <FormElement
@@ -383,6 +390,6 @@ export const AssessmentAdvancedTab = ({ editor }: { editor: AssessmentEditorCont
           </FormElement>
         </div>
       )}
-    </div>
+    </Stack>
   );
 };

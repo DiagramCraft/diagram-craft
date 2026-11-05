@@ -100,7 +100,7 @@ export const EntityFormFields = ({
       ? [
           {
             id: '__ungrouped__',
-            label: groups.length > 0 ? 'Other Fields' : 'Entity Fields',
+            label: 'Entity Fields',
             fields: ungrouped
           }
         ]

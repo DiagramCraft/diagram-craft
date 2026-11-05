@@ -1,15 +1,14 @@
 import type { ReactNode } from 'react';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
+import { FormGroup } from '../../../components/FormGroup';
 import { Select } from '@diagram-craft/app-components/Select';
 import type { GovernanceWorkflowCaseKind } from '@arch-register/api-types/governanceWorkflowConfigContract';
 import type { StrategySection } from './WorkflowConfigHelpers';
-import styles from './WorkflowsSubSection.module.css';
 
 export const WorkflowBlock = ({ title, children }: { title: string; children: ReactNode }) => (
-  <section className={styles.workflowBlock}>
-    <div className={styles.workflowBlockTitle}>{title}</div>
-    <div className={styles.workflowBlockFields}>{children}</div>
-  </section>
+  <FormGroup variant="section" label={title}>
+    {children}
+  </FormGroup>
 );
 
 export const StrategyEditor = ({
