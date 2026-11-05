@@ -89,3 +89,7 @@
 .relationName:hover {
   text-decoration: underline;
 }
+
+.relationRemoved {
+  opacity: 0.5;
+}

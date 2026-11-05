@@ -11,8 +11,8 @@ import type {
 import { useEntitiesBySchema } from '../../../hooks/useEntities';
 import type { BulkEditableField } from './bulkEditFields';
 import styles from './BulkEditToolbar.module.css';
-import { ListEditor } from '../../../components/ListEditor';
-import { isMultiValuedScalarField, scalarValues } from '../../../lib/scalarFieldValues';
+import { ScalarListEditor } from '../../../components/ScalarListEditor';
+import { isMultiValuedScalarField } from '../../../lib/scalarFieldValues';
 import { DurationInput } from '../../../components/DurationInput';
 import { decodeDurationText, encodeDurationText } from '../../../utils/durationFormat';
 import { selectableEnumOptions } from '../../../utils/enumOptions';
@@ -200,24 +200,12 @@ export const BulkFieldInput = ({
     };
 
     return (
-      <ListEditor
-        items={scalarValues(values)}
+      <ScalarListEditor
+        fieldType={schemaField.type}
+        value={values}
         onChange={next => onValue(JSON.stringify(next))}
-        removeLabel="Remove value"
-        reorder="drag"
-        createItem={() =>
-          schemaField.type === 'boolean'
-            ? false
-            : schemaField.type === 'currency'
-              ? { amount: undefined, currency: defaultCurrency }
-              : schemaField.type === 'duration'
-                ? { amount: undefined, unit: 'years' }
-                : schemaField.type === 'number'
-                  ? ''
-                  : ''
-        }
-        renderItem={(item, ctx) => renderItem(item, ctx.index, ctx.replace)}
-        addLabel="Add"
+        defaultCurrency={defaultCurrency}
+        renderItem={renderItem}
       />
     );
   }

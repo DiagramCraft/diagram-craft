@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { TbChevronRight, TbPlus, TbTrash } from 'react-icons/tb';
+import { TbChevronRight } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { Select } from '@diagram-craft/app-components/Select';
+import { ListEditor } from '../../../components/ListEditor';
 import type { TypedRelationField } from '@arch-register/api-types/schemaContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
@@ -46,6 +47,10 @@ const pendingFieldValue = (
   pendingUpdate !== undefined && Object.hasOwn(pendingUpdate, fieldId)
     ? pendingUpdate[fieldId]
     : fallback;
+
+type RelationEntry =
+  | { kind: 'existing'; id: string; record: RelationRecord }
+  | { kind: 'draft'; id: string; draft: RelationRecordDraft; index: number };
 
 type Props = {
   workspaceId: string;
@@ -99,6 +104,14 @@ export const TypedRelationFieldEditor = ({
   const currentCount = activeExistingCount + fieldState.create.length;
   const atMinimum = currentCount <= field.minCount;
   const atMaximum = field.maxCount !== -1 && currentCount >= field.maxCount;
+  const entries: RelationEntry[] = [
+    ...existingRecords.map(
+      (record): RelationEntry => ({ kind: 'existing', id: record._uid, record })
+    ),
+    ...fieldState.create.map(
+      (draft, index): RelationEntry => ({ kind: 'draft', id: `draft-${index}`, draft, index })
+    )
+  ];
 
   return (
     // The parent .propValue is a flex row (`align-items: center`, no stretch), so without an
@@ -109,235 +122,216 @@ export const TypedRelationFieldEditor = ({
         {currentCount} relation{currentCount === 1 ? '' : 's'} · minimum {field.minCount} · maximum{' '}
         {field.maxCount === -1 ? 'unlimited' : field.maxCount}
       </div>
-      {existingRecords.map(record => {
-        const removed = fieldState.remove.has(record._uid);
-        const otherEndpointInfo = direction === 'outgoing' ? record._out : record._in;
-        const pendingUpdate = fieldState.update.get(record._uid);
-        const expanded = expandedUid === record._uid;
-        const fieldSummaries = activeFields
-          .slice(0, KEY_FIELD_COUNT)
-          .map(f => {
-            const value = pendingFieldValue(pendingUpdate, f.id, record[f.id]);
-            const formatted = formatRelationFieldValue(f, value);
-            return formatted !== null ? `${f.name}: ${formatted}` : null;
-          })
-          .filter((v): v is string => v !== null);
-        return (
-          <div
-            key={record._uid}
-            style={{
-              marginBottom: 6,
-              opacity: removed ? 0.5 : 1,
-              border: '1px solid var(--panel-border)',
-              borderRadius: 4,
-              padding: 8,
-              background: 'var(--base-bg)'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              {/* Not `styles.relation` — that class carries its own border/background, which
-                  would look like a second, inner card competing with the one wrapping this
-                  whole row (header + expanded form). Plain/unstyled here so there's only one. */}
-              <button
-                type="button"
-                style={{
-                  flex: 1,
-                  textAlign: 'left',
-                  background: 'transparent',
-                  border: 'none',
-                  padding: 0,
-                  cursor: removed ? 'default' : 'pointer',
-                  font: 'inherit',
-                  color: 'inherit'
-                }}
-                disabled={removed}
-                onClick={() => setExpandedUid(expanded ? null : record._uid)}
-              >
-                <span className={styles.relationLead}>
-                  <TbChevronRight
-                    size={10}
-                    className={sharedStyles.dim}
-                    style={{
-                      transform: expanded ? 'rotate(90deg)' : undefined,
-                      transition: 'transform 0.1s ease'
-                    }}
-                  />
-                  {/* Plain text, not a navigation link — in edit mode a click here should expand
-                      this row's fields, not carry the user away to the other entity. Not
-                      `styles.relationName` either: that class's hover-underline signals "this is
-                      a link", which is no longer true here. */}
-                  <span style={{ color: 'var(--base-fg)', fontWeight: 500, minWidth: 0 }}>
-                    {otherEndpointInfo.name}
-                  </span>
-                  {!expanded && fieldSummaries.length > 0 && (
-                    <span className={sharedStyles.tertiary}> {fieldSummaries.join(' · ')}</span>
-                  )}
-                </span>
-              </button>
-              {!disabled && (
-                <Button
-                  variant="ghost"
-                  disabled={!removed && atMinimum}
-                  onClick={() => onToggleRemove(record._uid)}
-                >
-                  {removed ? 'Undo' : <TbTrash size={12} />}
-                </Button>
-              )}
-            </div>
-            {expanded && !removed && !disabled && (
-              <div style={{ padding: '8px 10px 8px 16px' }}>
-                <div style={{ marginBottom: 8 }}>
-                  <FormElement label="Owner">
-                    <Select.Root
-                      value={
-                        (String(
-                          pendingFieldValue(pendingUpdate, '_owner', record._owner?.id) ?? ''
-                        ) || undefined) as string | undefined
-                      }
-                      disabled={!record.canAdmin}
-                      onChange={value => onUpdateField(record._uid, '_owner', value ?? '')}
-                      placeholder="—"
-                      style={{ width: '100%' }}
-                    >
-                      {teams.map(team => (
-                        <Select.Item key={team.id} value={team.id}>
-                          {team.name}
-                        </Select.Item>
-                      ))}
-                    </Select.Root>
-                  </FormElement>
-                </div>
-                <div style={{ marginBottom: 8 }}>
-                  <FormElement label="Lifecycle">
-                    <Select.Root
-                      value={
-                        (String(
-                          pendingFieldValue(pendingUpdate, '_lifecycle', record._lifecycle?.id) ??
-                            ''
-                        ) || undefined) as string | undefined
-                      }
-                      disabled={!record.canEdit}
-                      onChange={value => onUpdateField(record._uid, '_lifecycle', value ?? '')}
-                      placeholder="—"
-                      style={{ width: '100%' }}
-                    >
-                      {lifecycleStates.map(state => (
-                        <Select.Item key={state.id} value={state.id}>
-                          {state.label}
-                        </Select.Item>
-                      ))}
-                    </Select.Root>
-                  </FormElement>
-                </div>
-                {activeFieldGroups.map((segment, index) => {
-                  const wrapperStyle = {
-                    marginBottom: index < activeFieldGroups.length - 1 ? 8 : 0
-                  };
-                  const inputs = segment.fields.map(f => (
-                    <RelationFieldInput
-                      key={f.id}
-                      workspaceId={workspaceId}
-                      field={f}
-                      value={
-                        f.type === 'entityRelation' || isMultiValuedRelationSelectField(f)
-                          ? relationIds(pendingFieldValue(pendingUpdate, f.id, record[f.id]))
-                          : String(pendingFieldValue(pendingUpdate, f.id, record[f.id]) ?? '')
-                      }
-                      onChange={value =>
-                        onUpdateField(record._uid, f.id, toRelationFieldValue(f, value))
-                      }
-                    />
-                  ));
-                  return segment.group ? (
-                    <div key={segment.group.id} style={wrapperStyle}>
-                      <RelationFieldGroupSection
-                        name={segment.group.name}
-                        description={segment.group.description}
-                      >
-                        {inputs}
-                      </RelationFieldGroupSection>
-                    </div>
-                  ) : (
-                    <div key={segment.fields[0]!.id} style={wrapperStyle}>
-                      {inputs}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        );
-      })}
-
-      {fieldState.create.map((draft, index) => (
-        <div
-          key={`draft-${index}`}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            marginBottom: 6,
-            border: '1px solid var(--panel-border)',
-            borderRadius: 4,
-            padding: 8,
-            background: 'var(--base-bg)'
-          }}
-        >
-          <span style={{ flex: 1 }}>
-            <span className={styles.relationLead}>
-              <TbChevronRight size={10} className={sharedStyles.dim} />
-              <span style={{ color: 'var(--base-fg)', fontWeight: 500 }}>
-                {draftEntityNames[draft.otherEntityId] ??
-                  otherEntityCandidates.find(e => e._uid === draft.otherEntityId)?._name ??
-                  otherEntityCandidates.find(e => e._uid === draft.otherEntityId)?._slug ??
-                  draft.otherEntityId}
-              </span>
-            </span>
-          </span>
-          {!disabled && (
-            <Button
-              variant="ghost"
-              disabled={currentCount <= field.minCount}
-              onClick={() => onRemoveDraft(index)}
-            >
-              <TbTrash size={12} />
+      <ListEditor<RelationEntry>
+        layout="card"
+        header="none"
+        items={entries}
+        getId={entry => entry.id}
+        addLabel="Add"
+        emptyMessage="No relations"
+        disabled={disabled}
+        addDisabled={atMaximum}
+        addControl={adding ? false : undefined}
+        onAdd={() => setAdding(true)}
+        onMove={() => undefined}
+        canRemove={entry =>
+          entry.kind === 'draft'
+            ? currentCount > field.minCount
+            : !fieldState.remove.has(entry.record._uid) && !atMinimum
+        }
+        onRemove={entry =>
+          entry.kind === 'draft' ? onRemoveDraft(entry.index) : onToggleRemove(entry.record._uid)
+        }
+        itemClassName={entry =>
+          entry.kind === 'existing' && fieldState.remove.has(entry.record._uid)
+            ? (styles.relationRemoved ?? '')
+            : ''
+        }
+        renderActions={entry =>
+          entry.kind === 'existing' && fieldState.remove.has(entry.record._uid) ? (
+            <Button variant="ghost" onClick={() => onToggleRemove(entry.record._uid)}>
+              Undo
             </Button>
-          )}
-        </div>
-      ))}
+          ) : null
+        }
+        renderItem={entry => {
+          if (entry.kind === 'draft') {
+            const { draft } = entry;
+            return (
+              <span className={styles.relationLead}>
+                <TbChevronRight size={10} className={sharedStyles.dim} />
+                <span style={{ color: 'var(--base-fg)', fontWeight: 500 }}>
+                  {draftEntityNames[draft.otherEntityId] ??
+                    otherEntityCandidates.find(e => e._uid === draft.otherEntityId)?._name ??
+                    otherEntityCandidates.find(e => e._uid === draft.otherEntityId)?._slug ??
+                    draft.otherEntityId}
+                </span>
+              </span>
+            );
+          }
+          const { record } = entry;
+          const removed = fieldState.remove.has(record._uid);
+          const otherEndpointInfo = direction === 'outgoing' ? record._out : record._in;
+          const pendingUpdate = fieldState.update.get(record._uid);
+          const expanded = expandedUid === record._uid;
+          const fieldSummaries = activeFields
+            .slice(0, KEY_FIELD_COUNT)
+            .map(f => {
+              const value = pendingFieldValue(pendingUpdate, f.id, record[f.id]);
+              const formatted = formatRelationFieldValue(f, value);
+              return formatted !== null ? `${f.name}: ${formatted}` : null;
+            })
+            .filter((v): v is string => v !== null);
+          return (
+            // Not `styles.relation` — that class carries its own border/background, which would
+            // look like a second, inner card inside the ListEditor item.
+            <button
+              type="button"
+              style={{
+                width: '100%',
+                textAlign: 'left',
+                background: 'transparent',
+                border: 'none',
+                padding: 0,
+                cursor: removed ? 'default' : 'pointer',
+                font: 'inherit',
+                color: 'inherit'
+              }}
+              disabled={removed}
+              onClick={() => setExpandedUid(expanded ? null : record._uid)}
+            >
+              <span className={styles.relationLead}>
+                <TbChevronRight
+                  size={10}
+                  className={sharedStyles.dim}
+                  style={{
+                    transform: expanded ? 'rotate(90deg)' : undefined,
+                    transition: 'transform 0.1s ease'
+                  }}
+                />
+                {/* Plain text, not a navigation link — in edit mode a click here should expand
+                    this row's fields, not carry the user away to the other entity. */}
+                <span style={{ color: 'var(--base-fg)', fontWeight: 500, minWidth: 0 }}>
+                  {otherEndpointInfo.name}
+                </span>
+                {!expanded && fieldSummaries.length > 0 && (
+                  <span className={sharedStyles.tertiary}> {fieldSummaries.join(' · ')}</span>
+                )}
+              </span>
+            </button>
+          );
+        }}
+        renderFooter={entry => {
+          if (entry.kind !== 'existing') return null;
+          const { record } = entry;
+          const removed = fieldState.remove.has(record._uid);
+          const pendingUpdate = fieldState.update.get(record._uid);
+          if (expandedUid !== record._uid || removed || disabled) return null;
+          return (
+            <div style={{ padding: '8px 10px 8px 16px' }}>
+              <div style={{ marginBottom: 8 }}>
+                <FormElement label="Owner">
+                  <Select.Root
+                    value={
+                      (String(
+                        pendingFieldValue(pendingUpdate, '_owner', record._owner?.id) ?? ''
+                      ) || undefined) as string | undefined
+                    }
+                    disabled={!record.canAdmin}
+                    onChange={value => onUpdateField(record._uid, '_owner', value ?? '')}
+                    placeholder="—"
+                    style={{ width: '100%' }}
+                  >
+                    {teams.map(team => (
+                      <Select.Item key={team.id} value={team.id}>
+                        {team.name}
+                      </Select.Item>
+                    ))}
+                  </Select.Root>
+                </FormElement>
+              </div>
+              <div style={{ marginBottom: 8 }}>
+                <FormElement label="Lifecycle">
+                  <Select.Root
+                    value={
+                      (String(
+                        pendingFieldValue(pendingUpdate, '_lifecycle', record._lifecycle?.id) ?? ''
+                      ) || undefined) as string | undefined
+                    }
+                    disabled={!record.canEdit}
+                    onChange={value => onUpdateField(record._uid, '_lifecycle', value ?? '')}
+                    placeholder="—"
+                    style={{ width: '100%' }}
+                  >
+                    {lifecycleStates.map(state => (
+                      <Select.Item key={state.id} value={state.id}>
+                        {state.label}
+                      </Select.Item>
+                    ))}
+                  </Select.Root>
+                </FormElement>
+              </div>
+              {activeFieldGroups.map((segment, index) => {
+                const wrapperStyle = {
+                  marginBottom: index < activeFieldGroups.length - 1 ? 8 : 0
+                };
+                const inputs = segment.fields.map(f => (
+                  <RelationFieldInput
+                    key={f.id}
+                    workspaceId={workspaceId}
+                    field={f}
+                    value={
+                      f.type === 'entityRelation' || isMultiValuedRelationSelectField(f)
+                        ? relationIds(pendingFieldValue(pendingUpdate, f.id, record[f.id]))
+                        : String(pendingFieldValue(pendingUpdate, f.id, record[f.id]) ?? '')
+                    }
+                    onChange={value =>
+                      onUpdateField(record._uid, f.id, toRelationFieldValue(f, value))
+                    }
+                  />
+                ));
+                return segment.group ? (
+                  <div key={segment.group.id} style={wrapperStyle}>
+                    <RelationFieldGroupSection
+                      name={segment.group.name}
+                      description={segment.group.description}
+                    >
+                      {inputs}
+                    </RelationFieldGroupSection>
+                  </div>
+                ) : (
+                  <div key={segment.fields[0]!.id} style={wrapperStyle}>
+                    {inputs}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        }}
+      />
 
-      {!disabled &&
-        (adding ? (
-          <NewRelationDraftForm
-            workspaceId={workspaceId}
-            fields={activeFields}
-            groups={relationSchema?.groups}
-            candidates={otherEntityCandidates}
-            teams={teams}
-            lifecycleStates={lifecycleStates}
-            onCancel={() => setAdding(false)}
-            onConfirm={draft => {
-              const entity = otherEntityCandidates.find(e => e._uid === draft.otherEntityId);
-              if (entity) {
-                setDraftEntityNames(names => ({
-                  ...names,
-                  [entity._uid]: entity._name ?? entity._slug
-                }));
-              }
-              onCreate(draft);
-              setAdding(false);
-            }}
-          />
-        ) : (
-          <Button
-            variant="ghost"
-            icon={<TbPlus size={11} />}
-            disabled={atMaximum}
-            onClick={() => setAdding(true)}
-          >
-            Add
-          </Button>
-        ))}
+      {!disabled && adding && (
+        <NewRelationDraftForm
+          workspaceId={workspaceId}
+          fields={activeFields}
+          groups={relationSchema?.groups}
+          candidates={otherEntityCandidates}
+          teams={teams}
+          lifecycleStates={lifecycleStates}
+          onCancel={() => setAdding(false)}
+          onConfirm={draft => {
+            const entity = otherEntityCandidates.find(e => e._uid === draft.otherEntityId);
+            if (entity) {
+              setDraftEntityNames(names => ({
+                ...names,
+                [entity._uid]: entity._name ?? entity._slug
+              }));
+            }
+            onCreate(draft);
+            setAdding(false);
+          }}
+        />
+      )}
     </div>
   );
 };
