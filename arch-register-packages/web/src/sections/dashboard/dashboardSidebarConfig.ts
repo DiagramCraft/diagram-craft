@@ -5,16 +5,6 @@ import type {
 
 export const isValidVariableName = (value: string) => /^[a-zA-Z_]\w*$/.test(value);
 
-export const moveItem = <T>(items: readonly T[], index: number, delta: -1 | 1): T[] => {
-  const target = index + delta;
-  if (index < 0 || index >= items.length || target < 0 || target >= items.length) {
-    return [...items];
-  }
-  const result = [...items];
-  [result[index], result[target]] = [result[target]!, result[index]!];
-  return result;
-};
-
 export const isFacetsConfigValid = (
   schemaName: string,
   facets: readonly DashboardFacetConfig[]

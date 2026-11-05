@@ -2,23 +2,11 @@ import { describe, expect, it } from 'vitest';
 import {
   isFacetsConfigValid,
   isOptionsConfigValid,
-  moveItem,
   normalizeFacets,
   normalizeOptions
 } from './dashboardSidebarConfig';
 
 const facet = (fieldId: string, variableName: string) => ({ fieldId, variableName });
-
-describe('moveItem', () => {
-  it('swaps with neighbour', () => {
-    expect(moveItem([1, 2, 3], 1, -1)).toEqual([2, 1, 3]);
-    expect(moveItem([1, 2, 3], 1, 1)).toEqual([1, 3, 2]);
-  });
-  it('is a no-op at the edges', () => {
-    expect(moveItem([1, 2], 0, -1)).toEqual([1, 2]);
-    expect(moveItem([1, 2], 1, 1)).toEqual([1, 2]);
-  });
-});
 
 describe('isFacetsConfigValid', () => {
   it('accepts a valid config', () => {
