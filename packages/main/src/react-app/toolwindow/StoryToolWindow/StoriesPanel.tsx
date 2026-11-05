@@ -361,6 +361,7 @@ export const StoriesPanel = () => {
           <div>
             <label>Description</label>
             <TextArea
+              canMaximize
               rows={5}
               value={newStepDescription}
               onChange={v => setNewStepDescription(v ?? '')}

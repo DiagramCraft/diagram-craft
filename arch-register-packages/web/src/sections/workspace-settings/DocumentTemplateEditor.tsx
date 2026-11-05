@@ -233,7 +233,6 @@ export const DocumentTemplateEditor = ({
                 setDirty(true);
               }}
               rows={10}
-              allowMaximize={false}
               style={{ width: '100%' }}
             />
 

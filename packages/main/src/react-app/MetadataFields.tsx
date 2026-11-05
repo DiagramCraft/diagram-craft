@@ -58,7 +58,6 @@ export const MetadataFields = (props: { document: DiagramDocument }) => {
           value={document.props.metadata.description}
           onChange={value => handleChange('description', value ?? '')}
           rows={3}
-          allowMaximize={false}
         />
       </KeyValueTable.Value>
     </KeyValueTable.Root>

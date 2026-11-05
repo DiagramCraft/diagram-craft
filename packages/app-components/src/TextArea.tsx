@@ -69,7 +69,7 @@ export const TextArea = React.forwardRef<HTMLTextAreaElement, Props>((props, ref
           {props.isIndeterminate ? '' : currentValue}
         </textarea>
 
-        {!maximized && props.allowMaximize !== false && (
+        {!maximized && props.canMaximize && (
           <MaximizeButton onClick={() => setMaximized(true)} />
         )}
       </div>
@@ -93,7 +93,7 @@ export const TextArea = React.forwardRef<HTMLTextAreaElement, Props>((props, ref
 type Props = {
   value: string | number;
   isIndeterminate?: boolean;
-  allowMaximize?: boolean;
+  canMaximize?: boolean;
   state?: 'set' | 'unset' | 'overridden';
   onChange?: (value: string | undefined, ev: ChangeEvent<HTMLTextAreaElement>) => void;
 } & Omit<

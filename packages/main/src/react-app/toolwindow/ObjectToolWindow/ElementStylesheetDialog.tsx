@@ -141,6 +141,7 @@ export const ElementStylesheetDialog = (props: Props) => {
           <Tabs.Content value="json">
             <div style={{ padding: '0.5rem 0' }}>
               <TextArea
+                canMaximize
                 rows={30}
                 cols={60}
                 value={JSON.stringify(data ?? {}, undefined, 2)}

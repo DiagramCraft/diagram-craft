@@ -48,7 +48,6 @@ const DiscussionComposer = ({
         placeholder={placeholder}
         value={value}
         rows={4}
-        allowMaximize={false}
         onChange={next => setValue(next ?? '')}
         style={{ fontSize: '12px' }}
       />

@@ -71,6 +71,7 @@ export const StringInputDialog = (props: Props) => {
       )}
       {props.type === 'text' && (
         <TextArea
+          canMaximize
           ref={areaRef}
           cols={40}
           rows={10}

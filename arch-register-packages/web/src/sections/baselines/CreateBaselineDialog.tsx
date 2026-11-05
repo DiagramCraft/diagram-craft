@@ -133,7 +133,6 @@ export const CreateBaselineDialog = ({
             onChange={value => setDescription(value ?? '')}
             placeholder="What does this snapshot represent?"
             maxLength={2000}
-            allowMaximize={false}
           />
         </FormElement>
         <FormElement

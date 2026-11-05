@@ -73,6 +73,7 @@ const WithSupAndSubContent = () => {
       <div style={{ display: 'flex', flexDirection: 'column' }}>
         <div style={labelStyle}>Description</div>
         <TextArea
+          canMaximize
           value={desc}
           placeholder="What is this project about?"
           onChange={v => setDesc(v ?? '')}
