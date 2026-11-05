@@ -17,11 +17,6 @@
   align-items: center;
   gap: 8px;
 }
-.rowList {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
 .muted {
   color: var(--panel-fg-tertiary);
   font-size: 11px;
@@ -30,14 +25,6 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 12px;
-  border: 1px solid var(--cmp-border, var(--cmp-fg-disabled));
-  border-radius: 4px;
-}
-.sectionHead {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
 }
 .check {
   display: flex;

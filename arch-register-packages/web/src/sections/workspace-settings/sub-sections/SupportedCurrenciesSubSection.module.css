@@ -1,10 +1,7 @@
-.fieldGrid {
-  gap: 14px;
-  grid-row-gap: 6px;
+.currencyRow {
   display: grid;
-  grid-template-columns: 26px 120px 1fr auto;
-  margin-top: 6px;
-  margin-bottom: 16px;
+  grid-template-columns: 26px 120px 1fr;
+  gap: 14px;
   align-items: center;
 }
 
