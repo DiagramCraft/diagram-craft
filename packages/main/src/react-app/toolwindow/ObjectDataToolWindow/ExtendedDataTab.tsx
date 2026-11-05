@@ -336,6 +336,7 @@ export const ExtendedDataTab = () => {
                             <KeyValueTable.Label valign={'top'}>{k}:</KeyValueTable.Label>
                             <KeyValueTable.Value>
                               <TextArea
+                                canMaximize
                                 value={v[0] ?? ''}
                                 isIndeterminate={v.length > 1}
                                 style={{ height: '40px' }}

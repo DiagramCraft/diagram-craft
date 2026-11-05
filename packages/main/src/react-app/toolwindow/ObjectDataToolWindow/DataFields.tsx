@@ -35,6 +35,7 @@ const DataField = (props: {
         )}
         {props.field.type === 'longtext' && (
           <TextArea
+            canMaximize
             style={{ height: '40px' }}
             value={props.value.length > 1 ? '***' : (props.value[0]?.toString() ?? '')}
             disabled={props.disabled}

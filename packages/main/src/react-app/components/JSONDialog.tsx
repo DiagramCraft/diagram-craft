@@ -53,6 +53,7 @@ export function JSONDialog<T>(
 
       <label>{props.label ?? 'JSON'}:</label>
       <TextArea
+        canMaximize
         ref={ref}
         rows={30}
         cols={60}

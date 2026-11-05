@@ -122,6 +122,7 @@ export const WithTextArea: Story = {
       <div style={{ width: '300px' }}>
         <FormElement label="Description" required={false} hint="Provide a brief description">
           <TextArea
+            canMaximize
             value={value}
             onChange={v => setValue(v ?? '')}
             placeholder="Enter description"
@@ -197,6 +198,7 @@ export const MultipleFields: Story = {
 
         <FormElement label="Bio" required={false}>
           <TextArea
+            canMaximize
             value={description}
             onChange={v => setDescription(v ?? '')}
             placeholder="Tell us about yourself"

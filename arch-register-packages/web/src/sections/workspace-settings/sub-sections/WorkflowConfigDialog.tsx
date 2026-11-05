@@ -184,7 +184,6 @@ export const WorkflowConfigDialog = ({
                 value={description}
                 maxLength={2000}
                 rows={3}
-                allowMaximize={false}
                 placeholder="Describe what this configuration is for"
                 onChange={value => setDescription(value ?? '')}
               />

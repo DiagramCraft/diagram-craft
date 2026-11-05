@@ -96,6 +96,7 @@ export const BasicInfoTab = ({ mode }: ObjectNamePanelProps) => {
         <KeyValueTable.Label valign={'top'}>Tooltip:</KeyValueTable.Label>
         <KeyValueTable.Value>
           <TextArea
+            canMaximize
             value={tooltip.val}
             onChange={v => tooltip.set(v)}
             style={{ minHeight: '60px' }}

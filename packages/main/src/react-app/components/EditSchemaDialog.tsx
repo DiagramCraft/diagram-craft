@@ -254,6 +254,7 @@ export const EditSchemaDialog = (props: Props) => {
       >
         <label>{$t('dialog.schema.description', 'Description')}:</label>
         <TextArea
+          canMaximize
           id="schema-description"
           value={description}
           onChange={value => setDescription(value ?? '')}

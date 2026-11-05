@@ -145,7 +145,6 @@ export const DocumentFieldRow = ({
           <TextArea
             rows={5}
             value={field.description ?? ''}
-            allowMaximize={false}
             onChange={value => onUpdate({ description: value?.trim() ? value : undefined })}
           />
         </FieldConfig.Cell>

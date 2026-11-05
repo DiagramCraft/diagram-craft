@@ -208,7 +208,6 @@ export const RelationFieldRow = ({
             rows={5}
             value={field.description ?? ''}
             disabled={!canEdit}
-            allowMaximize={false}
             onChange={value => onUpdate({ description: value?.trim() ? value : undefined })}
           />
         </FieldConfig.Cell>

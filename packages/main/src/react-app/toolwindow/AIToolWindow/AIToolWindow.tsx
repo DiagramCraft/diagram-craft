@@ -209,6 +209,7 @@ export const AIToolWindow = () => {
 
             <div className={styles.eInputArea}>
               <TextArea
+                canMaximize
                 key={textAreaKey}
                 value={input}
                 onChange={value => setInput(value ?? '')}

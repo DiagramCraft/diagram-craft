@@ -71,7 +71,6 @@ export const QueryConsoleSubSection = ({ workspaceId }: { workspaceId: string })
             className={styles.input}
             value={queryText}
             rows={8}
-            allowMaximize
             placeholder={'schema:Component AND lifecycle = "active"'}
             onChange={handleQueryChange}
           />

@@ -501,7 +501,6 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
                   value={description}
                   onChange={value => setDescription(value ?? '')}
                   rows={3}
-                  allowMaximize={false}
                 />
               </FormElement>
             </div>

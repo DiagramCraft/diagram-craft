@@ -189,6 +189,7 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
             )}
             {field.type === 'longtext' && (
               <TextArea
+                canMaximize
                 value={(formData[field.id] as string | undefined) ?? ''}
                 onChange={v => setFormData(prev => ({ ...prev, [field.id]: v ?? '' }))}
                 style={{
