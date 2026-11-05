@@ -74,6 +74,9 @@
       padding-left: 0;
       padding-right: 0;
     }
+    .eViewport {
+      border-radius: 0;
+    }
   }
   .eScrollbar {
     display: flex;

@@ -122,7 +122,6 @@
   border: 1px solid var(--cmp-border);
   border-radius: var(--cmp-radius);
   padding: 0.5rem;
-  margin-top: 0.5rem;
   background: var(--base-bg);
 
   --cmp-bg: var(--orig-cmp-bg);
