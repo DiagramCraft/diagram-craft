@@ -13,14 +13,12 @@ import { Select } from '@diagram-craft/app-components/Select';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { Chip } from '../../components/Chip';
-import { UserGroupPicker } from '../../components/UserGroupPicker';
+import { PrincipalPicker } from '../../components/PrincipalPicker';
 import { TypeBadge } from '../../components/TypeBadge';
 import { HoverCard } from '../../components/HoverCard';
 import { DocumentHoverCardBody } from '../../components/DocumentHoverCardBody';
 import { ExternalMetadataIndicator } from '../../components/ExternalMetadataIndicator';
 import { useContentFile } from '../../hooks/useContentScope';
-import { useWorkspaceUsers } from '../../hooks/useWorkspaceMembers';
-import { useTeams } from '../../hooks/useWorkspaceConfig';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { resolveDocumentTypeColor } from '../../lib/schemaPresentation';
 import {
@@ -435,56 +433,18 @@ const WorkspaceLinkValueEdit = ({
   onChange: (value: string | string[] | null) => void;
 }) => {
   const { workspaceSlug } = useWorkspaceContext();
-  const { data: users = [] } = useWorkspaceUsers(workspaceSlug);
-  const { data: teams = [] } = useTeams(workspaceSlug);
   const isUserLink = field.type === 'user_link';
   const values = Array.isArray(value) ? value : typeof value === 'string' ? [value] : [];
-  const available = isUserLink
-    ? users
-        .filter(user => user.is_active)
-        .map(user => ({
-          id: user.id,
-          kind: 'user' as const,
-          label: user.display_name,
-          email: user.email,
-          color: user.color
-        }))
-    : teams.map(team => ({ id: team.id, kind: 'team' as const, label: team.name }));
-  const labels = new Map(available.map(item => [item.id, item.label]));
-  const addValue = (next: string | undefined) => {
-    if (!next || values.includes(next)) return;
-    const nextValues = [...values, next];
-    onChange(field.maxCardinality === 1 ? (nextValues[0] ?? null) : nextValues);
-  };
-  const removeValue = (id: string) => {
-    const nextValues = values.filter(valueId => valueId !== id);
-    onChange(field.maxCardinality === 1 ? (nextValues[0] ?? null) : nextValues);
-  };
 
   return (
     <div className={styles.linkEdit}>
-      {values.map(id => (
-        <Chip key={id}>
-          {labels.get(id) ?? 'Unavailable'}
-          <button
-            type="button"
-            className={styles.chipRemove}
-            onClick={() => removeValue(id)}
-            title="Remove value"
-          >
-            <TbX size={8} />
-          </button>
-        </Chip>
-      ))}
-      {(field.maxCardinality !== 1 || values.length === 0) && (
-        <UserGroupPicker
-          kind={isUserLink ? 'user' : 'team'}
-          activeOnly={isUserLink}
-          excludeIds={values}
-          onSelect={item => addValue(item.id)}
-          placeholder={isUserLink ? 'Search users to add…' : 'Search teams or groups to add…'}
-        />
-      )}
+      <PrincipalPicker
+        workspaceSlug={workspaceSlug}
+        kind={isUserLink ? 'user' : 'team'}
+        values={values}
+        maxValues={field.maxCardinality === 1 ? 1 : undefined}
+        onChange={next => onChange(field.maxCardinality === 1 ? (next[0] ?? null) : next)}
+      />
     </div>
   );
 };

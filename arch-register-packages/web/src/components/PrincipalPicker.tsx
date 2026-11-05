@@ -3,7 +3,7 @@ import { MultiSelect, MultiSelectItem } from '@diagram-craft/app-components/Mult
 import { useWorkspaceMembers, useWorkspaceUsers } from '../hooks/useWorkspaceMembers';
 import { useTeams } from '../hooks/useWorkspaceConfig';
 import { MemberAvatar, stableHue } from './MemberAvatar';
-import styles from './UserGroupPicker.module.css';
+import styles from './PrincipalPicker.module.css';
 
 export type PrincipalPickerProps = {
   workspaceSlug: string;
@@ -14,6 +14,8 @@ export type PrincipalPickerProps = {
   onChange: (values: string[]) => void;
   /** Optional cap on how many principals can be selected. */
   maxValues?: number;
+  /** Ids hidden from search results, e.g. principals already present elsewhere in the form. */
+  excludeIds?: string[];
   disabled?: boolean;
 };
 
@@ -32,6 +34,7 @@ export const PrincipalPicker = ({
   values,
   onChange,
   maxValues,
+  excludeIds,
   disabled
 }: PrincipalPickerProps) => {
   const [query, setQuery] = useState('');
@@ -56,7 +59,7 @@ export const PrincipalPicker = ({
     if (!enabled) return [];
     if (kind === 'user') {
       return (usersQuery.data ?? [])
-        .filter(user => user.is_active)
+        .filter(user => user.is_active && !excludeIds?.includes(user.id))
         .map(user => ({
           value: user.id,
           label: user.display_name,
@@ -64,12 +67,14 @@ export const PrincipalPicker = ({
           color: user.color
         }));
     }
-    return (teamsQuery.data ?? []).map(team => ({
-      value: team.id,
-      label: team.name,
-      color: team.color
-    }));
-  }, [enabled, kind, teamsQuery.data, usersQuery.data]);
+    return (teamsQuery.data ?? [])
+      .filter(team => !excludeIds?.includes(team.id))
+      .map(team => ({
+        value: team.id,
+        label: team.name,
+        color: team.color
+      }));
+  }, [enabled, excludeIds, kind, teamsQuery.data, usersQuery.data]);
 
   const byValue = useMemo(() => new Map(availableItems.map(i => [i.value, i])), [availableItems]);
   const isLoading = kind === 'user' ? usersQuery.isLoading : teamsQuery.isLoading;

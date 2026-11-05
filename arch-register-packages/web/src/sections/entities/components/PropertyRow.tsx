@@ -1,9 +1,8 @@
 import { MultiSelect, MultiSelectItem } from '@diagram-craft/app-components/MultiSelect';
 import { Select } from '@diagram-craft/app-components/Select';
 import { DurationInput } from '../../../components/DurationInput';
-import { TbX } from 'react-icons/tb';
-import { Chip } from '../../../components/Chip';
-import { UserGroupPicker } from '../../../components/UserGroupPicker';
+import { PrincipalPicker } from '../../../components/PrincipalPicker';
+import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { usePrincipalLabel } from '../../../hooks/usePrincipalLabel';
 import { formatDate } from '../../../utils/dateFormat';
 import { useDateTimeFormatPreference } from '../../../hooks/useDateTimeFormatPreference';
@@ -33,31 +32,9 @@ const PrincipalEditor = ({
   value: unknown;
   onChange: (value: unknown) => void;
 }) => {
-  const resolveLabel = usePrincipalLabel();
+  const { workspaceSlug } = useWorkspaceContext();
   const principal = asPrincipal(value);
   const kind: 'user' | 'team' = principal.principal_type === 'team' ? 'team' : 'user';
-
-  if (principal.principal_id) {
-    return (
-      <Chip tone="ghost">
-        <span>{resolveLabel(principal) ?? principal.principal_id}</span>
-        <button
-          type="button"
-          aria-label="Clear"
-          onClick={() => onChange(undefined)}
-          style={{
-            marginLeft: 4,
-            border: 'none',
-            background: 'none',
-            cursor: 'pointer',
-            padding: 0
-          }}
-        >
-          <TbX size={10} />
-        </button>
-      </Chip>
-    );
-  }
 
   return (
     <div style={{ display: 'flex', gap: 6 }}>
@@ -69,10 +46,14 @@ const PrincipalEditor = ({
         <Select.Item value="user">User</Select.Item>
         <Select.Item value="team">Team</Select.Item>
       </Select.Root>
-      <UserGroupPicker
+      <PrincipalPicker
+        workspaceSlug={workspaceSlug}
         kind={kind}
-        onSelect={item => onChange({ principal_type: item.kind, principal_id: item.id })}
-        placeholder={kind === 'user' ? 'Search users…' : 'Search teams…'}
+        maxValues={1}
+        values={principal.principal_id ? [principal.principal_id] : []}
+        onChange={ids =>
+          onChange(ids[0] ? { principal_type: kind, principal_id: ids[0] } : undefined)
+        }
       />
     </div>
   );

@@ -11,7 +11,7 @@ import { useSchemaEditor } from './schemaEditorContext';
 /** Delete / error / field-migration / field-group dialogs shared by the schema editors. */
 export const SchemaEditorDialogs = ({ extraDialogs }: { extraDialogs?: ReactNode }) => {
   const editor = useSchemaEditor();
-  const { fieldGroups = [], teams } = useWorkspaceContext();
+  const { fieldGroups = [] } = useWorkspaceContext();
   const { labels, draft } = editor;
   const groups = draft?.groups ?? [];
   const sharedFieldGroupLinks = draft?.sharedFieldGroupLinks ?? [];
@@ -71,7 +71,6 @@ export const SchemaEditorDialogs = ({ extraDialogs }: { extraDialogs?: ReactNode
       >
         {editor.accessDialogGroupId && (
           <TeamAccessPicker
-            teams={teams}
             teamIds={
               sharedFieldGroupLinks.find(link => link.groupId === editor.accessDialogGroupId)
                 ?.teamIds ??
