@@ -69,9 +69,7 @@ export const TextArea = React.forwardRef<HTMLTextAreaElement, Props>((props, ref
           {props.isIndeterminate ? '' : currentValue}
         </textarea>
 
-        {!maximized && props.canMaximize && (
-          <MaximizeButton onClick={() => setMaximized(true)} />
-        )}
+        {!maximized && props.canMaximize && <MaximizeButton onClick={() => setMaximized(true)} />}
       </div>
     </>
   );
