@@ -19,8 +19,8 @@ import type { RelationSchema } from '@arch-register/api-types/relationSchemaCont
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
 import type { RelationRecordDraft } from '@arch-register/api-types/entityContract';
 import { TypedRelationFieldEditor } from './TypedRelationFieldEditor';
-import { ListEditor } from '../../../components/ListEditor';
-import { isMultiValuedScalarField, scalarValues } from '../../../lib/scalarFieldValues';
+import { ScalarListEditor } from '../../../components/ScalarListEditor';
+import { isMultiValuedScalarField } from '../../../lib/scalarFieldValues';
 import type { TypedRelationFieldEditState } from '../../../lib/entityEditState';
 import { selectableEnumOptions } from '../../../utils/enumOptions';
 import { asPrincipal, renderEntityFieldDisplayValue } from './entityFieldDisplay';
@@ -256,24 +256,12 @@ export const PropertyRow = ({
         );
       };
       return (
-        <ListEditor
-          items={scalarValues(editValue)}
+        <ScalarListEditor
+          fieldType={field.type}
+          value={editValue}
           onChange={onChange}
-          addLabel="Add value"
-          removeLabel="Remove value"
-          reorder="drag"
-          createItem={() =>
-            field.type === 'boolean'
-              ? false
-              : field.type === 'currency'
-                ? { amount: undefined, currency: defaultCurrency }
-                : field.type === 'duration'
-                  ? { amount: undefined, unit: 'years' }
-                  : field.type === 'number'
-                    ? ''
-                    : ''
-          }
-          renderItem={(item, ctx) => renderItem(item, ctx.index, ctx.replace)}
+          defaultCurrency={defaultCurrency}
+          renderItem={renderItem}
         />
       );
     }

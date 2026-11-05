@@ -22,3 +22,16 @@ export const scalarValues = (value: unknown): unknown[] =>
   Array.isArray(value) ? value : value == null || value === '' ? [] : [value];
 
 export const firstScalarValue = (value: unknown): unknown => scalarValues(value)[0];
+
+export const createScalarItem = (type: SchemaField['type'], defaultCurrency?: string): unknown => {
+  switch (type) {
+    case 'boolean':
+      return false;
+    case 'currency':
+      return { amount: undefined, currency: defaultCurrency ?? 'USD' };
+    case 'duration':
+      return { amount: undefined, unit: 'years' };
+    default:
+      return '';
+  }
+};

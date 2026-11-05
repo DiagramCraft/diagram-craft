@@ -7,8 +7,8 @@ import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { EntitySummary } from '@arch-register/api-types/entityContract';
-import { ListEditor } from '../components/ListEditor';
-import { isMultiValuedScalarField, scalarValues } from '../lib/scalarFieldValues';
+import { ScalarListEditor } from '../components/ScalarListEditor';
+import { isMultiValuedScalarField } from '../lib/scalarFieldValues';
 import { selectableEnumOptions } from '../utils/enumOptions';
 import { DurationInput } from '../components/DurationInput';
 import { PrincipalPicker } from '../components/PrincipalPicker';
@@ -216,25 +216,13 @@ export const EntityFieldInput = ({
         hint={field.description}
         required={field.requirementLevel !== 'optional'}
       >
-        <ListEditor
-          items={scalarValues(value)}
+        <ScalarListEditor
+          fieldType={field.type}
+          value={value}
           onChange={onChange}
-          addLabel="Add value"
-          removeLabel="Remove value"
-          reorder="drag"
+          defaultCurrency={defaultCurrency}
           disabled={disabled}
-          createItem={() =>
-            field.type === 'boolean'
-              ? false
-              : field.type === 'currency'
-                ? { amount: undefined, currency: defaultCurrency ?? 'USD' }
-                : field.type === 'duration'
-                  ? { amount: undefined, unit: 'years' }
-                  : field.type === 'number'
-                    ? ''
-                    : ''
-          }
-          renderItem={(item, ctx) => renderItem(item, ctx.index, ctx.replace)}
+          renderItem={renderItem}
         />
       </FormElement>
     );
