@@ -1,16 +1,14 @@
-import type { ReactNode } from 'react';
+import type { ReactNode, RefCallback } from 'react';
 import { Button } from '@diagram-craft/app-components/Button';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { Menu } from '@diagram-craft/app-components/Menu';
 import { TbDots, TbLock, TbPlus } from 'react-icons/tb';
 import { resolveGroupAccessControl } from '../../lib/fieldGroupAccess';
-import { FieldConfigList, type FieldConfigDragHandle } from '../../components/FieldConfigList';
+import { GroupedListEditor } from '../../components/GroupedListEditor';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useCanEditSchemas, useSchemaEditor } from './schemaEditorContext';
 import type { EditorField, EditorGroup } from './schemaEditorState';
 import styles from './SchemaSettingsScreen.module.css';
-
-const UNGROUPED_LIST_ID = '__ungrouped__';
 
 export type FieldGroupsEditorField = {
   id: string;
@@ -28,7 +26,7 @@ export type FieldGroupsEditorProps<Field extends FieldGroupsEditorField> = {
   renderField: (
     field: Field,
     options: { inherited: boolean; canEdit: boolean },
-    drag: FieldConfigDragHandle
+    drag: { ref: RefCallback<HTMLElement> }
   ) => ReactNode;
 };
 
@@ -49,13 +47,8 @@ export function FieldGroupsEditor<
   const groups: Group[] = editor.draft?.groups ?? [];
   const sharedFieldGroupLinks = editor.draft?.sharedFieldGroupLinks ?? [];
 
-  const groupIds = new Set(groups.map(group => group.id));
-  const ungroupedFields = fields.filter(field => !field.groupId || !groupIds.has(field.groupId));
-  const fieldsByGroup = new Map<string, Field[]>();
-  for (const group of groups) fieldsByGroup.set(group.id, []);
-  for (const field of fields) {
-    if (field.groupId && groupIds.has(field.groupId)) fieldsByGroup.get(field.groupId)!.push(field);
-  }
+  const isInherited = (groupId: string) =>
+    sharedFieldGroupLinks.some(link => link.groupId === groupId);
 
   return (
     <>
@@ -74,119 +67,104 @@ export function FieldGroupsEditor<
       </div>
 
       {fields.length > 0 || groups.length > 0 ? (
-        <div className={styles.fieldsTable}>
-          <FieldConfigList
-            items={ungroupedFields}
-            getId={field => fieldKeys.get(field.id) ?? field.id}
-            listId={UNGROUPED_LIST_ID}
-            onReorder={(from, to) =>
-              editor.reorderFields(
-                ungroupedFields.map(field => field.id),
-                from,
-                to
-              )
-            }
-            renderItem={(field, _index, drag) =>
-              renderField(field, { inherited: false, canEdit }, drag)
-            }
-          />
-          {groups.map(group => {
-            const inherited = sharedFieldGroupLinks.some(link => link.groupId === group.id);
-            const groupFields = fieldsByGroup.get(group.id) ?? [];
+        <GroupedListEditor
+          className={styles.fieldsTable}
+          groupClassName={styles.groupSection}
+          items={fields}
+          groups={groups}
+          getGroupId={field => field.groupId}
+          getId={field => fieldKeys.get(field.id) ?? field.id}
+          onMove={(bucket, from, to) =>
+            editor.reorderFields(
+              bucket.map(field => field.id),
+              from,
+              to
+            )
+          }
+          renderGroupHeader={group => {
+            const inherited = isInherited(group.id);
             const teamIds = resolveGroupAccessControl(group, sharedFieldGroupLinks)?.teamIds ?? [];
             return (
-              <div className={styles.groupSection} key={group.id}>
-                <div className={styles.groupHeader}>
-                  <div>
-                    <div className={styles.groupName}>
-                      {group.name}
-                      {teamIds.length > 0 && (
-                        <span className={styles.restrictedBadge}>
-                          <TbLock size={10} />
-                          Restricted
-                        </span>
-                      )}
-                    </div>
-                    {group.description && (
-                      <div className={styles.groupDescription}>{group.description}</div>
-                    )}
-                    {teamIds.length > 0 && (
-                      <div className={styles.restrictedTeams}>
-                        Restricted to{' '}
-                        {teamIds
-                          .map(
-                            teamId =>
-                              teams.find(team => team.id === teamId)?.name ?? 'Unavailable team'
-                          )
-                          .join(', ')}
-                      </div>
-                    )}
-                  </div>
-                  {canEdit && (
-                    <div className={styles.groupActions}>
-                      {!inherited && (
-                        <Button
-                          variant="ghost"
-                          icon={<TbPlus size={11} />}
-                          onClick={() => editor.addField(group.id)}
-                        >
-                          Add field
-                        </Button>
-                      )}
-                      <MenuButton.Root>
-                        <MenuButton.Trigger
-                          element={
-                            <button type="button" className={styles.iconBtn}>
-                              <TbDots size={13} />
-                            </button>
-                          }
-                        />
-                        <MenuButton.Menu>
-                          <Menu.Item disabled={inherited} onClick={() => editor.editGroup(group)}>
-                            Edit
-                          </Menu.Item>
-                          <Menu.Item onClick={() => editor.setAccessDialogGroupId(group.id)}>
-                            Change access
-                          </Menu.Item>
-                          <Menu.Separator />
-                          <Menu.Item
-                            type="danger"
-                            onClick={() =>
-                              inherited
-                                ? editor.removeSharedFieldGroup(group.id)
-                                : editor.removeGroup(group.id)
-                            }
-                          >
-                            Delete
-                          </Menu.Item>
-                        </MenuButton.Menu>
-                      </MenuButton.Root>
-                    </div>
-                  )}
-                </div>
-                {groupFields.length > 0 ? (
-                  <FieldConfigList
-                    items={groupFields}
-                    getId={field => fieldKeys.get(field.id) ?? field.id}
-                    listId={group.id}
-                    onReorder={(from, to) =>
-                      editor.reorderFields(
-                        groupFields.map(field => field.id),
-                        from,
-                        to
-                      )
-                    }
-                    renderItem={(field, _index, drag) =>
-                      renderField(field, { inherited, canEdit: canEdit && !inherited }, drag)
-                    }
-                  />
-                ) : (
-                  <div className={styles.groupEmpty}>No fields in this group.</div>
-                )}
+        <div className={styles.groupHeader}>
+          <div>
+            <div className={styles.groupName}>
+              {group.name}
+              {teamIds.length > 0 && (
+                <span className={styles.restrictedBadge}>
+                  <TbLock size={10} />
+                  Restricted
+                </span>
+              )}
+            </div>
+            {group.description && (
+              <div className={styles.groupDescription}>{group.description}</div>
+            )}
+            {teamIds.length > 0 && (
+              <div className={styles.restrictedTeams}>
+                Restricted to{' '}
+                {teamIds
+                  .map(
+                    teamId =>
+                      teams.find(team => team.id === teamId)?.name ?? 'Unavailable team'
+                  )
+                  .join(', ')}
               </div>
-            );
-          })}
+            )}
+          </div>
+          {canEdit && (
+            <div className={styles.groupActions}>
+              {!inherited && (
+                <Button
+                  variant="ghost"
+                  icon={<TbPlus size={11} />}
+                  onClick={() => editor.addField(group.id)}
+                >
+                  Add field
+                </Button>
+              )}
+              <MenuButton.Root>
+                <MenuButton.Trigger
+                  element={
+                    <button type="button" className={styles.iconBtn}>
+                      <TbDots size={13} />
+                    </button>
+                  }
+                />
+                <MenuButton.Menu>
+                  <Menu.Item disabled={inherited} onClick={() => editor.editGroup(group)}>
+                    Edit
+                  </Menu.Item>
+                  <Menu.Item onClick={() => editor.setAccessDialogGroupId(group.id)}>
+                    Change access
+                  </Menu.Item>
+                  <Menu.Separator />
+                  <Menu.Item
+                    type="danger"
+                    onClick={() =>
+                      inherited
+                        ? editor.removeSharedFieldGroup(group.id)
+                        : editor.removeGroup(group.id)
+                    }
+                  >
+                    Delete
+                  </Menu.Item>
+                </MenuButton.Menu>
+              </MenuButton.Root>
+            </div>
+          )}
         </div>
+            );
+          }}
+          renderEmpty={() => <div className={styles.groupEmpty}>No fields in this group.</div>}
+          renderItem={(field, ctx) => {
+            const inherited = field.groupId !== undefined && isInherited(field.groupId);
+            return renderField(
+              field,
+              { inherited, canEdit: canEdit && !inherited },
+              { ref: ctx.dragRef }
+            );
+          }}
+        />
       ) : (
         <div className={styles.fieldsEmpty}>
           No fields defined yet. Click &quot;Add field&quot; to get started.

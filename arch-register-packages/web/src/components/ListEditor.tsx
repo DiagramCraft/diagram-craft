@@ -1,6 +1,6 @@
 import type { ReactNode, RefCallback } from 'react';
 import { useId } from 'react';
-import { TbGripVertical, TbPlus, TbTrash } from 'react-icons/tb';
+import { TbChevronDown, TbChevronUp, TbGripVertical, TbPlus, TbTrash } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { FieldConfigList } from './FieldConfigList';
 import { FormGroup } from './FormGroup';
@@ -16,6 +16,8 @@ export type ListEditorItemContext<T> = {
   update: (patch: Partial<T>) => void;
   replace: (item: T) => void;
   remove: () => void;
+  /** Moves the item by `delta` positions (e.g. ±1 for keyboard-accessible controls). No-op when out of range or when reordering is off. */
+  moveBy: (delta: number) => void;
 };
 
 type ControlledProps<T> = {
@@ -45,6 +47,10 @@ type BaseProps<T> = {
   /** Section label. When set, the list is wrapped in a FormGroup with the add button as its action; otherwise the add button sits below the list */
   label?: string;
   supplementaryLabel?: string;
+  /** `none` renders the list without the section wrapper, for parents that draw their own header. Ignores `label`; the add button then sits below the list. */
+  header?: 'section' | 'none';
+  /** Replaces the default add button, e.g. a menu of item types. Hidden when the list is disabled. */
+  addControl?: ReactNode;
   /** Disables the add button while keeping it visible, e.g. when there is nothing to create an item from */
   addDisabled?: boolean;
   /** Shown when there are no items */
@@ -54,7 +60,8 @@ type BaseProps<T> = {
    * `bare` renders `renderItem` as is, for items that bring their own handle, menu and box.
    */
   layout?: 'row' | 'card' | 'bare';
-  reorder?: 'drag' | 'none';
+  /** `drag+buttons` adds up/down buttons next to the drag handle for keyboard-accessible reordering */
+  reorder?: 'drag' | 'drag+buttons' | 'none';
   disabled?: boolean;
   canRemove?: (item: T, index: number) => boolean;
   maxItems?: number;
@@ -82,6 +89,8 @@ export const ListEditor = <T,>(props: ListEditorProps<T>) => {
     addDisabled = false,
     label,
     supplementaryLabel,
+    header = 'section',
+    addControl,
     emptyMessage,
     layout = 'row',
     reorder = 'none',
@@ -119,10 +128,15 @@ export const ListEditor = <T,>(props: ListEditorProps<T>) => {
 
   const addButton =
     !disabled && (maxItems === undefined || items.length < maxItems) ? (
+      addControl ?? (
       <Button size="xs" icon={<TbPlus size={11} />} onClick={add} disabled={addDisabled}>
         {addLabel}
       </Button>
+      )
     ) : null;
+  const sectioned = header === 'section' && label !== undefined;
+
+  const draggable = (reorder === 'drag' || reorder === 'drag+buttons') && !disabled;
 
   const renderEntry = (
     entry: (typeof entries)[number],
@@ -141,7 +155,9 @@ export const ListEditor = <T,>(props: ListEditorProps<T>) => {
       removeLabel={removeLabel}
       itemClassName={itemClassName}
       onItemClick={onItemClick}
-      dragRef={reorder === 'drag' && !disabled ? dragRef : undefined}
+      dragRef={draggable ? dragRef : undefined}
+      count={items.length}
+      moveButtons={reorder === 'drag+buttons' && !disabled}
       renderItem={renderItem}
       renderActions={renderActions}
       renderFooter={renderFooter}
@@ -152,7 +168,7 @@ export const ListEditor = <T,>(props: ListEditorProps<T>) => {
     <div className={styles.root}>
       {items.length === 0 ? (
         emptyMessage && <div className={styles.emptyMessage}>{emptyMessage}</div>
-      ) : reorder === 'drag' ? (
+      ) : draggable ? (
         <FieldConfigList
           items={entries}
           getId={entry => entry.key}
@@ -164,16 +180,16 @@ export const ListEditor = <T,>(props: ListEditorProps<T>) => {
         entries.map(entry => <div key={entry.key}>{renderEntry(entry)}</div>)
       )}
 
-      {label === undefined && addButton && <div className={styles.footer}>{addButton}</div>}
+      {!sectioned && addButton && <div className={styles.footer}>{addButton}</div>}
     </div>
   );
 
-  if (label === undefined) return body;
+  if (!sectioned) return body;
 
   return (
     <FormGroup
       variant="section"
-      label={label}
+      label={label ?? ''}
       supplementaryLabel={supplementaryLabel}
       action={
         headerActions || addButton ? (
@@ -200,6 +216,8 @@ const ListEditorItem = <T,>(props: {
   itemClassName?: ListEditorProps<T>['itemClassName'];
   onItemClick?: ListEditorProps<T>['onItemClick'];
   dragRef?: React.RefCallback<HTMLElement>;
+  count: number;
+  moveButtons: boolean;
   renderItem: ListEditorProps<T>['renderItem'];
   renderActions?: ListEditorProps<T>['renderActions'];
   renderFooter?: ListEditorProps<T>['renderFooter'];
@@ -210,7 +228,12 @@ const ListEditorItem = <T,>(props: {
     dragRef: props.dragRef ?? noopDragRef,
     update: patch => list.update(index, patch),
     replace: next => list.replace(index, next),
-    remove: () => list.remove(index)
+    remove: () => list.remove(index),
+    moveBy: delta => {
+      const to = index + delta;
+      if (!props.dragRef || delta === 0 || to < 0 || to >= props.count) return;
+      list.move(index, to);
+    }
   };
 
   if (props.layout === 'bare') return <>{props.renderItem(item, ctx)}</>;
@@ -231,6 +254,28 @@ const ListEditorItem = <T,>(props: {
         <div className={styles.content}>{props.renderItem(item, ctx)}</div>
         {!props.disabled && (
           <div className={styles.actions}>
+            {props.moveButtons && (
+              <>
+                <Button
+                  variant="icon-only"
+                  size="sm"
+                  icon={<TbChevronUp size={12} />}
+                  aria-label="Move up"
+                  title="Move up"
+                  disabled={index === 0}
+                  onClick={() => ctx.moveBy(-1)}
+                />
+                <Button
+                  variant="icon-only"
+                  size="sm"
+                  icon={<TbChevronDown size={12} />}
+                  aria-label="Move down"
+                  title="Move down"
+                  disabled={index === props.count - 1}
+                  onClick={() => ctx.moveBy(1)}
+                />
+              </>
+            )}
             {props.renderActions?.(item, ctx)}
             {props.removable && (
               <Button
