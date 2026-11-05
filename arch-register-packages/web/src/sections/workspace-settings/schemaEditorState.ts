@@ -138,10 +138,8 @@ export type SchemaEditorController<
   changeFieldType: (fieldId: string, newType: FieldType) => void;
   removeField: (fieldId: string) => void;
   reorderFields: (bucketFieldIds: string[], fromIndex: number, toIndex: number) => void;
-  addValidationRule: () => void;
-  updateValidationRule: (index: number, patch: Partial<ValidationRule>) => void;
-  toggleValidationRule: (index: number) => void;
-  deleteValidationRule: (index: number) => void;
+  setValidationRules: (rules: ValidationRule[]) => void;
+  createValidationRule: () => ValidationRule;
   addSharedFieldGroup: (groupId: string | undefined) => void;
   removeSharedFieldGroup: (groupId: string) => void;
   setGroupAccess: (groupId: string, teamIds: string[]) => void;
@@ -346,46 +344,14 @@ export const useSchemaEditorController = <
     [updateDraft]
   );
 
-  const addValidationRule = useCallback(() => {
-    updateDraft(current => ({
-      ...current,
-      validationRules: [...current.validationRules, adapterRef.current.validationRuleDefaults()]
-    }));
-  }, [updateDraft]);
-
-  const updateValidationRule = useCallback(
-    (index: number, patch: Partial<ValidationRule>) => {
-      updateDraft(current => ({
-        ...current,
-        validationRules: current.validationRules.map((rule, ruleIndex) =>
-          ruleIndex === index ? { ...rule, ...patch } : rule
-        )
-      }));
+  const setValidationRules = useCallback(
+    (validationRules: ValidationRule[]) => {
+      updateDraft(current => ({ ...current, validationRules }));
     },
     [updateDraft]
   );
 
-  const toggleValidationRule = useCallback(
-    (index: number) => {
-      updateDraft(current => ({
-        ...current,
-        validationRules: current.validationRules.map((rule, ruleIndex) =>
-          ruleIndex === index ? { ...rule, active: !rule.active } : rule
-        )
-      }));
-    },
-    [updateDraft]
-  );
-
-  const deleteValidationRule = useCallback(
-    (index: number) => {
-      updateDraft(current => ({
-        ...current,
-        validationRules: current.validationRules.filter((_, ruleIndex) => ruleIndex !== index)
-      }));
-    },
-    [updateDraft]
-  );
+  const createValidationRule = useCallback(() => adapterRef.current.validationRuleDefaults(), []);
 
   const addSharedFieldGroup = useCallback(
     (groupId: string | undefined) => {
@@ -592,10 +558,8 @@ export const useSchemaEditorController = <
     changeFieldType,
     removeField,
     reorderFields,
-    addValidationRule,
-    updateValidationRule,
-    toggleValidationRule,
-    deleteValidationRule,
+    setValidationRules,
+    createValidationRule,
     addSharedFieldGroup,
     removeSharedFieldGroup,
     setGroupAccess,

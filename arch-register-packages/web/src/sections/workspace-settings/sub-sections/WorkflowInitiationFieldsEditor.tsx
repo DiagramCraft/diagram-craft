@@ -43,7 +43,6 @@ export const WorkflowInitiationFieldsEditor = ({
           emptyMessage="No initiation fields defined."
           layout="card"
           reorder="drag"
-          itemClassName={styles.field}
           removeLabel="Remove field"
           renderItem={(field, { update }) => (
             <InitiationFieldMain field={field} onUpdate={update} />
@@ -108,7 +107,7 @@ const InitiationFieldDetails = ({
 }) => (
   <div
     style={{
-      borderTop: '1px solid var(--cmp-border)',
+      borderTop: '1px solid var(--panel-border)',
       margin: '0.5rem -0.5rem 0 -0.5rem',
       padding: '0.5rem 0.5rem 0 0.5rem',
       minHeight: '1rem',

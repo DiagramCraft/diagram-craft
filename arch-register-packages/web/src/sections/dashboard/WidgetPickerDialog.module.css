@@ -82,14 +82,14 @@
 }
 
 .optionLabel {
-  color: var(--base-fg);
+  color: var(--panel-fg);
   font-weight: 500;
   font-size: 12.5px;
 }
 
 .optionDescription {
   font-size: 11px;
-  color: var(--cmp-fg-disabled);
+  color: var(--panel-fg-secondary);
 }
 
 .viewPicker {

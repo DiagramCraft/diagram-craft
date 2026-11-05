@@ -15,10 +15,8 @@ export const RelationValidationTab = () => {
       variant="relation"
       rules={editor.draft?.validationRules ?? []}
       canEdit={canEdit}
-      onAdd={editor.addValidationRule}
-      onUpdate={editor.updateValidationRule}
-      onToggle={editor.toggleValidationRule}
-      onDelete={editor.deleteValidationRule}
+      onChange={editor.setValidationRules}
+      createRule={editor.createValidationRule}
     />
   );
 };
@@ -56,10 +54,8 @@ export const EntityValidationTab = () => {
       previewPending={previewValidation.isPending}
       previewMessage={previewMessage}
       onPreview={() => void preview()}
-      onAdd={editor.addValidationRule}
-      onUpdate={editor.updateValidationRule}
-      onToggle={editor.toggleValidationRule}
-      onDelete={editor.deleteValidationRule}
+      onChange={editor.setValidationRules}
+      createRule={editor.createValidationRule}
     />
   );
 };

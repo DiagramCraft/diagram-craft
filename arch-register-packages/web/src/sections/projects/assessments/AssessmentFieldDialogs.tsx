@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react';
-import { TbPlus, TbTrash } from 'react-icons/tb';
 import type {
   AssessmentEnumOption,
   AssessmentField
 } from '@arch-register/api-types/assessmentContract';
-import { Button } from '@diagram-craft/app-components/Button';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { ListEditor } from '../../../components/ListEditor';
 import { DerivedExpressionTestDialog } from '../../../components/DerivedExpressionTestDialog';
 import styles from './assessment-editor-shared.module.css';
 
@@ -69,54 +68,28 @@ export const AssessmentInlineEnumDialog = ({
         }
       ]}
     >
-      <div className={styles.inlineEnumDialogOptions}>
-        {draftOptions.map((option, index) => (
-          <div key={`${option.value}-${index}`} className={styles.inlineEnumDialogOption}>
+      <ListEditor
+        items={draftOptions}
+        onChange={setDraftOptions}
+        createItem={() => ({ value: `option_${draftOptions.length + 1}`, label: '' })}
+        addLabel="Add option"
+        reorder="drag"
+        removeLabel="Remove option"
+        renderItem={(option, { update }) => (
+          <div className={styles.inlineEnumDialogOption}>
             <TextInput
               value={option.value}
-              onChange={value =>
-                setDraftOptions(current =>
-                  current.map((item, itemIndex) =>
-                    itemIndex === index ? { ...item, value: value ?? '' } : item
-                  )
-                )
-              }
+              onChange={value => update({ value: value ?? '' })}
               placeholder="Value"
             />
             <TextInput
               value={option.label}
-              onChange={value =>
-                setDraftOptions(current =>
-                  current.map((item, itemIndex) =>
-                    itemIndex === index ? { ...item, label: value ?? '' } : item
-                  )
-                )
-              }
+              onChange={value => update({ label: value ?? '' })}
               placeholder="Label"
             />
-            <Button
-              variant="ghost"
-              icon={<TbTrash size={13} />}
-              onClick={() =>
-                setDraftOptions(current => current.filter((_, itemIndex) => itemIndex !== index))
-              }
-              title="Remove option"
-            />
           </div>
-        ))}
-        <Button
-          variant="ghost"
-          icon={<TbPlus size={13} />}
-          onClick={() =>
-            setDraftOptions(current => [
-              ...current,
-              { value: `option_${current.length + 1}`, label: '' }
-            ])
-          }
-        >
-          Add option
-        </Button>
-      </div>
+        )}
+      />
     </Dialog>
   );
 };

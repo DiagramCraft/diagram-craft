@@ -180,40 +180,9 @@
   border-bottom: 0;
 }
 
-.validationRuleRow {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  grid-template-areas: "fields actions";
-  align-items: start;
-  gap: 12px;
-  padding: 12px;
-}
-
-.validationRuleActions {
-  grid-area: actions;
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
 .validationRuleFields {
-  grid-area: fields;
   display: grid;
   gap: 10px;
-}
-
-@media (max-width: 700px) {
-  .validationRuleRow {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas:
-      "actions"
-      "fields";
-  }
-
-  .validationRuleActions {
-    grid-row: 1;
-    justify-content: flex-start;
-  }
 }
 
 .templateName {

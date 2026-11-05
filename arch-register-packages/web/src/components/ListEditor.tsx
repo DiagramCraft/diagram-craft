@@ -2,7 +2,6 @@ import type { ReactNode } from 'react';
 import { useId } from 'react';
 import { TbGripVertical, TbPlus, TbTrash } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
-import { EmptyState } from './EmptyState';
 import { FieldConfigList } from './FieldConfigList';
 import { FormGroup } from './FormGroup';
 import { useListEditor, type ListEditorApi } from './useListEditor';
@@ -33,8 +32,12 @@ export type ListEditorProps<T> = {
   disabled?: boolean;
   canRemove?: (item: T, index: number) => boolean;
   maxItems?: number;
-  /** Extra class on each item's outer element (handle, content and actions), e.g. to draw a card */
-  itemClassName?: string;
+  /** Extra class on each item's outer element (handle, content and actions) */
+  itemClassName?: string | ((item: T, ctx: ListEditorItemContext<T>) => string);
+  /** Called when an item is clicked, e.g. to select it */
+  onItemClick?: (item: T, ctx: ListEditorItemContext<T>) => void;
+  /** Extra controls in the section header next to the add button (only with `label`) */
+  headerActions?: ReactNode;
   renderItem: (item: T, ctx: ListEditorItemContext<T>) => ReactNode;
   /** Full-width content below the item's main row, inside the item (e.g. a divided details section) */
   renderFooter?: (item: T, ctx: ListEditorItemContext<T>) => ReactNode;
@@ -59,6 +62,8 @@ export const ListEditor = <T,>(props: ListEditorProps<T>) => {
     canRemove,
     maxItems,
     itemClassName,
+    onItemClick,
+    headerActions,
     renderItem,
     renderActions,
     renderFooter,
@@ -93,6 +98,7 @@ export const ListEditor = <T,>(props: ListEditorProps<T>) => {
       removable={canRemove ? canRemove(entry.item, entry.index) : true}
       removeLabel={removeLabel}
       itemClassName={itemClassName}
+      onItemClick={onItemClick}
       dragRef={reorder === 'drag' && !disabled ? dragRef : undefined}
       renderItem={renderItem}
       renderActions={renderActions}
@@ -127,7 +133,14 @@ export const ListEditor = <T,>(props: ListEditorProps<T>) => {
       variant="section"
       label={label}
       supplementaryLabel={supplementaryLabel}
-      action={addButton}
+      action={
+        headerActions || addButton ? (
+          <>
+            {headerActions}
+            {addButton}
+          </>
+        ) : undefined
+      }
     >
       {body}
     </FormGroup>
@@ -142,7 +155,8 @@ const ListEditorItem = <T,>(props: {
   disabled: boolean;
   removable: boolean;
   removeLabel: string;
-  itemClassName?: string;
+  itemClassName?: ListEditorProps<T>['itemClassName'];
+  onItemClick?: ListEditorProps<T>['onItemClick'];
   dragRef?: React.RefCallback<HTMLElement>;
   renderItem: ListEditorProps<T>['renderItem'];
   renderActions?: ListEditorProps<T>['renderActions'];
@@ -157,7 +171,10 @@ const ListEditorItem = <T,>(props: {
   };
 
   return (
-    <div className={`${styles.item} ${props.itemClassName ?? ''}`}>
+    <div
+      className={`${styles.item} ${props.layout === 'card' ? styles.itemBox : ''} ${typeof props.itemClassName === 'function' ? props.itemClassName(item, ctx) : (props.itemClassName ?? '')}`}
+      onClick={props.onItemClick ? () => props.onItemClick?.(item, ctx) : undefined}
+    >
       <div
         className={`${styles.main} ${props.layout === 'card' ? styles.mainCard : styles.mainRow}`}
       >

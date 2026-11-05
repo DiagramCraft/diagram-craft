@@ -16,6 +16,21 @@
 
 .emptyMessage {
   color: var(--panel-fg-tertiary);
+  font-size: 11px;
+}
+
+.itemBox {
+  padding: 0.5rem;
+  background: var(--base-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+
+  --cmp-bg: var(--orig-cmp-bg);
+  --cmp-bg-hover: var(--orig-cmp-bg-hover);
+  --cmp-fg: var(--orig-cmp-fg);
+  --cmp-fg-secondary: var(--orig-cmp-fg-secondary);
+  --cmp-fg-tertiary: var(--orig-cmp-fg-tertiary);
+  --cmp-fg-dimmed: var(--orig-cmp-fg-dimmed);
 }
 
 .main {
