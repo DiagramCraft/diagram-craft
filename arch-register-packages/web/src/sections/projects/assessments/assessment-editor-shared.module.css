@@ -25,7 +25,7 @@
 
 .inlineEnumDialogOption {
   display: grid;
-  grid-template-columns: minmax(80px, 1fr) minmax(100px, 1.5fr) auto;
+  grid-template-columns: minmax(80px, 1fr) minmax(100px, 1.5fr);
   gap: 6px;
   align-items: center;
 }

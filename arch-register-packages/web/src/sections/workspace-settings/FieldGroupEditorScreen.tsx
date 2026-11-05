@@ -1,21 +1,19 @@
 import { useCallback } from 'react';
 import { getRouteApi } from '@tanstack/react-router';
-import { TbPlus } from 'react-icons/tb';
-import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { Title } from '../../components/Title';
 import { Page } from '../../components/Page';
 import { Panel } from '../../components/Panel';
+import { Stack } from '../../components/Stack';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import { FieldConfigList } from '../../components/FieldConfigList';
+import { ListEditor } from '../../components/ListEditor';
 import { EditorActionsMenu, EditorSaveButtons } from './EditorActionsMenu';
 import { useFieldGroupDraft } from './useFieldGroupDraft';
 import { SchemaFieldRow } from './SchemaFieldRow';
 import { CategorySelect } from './CategorySelect';
 import styles from './SchemaSettingsScreen.module.css';
-
-const FIELDS_LIST_ID = 'shared-fieldgroup-fields';
 
 export const NEW_FIELD_GROUP_ID = 'new';
 
@@ -83,66 +81,60 @@ export const FieldGroupEditorScreen = () => {
 
       {editing ? (
         <Panel>
-          {draft.error && <div role="alert">{draft.error}</div>}
-          <div className={styles.formRow}>
-            <div>
-              <div className={styles.formLabel}>Name</div>
+          <Stack>
+            {draft.error && <div role="alert">{draft.error}</div>}
+
+            <FormElement label="Name">
               <TextInput
                 value={draft.name}
                 readOnly={!canEdit}
                 onChange={v => draft.setName(v ?? '')}
               />
-            </div>
-          </div>
-          <div className={styles.formRow}>
-            <div>
-              <div className={styles.formLabel}>Category</div>
+            </FormElement>
+
+            <FormElement label={'Category'}>
               <CategorySelect
                 value={draft.categoryId}
                 categories={categories}
                 disabled={!canEdit}
                 onChange={draft.setCategoryId}
               />
-            </div>
-          </div>
-          <div className={styles.formRow}>
-            <div>
-              <div className={styles.formLabel}>Description</div>
+            </FormElement>
+
+            <FormElement label={'Description'}>
               <TextArea
                 value={draft.description}
                 readOnly={!canEdit}
                 onChange={v => draft.setDescription(v ?? '')}
                 rows={3}
               />
-            </div>
-          </div>
-          <div className={styles.fieldsHead}>
-            <div className={styles.sectionLabel}>Fields</div>
-            {canEdit && (
-              <Button variant="ghost" icon={<TbPlus size={11} />} onClick={draft.addField}>
-                Add field
-              </Button>
-            )}
-          </div>
-          <FieldConfigList
-            items={draft.fields}
-            getId={field => field.id}
-            listId={FIELDS_LIST_ID}
-            onReorder={draft.reorderFields}
-            renderItem={(field, _index, drag) => (
-              <SchemaFieldRow
-                field={field}
-                onUpdate={patch => draft.updateField(field.id, patch)}
-                onChangeType={type => draft.changeType(field.id, type)}
-                onRemove={canEdit ? () => draft.removeField(field.id) : undefined}
-                containmentDisabled={draft.fields.some(
-                  item => item.id !== field.id && item.type === 'containment'
-                )}
-                canEdit={canEdit}
-                dragHandleRef={drag.ref}
-              />
-            )}
-          />
+            </FormElement>
+
+            <ListEditor
+              label="Fields"
+              items={draft.fields}
+              getId={field => field.id}
+              addLabel="Add field"
+              layout="bare"
+              reorder="drag"
+              disabled={!canEdit}
+              onAdd={draft.addField}
+              onMove={draft.reorderFields}
+              renderItem={(field, { dragRef }) => (
+                <SchemaFieldRow
+                  field={field}
+                  onUpdate={patch => draft.updateField(field.id, patch)}
+                  onChangeType={type => draft.changeType(field.id, type)}
+                  onRemove={canEdit ? () => draft.removeField(field.id) : undefined}
+                  containmentDisabled={draft.fields.some(
+                    item => item.id !== field.id && item.type === 'containment'
+                  )}
+                  canEdit={canEdit}
+                  dragHandleRef={dragRef}
+                />
+              )}
+            />
+          </Stack>
         </Panel>
       ) : (
         <div className={styles.fieldsEmpty}>Select a fieldgroup or create a new one.</div>

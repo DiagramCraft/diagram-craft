@@ -14,6 +14,7 @@ import { SearchInput } from '../../../components/SearchInput';
 import { useDocumentTypes } from '../../../hooks/useDocuments';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { FormGroup } from '../../../components/FormGroup';
+import { useListEditor } from '../../../components/useListEditor';
 import { DocumentBrowserEmbed } from './DocumentBrowserEmbed';
 import type { DocumentBrowserBaseColumnId, DocumentBrowserEmbedConfig } from './types';
 import styles from './DocumentBrowserEmbedConfigForm.module.css';
@@ -99,15 +100,16 @@ const MetadataFilterBuilder = ({
   conditions: FilterCondition[];
   onChange: (conditions: FilterCondition[]) => void;
 }) => {
+  const list = useListEditor(conditions, onChange);
+
   const addCondition = () => {
     const field = fields[0];
     if (!field) return;
-    onChange([...conditions, { fieldId: field.id, op: defaultOperator(field), value: '' }]);
+    list.append({ fieldId: field.id, op: defaultOperator(field), value: '' });
   };
 
   const updateCondition = (index: number, update: Partial<FilterCondition>) => {
-    const next = [...conditions];
-    const updated = { ...next[index]!, ...update };
+    const updated = { ...conditions[index]!, ...update };
 
     if (update.fieldId) {
       const field = fields.find(item => item.id === update.fieldId);
@@ -117,8 +119,7 @@ const MetadataFilterBuilder = ({
       }
     }
 
-    next[index] = updated;
-    onChange(next);
+    list.replace(index, updated);
   };
 
   const clearAll = () => onChange([]);
@@ -150,7 +151,7 @@ const MetadataFilterBuilder = ({
               : (field.enumOptions ?? []).map(option => [option.value, option.label]);
 
           return (
-            <div className={filterStyles.row} key={`${condition.fieldId}-${index}`}>
+            <div className={filterStyles.row} key={list.keys[index]}>
               <div className={filterStyles.rowHead}>
                 <div className={filterStyles.tokField}>
                   <Select.Root
@@ -217,7 +218,7 @@ const MetadataFilterBuilder = ({
               <button
                 type="button"
                 className={filterStyles.removeBtn}
-                onClick={() => onChange(conditions.filter((_, itemIndex) => itemIndex !== index))}
+                onClick={() => list.remove(index)}
                 aria-label="Remove filter"
                 title="Remove filter"
               >
@@ -410,7 +411,16 @@ export const DocumentBrowserEmbedConfigForm = ({ config: value, onChange }: Prop
           <Popover.Root>
             <Popover.Trigger
               element={
-                <Button size="sm" variant={value.conditions.length > 0 ? 'primary' : 'secondary'}>
+                <Button
+                  size="sm"
+                  variant={value.conditions.length > 0 ? 'primary' : 'secondary'}
+                  disabled={selectedFields.length === 0}
+                  title={
+                    selectedFields.length === 0
+                      ? 'Select a document type to filter on its fields'
+                      : undefined
+                  }
+                >
                   <TbFilter size={12} style={{ marginRight: 4 }} />
                   Filter
                   {value.conditions.length > 0 && (

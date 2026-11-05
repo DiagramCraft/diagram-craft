@@ -15,32 +15,15 @@
 }
 
 .tabItem {
-  display: flex;
-  align-items: center;
-  gap: 4px;
   padding: 4px;
   border: 1px solid transparent;
   border-radius: var(--r);
   cursor: pointer;
 }
 
-.tabItem[data-selected="true"] {
+.tabItemSelected {
   border-color: var(--accent-fg);
   background: var(--cmp-bg);
-}
-
-.tabActions {
-  display: flex;
-  gap: 0;
-}
-
-.handle {
-  display: flex;
-  align-items: center;
-  align-self: stretch;
-  padding: 0 2px;
-  color: var(--cmp-fg-dim, var(--base-fg));
-  cursor: grab;
 }
 
 .content {

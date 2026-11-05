@@ -1,5 +1,4 @@
 import React from 'react';
-import { TbPlus } from 'react-icons/tb';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { isRelationLikeField } from '@arch-register/api-types/schemaContract';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
@@ -11,9 +10,8 @@ import {
   defaultOpForField,
   type FieldDef
 } from '../../../components/FilterBuilder';
-import { FormGroup } from '../../../components/FormGroup';
+import { ListEditor } from '../../../components/ListEditor';
 import { Button } from '@diagram-craft/app-components/Button';
-import styles from '../../../components/FilterBuilder.module.css';
 import scopeStyles from './AssessmentScopeFilterBuilder.module.css';
 import type { FieldGroupAccess, FieldGroupAccessControl } from '@arch-register/permissions';
 
@@ -110,54 +108,37 @@ export const AssessmentScopeFilterBuilder = ({
 }) => {
   const fields = useScopeFields({ schemas, scope, lifecycleStates, teams, getFieldGroupAccess });
 
-  const addCondition = () => {
-    const first = fields[0];
-    if (!first) return;
-    onChange([...conditions, { fieldId: first.id, op: defaultOpForField(first), value: '' }]);
-  };
-
-  const updateCondition = (index: number, updates: Partial<FilterCondition>) => {
-    const next = [...conditions];
-    next[index] = applyConditionUpdate(next[index]!, updates, fields);
-    onChange(next);
-  };
-
-  const removeCondition = (index: number) => onChange(conditions.filter((_, i) => i !== index));
-
-  const clearAll = () => onChange([]);
-
   return (
-    <FormGroup
-      label={'Filter Conditions'}
-      variant={'section'}
-      action={
-        <>
-          {conditions.length > 0 && (
-            <Button size="xs" variant="danger" onClick={clearAll}>
-              Clear all
-            </Button>
-          )}
-          <Button size="xs" onClick={addCondition} disabled={fields.length === 0}>
-            <TbPlus size={11} />
-            Add filter
+    <ListEditor
+      label="Filter Conditions"
+      items={conditions}
+      onChange={onChange}
+      createItem={() => {
+        const first = fields[0]!;
+        return { fieldId: first.id, op: defaultOpForField(first), value: '' };
+      }}
+      addLabel="Add filter"
+      addDisabled={fields.length === 0}
+      emptyMessage="No filter conditions"
+      layout="row"
+      headerActions={
+        conditions.length > 0 && (
+          <Button size="xs" variant="danger" onClick={() => onChange([])}>
+            Clear all
           </Button>
-        </>
+        )
       }
-    >
-      <div className={scopeStyles.panel}>
-        <div className={styles.rows}>
-          {conditions.length === 0 && <div className={styles.empty}>No filter conditions</div>}
-          {conditions.map((condition, index) => (
-            <FilterRow
-              key={index}
-              condition={condition}
-              fields={fields}
-              onUpdate={updates => updateCondition(index, updates)}
-              onRemove={() => removeCondition(index)}
-            />
-          ))}
+      renderItem={(condition, { replace, remove }) => (
+        <div className={scopeStyles.rowContent}>
+          <FilterRow
+            condition={condition}
+            fields={fields}
+            onUpdate={updates => replace(applyConditionUpdate(condition, updates, fields))}
+            onRemove={remove}
+            hideRemove
+          />
         </div>
-      </div>
-    </FormGroup>
+      )}
+    />
   );
 };

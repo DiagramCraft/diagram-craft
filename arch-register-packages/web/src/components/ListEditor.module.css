@@ -1,0 +1,82 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.footer {
+  display: flex;
+  margin-top: 4px;
+}
+
+.item {
+  min-width: 0;
+}
+
+.emptyMessage {
+  color: var(--panel-fg-tertiary);
+  font-size: 11px;
+}
+
+.itemBox {
+  padding: 0.5rem;
+  background: var(--base-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+
+  --cmp-bg: var(--orig-cmp-bg);
+  --cmp-bg-hover: var(--orig-cmp-bg-hover);
+  --cmp-fg: var(--orig-cmp-fg);
+  --cmp-fg-secondary: var(--orig-cmp-fg-secondary);
+  --cmp-fg-tertiary: var(--orig-cmp-fg-tertiary);
+  --cmp-fg-dimmed: var(--orig-cmp-fg-dimmed);
+}
+
+.main {
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+}
+
+.mainCard {
+  align-items: stretch;
+}
+
+.mainRow {
+  align-items: center;
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+}
+
+.handle {
+  display: flex;
+  align-items: center;
+  align-self: center;
+  color: var(--panel-fg-secondary);
+  cursor: grab;
+  flex-shrink: 0;
+}
+
+.mainCard .handle {
+  align-self: flex-start;
+  padding: 4px 2px 0 0;
+}
+
+.handle:active {
+  cursor: grabbing;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.mainCard .actions {
+  align-items: flex-start;
+}

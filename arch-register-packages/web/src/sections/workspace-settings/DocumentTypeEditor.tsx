@@ -15,14 +15,12 @@ import { SCHEMA_ICONS } from '../../lib/schemaPresentation';
 import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
 import { FieldMigrationDialog } from '../../dialogs/FieldMigrationDialog';
 import { DocumentTypeVersionHistorySubSection } from './sub-sections/DocumentTypeVersionHistorySubSection';
-import { FieldConfigList } from '../../components/FieldConfigList';
+import { ListEditor } from '../../components/ListEditor';
 import { DocumentAiActionsSection } from './DocumentAiActionsSection';
 import { DocumentFieldRow } from './DocumentFieldRow';
 import { EditorActionsMenu, EditorSaveButtons } from './EditorActionsMenu';
 import { NEW_DOCUMENT_TYPE_ID, useDocumentTypeDraft } from './useDocumentTypeDraft';
 import styles from './DocumentSettingsScreen.module.css';
-
-const FIELDS_LIST_ID = 'document-fields';
 
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/documents');
 
@@ -129,37 +127,25 @@ export const DocumentTypeEditor = ({
           <Tabs.Trigger value="ai">AI actions</Tabs.Trigger>
         </Tabs.List>
         <Tabs.Content value="fields">
-          <div className={styles.fieldsHead}>
-            <div className={styles.sectionLabel}>Fields</div>
-            <Button variant="ghost" icon={<TbPlus size={11} />} onClick={draft.addField}>
-              Add field
-            </Button>
-          </div>
-
-          {draft.fields.length > 0 ? (
-            <div className={styles.fieldsTable}>
-              <FieldConfigList
-                items={draft.fields}
-                getId={field => draft.fieldKeys.get(field.id) ?? field.id}
-                listId={FIELDS_LIST_ID}
-                onReorder={draft.reorderFields}
-                renderItem={(field, _index, drag) => (
-                  <DocumentFieldRow
-                    field={field}
-                    onUpdate={patch => draft.updateField(field.id, patch)}
-                    onRemove={() => draft.removeField(field)}
-                    dragHandleRef={drag.ref}
-                  />
-                )}
+          <ListEditor
+            label="Fields"
+            items={draft.fields}
+            getId={field => draft.fieldKeys.get(field.id) ?? field.id}
+            addLabel="Add field"
+            emptyMessage={'No fields defined yet. Click "Add field" to get started.'}
+            layout="bare"
+            reorder="drag"
+            onAdd={draft.addField}
+            onMove={draft.reorderFields}
+            renderItem={(field, { dragRef }) => (
+              <DocumentFieldRow
+                field={field}
+                onUpdate={patch => draft.updateField(field.id, patch)}
+                onRemove={() => draft.removeField(field)}
+                dragHandleRef={dragRef}
               />
-            </div>
-          ) : (
-            <div className={styles.fieldsTable}>
-              <div className={styles.fieldEmpty}>
-                No fields defined yet. Click &quot;Add field&quot; to get started.
-              </div>
-            </div>
-          )}
+            )}
+          />
           <div className={styles.fieldsHint}>
             <TbInfoCircle size={11} />
             Fields already used by documents keep their value type. Renaming or removing a used

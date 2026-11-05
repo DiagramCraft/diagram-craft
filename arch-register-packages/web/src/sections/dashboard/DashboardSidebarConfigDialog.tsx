@@ -9,13 +9,15 @@ import type {
 import { facetKindForField } from './dashboardFacetFields';
 import { useSchemas } from '../../hooks/useSchemas';
 import { useRelationSchemas } from '../../hooks/useRelationSchemas';
+import { ListEditor } from '../../components/ListEditor';
 import { DialogContent } from '../markdown/editor/BlockDialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
+import { Select } from '@diagram-craft/app-components/Select';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 import {
   isFacetsConfigValid,
   isOptionsConfigValid,
   isValidVariableName,
-  moveItem,
   normalizeFacets,
   normalizeOptions
 } from './dashboardSidebarConfig';
@@ -76,9 +78,6 @@ export const DashboardSidebarConfigDialog = ({
     ?.fields.filter(field => facetKindForField(field) !== undefined)
     .map(field => field.name);
 
-  const updateFacet = (index: number, patch: Partial<DashboardFacetConfig>) =>
-    setFacets(current => current.map((f, i) => (i === index ? { ...f, ...patch } : f)));
-
   const changeFacetsSchema = (value: string) => {
     const nextKind = value.startsWith('relation:') ? 'relation' : 'entity';
     const name = value.replace(/^(entity|relation):/, '');
@@ -99,9 +98,6 @@ export const DashboardSidebarConfigDialog = ({
       )
     );
   };
-
-  const updateOption = (index: number, patch: Partial<DashboardSidebarOption>) =>
-    setOptions(current => current.map((o, i) => (i === index ? { ...o, ...patch } : o)));
 
   const canSave =
     kind === 'facets'
@@ -167,25 +163,22 @@ export const DashboardSidebarConfigDialog = ({
     >
       <DialogContent>
         <FormElement label="Sidebar type">
-          <select
-            className={styles.selectInput}
+          <Select.Root
             value={kind}
-            onChange={event => setKind(event.currentTarget.value as DashboardSidebarConfig['kind'])}
+            onChange={value => value && setKind(value as DashboardSidebarConfig['kind'])}
           >
-            <option value="entity-picker">Entity picker (single select)</option>
-            <option value="facets">Facets (multi select)</option>
-            <option value="options">Fixed options (single select)</option>
-          </select>
+            <Select.Item value="entity-picker">Entity picker (single select)</Select.Item>
+            <Select.Item value="facets">Facets (multi select)</Select.Item>
+            <Select.Item value="options">Fixed options (single select)</Select.Item>
+          </Select.Root>
         </FormElement>
         {kind === 'options' ? (
           <>
             <FormElement label="Variable name">
-              <input
-                type="text"
-                className={styles.labelInput}
+              <TextInput
                 placeholder="e.g. status"
                 value={optionsVariableName}
-                onChange={event => setOptionsVariableName(event.currentTarget.value)}
+                onChange={value => setOptionsVariableName(value ?? '')}
               />
               <div className={styles.hint}>
                 Referenced in widget config as <code>${optionsVariableName || '<name>'}</code>. It
@@ -193,208 +186,129 @@ export const DashboardSidebarConfigDialog = ({
               </div>
             </FormElement>
             <FormElement label="List label" required={false}>
-              <input
-                type="text"
-                className={styles.labelInput}
+              <TextInput
                 value={optionsItemLabel}
-                onChange={event => setOptionsItemLabel(event.currentTarget.value)}
+                onChange={value => setOptionsItemLabel(value ?? '')}
               />
             </FormElement>
             <FormElement label="“All” row label" required={false}>
-              <input
-                type="text"
-                className={styles.labelInput}
+              <TextInput
                 placeholder="e.g. All (leave empty for no “All” row)"
                 value={optionsAllLabel}
-                onChange={event => setOptionsAllLabel(event.currentTarget.value)}
+                onChange={value => setOptionsAllLabel(value ?? '')}
               />
             </FormElement>
-            <FormElement label="Options">
-              <div className={styles.options}>
-                {options.map((option, index) => (
-                  <div key={index} className={styles.options}>
-                    <input
-                      type="text"
-                      className={styles.labelInput}
-                      placeholder="Value"
-                      value={option.value}
-                      onChange={event => updateOption(index, { value: event.currentTarget.value })}
-                    />
-                    <input
-                      type="text"
-                      className={styles.labelInput}
-                      placeholder="Label"
-                      value={option.label}
-                      onChange={event => updateOption(index, { label: event.currentTarget.value })}
-                    />
-                    <div className={styles.optionRow}>
-                      <Button
-                        variant="secondary"
-                        disabled={index === 0}
-                        onClick={() => setOptions(current => moveItem(current, index, -1))}
-                      >
-                        Move up
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        disabled={index === options.length - 1}
-                        onClick={() => setOptions(current => moveItem(current, index, 1))}
-                      >
-                        Move down
-                      </Button>
-                      <Button
-                        variant="danger"
-                        onClick={() => setOptions(current => current.filter((_, i) => i !== index))}
-                      >
-                        Remove
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-                <Button
-                  variant="secondary"
-                  onClick={() => setOptions(current => [...current, { value: '', label: '' }])}
-                >
-                  Add option
-                </Button>
-              </div>
-            </FormElement>
+            <ListEditor
+              label="Options"
+              items={options}
+              onChange={setOptions}
+              createItem={() => ({ value: '', label: '' })}
+              addLabel="Add option"
+              layout="card"
+              reorder="drag"
+              renderItem={(option, { update }) => (
+                <div className={styles.options}>
+                  <TextInput
+                    placeholder="Value"
+                    value={option.value}
+                    onChange={value => update({ value: value ?? '' })}
+                  />
+                  <TextInput
+                    placeholder="Label"
+                    value={option.label}
+                    onChange={value => update({ label: value ?? '' })}
+                  />
+                </div>
+              )}
+            />
           </>
         ) : kind === 'facets' ? (
           <>
             <FormElement label="Schema">
-              <select
-                className={styles.selectInput}
-                value={facetsSchemaName ? `${facetsSchemaKind}:${facetsSchemaName}` : ''}
-                onChange={event => changeFacetsSchema(event.currentTarget.value)}
+              <Select.Root
+                value={facetsSchemaName ? `${facetsSchemaKind}:${facetsSchemaName}` : undefined}
+                placeholder="Select a schema…"
+                onChange={value => changeFacetsSchema(value ?? '')}
               >
-                <option value="">Select a schema…</option>
-                <optgroup label="Entity schemas">
-                  {(entitySchemas.data ?? []).map(schema => (
-                    <option key={schema.id} value={`entity:${schema.name}`}>
-                      {schema.name}
-                    </option>
-                  ))}
-                </optgroup>
-                <optgroup label="Relation types">
-                  {(relationSchemas.data ?? []).map(schema => (
-                    <option key={schema.id} value={`relation:${schema.name}`}>
-                      {schema.name}
-                    </option>
-                  ))}
-                </optgroup>
-              </select>
-            </FormElement>
-            <FormElement label="Facets">
-              <div className={styles.options}>
-                {facets.map((facet, index) => (
-                  <div key={index} className={styles.options}>
-                    <select
-                      className={styles.selectInput}
-                      value={facet.fieldId}
-                      onChange={event => updateFacet(index, { fieldId: event.currentTarget.value })}
-                    >
-                      <option value="">Select a field…</option>
-                      <option value="_owner">Owner</option>
-                      <option value="_lifecycle">Lifecycle</option>
-                      {(referenceFieldNames ?? []).map(name => (
-                        <option key={name} value={name}>
-                          {name}
-                        </option>
-                      ))}
-                    </select>
-                    <input
-                      type="text"
-                      className={styles.labelInput}
-                      placeholder="Variable name, e.g. category"
-                      value={facet.variableName}
-                      onChange={event =>
-                        updateFacet(index, { variableName: event.currentTarget.value })
-                      }
-                    />
-                    <input
-                      type="text"
-                      className={styles.labelInput}
-                      placeholder="Label (optional)"
-                      value={facet.itemLabel ?? ''}
-                      onChange={event =>
-                        updateFacet(index, { itemLabel: event.currentTarget.value })
-                      }
-                    />
-                    <div className={styles.optionRow}>
-                      <Button
-                        variant="secondary"
-                        disabled={index === 0}
-                        onClick={() => setFacets(current => moveItem(current, index, -1))}
-                      >
-                        Move up
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        disabled={index === facets.length - 1}
-                        onClick={() => setFacets(current => moveItem(current, index, 1))}
-                      >
-                        Move down
-                      </Button>
-                      <Button
-                        variant="danger"
-                        onClick={() => setFacets(current => current.filter((_, i) => i !== index))}
-                      >
-                        Remove
-                      </Button>
-                    </div>
-                  </div>
+                {(entitySchemas.data ?? []).map(schema => (
+                  <Select.Item key={`entity:${schema.id}`} value={`entity:${schema.name}`}>
+                    {`Entity schema · ${schema.name}`}
+                  </Select.Item>
                 ))}
-                <Button
-                  variant="secondary"
-                  onClick={() =>
-                    setFacets(current => [...current, { fieldId: '', variableName: '' }])
-                  }
-                >
-                  Add facet
-                </Button>
-              </div>
-              <div className={styles.hint}>
-                Each variable is referenced as <code>$&lt;name&gt;</code> and holds the comma-joined
-                selected ids.
-              </div>
+                {(relationSchemas.data ?? []).map(schema => (
+                  <Select.Item key={`relation:${schema.id}`} value={`relation:${schema.name}`}>
+                    {`Relation type · ${schema.name}`}
+                  </Select.Item>
+                ))}
+              </Select.Root>
             </FormElement>
+            <ListEditor
+              label="Facets"
+              items={facets}
+              onChange={setFacets}
+              createItem={(): DashboardFacetConfig => ({ fieldId: '', variableName: '' })}
+              addLabel="Add facet"
+              layout="card"
+              reorder="drag"
+              renderItem={(facet, { update }) => (
+                <div className={styles.options}>
+                  <Select.Root
+                    value={facet.fieldId || undefined}
+                    placeholder="Select a field…"
+                    onChange={value => update({ fieldId: value ?? '' })}
+                  >
+                    <Select.Item value="_owner">Owner</Select.Item>
+                    <Select.Item value="_lifecycle">Lifecycle</Select.Item>
+                    {(referenceFieldNames ?? []).map(name => (
+                      <Select.Item key={name} value={name}>
+                        {name}
+                      </Select.Item>
+                    ))}
+                  </Select.Root>
+                  <TextInput
+                    placeholder="Variable name, e.g. category"
+                    value={facet.variableName}
+                    onChange={value => update({ variableName: value ?? '' })}
+                  />
+                  <TextInput
+                    placeholder="Label (optional)"
+                    value={facet.itemLabel ?? ''}
+                    onChange={value => update({ itemLabel: value ?? '' })}
+                  />
+                </div>
+              )}
+            />
           </>
         ) : (
           <>
             <FormElement label="Entity schema">
-              <select
-                className={styles.selectInput}
-                value={schemaName}
-                onChange={event => setSchemaName(event.currentTarget.value)}
+              <Select.Root
+                value={schemaName || undefined}
+                placeholder="Select a schema…"
+                onChange={value => setSchemaName(value ?? '')}
               >
-                <option value="">Select a schema…</option>
                 {(entitySchemas.data ?? []).map(schema => (
-                  <option key={schema.id} value={schema.name}>
+                  <Select.Item key={schema.id} value={schema.name}>
                     {schema.name}
-                  </option>
+                  </Select.Item>
                 ))}
-              </select>
+              </Select.Root>
             </FormElement>
             <FormElement label="Variable name">
-              <input
-                type="text"
-                className={styles.labelInput}
+              <TextInput
                 placeholder="e.g. apiEntityId"
                 value={variableName}
-                onChange={event => setVariableName(event.currentTarget.value)}
+                onChange={value => setVariableName(value ?? '')}
               />
               <div className={styles.hint}>
                 Referenced in widget config as <code>${variableName || '<name>'}</code>.
               </div>
             </FormElement>
             <FormElement label="List label" required={false}>
-              <input
-                type="text"
-                className={styles.labelInput}
+              <TextInput
                 placeholder="e.g. APIs"
                 value={itemLabel}
-                onChange={event => setItemLabel(event.currentTarget.value)}
+                onChange={value => setItemLabel(value ?? '')}
               />
             </FormElement>
           </>

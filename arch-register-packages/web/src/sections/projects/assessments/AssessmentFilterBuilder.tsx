@@ -9,6 +9,7 @@ import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import type { EntitySummary } from '@arch-register/api-types/entityContract';
 import styles from '../../../components/FilterBuilder.module.css';
 import { EmptyState } from '../../../components/EmptyState';
+import { useListEditor } from '../../../components/useListEditor';
 import { defaultConditionFor, type AssessmentFilterCondition } from './assessmentFilterConditions';
 
 type Props = {
@@ -32,26 +33,16 @@ export const AssessmentFilterBuilder = ({
   scope,
   enums
 }: Props) => {
-  const addCondition = () => {
-    onChange([...conditions, defaultConditionFor('_owner', fields)]);
-  };
+  const list = useListEditor(conditions, onChange);
 
   const removeCondition = (index: number) => {
-    const next = [...conditions];
-    next.splice(index, 1);
-    onChange(next);
-    if (next.length === 0) onClose?.();
+    list.remove(index);
+    if (conditions.length === 1) onClose?.();
   };
 
   const clearAll = () => {
     onChange([]);
     onClose?.();
-  };
-
-  const updateCondition = (index: number, updated: AssessmentFilterCondition) => {
-    const next = [...conditions];
-    next[index] = updated;
-    onChange(next);
   };
 
   return (
@@ -69,22 +60,26 @@ export const AssessmentFilterBuilder = ({
         {conditions.length === 0 && <EmptyState compact title="No filters applied." />}
         {conditions.map((c, i) => (
           <AssessmentFilterRow
-            key={i}
+            key={list.keys[i]}
             condition={c}
             fields={fields}
             entities={entities}
             schemas={schemas}
             scope={scope}
             enums={enums}
-            onChange={updated => updateCondition(i, updated)}
-            onFieldChange={fieldId => updateCondition(i, defaultConditionFor(fieldId, fields))}
+            onChange={updated => list.replace(i, updated)}
+            onFieldChange={fieldId => list.replace(i, defaultConditionFor(fieldId, fields))}
             onRemove={() => removeCondition(i)}
           />
         ))}
       </div>
 
       <div className={styles.footer}>
-        <button type="button" className={styles.addFilter} onClick={addCondition}>
+        <button
+          type="button"
+          className={styles.addFilter}
+          onClick={() => list.append(defaultConditionFor('_owner', fields))}
+        >
           <TbPlus size={11} />
           Add filter
         </button>
