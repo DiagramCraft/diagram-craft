@@ -50,8 +50,8 @@ export const GroupedListEditor = <T, G extends { id: string }>(props: Props<T, G
       reorder="drag"
       disabled={disabled}
       addLabel=""
-      // the add control lives in the group header, so suppress the footer button
-      maxItems={0}
+      // the add control lives in the group header
+      addControl={false}
       onAdd={noop}
       onMove={(from, to) => props.onMove(bucket, from, to)}
       renderItem={props.renderItem}

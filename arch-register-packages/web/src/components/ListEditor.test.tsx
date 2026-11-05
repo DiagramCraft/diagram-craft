@@ -150,4 +150,8 @@ describe('ListEditor', () => {
       'Custom add'
     );
   });
+
+  test('addControl={false} shows no add control', () => {
+    expect(render({ addControl: false })).not.toContain('Add item');
+  });
 });

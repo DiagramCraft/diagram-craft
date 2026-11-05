@@ -49,8 +49,8 @@ type BaseProps<T> = {
   supplementaryLabel?: string;
   /** `none` renders the list without the section wrapper, for parents that draw their own header. Ignores `label`; the add button then sits below the list. */
   header?: 'section' | 'none';
-  /** Replaces the default add button, e.g. a menu of item types. Hidden when the list is disabled. */
-  addControl?: ReactNode;
+  /** Replaces the default add button, e.g. a menu of item types; `false` shows no add control at all. Hidden when the list is disabled. */
+  addControl?: ReactNode | false;
   /** Disables the add button while keeping it visible, e.g. when there is nothing to create an item from */
   addDisabled?: boolean;
   /** Shown when there are no items */
@@ -128,11 +128,11 @@ export const ListEditor = <T,>(props: ListEditorProps<T>) => {
 
   const addButton =
     !disabled && (maxItems === undefined || items.length < maxItems) ? (
-      addControl ?? (
+      addControl === false ? null : (addControl ?? (
       <Button size="xs" icon={<TbPlus size={11} />} onClick={add} disabled={addDisabled}>
         {addLabel}
       </Button>
-      )
+      ))
     ) : null;
   const sectioned = header === 'section' && label !== undefined;
 
