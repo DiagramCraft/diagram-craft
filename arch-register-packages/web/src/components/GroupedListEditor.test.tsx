@@ -15,16 +15,16 @@ const ITEMS: Item[] = [
 const render = (groups = [{ id: 'g1' }, { id: 'g2' }]) =>
   renderToStaticMarkup(
     <DndProvider backend={HTML5Backend}>
-    <GroupedListEditor<Item, { id: string }>
-      items={ITEMS}
-      groups={groups}
-      getGroupId={i => i.group}
-      getId={i => i.id}
-      onMove={() => {}}
-      renderGroupHeader={g => <h3>Header {g.id}</h3>}
-      renderEmpty={g => <p>Empty {g.id}</p>}
-      renderItem={i => <span>{i.name}</span>}
-    />
+      <GroupedListEditor<Item, { id: string }>
+        items={ITEMS}
+        groups={groups}
+        getGroupId={i => i.group}
+        getId={i => i.id}
+        onMove={() => {}}
+        renderGroupHeader={g => <h3>Header {g.id}</h3>}
+        renderEmpty={g => <p>Empty {g.id}</p>}
+        renderItem={i => <span>{i.name}</span>}
+      />
     </DndProvider>
   );
 

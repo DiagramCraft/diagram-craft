@@ -127,13 +127,15 @@ export const ListEditor = <T,>(props: ListEditorProps<T>) => {
   }));
 
   const addButton =
-    !disabled && (maxItems === undefined || items.length < maxItems) ? (
-      addControl === false ? null : (addControl ?? (
-      <Button size="xs" icon={<TbPlus size={11} />} onClick={add} disabled={addDisabled}>
-        {addLabel}
-      </Button>
-      ))
-    ) : null;
+    !disabled && (maxItems === undefined || items.length < maxItems)
+      ? addControl === false
+        ? null
+        : (addControl ?? (
+            <Button size="xs" icon={<TbPlus size={11} />} onClick={add} disabled={addDisabled}>
+              {addLabel}
+            </Button>
+          ))
+      : null;
   const sectioned = header === 'section' && label !== undefined;
 
   const draggable = (reorder === 'drag' || reorder === 'drag+buttons') && !disabled;

@@ -146,9 +146,9 @@ describe('ListEditor', () => {
   });
 
   test('addControl is hidden when disabled', () => {
-    expect(render({ addControl: <button type="button">Custom add</button>, disabled: true })).not.toContain(
-      'Custom add'
-    );
+    expect(
+      render({ addControl: <button type="button">Custom add</button>, disabled: true })
+    ).not.toContain('Custom add');
   });
 
   test('addControl={false} shows no add control', () => {

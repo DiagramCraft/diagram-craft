@@ -26,7 +26,6 @@ import { GroupedListEditor } from '../../../components/GroupedListEditor';
 import styles from './AssessmentEditorTabs.module.css';
 import sharedStyles from './assessment-editor-shared.module.css';
 
-
 export const AssessmentEditorTabs = ({
   editor,
   schemas

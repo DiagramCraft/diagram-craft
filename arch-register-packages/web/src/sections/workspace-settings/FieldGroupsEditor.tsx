@@ -85,74 +85,74 @@ export function FieldGroupsEditor<
             const inherited = isInherited(group.id);
             const teamIds = resolveGroupAccessControl(group, sharedFieldGroupLinks)?.teamIds ?? [];
             return (
-        <div className={styles.groupHeader}>
-          <div>
-            <div className={styles.groupName}>
-              {group.name}
-              {teamIds.length > 0 && (
-                <span className={styles.restrictedBadge}>
-                  <TbLock size={10} />
-                  Restricted
-                </span>
-              )}
-            </div>
-            {group.description && (
-              <div className={styles.groupDescription}>{group.description}</div>
-            )}
-            {teamIds.length > 0 && (
-              <div className={styles.restrictedTeams}>
-                Restricted to{' '}
-                {teamIds
-                  .map(
-                    teamId =>
-                      teams.find(team => team.id === teamId)?.name ?? 'Unavailable team'
-                  )
-                  .join(', ')}
+              <div className={styles.groupHeader}>
+                <div>
+                  <div className={styles.groupName}>
+                    {group.name}
+                    {teamIds.length > 0 && (
+                      <span className={styles.restrictedBadge}>
+                        <TbLock size={10} />
+                        Restricted
+                      </span>
+                    )}
+                  </div>
+                  {group.description && (
+                    <div className={styles.groupDescription}>{group.description}</div>
+                  )}
+                  {teamIds.length > 0 && (
+                    <div className={styles.restrictedTeams}>
+                      Restricted to{' '}
+                      {teamIds
+                        .map(
+                          teamId =>
+                            teams.find(team => team.id === teamId)?.name ?? 'Unavailable team'
+                        )
+                        .join(', ')}
+                    </div>
+                  )}
+                </div>
+                {canEdit && (
+                  <div className={styles.groupActions}>
+                    {!inherited && (
+                      <Button
+                        variant="ghost"
+                        icon={<TbPlus size={11} />}
+                        onClick={() => editor.addField(group.id)}
+                      >
+                        Add field
+                      </Button>
+                    )}
+                    <MenuButton.Root>
+                      <MenuButton.Trigger
+                        element={
+                          <button type="button" className={styles.iconBtn}>
+                            <TbDots size={13} />
+                          </button>
+                        }
+                      />
+                      <MenuButton.Menu>
+                        <Menu.Item disabled={inherited} onClick={() => editor.editGroup(group)}>
+                          Edit
+                        </Menu.Item>
+                        <Menu.Item onClick={() => editor.setAccessDialogGroupId(group.id)}>
+                          Change access
+                        </Menu.Item>
+                        <Menu.Separator />
+                        <Menu.Item
+                          type="danger"
+                          onClick={() =>
+                            inherited
+                              ? editor.removeSharedFieldGroup(group.id)
+                              : editor.removeGroup(group.id)
+                          }
+                        >
+                          Delete
+                        </Menu.Item>
+                      </MenuButton.Menu>
+                    </MenuButton.Root>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-          {canEdit && (
-            <div className={styles.groupActions}>
-              {!inherited && (
-                <Button
-                  variant="ghost"
-                  icon={<TbPlus size={11} />}
-                  onClick={() => editor.addField(group.id)}
-                >
-                  Add field
-                </Button>
-              )}
-              <MenuButton.Root>
-                <MenuButton.Trigger
-                  element={
-                    <button type="button" className={styles.iconBtn}>
-                      <TbDots size={13} />
-                    </button>
-                  }
-                />
-                <MenuButton.Menu>
-                  <Menu.Item disabled={inherited} onClick={() => editor.editGroup(group)}>
-                    Edit
-                  </Menu.Item>
-                  <Menu.Item onClick={() => editor.setAccessDialogGroupId(group.id)}>
-                    Change access
-                  </Menu.Item>
-                  <Menu.Separator />
-                  <Menu.Item
-                    type="danger"
-                    onClick={() =>
-                      inherited
-                        ? editor.removeSharedFieldGroup(group.id)
-                        : editor.removeGroup(group.id)
-                    }
-                  >
-                    Delete
-                  </Menu.Item>
-                </MenuButton.Menu>
-              </MenuButton.Root>
-            </div>
-          )}
-        </div>
             );
           }}
           renderEmpty={() => <div className={styles.groupEmpty}>No fields in this group.</div>}
