@@ -11,8 +11,8 @@ import type {
 import { useEntitiesBySchema } from '../../../hooks/useEntities';
 import type { BulkEditableField } from './bulkEditFields';
 import styles from './BulkEditToolbar.module.css';
-import { MultiValueEditor } from '../../../components/MultiValueEditor';
-import { isMultiValuedScalarField } from '../../../lib/scalarFieldValues';
+import { ListEditor } from '../../../components/ListEditor';
+import { isMultiValuedScalarField, scalarValues } from '../../../lib/scalarFieldValues';
 import { DurationInput } from '../../../components/DurationInput';
 import { decodeDurationText, encodeDurationText } from '../../../utils/durationFormat';
 import { selectableEnumOptions } from '../../../utils/enumOptions';
@@ -200,10 +200,12 @@ export const BulkFieldInput = ({
     };
 
     return (
-      <MultiValueEditor
-        value={values}
+      <ListEditor
+        items={scalarValues(values)}
         onChange={next => onValue(JSON.stringify(next))}
-        createValue={() =>
+        removeLabel="Remove value"
+        reorder="drag"
+        createItem={() =>
           schemaField.type === 'boolean'
             ? false
             : schemaField.type === 'currency'
@@ -214,7 +216,7 @@ export const BulkFieldInput = ({
                   ? ''
                   : ''
         }
-        renderItem={renderItem}
+        renderItem={(item, ctx) => renderItem(item, ctx.index, ctx.replace)}
         addLabel="Add"
       />
     );

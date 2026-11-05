@@ -7,8 +7,8 @@ import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { EntitySummary } from '@arch-register/api-types/entityContract';
-import { MultiValueEditor } from '../components/MultiValueEditor';
-import { isMultiValuedScalarField } from '../lib/scalarFieldValues';
+import { ListEditor } from '../components/ListEditor';
+import { isMultiValuedScalarField, scalarValues } from '../lib/scalarFieldValues';
 import { selectableEnumOptions } from '../utils/enumOptions';
 import { DurationInput } from '../components/DurationInput';
 import { PrincipalPicker } from '../components/PrincipalPicker';
@@ -216,10 +216,14 @@ export const EntityFieldInput = ({
         hint={field.description}
         required={field.requirementLevel !== 'optional'}
       >
-        <MultiValueEditor
-          value={value}
+        <ListEditor
+          items={scalarValues(value)}
           onChange={onChange}
-          createValue={() =>
+          addLabel="Add value"
+          removeLabel="Remove value"
+          reorder="drag"
+          disabled={disabled}
+          createItem={() =>
             field.type === 'boolean'
               ? false
               : field.type === 'currency'
@@ -230,7 +234,7 @@ export const EntityFieldInput = ({
                     ? ''
                     : ''
           }
-          renderItem={renderItem}
+          renderItem={(item, ctx) => renderItem(item, ctx.index, ctx.replace)}
         />
       </FormElement>
     );
