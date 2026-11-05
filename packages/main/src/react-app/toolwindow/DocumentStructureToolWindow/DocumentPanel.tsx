@@ -10,7 +10,8 @@ import { ActionMenuItem } from '../../components/ActionMenuItem';
 import { type ReactElement } from 'react';
 import { useDraggable, useDropTarget } from '../../hooks/dragAndDropHooks';
 import { mustExist } from '@diagram-craft/utils/assert';
-import styles from './StructureTree.module.css';
+import structureTreeStyles from './StructureTree.module.css';
+import styles from './DocumentPanel.module.css';
 import { MetadataFields } from '../../MetadataFields';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
 
@@ -93,7 +94,12 @@ const DiagramTreeNodeItem = (props: {
   const dnd = useDiagramReorderDnD(props.node);
 
   return (
-    <Tree.Node key={props.node.id} isOpen={true} {...dnd.eventHandlers} className={styles.eNode}>
+    <Tree.Node
+      key={props.node.id}
+      isOpen={true}
+      {...dnd.eventHandlers}
+      className={structureTreeStyles.eNode}
+    >
       <DocumentsContextMenu
         diagramId={props.node.id}
         element={
@@ -129,7 +135,7 @@ const RootDiagramNode = (props: {
   return (
     <Tree.Node
       key={props.node.id}
-      className={styles.eNode}
+      className={structureTreeStyles.eNode}
       isOpen={true}
       data-state={props.activeDiagramId === props.node.id ? 'on' : 'off'}
       {...dnd.eventHandlers}
@@ -185,8 +191,8 @@ export const DocumentPanel = () => {
       <Accordion.Item value="document">
         <Accordion.ItemHeader>Diagrams</Accordion.ItemHeader>
         <Accordion.ItemContent forceMount>
-          <div className="cmp-document-list">
-            <Tree.Root className={styles.icStructureTree}>
+          <div className={styles.icDocumentList}>
+            <Tree.Root className={structureTreeStyles.icStructureTree}>
               {document.diagrams.map(node => (
                 <RootDiagramNode
                   key={node.id}
