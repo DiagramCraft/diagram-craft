@@ -49,11 +49,13 @@ export const AssessmentTypesSubSection = ({
           addLabel="Add assessment type"
           removeLabel="Delete type"
           renderItem={(type, { update }) => (
-            <TextInput
-              value={type.name}
-              onChange={value => update({ name: value ?? '' })}
-              placeholder="Name (e.g. Risk & compliance)"
-            />
+            <div style={{ marginTop: '0.25rem', marginBottom: '0.25rem' }}>
+              <TextInput
+                value={type.name}
+                onChange={value => update({ name: value ?? '' })}
+                placeholder="Name (e.g. Risk & compliance)"
+              />
+            </div>
           )}
         />
       </SettingsBlock>

@@ -33,4 +33,6 @@
   grid-template-columns: 1fr auto;
   gap: 14px;
   align-items: center;
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
 }

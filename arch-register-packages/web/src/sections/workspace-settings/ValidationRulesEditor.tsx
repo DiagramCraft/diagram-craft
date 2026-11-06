@@ -48,15 +48,29 @@ export const ValidationRulesEditor = ({
           )
         }
         renderActions={(rule, { update }) => (
-          <Button size="xs" onClick={() => update({ active: !rule.active })}>
+          <Button size="sm" variant={'ghost'} onClick={() => update({ active: !rule.active })}>
             {rule.active ? 'Deactivate' : 'Activate'}
           </Button>
         )}
         renderItem={(rule, { update }) => (
           <div className={styles.validationRuleFields}>
-            <FormElement label="Name">
-              <TextInput value={rule.name} onChange={value => update({ name: value ?? '' })} />
-            </FormElement>
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <FormElement label="Name" style={{ width: '100%' }}>
+                <TextInput value={rule.name} onChange={value => update({ name: value ?? '' })} />
+              </FormElement>
+
+              <FormElement label="Severity" style={{ minWidth: '10rem' }}>
+                <Select.Root
+                  value={rule.severity}
+                  onChange={value =>
+                    update({ severity: (value ?? 'error') as ValidationRule['severity'] })
+                  }
+                >
+                  <Select.Item value="error">Blocking error</Select.Item>
+                  <Select.Item value="warning">Warning</Select.Item>
+                </Select.Root>
+              </FormElement>
+            </div>
             <FormElement label="Expression">
               <TextArea
                 value={rule.expression}
@@ -71,17 +85,6 @@ export const ValidationRulesEditor = ({
                 onChange={value => update({ message: value ?? '' })}
                 placeholder="Message shown when the rule fails"
               />
-            </FormElement>
-            <FormElement label="Severity">
-              <Select.Root
-                value={rule.severity}
-                onChange={value =>
-                  update({ severity: (value ?? 'error') as ValidationRule['severity'] })
-                }
-              >
-                <Select.Item value="error">Blocking error</Select.Item>
-                <Select.Item value="warning">Warning</Select.Item>
-              </Select.Root>
             </FormElement>
           </div>
         )}
