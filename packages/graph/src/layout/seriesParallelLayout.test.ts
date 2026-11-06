@@ -386,4 +386,41 @@ describe('layoutSeriesParallel', () => {
       expect(positions.size).toBe(0);
     });
   });
+
+  describe('cyclic graphs', () => {
+    test('unique source-to-sink path with dense cyclic side component completes promptly', () => {
+      const graph = new SimpleGraph();
+      const ids = ['s', 'a', 't'];
+      const side = Array.from({ length: 22 }, (_, i) => `c${i}`);
+      for (const id of [...ids, ...side]) graph.addVertex({ id, data: {} });
+
+      graph.addEdge({ id: 'e1', from: 's', to: 'a', weight: 1, data: {} });
+      graph.addEdge({ id: 'e2', from: 'a', to: 't', weight: 1, data: {} });
+      graph.addEdge({ id: 'e3', from: 'a', to: 'c0', weight: 1, data: {} });
+      for (const x of side) {
+        for (const y of side) {
+          if (x !== y) graph.addEdge({ id: `${x}-${y}`, from: x, to: y, weight: 1, data: {} });
+        }
+      }
+
+      const start = Date.now();
+      const positions = layoutSeriesParallel(graph, ['s']);
+
+      expect(Date.now() - start).toBeLessThan(2000);
+      expect(positions.size).toBe(ids.length + side.length);
+    });
+
+    test('detects parallel paths through a cycle', () => {
+      const graph = new SimpleGraph();
+      for (const id of ['s', 'a', 'b', 't']) graph.addVertex({ id, data: {} });
+      graph.addEdge({ id: 'e1', from: 's', to: 'a', weight: 1, data: {} });
+      graph.addEdge({ id: 'e2', from: 'a', to: 'b', weight: 1, data: {} });
+      graph.addEdge({ id: 'e3', from: 'a', to: 't', weight: 1, data: {} });
+      graph.addEdge({ id: 'e4', from: 'b', to: 't', weight: 1, data: {} });
+      graph.addEdge({ id: 'e5', from: 'b', to: 'a', weight: 1, data: {} });
+
+      const positions = layoutSeriesParallel(graph, ['s']);
+      expect(positions.size).toBe(4);
+    });
+  });
 });
