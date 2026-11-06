@@ -39,7 +39,6 @@
   display: flex;
   gap: 16px;
   align-items: flex-start;
-  margin-top: 12px;
 }
 
 .appearanceRow > div:first-child {

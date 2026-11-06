@@ -11,6 +11,8 @@ import { TypeBadge } from '../../components/TypeBadge';
 import { ICON_MAP } from '../../components/TypeBadge';
 import { EmptyState } from '../../components/EmptyState';
 import { Title } from '../../components/Title';
+import { Panel } from '../../components/Panel';
+import { Stack } from '../../components/Stack';
 import { SCHEMA_ICONS } from '../../lib/schemaPresentation';
 import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
 import { FieldMigrationDialog } from '../../dialogs/FieldMigrationDialog';
@@ -21,6 +23,7 @@ import { DocumentFieldRow } from './DocumentFieldRow';
 import { EditorActionsMenu, EditorSaveButtons } from './EditorActionsMenu';
 import { NEW_DOCUMENT_TYPE_ID, useDocumentTypeDraft } from './useDocumentTypeDraft';
 import styles from './DocumentSettingsScreen.module.css';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
 
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/documents');
 
@@ -56,114 +59,114 @@ export const DocumentTypeEditor = ({
   });
 
   const editorBody = (
-    <div className={styles.editor}>
-      {selected?.archived && (
-        <div className={styles.banner}>
-          <TbInfoCircle size={12} />
-          Archived — visible on existing documents for history, but not offered when creating new
-          ones.
-        </div>
-      )}
-
-      <div className={styles.formRow}>
-        <div>
-          <div className={styles.formLabel}>Name</div>
-          <TextInput
-            value={draft.name}
-            onChange={value => draft.setName(value ?? '')}
-            style={{ width: '100%' }}
-          />
-        </div>
-        <div style={{ flex: 2 }}>
-          <div className={styles.formLabel}>Description</div>
-          <TextInput
-            value={draft.description}
-            onChange={value => draft.setDescription(value ?? '')}
-            style={{ width: '100%' }}
-          />
-        </div>
-      </div>
-
-      <div className={styles.appearanceRow}>
-        <div>
-          <div className={styles.formLabel}>Color</div>
-          <div className={styles.colorSwatches}>
-            {SCHEMA_COLORS.map(preset => (
-              <button
-                type="button"
-                key={preset}
-                className={`${styles.swatch} ${draft.color === preset ? styles.swatchActive : ''}`}
-                style={{ background: preset }}
-                title={preset}
-                onClick={() => draft.setColor(preset)}
-              />
-            ))}
+    <Panel>
+      <Stack>
+        {selected?.archived && (
+          <div className={styles.banner}>
+            <TbInfoCircle size={12} />
+            Archived — visible on existing documents for history, but not offered when creating new
+            ones.
           </div>
+        )}
+
+        <div className={styles.formRow}>
+          <FormElement label={'Name'}>
+            <TextInput
+              value={draft.name}
+              onChange={value => draft.setName(value ?? '')}
+              style={{ width: '100%' }}
+            />
+          </FormElement>
+
+          <FormElement label={'Description'}>
+            <TextInput
+              value={draft.description}
+              onChange={value => draft.setDescription(value ?? '')}
+              style={{ width: '100%' }}
+            />
+          </FormElement>
         </div>
-        <div>
-          <div className={styles.formLabel}>Icon</div>
-          <div className={styles.iconPicker}>
-            {SCHEMA_ICONS.map(id => {
-              const Icon = ICON_MAP[id];
-              return (
+
+        <div className={styles.appearanceRow}>
+          <FormElement label={'Color'}>
+            <div className={styles.colorSwatches}>
+              {SCHEMA_COLORS.map(preset => (
                 <button
                   type="button"
-                  key={id}
-                  className={`${styles.iconOption} ${draft.icon === id ? styles.iconOptionActive : ''}`}
-                  title={id}
-                  onClick={() => draft.setIcon(id)}
-                >
-                  <Icon size={14} />
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
+                  key={preset}
+                  className={`${styles.swatch} ${draft.color === preset ? styles.swatchActive : ''}`}
+                  style={{ background: preset }}
+                  title={preset}
+                  onClick={() => draft.setColor(preset)}
+                />
+              ))}
+            </div>
+          </FormElement>
 
-      <Tabs.Root autoHeight value={panelTab} onValueChange={setPanelTab}>
-        <Tabs.List aria-label="Document type sections">
-          <Tabs.Trigger value="fields">Fields</Tabs.Trigger>
-          <Tabs.Trigger value="ai">AI actions</Tabs.Trigger>
-        </Tabs.List>
-        <Tabs.Content value="fields">
-          <ListEditor
-            label="Fields"
-            items={draft.fields}
-            getId={field => draft.fieldKeys.get(field.id) ?? field.id}
-            addLabel="Add field"
-            emptyMessage={'No fields defined yet. Click "Add field" to get started.'}
-            layout="bare"
-            reorder="drag"
-            operations
-            onAdd={draft.addField}
-            onMove={draft.reorderFields}
-            renderItem={(field, { dragRef }) => (
-              <DocumentFieldRow
-                field={field}
-                onUpdate={patch => draft.updateField(field.id, patch)}
-                onRemove={() => draft.removeField(field)}
-                dragHandleRef={dragRef}
-              />
-            )}
-          />
-          <div className={styles.fieldsHint}>
-            <TbInfoCircle size={11} />
-            Fields already used by documents keep their value type. Renaming or removing a used
-            field will ask you to choose how to migrate its data before saving.
-          </div>
-        </Tabs.Content>
-        <Tabs.Content value="ai">
-          <DocumentAiActionsSection
-            workspaceSlug={workspaceSlug}
-            documentTypeId={selected?.id ?? null}
-            fields={draft.fields}
-            aiActions={draft.aiActions}
-            onChange={draft.setAiActions}
-          />
-        </Tabs.Content>
-      </Tabs.Root>
-    </div>
+          <FormElement label={'Icon'}>
+            <div className={styles.iconPicker}>
+              {SCHEMA_ICONS.map(id => {
+                const Icon = ICON_MAP[id];
+                return (
+                  <button
+                    type="button"
+                    key={id}
+                    className={`${styles.iconOption} ${draft.icon === id ? styles.iconOptionActive : ''}`}
+                    title={id}
+                    onClick={() => draft.setIcon(id)}
+                  >
+                    <Icon size={14} />
+                  </button>
+                );
+              })}
+            </div>
+          </FormElement>
+        </div>
+
+        <Tabs.Root autoHeight value={panelTab} onValueChange={setPanelTab}>
+          <Tabs.List aria-label="Document type sections">
+            <Tabs.Trigger value="fields">Fields</Tabs.Trigger>
+            <Tabs.Trigger value="ai">AI actions</Tabs.Trigger>
+          </Tabs.List>
+          <Tabs.Content value="fields">
+            <ListEditor
+              label="Fields"
+              items={draft.fields}
+              getId={field => draft.fieldKeys.get(field.id) ?? field.id}
+              addLabel="Add field"
+              emptyMessage={'No fields defined yet. Click "Add field" to get started.'}
+              layout="bare"
+              reorder="drag"
+              operations
+              onAdd={draft.addField}
+              onMove={draft.reorderFields}
+              renderItem={(field, { dragRef }) => (
+                <DocumentFieldRow
+                  field={field}
+                  onUpdate={patch => draft.updateField(field.id, patch)}
+                  onRemove={() => draft.removeField(field)}
+                  dragHandleRef={dragRef}
+                />
+              )}
+            />
+            <div className={styles.fieldsHint}>
+              <TbInfoCircle size={11} />
+              Fields already used by documents keep their value type. Renaming or removing a used
+              field will ask you to choose how to migrate its data before saving.
+            </div>
+          </Tabs.Content>
+          <Tabs.Content value="ai">
+            <DocumentAiActionsSection
+              workspaceSlug={workspaceSlug}
+              documentTypeId={selected?.id ?? null}
+              fields={draft.fields}
+              aiActions={draft.aiActions}
+              onChange={draft.setAiActions}
+            />
+          </Tabs.Content>
+        </Tabs.Root>
+      </Stack>
+    </Panel>
   );
 
   return (
