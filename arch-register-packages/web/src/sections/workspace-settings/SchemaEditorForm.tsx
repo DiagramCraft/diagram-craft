@@ -8,7 +8,6 @@ import type { EntityEditorExtra } from './entitySchemaAdapter';
 import { SchemaEditorFormShell } from './SchemaEditorFormShell';
 import { SchemaEditorTabs } from './SchemaEditorTabs';
 import { useCanEditSchemas, useSchemaEditor } from './schemaEditorContext';
-import styles from './SchemaSettingsScreen.module.css';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 
 const deriveKeyPrefix = (value: string) =>

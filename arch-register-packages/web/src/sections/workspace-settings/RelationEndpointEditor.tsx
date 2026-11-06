@@ -4,7 +4,6 @@ import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useCanEditSchemas } from './schemaEditorContext';
 import type { RelationEndpoint } from '@arch-register/api-types/relationSchemaContract';
 import { setEndpointSchemaIds } from './relationSchemaSettingsHelpers';
-import styles from './SchemaSettingsScreen.module.css';
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 
