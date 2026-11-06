@@ -9,6 +9,7 @@ import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useCanEditSchemas, useSchemaEditor } from './schemaEditorContext';
 import type { EditorField, EditorGroup } from './schemaEditorState';
 import styles from './SchemaSettingsScreen.module.css';
+import { FormGroup } from '../../components/FormGroup';
 
 export type FieldGroupsEditorField = {
   id: string;
@@ -51,21 +52,30 @@ export function FieldGroupsEditor<
     sharedFieldGroupLinks.some(link => link.groupId === groupId);
 
   return (
-    <>
-      <div className={styles.fieldsHead}>
-        <div className={styles.sectionLabel}>Fields</div>
-        {canEdit && (
-          <div style={{ display: 'flex', gap: 8 }}>
-            <Button variant="ghost" icon={<TbPlus size={11} />} onClick={editor.addGroup}>
-              Add group
-            </Button>
-            <Button variant="ghost" icon={<TbPlus size={11} />} onClick={() => editor.addField()}>
-              Add field
-            </Button>
-          </div>
-        )}
-      </div>
-
+    <FormGroup
+      variant={'section'}
+      label={'Fields'}
+      action={
+        <>
+          <Button
+            size="xs"
+            icon={<TbPlus size={11} />}
+            onClick={editor.addGroup}
+            disabled={!canEdit}
+          >
+            Add group
+          </Button>
+          <Button
+            size="xs"
+            icon={<TbPlus size={11} />}
+            onClick={() => editor.addField()}
+            disabled={!canEdit}
+          >
+            Add field
+          </Button>
+        </>
+      }
+    >
       {fields.length > 0 || groups.length > 0 ? (
         <GroupedListEditor
           className={styles.fieldsTable}
@@ -115,7 +125,7 @@ export function FieldGroupsEditor<
                   <div className={styles.groupActions}>
                     {!inherited && (
                       <Button
-                        variant="ghost"
+                        size={'xs'}
                         icon={<TbPlus size={11} />}
                         onClick={() => editor.addField(group.id)}
                       >
@@ -125,9 +135,9 @@ export function FieldGroupsEditor<
                     <MenuButton.Root>
                       <MenuButton.Trigger
                         element={
-                          <button type="button" className={styles.iconBtn}>
-                            <TbDots size={13} />
-                          </button>
+                          <Button size={'xs'}>
+                            <TbDots size={11} />
+                          </Button>
                         }
                       />
                       <MenuButton.Menu>
@@ -170,6 +180,6 @@ export function FieldGroupsEditor<
           No fields defined yet. Click &quot;Add field&quot; to get started.
         </div>
       )}
-    </>
+    </FormGroup>
   );
 }

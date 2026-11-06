@@ -26,15 +26,18 @@ type ControlledProps<T> = {
   createItem: () => T;
   /** Row key. Omit when items have no stable id (or an editable one); keys are then tracked internally. */
   getId?: (item: T) => string;
+  operations?: false;
   onAdd?: never;
   onMove?: never;
   onRemove?: never;
 };
 
 type OperationsProps<T> = {
+  operations: true;
   /** Operations mode: the owner applies add, move and remove itself (e.g. domain logic, grouped lists) */
-  onAdd: () => void;
-  onMove: (fromIndex: number, toIndex: number) => void;
+  onAdd?: () => void;
+  /** Required for reorderable lists */
+  onMove?: (fromIndex: number, toIndex: number) => void;
   onRemove?: (item: T, index: number) => void;
   getId: (item: T) => string;
   onChange?: never;
@@ -107,10 +110,12 @@ export const ListEditor = <T,>(props: ListEditorProps<T>) => {
   } = props;
 
   const listId = useId();
-  const base = useListEditor(items, props.onChange ?? (() => undefined), getId);
-  const list: ListEditorApi<T> = props.onAdd
+  const operations = props.operations === true;
+  const controlled = useListEditor(items, props.onChange ?? (() => undefined), getId);
+  const list: ListEditorApi<T> = operations
     ? {
-        ...base,
+        ...controlled,
+        keys: items.map(item => getId?.(item) ?? ''),
         append: () => props.onAdd?.(),
         move: (from, to) => props.onMove?.(from, to),
         remove: index => {
@@ -118,8 +123,8 @@ export const ListEditor = <T,>(props: ListEditorProps<T>) => {
           if (item !== undefined) props.onRemove?.(item, index);
         }
       }
-    : base;
-  const add = () => (props.onAdd ? props.onAdd() : base.append(props.createItem()));
+    : controlled;
+  const add = () => (operations ? props.onAdd?.() : controlled.append(props.createItem?.() as T));
   const entries = items.map((item, index) => ({
     key: list.keys[index] ?? String(index),
     item,
@@ -151,7 +156,7 @@ export const ListEditor = <T,>(props: ListEditorProps<T>) => {
       index={entry.index}
       disabled={disabled}
       removable={
-        (props.onAdd ? props.onRemove !== undefined : true) &&
+        (operations ? props.onRemove !== undefined : true) &&
         (canRemove ? canRemove(entry.item, entry.index) : true)
       }
       removeLabel={removeLabel}

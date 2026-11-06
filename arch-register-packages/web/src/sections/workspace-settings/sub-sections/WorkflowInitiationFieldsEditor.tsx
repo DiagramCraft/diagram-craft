@@ -104,68 +104,69 @@ const InitiationFieldDetails = ({
   field: GovernanceInitiationField;
   enums: WorkspaceEnum[];
   onUpdate: (patch: Partial<GovernanceInitiationField>) => void;
-}) => (
-  <div
-    style={{
-      borderTop: '1px solid var(--panel-border)',
-      margin: '0.5rem -0.5rem 0 -0.5rem',
-      padding: '0.5rem 0.5rem 0 0.5rem',
-      minHeight: '1rem',
-      display: 'flex',
-      gap: '0.5rem'
-    }}
-  >
-    {field.type === 'rating' && (
-      <FormElement label="Maximum rating">
-        <TextInput
-          type="number"
-          value={String(field.max ?? 5)}
-          onChange={value => onUpdate({ max: Math.max(2, Number(value ?? 5)) })}
-        />
-      </FormElement>
-    )}
-    {field.type === 'enum' && (
-      <>
-        <FormElement label="Workspace enumeration">
-          <Select.Root
-            value={field.enumId}
-            placeholder="Use inline options"
-            onChange={value => onUpdate({ enumId: value, options: undefined })}
-          >
-            {enums.map(enumeration => (
-              <Select.Item key={enumeration.id} value={enumeration.id}>
-                {enumeration.name}
-              </Select.Item>
-            ))}
-          </Select.Root>
+}) =>
+  field.type !== 'rating' && field.type !== 'enum' ? undefined : (
+    <div
+      style={{
+        borderTop: '1px solid var(--panel-border)',
+        margin: '0.5rem -0.5rem 0 -0.5rem',
+        padding: '0.5rem 0.5rem 0 30px',
+        minHeight: '1rem',
+        display: 'flex',
+        gap: '0.5rem'
+      }}
+    >
+      {field.type === 'rating' && (
+        <FormElement label="Maximum rating">
+          <TextInput
+            type="number"
+            value={String(field.max ?? 5)}
+            onChange={value => onUpdate({ max: Math.max(2, Number(value ?? 5)) })}
+          />
         </FormElement>
-        {!field.enumId && (
-          <FormElement label="Inline options (value: label, one per line)">
-            <TextInput
-              value={(field.options ?? [])
-                .map(option => `${option.value}: ${option.label}`)
-                .join('\n')}
-              onChange={value =>
-                onUpdate({
-                  options: (value ?? '')
-                    .split('\n')
-                    .map(line => line.trim())
-                    .filter(Boolean)
-                    .map(line => {
-                      const separator = line.indexOf(':');
-                      return separator < 0
-                        ? { value: line, label: line }
-                        : {
-                            value: line.slice(0, separator).trim(),
-                            label: line.slice(separator + 1).trim()
-                          };
-                    })
-                })
-              }
-            />
+      )}
+      {field.type === 'enum' && (
+        <>
+          <FormElement label="Workspace enumeration">
+            <Select.Root
+              value={field.enumId}
+              placeholder="Use inline options"
+              onChange={value => onUpdate({ enumId: value, options: undefined })}
+            >
+              {enums.map(enumeration => (
+                <Select.Item key={enumeration.id} value={enumeration.id}>
+                  {enumeration.name}
+                </Select.Item>
+              ))}
+            </Select.Root>
           </FormElement>
-        )}
-      </>
-    )}
-  </div>
-);
+          {!field.enumId && (
+            <FormElement label="Inline options (value: label, one per line)">
+              <TextInput
+                value={(field.options ?? [])
+                  .map(option => `${option.value}: ${option.label}`)
+                  .join('\n')}
+                onChange={value =>
+                  onUpdate({
+                    options: (value ?? '')
+                      .split('\n')
+                      .map(line => line.trim())
+                      .filter(Boolean)
+                      .map(line => {
+                        const separator = line.indexOf(':');
+                        return separator < 0
+                          ? { value: line, label: line }
+                          : {
+                              value: line.slice(0, separator).trim(),
+                              label: line.slice(separator + 1).trim()
+                            };
+                      })
+                  })
+                }
+              />
+            </FormElement>
+          )}
+        </>
+      )}
+    </div>
+  );

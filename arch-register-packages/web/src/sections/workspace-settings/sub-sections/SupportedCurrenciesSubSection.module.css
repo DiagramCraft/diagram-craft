@@ -1,8 +1,15 @@
 .currencyRow {
   display: grid;
-  grid-template-columns: 26px 120px 1fr;
+  grid-template-columns: 15px 120px 1fr;
   gap: 14px;
   align-items: center;
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+
+  input[type="radio"] {
+    margin-left: 0;
+    margin-top: 0;
+  }
 }
 
 .defaultRadio {

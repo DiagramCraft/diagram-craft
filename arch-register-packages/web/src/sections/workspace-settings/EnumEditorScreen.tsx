@@ -118,6 +118,7 @@ export const EnumEditorScreen = () => {
               layout="bare"
               reorder="drag"
               disabled={!canEdit}
+              operations
               onAdd={addOption}
               onMove={reorderOptions}
               renderItem={(opt, { index: i, dragRef }) => (

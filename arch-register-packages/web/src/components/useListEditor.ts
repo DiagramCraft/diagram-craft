@@ -15,36 +15,49 @@ export type ListEditorApi<T> = {
 };
 
 /**
- * Array editing operations for a controlled list, plus stable per-row keys.
+ * Stable per-row keys for a list.
  *
- * When `getId` is given it is the key. Otherwise keys are tracked internally across
- * append/remove/move, so rows keep their identity (and input focus) even when the item has
- * no id, or its id is itself editable.
+ * When `getId` is given it is the key. Otherwise keys are tracked internally, so rows keep their
+ * identity (and input focus) even when the item has no id, or its id is itself editable.
+ * Callers that change the list must keep the keys aligned via the returned `setKeys`.
+ */
+export const useRowKeys = <T>(items: T[], getId?: (item: T) => string) => {
+  const keysRef = useRef<string[]>([]);
+  if (!getId) keysRef.current = reconcileKeys(keysRef.current, items.length, makeKey);
+  return {
+    keys: getId ? items.map(getId) : keysRef.current,
+    tracked: !getId,
+    setKeys: (keys: string[]) => {
+      keysRef.current = keys;
+    },
+    current: () => keysRef.current
+  };
+};
+
+/**
+ * Array editing operations for a controlled list, plus stable per-row keys.
  */
 export const useListEditor = <T>(
   items: T[],
   onChange: (items: T[]) => void,
   getId?: (item: T) => string
 ): ListEditorApi<T> => {
-  const keysRef = useRef<string[]>([]);
-
-  if (!getId) keysRef.current = reconcileKeys(keysRef.current, items.length, makeKey);
-  const keys = getId ? items.map(getId) : keysRef.current;
+  const rows = useRowKeys(items, getId);
 
   return {
-    keys,
+    keys: rows.keys,
     append: item => {
-      if (!getId) keysRef.current = [...keysRef.current, makeKey()];
+      if (rows.tracked) rows.setKeys([...rows.current(), makeKey()]);
       onChange([...items, item]);
     },
     update: (index, patch) => onChange(updateAt(items, index, patch)),
     replace: (index, item) => onChange(replaceAt(items, index, item)),
     remove: index => {
-      if (!getId) keysRef.current = removeAt(keysRef.current, index);
+      if (rows.tracked) rows.setKeys(removeAt(rows.current(), index));
       onChange(removeAt(items, index));
     },
     move: (fromIndex, toIndex) => {
-      if (!getId) keysRef.current = moveItem(keysRef.current, fromIndex, toIndex);
+      if (rows.tracked) rows.setKeys(moveItem(rows.current(), fromIndex, toIndex));
       onChange(moveItem(items, fromIndex, toIndex));
     }
   };

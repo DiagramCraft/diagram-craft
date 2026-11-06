@@ -23,8 +23,6 @@ type Props<T, G extends { id: string }> = {
   groupClassName?: string;
 };
 
-const noop = () => undefined;
-
 /**
  * An ungrouped list followed by one section per group, each with its own header, empty state and drag scope.
  * Built on `ListEditor` (operations mode, bare layout), one instance per bucket.
@@ -52,7 +50,7 @@ export const GroupedListEditor = <T, G extends { id: string }>(props: Props<T, G
       addLabel=""
       // the add control lives in the group header
       addControl={false}
-      onAdd={noop}
+      operations
       onMove={(from, to) => props.onMove(bucket, from, to)}
       renderItem={props.renderItem}
     />

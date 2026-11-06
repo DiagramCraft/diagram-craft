@@ -1,12 +1,13 @@
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { DateInput } from '@diagram-craft/app-components/DateInput';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
-import { MultiSelect, type MultiSelectItem } from '@diagram-craft/app-components/MultiSelect';
+import { MultiSelect } from '@diagram-craft/app-components/MultiSelect';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { EntitySummary } from '@arch-register/api-types/entityContract';
+import { ScalarMultiSelect } from '../components/ScalarMultiSelect';
 import { ScalarListEditor } from '../components/ScalarListEditor';
 import { isMultiValuedScalarField } from '../lib/scalarFieldValues';
 import { selectableEnumOptions } from '../utils/enumOptions';
@@ -81,23 +82,13 @@ export const EntityFieldInput = ({
   }
 
   if (isMultiValuedScalarField(field) && field.type === 'select') {
-    const availableItems: MultiSelectItem[] = selectableEnumOptions(field.options, value).map(
-      option => ({ value: option.value, label: option.label })
-    );
     return (
       <FormElement
         label={field.name}
         hint={field.description}
         required={field.requirementLevel !== 'optional'}
       >
-        <MultiSelect
-          selectedValues={Array.isArray(value) ? (value as string[]) : []}
-          availableItems={availableItems}
-          onSelectionChange={onChange}
-          disabled={disabled}
-          placeholder={`Select ${field.name.toLowerCase()}...`}
-          style={{ width: '100%' }}
-        />
+        <ScalarMultiSelect field={field} value={value} onChange={onChange} disabled={disabled} />
       </FormElement>
     );
   }
