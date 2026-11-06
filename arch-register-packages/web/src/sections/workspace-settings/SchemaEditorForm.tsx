@@ -9,6 +9,7 @@ import { SchemaEditorFormShell } from './SchemaEditorFormShell';
 import { SchemaEditorTabs } from './SchemaEditorTabs';
 import { useCanEditSchemas, useSchemaEditor } from './schemaEditorContext';
 import styles from './SchemaSettingsScreen.module.css';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
 
 const deriveKeyPrefix = (value: string) =>
   value
@@ -36,22 +37,19 @@ export const SchemaEditorForm = () => {
         }))
       }
       beforeDescription={
-        <div className={styles.formRow}>
-          <div>
-            <div className={styles.formLabel}>Key Prefix</div>
-            <TextInput
-              value={editor.draft.keyPrefix}
-              disabled={!canEdit}
-              onChange={value =>
-                editor.updateDraft(current => ({
-                  ...current,
-                  keyPrefix: (value ?? '').toUpperCase()
-                }))
-              }
-              style={{ width: '100%' }}
-            />
-          </div>
-        </div>
+        <FormElement label={'Key Prefix'}>
+          <TextInput
+            value={editor.draft.keyPrefix}
+            disabled={!canEdit}
+            onChange={value =>
+              editor.updateDraft(current => ({
+                ...current,
+                keyPrefix: (value ?? '').toUpperCase()
+              }))
+            }
+            style={{ width: '100%' }}
+          />
+        </FormElement>
       }
     >
       <SchemaEditorTabs />

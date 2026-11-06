@@ -13,6 +13,7 @@ import { SchemaEditorFormShell } from './SchemaEditorFormShell';
 import { useCanEditSchemas, useSchemaEditor } from './schemaEditorContext';
 import { RelationValidationTab } from './ValidationTab';
 import styles from './SchemaSettingsScreen.module.css';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
 
 /** Editor form for a relation type: endpoints and uniqueness on top of the shared form. */
 export const RelationEditorForm = () => {
@@ -48,19 +49,24 @@ export const RelationEditorForm = () => {
               }
             />
           </div>
-          <div className={styles.formLabel} style={{ marginTop: '8px' }}>
-            Uniqueness
-          </div>
-          <div style={{ fontSize: '12px', display: 'flex', alignItems: 'center' }}>
-            <Checkbox
-              label="Allow only one relation per ordered endpoint pair"
-              value={draft.uniqueEndpointPair}
-              disabled={!canEdit}
-              onChange={value =>
-                editor.updateDraft(current => ({ ...current, uniqueEndpointPair: value ?? false }))
-              }
-            />
-          </div>
+
+          <FormElement label={'Uniqueness'}>
+            <div
+              style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+            >
+              <Checkbox
+                value={draft.uniqueEndpointPair}
+                disabled={!canEdit}
+                onChange={value =>
+                  editor.updateDraft(current => ({
+                    ...current,
+                    uniqueEndpointPair: value ?? false
+                  }))
+                }
+              />
+              <div style={{ lineHeight: 1 }}>Allow only one relation per ordered endpoint pair</div>
+            </div>
+          </FormElement>
         </>
       }
     >

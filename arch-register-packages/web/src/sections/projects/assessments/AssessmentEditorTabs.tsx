@@ -224,7 +224,7 @@ export const AssessmentFieldsTab = ({ editor }: { editor: AssessmentEditorContro
     <MenuButton.Root>
       <MenuButton.Trigger
         element={
-          <Button size="xs" variant={groupId ? 'ghost' : undefined} icon={<TbPlus size={11} />}>
+          <Button size="xs" icon={<TbPlus size={11} />}>
             {groupId ? 'Add field' : 'Field'}
           </Button>
         }
@@ -283,15 +283,15 @@ export const AssessmentFieldsTab = ({ editor }: { editor: AssessmentEditorContro
                 <div className={styles.groupActions}>
                   {fieldMenu(group.id)}
                   <Button
-                    variant="ghost"
-                    icon={<TbEdit size={12} />}
+                    size={'xs'}
+                    icon={<TbEdit size={11} />}
                     onClick={() => actions.openEditGroup(group)}
                   >
                     Edit
                   </Button>
                   <Button
-                    variant="ghost"
-                    icon={<TbTrash size={12} />}
+                    size={'xs'}
+                    icon={<TbTrash size={11} />}
                     onClick={() => actions.removeGroup(group.id)}
                   >
                     Delete

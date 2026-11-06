@@ -6,6 +6,7 @@ import type { RelationEndpoint } from '@arch-register/api-types/relationSchemaCo
 import { setEndpointSchemaIds } from './relationSchemaSettingsHelpers';
 import styles from './SchemaSettingsScreen.module.css';
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
 
 export const RelationEndpointEditor = ({
   label,
@@ -20,8 +21,7 @@ export const RelationEndpointEditor = ({
   const canEdit = useCanEditSchemas();
 
   return (
-    <div style={{ fontSize: '12px', marginBottom: '8px' }}>
-      <div className={styles.formLabel}>{label}</div>
+    <FormElement label={label}>
       <TextInput
         value={endpoint.label ?? ''}
         disabled={!canEdit}
@@ -62,6 +62,6 @@ export const RelationEndpointEditor = ({
           />
         )}
       </div>
-    </div>
+    </FormElement>
   );
 };
