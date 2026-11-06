@@ -132,8 +132,8 @@ export const TypedRelationFieldEditor = ({
         disabled={disabled}
         addDisabled={atMaximum}
         addControl={adding ? false : undefined}
+        operations
         onAdd={() => setAdding(true)}
-        onMove={() => undefined}
         canRemove={entry =>
           entry.kind === 'draft'
             ? currentCount > field.minCount

@@ -1,22 +1,21 @@
 import type { SchemaField } from '@arch-register/api-types/schemaContract';
 
+const MULTI_VALUABLE_TYPES: ReadonlySet<SchemaField['type']> = new Set([
+  'text',
+  'longtext',
+  'boolean',
+  'date',
+  'currency',
+  'duration',
+  'number',
+  'select',
+  'principal'
+]);
+
 export const isMultiValuedScalarField = (field: SchemaField): boolean =>
-  (() => {
-    if (
-      field.type !== 'text' &&
-      field.type !== 'longtext' &&
-      field.type !== 'boolean' &&
-      field.type !== 'date' &&
-      field.type !== 'currency' &&
-      field.type !== 'duration' &&
-      field.type !== 'number' &&
-      field.type !== 'select' &&
-      field.type !== 'principal'
-    ) {
-      return false;
-    }
-    return field.maxCardinality === -1 || (field.maxCardinality ?? 1) > 1;
-  })();
+  MULTI_VALUABLE_TYPES.has(field.type) &&
+  'maxCardinality' in field &&
+  (field.maxCardinality === -1 || (field.maxCardinality ?? 1) > 1);
 
 export const scalarValues = (value: unknown): unknown[] =>
   Array.isArray(value) ? value : value == null || value === '' ? [] : [value];

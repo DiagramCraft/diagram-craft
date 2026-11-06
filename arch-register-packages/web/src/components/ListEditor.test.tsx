@@ -45,6 +45,7 @@ const renderOperations = (onRemove?: (item: Item, index: number) => void) =>
     <ListEditor<Item>
       items={ITEMS}
       getId={item => item.id}
+      operations
       onAdd={() => {}}
       onMove={() => {}}
       onRemove={onRemove}

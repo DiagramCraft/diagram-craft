@@ -19,6 +19,7 @@ import type { RelationSchema } from '@arch-register/api-types/relationSchemaCont
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
 import type { RelationRecordDraft } from '@arch-register/api-types/entityContract';
 import { TypedRelationFieldEditor } from './TypedRelationFieldEditor';
+import { ScalarMultiSelect } from '../../../components/ScalarMultiSelect';
 import { ScalarListEditor } from '../../../components/ScalarListEditor';
 import { isMultiValuedScalarField } from '../../../lib/scalarFieldValues';
 import type { TypedRelationFieldEditState } from '../../../lib/entityEditState';
@@ -147,18 +148,7 @@ export const PropertyRow = ({
       );
     }
     if (isMultiValuedScalarField(field) && field.type === 'select') {
-      const availableItems: MultiSelectItem[] = selectableEnumOptions(field.options, editValue).map(
-        option => ({ value: option.value, label: option.label })
-      );
-      return (
-        <MultiSelect
-          selectedValues={Array.isArray(editValue) ? (editValue as string[]) : []}
-          availableItems={availableItems}
-          onSelectionChange={onChange}
-          placeholder={`Select ${field.name.toLowerCase()}...`}
-          style={{ width: '100%' }}
-        />
-      );
+      return <ScalarMultiSelect field={field} value={editValue} onChange={onChange} />;
     }
     if (isMultiValuedScalarField(field)) {
       const renderItem = (item: unknown, _index: number, update: (value: unknown) => void) => {

@@ -118,6 +118,7 @@ export const FieldGroupEditorScreen = () => {
               layout="bare"
               reorder="drag"
               disabled={!canEdit}
+              operations
               onAdd={draft.addField}
               onMove={draft.reorderFields}
               renderItem={(field, { dragRef }) => (

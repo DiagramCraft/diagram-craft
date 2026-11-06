@@ -135,6 +135,7 @@ export const DocumentTypeEditor = ({
             emptyMessage={'No fields defined yet. Click "Add field" to get started.'}
             layout="bare"
             reorder="drag"
+            operations
             onAdd={draft.addField}
             onMove={draft.reorderFields}
             renderItem={(field, { dragRef }) => (
