@@ -14,7 +14,7 @@ import { Title } from '../../components/Title';
 import { Panel } from '../../components/Panel';
 import { Stack } from '../../components/Stack';
 import { SCHEMA_ICONS } from '../../lib/schemaPresentation';
-import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
+import { ColorPicker } from '../../components/ColorPicker';
 import { FieldMigrationDialog } from '../../dialogs/FieldMigrationDialog';
 import { DocumentTypeVersionHistorySubSection } from './sub-sections/DocumentTypeVersionHistorySubSection';
 import { ListEditor } from '../../components/ListEditor';
@@ -89,18 +89,7 @@ export const DocumentTypeEditor = ({
 
         <div className={styles.appearanceRow}>
           <FormElement label={'Color'}>
-            <div className={styles.colorSwatches}>
-              {SCHEMA_COLORS.map(preset => (
-                <button
-                  type="button"
-                  key={preset}
-                  className={`${styles.swatch} ${draft.color === preset ? styles.swatchActive : ''}`}
-                  style={{ background: preset }}
-                  title={preset}
-                  onClick={() => draft.setColor(preset)}
-                />
-              ))}
-            </div>
+            <ColorPicker size="small" value={draft.color} onChange={c => c && draft.setColor(c)} />
           </FormElement>
 
           <FormElement label={'Icon'}>

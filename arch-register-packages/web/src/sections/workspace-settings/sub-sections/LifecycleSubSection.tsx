@@ -6,6 +6,7 @@ import styles from './LifecycleSubSection.module.css';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Select } from '@diagram-craft/app-components/Select';
 import { LIFECYCLE_COLOR_PRESETS } from '@arch-register/api-types/colors';
+import { ColorPicker } from '../../../components/ColorPicker';
 import { SettingsBlock, SettingsBlockField } from '../SettingsBlock';
 import { SectionActions } from '../SectionActions';
 import { ListEditor } from '../../../components/ListEditor';
@@ -19,8 +20,6 @@ const buildLifecycleStateDraft = (lifecycleStates: WorkspaceLifecycleState[]) =>
     color: state.color,
     is_deprecated_state: state.is_deprecated_state ?? false
   }));
-
-const COLOR_PRESETS = LIFECYCLE_COLOR_PRESETS;
 
 export const LifecycleSubSection = ({
   workspace,
@@ -94,18 +93,12 @@ export const LifecycleSubSection = ({
                 onChange={value => update({ label: value ?? '' })}
                 placeholder="Label (e.g. Production)"
               />
-              <div className={styles.swatches}>
-                {COLOR_PRESETS.map(c => (
-                  <button
-                    key={c.value}
-                    type="button"
-                    title={c.label}
-                    onClick={() => update({ color: c.value })}
-                    className={`${styles.swatch} ${s.color === c.value ? styles.swatchActive : ''}`}
-                    style={{ background: c.value }}
-                  />
-                ))}
-              </div>
+              <ColorPicker
+                size="small"
+                value={s.color}
+                colors={LIFECYCLE_COLOR_PRESETS}
+                onChange={c => c && update({ color: c })}
+              />
             </div>
           )}
         />

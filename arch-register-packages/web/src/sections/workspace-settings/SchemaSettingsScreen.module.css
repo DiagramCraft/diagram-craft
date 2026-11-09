@@ -175,25 +175,6 @@
   font-size: 11px;
 }
 
-.colorSwatches {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-  height: 28px;
-}
-
-.swatch {
-  width: 18px;
-  height: 18px;
-  border-radius: 3px;
-  border: 1px solid var(--cmp-border);
-  cursor: pointer;
-}
-
-.swatchActive {
-  box-shadow: 0 0 0 2px var(--accent-fg);
-}
-
 .iconPicker {
   display: flex;
   gap: 2px;

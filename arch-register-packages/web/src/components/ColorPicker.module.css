@@ -18,7 +18,7 @@
 .swatch {
   width: 32px;
   height: 32px;
-  border: 2px solid transparent;
+  border: 2px solid var(--panel-border, transparent);
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -47,4 +47,16 @@
   box-shadow:
     0 0 0 2px var(--base-bg),
     0 0 0 4px var(--accent-fg);
+}
+
+.swatch.none {
+  background:
+    linear-gradient(
+      to top right,
+      transparent calc(50% - 1px),
+      var(--cmp-fg-disabled, #888) calc(50% - 1px),
+      var(--cmp-fg-disabled, #888) calc(50% + 1px),
+      transparent calc(50% + 1px)
+    ),
+    var(--panel-bg, transparent);
 }
