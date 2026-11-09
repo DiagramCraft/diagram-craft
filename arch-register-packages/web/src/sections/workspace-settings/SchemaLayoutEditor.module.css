@@ -189,6 +189,13 @@
   border-radius: var(--r);
   font-size: 11.5px;
   color: var(--base-fg-secondary);
+
+  --cmp-bg: var(--orig-cmp-bg);
+  --cmp-bg-hover: var(--orig-cmp-bg-hover);
+  --cmp-fg: var(--orig-cmp-fg);
+  --cmp-fg-secondary: var(--orig-cmp-fg-secondary);
+  --cmp-fg-tertiary: var(--orig-cmp-fg-tertiary);
+  --cmp-fg-dimmed: var(--orig-cmp-fg-dimmed);
 }
 
 .blockGroupRow {

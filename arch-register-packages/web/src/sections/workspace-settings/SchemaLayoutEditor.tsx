@@ -656,10 +656,6 @@ export const SchemaLayoutEditor = ({
 
   return (
     <div>
-      <div className={styles.topbar}>
-        <div className={styles.sectionLabel}>Detail/Edit layout</div>
-      </div>
-
       <div className={styles.tabStrip}>
         {layout.tabs.map((tab, tabIndex) => (
           <div
