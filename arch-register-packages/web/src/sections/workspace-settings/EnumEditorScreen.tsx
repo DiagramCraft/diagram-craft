@@ -171,7 +171,11 @@ export const EnumEditorScreen = () => {
                     </div>
                   }
                 >
-                  <FormElement label="Value" className={FieldConfig.mono} style={{ flexBasis: 180 }}>
+                  <FormElement
+                    label="Value"
+                    className={FieldConfig.mono}
+                    style={{ flexBasis: 180 }}
+                  >
                     <TextInput
                       value={opt.value}
                       readOnly={!canEdit || opt.originalValue !== undefined}
