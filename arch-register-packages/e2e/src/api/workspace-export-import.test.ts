@@ -347,7 +347,7 @@ test.describe('workspace export/import', () => {
         sort_order: 1 - index,
         application_id: application.id,
         application_order: 1 - index,
-        icon: 'TbChartBar',
+        icon: 'chart',
         updated_by: null
       });
       await server.db.dashboard.update(source.id, row.id, {
@@ -413,7 +413,7 @@ test.describe('workspace export/import', () => {
       await server.db.dashboard.listByApplication(target.id, importedApp!.id)
     ).sort((a, b) => (a.application_order ?? 0) - (b.application_order ?? 0));
     expect(dashboards.map(d => d.name)).toEqual(['First', 'Second']);
-    expect(dashboards[0]).toMatchObject({ icon: 'TbChartBar' });
+    expect(dashboards[0]).toMatchObject({ icon: 'chart' });
     const importedSchema = (await server.db.catalog.listSchemas(target.id)).find(
       item => item.name === schema.name
     );

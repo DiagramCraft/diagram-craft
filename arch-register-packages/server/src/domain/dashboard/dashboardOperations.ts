@@ -170,9 +170,9 @@ const assertKeyAvailable = async (
 };
 
 const assertValidIcon = (icon: string | null | undefined) =>
-  httpAssert.true(icon == null || /^Tb[A-Za-z0-9]{1,60}$/.test(icon), {
+  httpAssert.true(icon == null || /^[a-z0-9]+(-[a-z0-9]+)*$/.test(icon), {
     status: 400,
-    message: 'Invalid icon name'
+    message: 'Invalid icon id'
   });
 
 export const createWorkspaceDashboard = async (

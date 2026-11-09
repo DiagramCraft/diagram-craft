@@ -1,53 +1,41 @@
-import { APP_ICON_NAMES, resolveAppIcon } from '../shell/appIcons';
+import { ICON_IDS, ICON_MAP } from '../lib/icons';
+import styles from './IconPicker.module.css';
 
 type Props = {
   value: string | undefined;
   onChange: (value: string | undefined) => void;
   /** When set, shows a first option that clears the selection (e.g. "use the default icon"). */
   noneLabel?: string;
+  disabled?: boolean;
 };
 
-export const IconPicker = ({ value, onChange, noneLabel }: Props) => (
-  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
+export const IconPicker = ({ value, onChange, noneLabel, disabled = false }: Props) => (
+  <div className={styles.iconPicker}>
     {noneLabel !== undefined && (
       <button
         type="button"
+        className={`${styles.none} ${value === undefined ? styles.active : ''}`}
         aria-pressed={value === undefined}
+        disabled={disabled}
         onClick={() => onChange(undefined)}
-        style={{
-          padding: '6px 8px',
-          borderRadius: 6,
-          fontSize: 12,
-          color: 'inherit',
-          border: `1px solid ${value === undefined ? 'var(--accent, currentColor)' : 'transparent'}`,
-          background: 'transparent',
-          cursor: 'pointer'
-        }}
       >
         {noneLabel}
       </button>
     )}
-    {APP_ICON_NAMES.map(candidate => {
-      const Icon = resolveAppIcon(candidate);
-      const label = candidate.replace(/^Tb/, '');
+    {ICON_IDS.map(id => {
+      const Icon = ICON_MAP[id];
       return (
         <button
-          key={candidate}
+          key={id}
           type="button"
-          aria-pressed={value === candidate}
-          aria-label={label}
-          title={label}
-          onClick={() => onChange(candidate)}
-          style={{
-            padding: 6,
-            borderRadius: 6,
-            color: 'inherit',
-            border: `1px solid ${value === candidate ? 'var(--accent, currentColor)' : 'transparent'}`,
-            background: 'transparent',
-            cursor: 'pointer'
-          }}
+          className={`${styles.option} ${value === id ? styles.active : ''}`}
+          aria-pressed={value === id}
+          aria-label={id}
+          title={id}
+          disabled={disabled}
+          onClick={() => onChange(id)}
         >
-          <Icon size={16} />
+          <Icon size={14} />
         </button>
       );
     })}

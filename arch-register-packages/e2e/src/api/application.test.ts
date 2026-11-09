@@ -73,10 +73,10 @@ test.describe('Workspace Application API', () => {
 
     const added = await orpc.dashboard.create({
       params,
-      body: { name: 'Second', icon: 'TbBook', applicationId: app.id }
+      body: { name: 'Second', icon: 'book', applicationId: app.id }
     });
     expect(added.applicationId).toBe(app.id);
-    expect(added.icon).toBe('TbBook');
+    expect(added.icon).toBe('book');
 
     await expect(
       orpc.dashboard.create({
@@ -87,14 +87,14 @@ test.describe('Workspace Application API', () => {
 
     await orpc.dashboard.update({
       params: { ...params, id: added.id },
-      body: { name: 'Renamed', icon: 'TbApi' }
+      body: { name: 'Renamed', icon: 'api' }
     });
     const [listed] = (await orpc.workspaceApplications.list({ params })).filter(
       candidate => candidate.id === app.id
     );
     const ids = listed!.dashboards.map(d => d.id);
     expect(ids).toHaveLength(2);
-    expect(listed!.dashboards[1]).toMatchObject({ name: 'Renamed', icon: 'TbApi' });
+    expect(listed!.dashboards[1]).toMatchObject({ name: 'Renamed', icon: 'api' });
 
     await orpc.dashboard.update({
       params: { ...params, id: added.id },

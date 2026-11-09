@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { TypeBadge, ICON_MAP } from './TypeBadge';
+import { TypeBadge } from './TypeBadge';
+import { ICON_IDS } from '../lib/icons';
 
 const meta = {
   title: 'Components/TypeBadge',
@@ -17,7 +18,7 @@ const meta = {
     },
     icon: {
       control: 'select',
-      options: [null, ...Object.keys(ICON_MAP)]
+      options: [null, ...ICON_IDS]
     }
   }
 } satisfies Meta<typeof TypeBadge>;
@@ -103,7 +104,7 @@ export const AllIcons = {
       '#ec4899',
       '#6366f1'
     ];
-    const icons = Object.keys(ICON_MAP);
+    const icons = ICON_IDS;
 
     return (
       <div

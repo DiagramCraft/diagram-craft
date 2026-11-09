@@ -8,12 +8,11 @@ import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteCo
 import { ErrorDialog } from '@diagram-craft/app-components/ErrorDialog';
 import type { DocumentType } from '@arch-register/api-types/documentContract';
 import { TypeBadge } from '../../components/TypeBadge';
-import { ICON_MAP } from '../../components/TypeBadge';
+import { IconPicker } from '../../components/IconPicker';
 import { EmptyState } from '../../components/EmptyState';
 import { Title } from '../../components/Title';
 import { Panel } from '../../components/Panel';
 import { Stack } from '../../components/Stack';
-import { SCHEMA_ICONS } from '../../lib/schemaPresentation';
 import { ColorPicker } from '../../components/ColorPicker';
 import { FieldMigrationDialog } from '../../dialogs/FieldMigrationDialog';
 import { DocumentTypeVersionHistorySubSection } from './sub-sections/DocumentTypeVersionHistorySubSection';
@@ -93,22 +92,10 @@ export const DocumentTypeEditor = ({
           </FormElement>
 
           <FormElement label={'Icon'}>
-            <div className={styles.iconPicker}>
-              {SCHEMA_ICONS.map(id => {
-                const Icon = ICON_MAP[id];
-                return (
-                  <button
-                    type="button"
-                    key={id}
-                    className={`${styles.iconOption} ${draft.icon === id ? styles.iconOptionActive : ''}`}
-                    title={id}
-                    onClick={() => draft.setIcon(id)}
-                  >
-                    <Icon size={14} />
-                  </button>
-                );
-              })}
-            </div>
+            <IconPicker
+              value={draft.icon ?? undefined}
+              onChange={value => value && draft.setIcon(value)}
+            />
           </FormElement>
         </div>
 

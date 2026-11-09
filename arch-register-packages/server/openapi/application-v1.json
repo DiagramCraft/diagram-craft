@@ -61801,7 +61801,7 @@
                                 },
                                 "icon": {
                                   "type": "string",
-                                  "description": "Icon name overriding the widget default icon"
+                                  "description": "Icon id overriding the widget default icon"
                                 }
                               },
                               "description": "Per-instance frame settings; omitted values fall back to the widget defaults"
@@ -62475,7 +62475,7 @@
                               },
                               "icon": {
                                 "type": "string",
-                                "description": "Icon name overriding the widget default icon"
+                                "description": "Icon id overriding the widget default icon"
                               }
                             },
                             "description": "Per-instance frame settings; omitted values fall back to the widget defaults"
@@ -63008,7 +63008,7 @@
                             },
                             "icon": {
                               "type": "string",
-                              "description": "Icon name overriding the widget default icon"
+                              "description": "Icon id overriding the widget default icon"
                             }
                           },
                           "description": "Per-instance frame settings; omitted values fall back to the widget defaults"
@@ -138307,7 +138307,7 @@
                                 },
                                 "icon": {
                                   "type": "string",
-                                  "description": "Icon name overriding the widget default icon"
+                                  "description": "Icon id overriding the widget default icon"
                                 }
                               },
                               "description": "Per-instance frame settings; omitted values fall back to the widget defaults"
@@ -138399,7 +138399,7 @@
                             "type": "null"
                           }
                         ],
-                        "description": "Icon name shown for the dashboard in the app rail"
+                        "description": "Icon id shown for the dashboard in the app rail"
                       },
                       "railLabel": {
                         "anyOf": [
@@ -138621,7 +138621,7 @@
                         "type": "null"
                       }
                     ],
-                    "description": "Icon name shown in the app rail"
+                    "description": "Icon id shown in the app rail"
                   }
                 },
                 "required": [
@@ -138736,7 +138736,7 @@
                               },
                               "icon": {
                                 "type": "string",
-                                "description": "Icon name overriding the widget default icon"
+                                "description": "Icon id overriding the widget default icon"
                               }
                             },
                             "description": "Per-instance frame settings; omitted values fall back to the widget defaults"
@@ -138828,7 +138828,7 @@
                           "type": "null"
                         }
                       ],
-                      "description": "Icon name shown for the dashboard in the app rail"
+                      "description": "Icon id shown for the dashboard in the app rail"
                     },
                     "railLabel": {
                       "anyOf": [
@@ -139133,7 +139133,7 @@
                               },
                               "icon": {
                                 "type": "string",
-                                "description": "Icon name overriding the widget default icon"
+                                "description": "Icon id overriding the widget default icon"
                               }
                             },
                             "description": "Per-instance frame settings; omitted values fall back to the widget defaults"
@@ -139225,7 +139225,7 @@
                           "type": "null"
                         }
                       ],
-                      "description": "Icon name shown for the dashboard in the app rail"
+                      "description": "Icon id shown for the dashboard in the app rail"
                     },
                     "railLabel": {
                       "anyOf": [
@@ -139451,7 +139451,7 @@
                         "type": "null"
                       }
                     ],
-                    "description": "Icon name shown in the app rail"
+                    "description": "Icon id shown in the app rail"
                   },
                   "railLabel": {
                     "anyOf": [
@@ -139535,7 +139535,7 @@
                             },
                             "icon": {
                               "type": "string",
-                              "description": "Icon name overriding the widget default icon"
+                              "description": "Icon id overriding the widget default icon"
                             }
                           },
                           "description": "Per-instance frame settings; omitted values fall back to the widget defaults"
@@ -139818,7 +139818,7 @@
                               },
                               "icon": {
                                 "type": "string",
-                                "description": "Icon name overriding the widget default icon"
+                                "description": "Icon id overriding the widget default icon"
                               }
                             },
                             "description": "Per-instance frame settings; omitted values fall back to the widget defaults"
@@ -139910,7 +139910,7 @@
                           "type": "null"
                         }
                       ],
-                      "description": "Icon name shown for the dashboard in the app rail"
+                      "description": "Icon id shown for the dashboard in the app rail"
                     },
                     "railLabel": {
                       "anyOf": [
@@ -140263,7 +140263,7 @@
                               },
                               "icon": {
                                 "type": "string",
-                                "description": "Icon name overriding the widget default icon"
+                                "description": "Icon id overriding the widget default icon"
                               }
                             },
                             "description": "Per-instance frame settings; omitted values fall back to the widget defaults"
@@ -140355,7 +140355,7 @@
                           "type": "null"
                         }
                       ],
-                      "description": "Icon name shown for the dashboard in the app rail"
+                      "description": "Icon id shown for the dashboard in the app rail"
                     },
                     "railLabel": {
                       "anyOf": [
@@ -140645,7 +140645,7 @@
                                 },
                                 "icon": {
                                   "type": "string",
-                                  "description": "Icon name overriding the widget default icon"
+                                  "description": "Icon id overriding the widget default icon"
                                 }
                               },
                               "description": "Per-instance frame settings; omitted values fall back to the widget defaults"
@@ -140744,7 +140744,7 @@
                         "type": "null"
                       }
                     ],
-                    "description": "Icon name shown in the app rail"
+                    "description": "Icon id shown in the app rail"
                   }
                 },
                 "required": [
@@ -140851,7 +140851,7 @@
                               },
                               "icon": {
                                 "type": "string",
-                                "description": "Icon name overriding the widget default icon"
+                                "description": "Icon id overriding the widget default icon"
                               }
                             },
                             "description": "Per-instance frame settings; omitted values fall back to the widget defaults"
@@ -141029,7 +141029,7 @@
                               },
                               "icon": {
                                 "type": "string",
-                                "description": "Icon name overriding the widget default icon"
+                                "description": "Icon id overriding the widget default icon"
                               }
                             },
                             "description": "Per-instance frame settings; omitted values fall back to the widget defaults"
@@ -141132,7 +141132,7 @@
                         "type": "null"
                       }
                     ],
-                    "description": "Icon name shown in the app rail"
+                    "description": "Icon id shown in the app rail"
                   },
                   "railLabel": {
                     "anyOf": [
@@ -141216,7 +141216,7 @@
                             },
                             "icon": {
                               "type": "string",
-                              "description": "Icon name overriding the widget default icon"
+                              "description": "Icon id overriding the widget default icon"
                             }
                           },
                           "description": "Per-instance frame settings; omitted values fall back to the widget defaults"
@@ -141491,7 +141491,7 @@
                               },
                               "icon": {
                                 "type": "string",
-                                "description": "Icon name overriding the widget default icon"
+                                "description": "Icon id overriding the widget default icon"
                               }
                             },
                             "description": "Per-instance frame settings; omitted values fall back to the widget defaults"
@@ -141711,7 +141711,7 @@
                               },
                               "icon": {
                                 "type": "string",
-                                "description": "Icon name overriding the widget default icon"
+                                "description": "Icon id overriding the widget default icon"
                               }
                             },
                             "description": "Per-instance frame settings; omitted values fall back to the widget defaults"
@@ -141878,7 +141878,7 @@
                             },
                             "icon": {
                               "type": "string",
-                              "description": "Icon name overriding the widget default icon"
+                              "description": "Icon id overriding the widget default icon"
                             }
                           },
                           "description": "Per-instance frame settings; omitted values fall back to the widget defaults"
@@ -142003,7 +142003,7 @@
                               },
                               "icon": {
                                 "type": "string",
-                                "description": "Icon name overriding the widget default icon"
+                                "description": "Icon id overriding the widget default icon"
                               }
                             },
                             "description": "Per-instance frame settings; omitted values fall back to the widget defaults"

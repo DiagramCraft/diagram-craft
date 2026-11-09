@@ -33,7 +33,7 @@ const application = (
   order: 0,
   updatedAt: '2026-01-01T00:00:00.000Z',
   updatedBy: null,
-  dashboards: [dashboard('d2', 1, { railLabel: 'Second', icon: 'TbApi' }), dashboard('d1', 0)],
+  dashboards: [dashboard('d2', 1, { railLabel: 'Second', icon: 'api' }), dashboard('d1', 0)],
   ...overrides
 });
 

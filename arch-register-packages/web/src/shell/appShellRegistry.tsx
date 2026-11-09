@@ -11,7 +11,8 @@ import {
 } from 'react-icons/tb';
 import type { WorkspaceApplicationWithDashboards } from '@arch-register/api-types/applicationContract';
 import { AppDashboardPrimarySidebar } from '../sections/dashboard/AppDashboardPrimarySidebar';
-import { resolveAppIcon } from './appIcons';
+import { TbLayoutDashboard } from 'react-icons/tb';
+import { resolveIcon } from '../lib/icons';
 import type { AppDefinition, AppId, AppRailSection, WorkspaceRailItemId } from './shellTypes';
 
 /**
@@ -76,7 +77,7 @@ const toAppDefinition = (application: WorkspaceApplicationWithDashboards): AppDe
     .sort((a, b) => a.order - b.order)
     .map(dashboard => ({
       id: dashboard.id,
-      icon: resolveAppIcon(dashboard.icon),
+      icon: resolveIcon(dashboard.icon, TbLayoutDashboard),
       tooltip: dashboard.railLabel ?? dashboard.name,
       route: APP_ROUTE,
       routeParams: { appKey: application.key, dashboardKey: dashboard.key },

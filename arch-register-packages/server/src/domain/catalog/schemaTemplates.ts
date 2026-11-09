@@ -1444,7 +1444,7 @@ const strategySchemas: TemplateSchema[] = [
     description: 'A metric or KPI used to track progress on an Outcome.',
     category: 'Strategy',
     color: AR_COLOR_ORANGE,
-    icon: 'chart-bar',
+    icon: 'chart',
     fields: [
       {
         id: 'description',
