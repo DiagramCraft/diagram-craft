@@ -14,6 +14,7 @@ import { useEntitySchemaAdapter } from './entitySchemaAdapter';
 import { SchemaEditorForm } from './SchemaEditorForm';
 import { SchemaEditorDialogs } from './SchemaEditorDialogs';
 import { SchemaEditorProvider } from './schemaEditorContext';
+import { EntityDrawerDraftProvider, useEntityDrawerDraft } from './entityDrawerDraftContext';
 import { EditorActionsMenu, EditorSaveButtons } from './EditorActionsMenu';
 import { SchemaEditorScreenShell } from './SchemaEditorScreenShell';
 import { useSchemaEditorController } from './schemaEditorState';
@@ -55,6 +56,17 @@ export const SchemaSettingsScreen = () => {
     onSelect: onSelectSchema
   });
   const draft = editor.draft;
+  const drawerDraft = useEntityDrawerDraft(workspaceSlug, selected?.id);
+  const dirty = editor.dirty || drawerDraft.dirty;
+
+  const saveAll = async () => {
+    if (editor.dirty) await editor.save();
+    if (drawerDraft.dirty) await drawerDraft.save();
+  };
+  const revertAll = () => {
+    editor.revert();
+    drawerDraft.revert();
+  };
 
   const { data: schemaVersions, isLoading: schemaVersionsLoading } = useSchemaVersions(
     workspaceSlug,
@@ -67,82 +79,88 @@ export const SchemaSettingsScreen = () => {
 
   return (
     <SchemaEditorProvider editor={editor}>
-      <SchemaEditorScreenShell
-        hasSelection={Boolean((selected || isNew) && draft)}
-        breadcrumb={[
-          {
-            label: 'Home',
-            onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
-          },
-          { label: 'Settings' }
-        ]}
-        eyebrow="Entity"
-        buttons={
-          canEdit && draft ? (
-            <EditorSaveButtons
-              canSave={editor.dirty && Boolean(adapter.isValid?.(draft))}
-              dirty={editor.dirty}
-              onCancel={editor.revert}
-              pending={isSaving}
-              onSave={() => void editor.save()}
-            />
-          ) : undefined
-        }
-        menu={
-          canEdit && selected ? (
-            <EditorActionsMenu
-              deleteLabel="Delete type"
-              onDelete={() => editor.setConfirmDelete(true)}
-            />
-          ) : undefined
-        }
-        titleTestId="schema-editor-title"
-        icon={
-          (selected || isNew) && draft ? (
-            <TypeBadge
-              color={
-                draft.color ??
-                (selected
-                  ? resolveSchemaColor(selected, selectedIndex)
-                  : 'var(--base-fg-secondary)')
-              }
-              name={selected?.name ?? draft.name}
-              icon={draft.icon}
-              size={26}
-            />
-          ) : undefined
-        }
-        title={draft?.name ?? ''}
-        description={
-          selected ? `${selected.entity_count} entities · version ${selected.version}` : undefined
-        }
-        showHistory={editor.showHistory}
-        onShowHistoryChange={selected ? editor.setShowHistory : undefined}
-        history={
-          editor.showHistory ? (
-            <SchemaVersionHistorySubSection
-              versions={schemaVersions}
-              isLoading={schemaVersionsLoading}
-            />
-          ) : null
-        }
-        editor={(selected || isNew) && draft ? <SchemaEditorForm key={selectedSchemaId} /> : null}
-        emptyIcon={<TbCode size={22} />}
-        emptyTitle="No type selected"
-        emptySubtitle="Select an entity type from the sidebar to edit its schema."
-        emptyAction={
-          canEdit ? (
-            <Button
-              variant="primary"
-              icon={<TbPlus size={12} />}
-              onClick={() => onSelectSchema(NEW_SCHEMA_ID)}
-            >
-              New entity type
-            </Button>
-          ) : null
-        }
-        dialogs={<SchemaEditorDialogs />}
-      />
+      <EntityDrawerDraftProvider draft={drawerDraft}>
+        <SchemaEditorScreenShell
+          hasSelection={Boolean((selected || isNew) && draft)}
+          breadcrumb={[
+            {
+              label: 'Home',
+              onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
+            },
+            { label: 'Settings' }
+          ]}
+          eyebrow="Entity"
+          buttons={
+            canEdit && draft ? (
+              <EditorSaveButtons
+                canSave={
+                  dirty &&
+                  (!editor.dirty || Boolean(adapter.isValid?.(draft))) &&
+                  drawerDraft.validationErrors.length === 0
+                }
+                dirty={dirty}
+                onCancel={revertAll}
+                pending={isSaving || drawerDraft.isSaving}
+                onSave={() => void saveAll()}
+              />
+            ) : undefined
+          }
+          menu={
+            canEdit && selected ? (
+              <EditorActionsMenu
+                deleteLabel="Delete type"
+                onDelete={() => editor.setConfirmDelete(true)}
+              />
+            ) : undefined
+          }
+          titleTestId="schema-editor-title"
+          icon={
+            (selected || isNew) && draft ? (
+              <TypeBadge
+                color={
+                  draft.color ??
+                  (selected
+                    ? resolveSchemaColor(selected, selectedIndex)
+                    : 'var(--base-fg-secondary)')
+                }
+                name={selected?.name ?? draft.name}
+                icon={draft.icon}
+                size={26}
+              />
+            ) : undefined
+          }
+          title={draft?.name ?? ''}
+          description={
+            selected ? `${selected.entity_count} entities · version ${selected.version}` : undefined
+          }
+          showHistory={editor.showHistory}
+          onShowHistoryChange={selected ? editor.setShowHistory : undefined}
+          history={
+            editor.showHistory ? (
+              <SchemaVersionHistorySubSection
+                versions={schemaVersions}
+                isLoading={schemaVersionsLoading}
+              />
+            ) : null
+          }
+          editor={(selected || isNew) && draft ? <SchemaEditorForm key={selectedSchemaId} /> : null}
+          emptyIcon={<TbCode size={22} />}
+          emptyTitle="No type selected"
+          emptySubtitle="Select an entity type from the sidebar to edit its schema."
+          emptyAction={
+            canEdit ? (
+              <Button
+                variant="primary"
+                icon={<TbPlus size={12} />}
+                onClick={() => onSelectSchema(NEW_SCHEMA_ID)}
+              >
+                New entity type
+              </Button>
+            ) : null
+          }
+          dialogs={<SchemaEditorDialogs />}
+        />
+      </EntityDrawerDraftProvider>
     </SchemaEditorProvider>
   );
 };

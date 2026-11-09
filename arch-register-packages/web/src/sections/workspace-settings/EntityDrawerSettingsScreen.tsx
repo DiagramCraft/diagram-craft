@@ -1,44 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@diagram-craft/app-components/Button';
-import type {
-  EntityDrawerConfiguration,
-  EntityDrawerProfile
-} from '@arch-register/api-types/entityDrawerConfiguration';
-import {
-  buildFallbackEntityDrawerProfile,
-  normalizeLegacyEntityDrawerConfiguration
-} from '@arch-register/api-types/entityDrawerConfiguration';
+import type { EntityDrawerProfile } from '@arch-register/api-types/entityDrawerConfiguration';
+import { buildFallbackEntityDrawerProfile } from '@arch-register/api-types/entityDrawerConfiguration';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import {
-  useEntityDrawerCatalog,
-  useEntityDrawerConfiguration,
-  useUpdateEntityDrawerConfiguration
-} from '../../hooks/useWorkspaceConfig';
-import { Checkbox } from '@diagram-craft/app-components/Checkbox';
-import { FormCheckboxList } from '../../components/FormCheckboxList';
+import { useEntityDrawerCatalog } from '../../hooks/useWorkspaceConfig';
+import { useEntityDrawerDraftContext } from './entityDrawerDraftContext';
 import layoutStyles from './SchemaLayoutEditor.module.css';
 import styles from './EntityDrawerSettingsScreen.module.css';
 import { EntityDrawerBadgeEditor } from './EntityDrawerBadgeEditor';
 import { EntityDrawerSectionsEditor } from './EntityDrawerSectionsEditor';
+import { FormGroup } from '../../components/FormGroup';
 
 const cloneProfile = (profile: EntityDrawerProfile): EntityDrawerProfile =>
   JSON.parse(JSON.stringify(profile)) as EntityDrawerProfile;
-
-const validateLocalEntityDrawerDraft = (configuration: EntityDrawerConfiguration): string[] =>
-  Object.entries(configuration.profiles).flatMap(([schemaId, profile]) =>
-    profile.sections.flatMap(section =>
-      section.items.flatMap(item => {
-        if (item.kind !== 'query') return [];
-        return (item.fields ?? []).flatMap(field =>
-          field.fieldId.trim() === ''
-            ? [
-                `Schema '${schemaId}', section '${section.title}': query result fields require a field id.`
-              ]
-            : []
-        );
-      })
-    )
-  );
 
 const SaveErrors = ({ errors }: { errors: string[] }) =>
   errors.length > 0 ? (
@@ -59,23 +33,10 @@ export const EntityDrawerEditor = ({
   const { workspaceSlug, schemas, relationSchemas } = useWorkspaceContext();
   const selectedSchemaId = schemaId ?? schemas[0]?.id;
   const selectedSchema = schemas.find(schema => schema.id === selectedSchemaId) ?? schemas[0];
-  const configurationQuery = useEntityDrawerConfiguration(workspaceSlug);
+  const { configurationQuery, draft, edit, validationErrors, saveError } =
+    useEntityDrawerDraftContext();
   const catalogQuery = useEntityDrawerCatalog(workspaceSlug);
-  const update = useUpdateEntityDrawerConfiguration(workspaceSlug);
-  const [draft, setDraft] = useState<EntityDrawerConfiguration | null>(null);
   const [customizing, setCustomizing] = useState(false);
-  const [localErrors, setLocalErrors] = useState<string[]>([]);
-
-  useEffect(() => {
-    const stored = normalizeLegacyEntityDrawerConfiguration(
-      configurationQuery.data?.stored_configuration
-    );
-    setDraft(
-      stored && typeof stored === 'object' && 'version' in stored && stored.version === 1
-        ? (JSON.parse(JSON.stringify(stored)) as EntityDrawerConfiguration)
-        : { version: 1, profiles: {} }
-    );
-  }, [configurationQuery.data?.stored_configuration]);
 
   useEffect(() => {
     setCustomizing(Boolean(selectedSchemaId && draft?.profiles[selectedSchemaId]));
@@ -105,14 +66,12 @@ export const EntityDrawerEditor = ({
 
   const updateProfile = (next: EntityDrawerProfile) => {
     if (!draft || !selectedSchemaId) return;
-    update.reset();
-    setLocalErrors([]);
-    setDraft({ ...draft, profiles: { ...draft.profiles, [selectedSchemaId]: next } });
+    edit({ ...draft, profiles: { ...draft.profiles, [selectedSchemaId]: next } });
   };
 
   const startCustomizing = () => {
     if (!draft || !selectedSchemaId) return;
-    setDraft({
+    edit({
       ...draft,
       profiles: { ...draft.profiles, [selectedSchemaId]: cloneProfile(profile) }
     });
@@ -123,26 +82,13 @@ export const EntityDrawerEditor = ({
     if (!draft || !selectedSchemaId) return;
     const next = { ...draft, profiles: { ...draft.profiles } };
     delete next.profiles[selectedSchemaId];
-    setDraft(next);
+    edit(next);
     setCustomizing(false);
   };
 
-  const save = () => {
-    if (!draft) return;
-    const errors = validateLocalEntityDrawerDraft(draft);
-    if (errors.length > 0) {
-      update.reset();
-      setLocalErrors(errors);
-      return;
-    }
-    setLocalErrors([]);
-    update.mutate(draft);
-  };
   const saveErrors = [
-    ...localErrors,
-    ...(update.error instanceof Error
-      ? [`Unable to save drawer configuration: ${update.error.message}`]
-      : [])
+    ...validationErrors,
+    ...(saveError ? [`Unable to save drawer configuration: ${saveError}`] : [])
   ];
   const availableFields =
     catalog.schemas
@@ -159,24 +105,6 @@ export const EntityDrawerEditor = ({
       )
       .map(field => ({ childSchema, field }))
   );
-  const stored = configurationQuery.data.stored_configuration;
-  const storedProfiles =
-    stored &&
-    typeof stored === 'object' &&
-    'version' in stored &&
-    stored.version === 1 &&
-    'profiles' in stored &&
-    typeof stored.profiles === 'object' &&
-    stored.profiles !== null
-      ? stored.profiles
-      : undefined;
-  const defaultChangePending = Boolean(
-    selectedSchemaId &&
-      storedProfiles &&
-      selectedSchemaId in storedProfiles &&
-      !draft?.profiles[selectedSchemaId]
-  );
-
   if (!customizing)
     return (
       <div className={layoutStyles.off}>
@@ -190,11 +118,6 @@ export const EntityDrawerEditor = ({
         </div>
         {canEdit && (
           <div className={styles.defaultActions}>
-            {defaultChangePending && (
-              <Button variant="secondary" onClick={save} disabled={update.isPending}>
-                Save changes
-              </Button>
-            )}
             <Button variant="primary" onClick={startCustomizing}>
               Use a custom layout
             </Button>
@@ -205,34 +128,15 @@ export const EntityDrawerEditor = ({
     );
 
   return (
-    <>
-      <FormCheckboxList>
-        <FormCheckboxList.Row label="Use a custom layout for the entity drawer">
-          <Checkbox
-            disabled={!canEdit}
-            value
-            onChange={checked => {
-              if (!checked) disableCustomLayout();
-            }}
-          />
-        </FormCheckboxList.Row>
-      </FormCheckboxList>
-
-      <div className={styles.customHeader}>
-        <div>
-          <div className={layoutStyles.sectionLabel}>Entity drawer layout</div>
-          <p className={styles.description}>
-            Presentation only. Field-group and provider permissions are enforced when the drawer
-            renders.
-          </p>
-        </div>
-        {canEdit && (
-          <Button variant="primary" onClick={save} disabled={update.isPending}>
-            Save changes
-          </Button>
-        )}
-      </div>
-
+    <FormGroup
+      variant={'section'}
+      label={'Entity drawer layout'}
+      action={
+        <Button size={'xs'} onClick={disableCustomLayout}>
+          Reset to default
+        </Button>
+      }
+    >
       <SaveErrors errors={saveErrors} />
 
       {configurationQuery.data.diagnostics.length > 0 && (
@@ -272,6 +176,6 @@ export const EntityDrawerEditor = ({
           </div>
         </div>
       </fieldset>
-    </>
+    </FormGroup>
   );
 };

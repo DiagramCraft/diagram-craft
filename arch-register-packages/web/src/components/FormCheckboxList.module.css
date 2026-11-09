@@ -20,4 +20,5 @@
   align-items: center;
   gap: 8px;
   color: var(--fg-secondary);
+  font-size: 11px;
 }

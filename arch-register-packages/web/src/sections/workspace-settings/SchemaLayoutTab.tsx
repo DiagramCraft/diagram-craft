@@ -9,9 +9,8 @@ import { buildDefaultLayout } from '../../lib/detailLayoutDefaults';
 import type { EntityEditorExtra } from './entitySchemaAdapter';
 import { useCanEditSchemas, useSchemaEditor } from './schemaEditorContext';
 import { SchemaLayoutEditor } from './SchemaLayoutEditor';
-import { Checkbox } from '@diagram-craft/app-components/Checkbox';
-import { FormCheckboxList } from '../../components/FormCheckboxList';
 import layoutStyles from './SchemaLayoutEditor.module.css';
+import { FormGroup } from '../../components/FormGroup';
 
 /** Detail-screen layout tab of the entity schema editor. */
 export const SchemaLayoutTab = () => {
@@ -55,12 +54,15 @@ export const SchemaLayoutTab = () => {
   }
 
   return (
-    <>
-      <FormCheckboxList style={{ marginBottom: 12 }}>
-        <FormCheckboxList.Row label="Use a custom layout for the Details/Edit screens">
-          <Checkbox disabled={!canEdit} value onChange={checked => setEnabled(checked ?? false)} />
-        </FormCheckboxList.Row>
-      </FormCheckboxList>
+    <FormGroup
+      variant={'section'}
+      label={'Edit Layout'}
+      action={
+        <Button size={'xs'} onClick={() => setEnabled(false)}>
+          Reset to default
+        </Button>
+      }
+    >
       <SchemaLayoutEditor
         layout={draft.detailLayout ?? defaultLayoutFor(draft.fields, draft.groups)}
         fields={draft.fields}
@@ -69,6 +71,6 @@ export const SchemaLayoutTab = () => {
         canEdit={canEdit}
         onChange={layout => editor.updateDraft(current => ({ ...current, detailLayout: layout }))}
       />
-    </>
+    </FormGroup>
   );
 };
