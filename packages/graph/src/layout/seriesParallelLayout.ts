@@ -76,29 +76,26 @@ const findSeriesVertex = <V, E, VK, EK>(
 ): VK | undefined => {
   const adjacencyList = graph.adjacencyList();
 
-  // Build reverse adjacency (incoming edges)
-  const reverseAdj = new Map<VK, VK[]>();
-  for (const edge of graph.edges()) {
-    if (edge.disabled) continue;
-    if (!reverseAdj.has(edge.to)) {
-      reverseAdj.set(edge.to, []);
+  // A series point is any internal vertex that every source-to-sink path passes through
+  // (a cut vertex between source and sink), i.e. removing it disconnects sink from source.
+  const isCutVertex = (candidate: VK): boolean => {
+    const seen = new Set<VK>([source, candidate]);
+    const stack: VK[] = [source];
+    while (stack.length > 0) {
+      const current = stack.pop()!;
+      for (const { vertexId, edge } of adjacencyList.get(current) ?? []) {
+        if (edge.disabled || seen.has(vertexId)) continue;
+        if (vertexId === sink) return false;
+        seen.add(vertexId);
+        stack.push(vertexId);
+      }
     }
-    reverseAdj.get(edge.to)!.push(edge.from);
-  }
+    return true;
+  };
 
-  // Look for vertex with exactly one incoming and one outgoing edge (not source or sink)
   for (const vertex of graph.vertices()) {
     if (vertex.id === source || vertex.id === sink) continue;
-
-    const outgoing = adjacencyList.get(vertex.id) ?? [];
-    const incoming = reverseAdj.get(vertex.id) ?? [];
-
-    const outgoingActive = outgoing.filter(n => !n.edge.disabled);
-    const incomingActive = incoming;
-
-    if (outgoingActive.length === 1 && incomingActive.length === 1) {
-      return vertex.id;
-    }
+    if (isCutVertex(vertex.id)) return vertex.id;
   }
 
   return undefined;
@@ -208,6 +205,7 @@ const decomposeSeriesParallel = <V, E, VK, EK>(
     const allEdges = Array.from(graph.edges()).filter(e => !e.disabled);
     const remainingEdges = new Set(allEdges);
     const adjacencyList = graph.adjacencyList();
+    let complete = true;
 
     while (remainingEdges.size > 0) {
       // Find one path from source to sink using only remaining edges
@@ -240,7 +238,10 @@ const decomposeSeriesParallel = <V, E, VK, EK>(
       };
 
       if (!findPath(source)) {
-        break; // No more paths found
+        // Leftover edges that do not form a source-to-sink path (e.g. a branch
+        // hanging off a shared serial prefix) - this is not a pure parallel composition
+        complete = false;
+        break;
       }
 
       // Create subgraph for this path
@@ -250,9 +251,11 @@ const decomposeSeriesParallel = <V, E, VK, EK>(
       const subgraph = graph.subgraph(pathVerts, path);
 
       const child = decomposeSeriesParallel(subgraph, source, sink, idCounter);
-      if (child) {
-        children.push(child);
+      if (!child) {
+        complete = false;
+        break;
       }
+      children.push(child);
 
       // Remove edges from this path
       for (const edge of path) {
@@ -260,7 +263,9 @@ const decomposeSeriesParallel = <V, E, VK, EK>(
       }
     }
 
-    if (children.length > 1) {
+    // Only accept the parallel decomposition if it covers every edge; otherwise
+    // fall through to the series check so no branch is silently dropped
+    if (complete && children.length > 1) {
       return {
         type: 'P',
         id: `p_${idCounter.value++}`,
@@ -268,8 +273,7 @@ const decomposeSeriesParallel = <V, E, VK, EK>(
         sink,
         children
       };
-    } else if (children.length === 1) {
-      // Only one path found, return it directly
+    } else if (complete && children.length === 1) {
       return children[0];
     }
   }
@@ -584,8 +588,13 @@ export const layoutSeriesParallel = <V = unknown, E = unknown, VK = string, EK =
   const idCounter = { value: 0 };
   const decomposition = decomposeSeriesParallel(subgraph, source, sink, idCounter);
 
-  if (!decomposition) {
-    // Not a series-parallel graph, fall back to layered layout
+  // Compute layout from decomposition
+  const positions = decomposition
+    ? computeLayoutFromDecomposition(decomposition, horizontalSpacing, verticalSpacing)
+    : undefined;
+
+  // Not a (complete) series-parallel decomposition, fall back to layered layout
+  if (!positions || Array.from(componentVertices).some(id => !positions.has(id))) {
     if (fallbackToLayered) {
       return layoutLayered(graph, startIds, {
         horizontalSpacing,
@@ -595,13 +604,6 @@ export const layoutSeriesParallel = <V = unknown, E = unknown, VK = string, EK =
     }
     return new Map();
   }
-
-  // Compute layout from decomposition
-  const positions = computeLayoutFromDecomposition(
-    decomposition,
-    horizontalSpacing,
-    verticalSpacing
-  );
 
   // Apply direction transformation
   return transformPositions(positions, direction);
