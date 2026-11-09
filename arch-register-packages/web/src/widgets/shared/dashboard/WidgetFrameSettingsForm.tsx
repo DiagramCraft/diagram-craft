@@ -7,9 +7,16 @@ import {
   resolveFrameStyle,
   WIDGET_FRAME_STYLES,
   WIDGET_TINTS,
-  type WidgetFrameStyle
+  type WidgetFrameStyle,
+  type WidgetTint
 } from './widgetFrameSettings';
-import styles from './WidgetFrameSettingsForm.module.css';
+import { ColorPicker, type ColorOption } from '../../../components/ColorPicker';
+
+const TINT_OPTIONS: ColorOption[] = WIDGET_TINTS.map(tint => ({
+  value: tint,
+  label: tint,
+  swatch: `var(--${tint}-3)`
+}));
 
 type Props = {
   frame: DashboardWidgetFrame;
@@ -49,27 +56,13 @@ export const WidgetFrameSettingsForm = ({ frame, onChange, defaultTitle }: Props
       </ToggleButtonGroup.Root>
     </FormGroup>
     <FormGroup label="Color" variant="simple">
-      <div className={styles.swatches}>
-        <ToggleButtonGroup.Root
-          type="single"
-          value={frame.tint ? undefined : 'none'}
-          onChange={() => onChange({ ...frame, tint: undefined })}
-        >
-          <ToggleButtonGroup.Item value="none">None</ToggleButtonGroup.Item>
-        </ToggleButtonGroup.Root>
-        {WIDGET_TINTS.map(tint => (
-          <button
-            key={tint}
-            type="button"
-            className={styles.swatch}
-            data-tint={tint}
-            aria-label={tint}
-            title={tint}
-            aria-pressed={frame.tint === tint}
-            onClick={() => onChange({ ...frame, tint })}
-          />
-        ))}
-      </div>
+      <ColorPicker
+        size="small"
+        noneLabel="None"
+        value={frame.tint}
+        colors={TINT_OPTIONS}
+        onChange={tint => onChange({ ...frame, tint: (tint as WidgetTint | null) ?? undefined })}
+      />
     </FormGroup>
     <FormGroup label="Icon" variant="simple">
       <IconPicker

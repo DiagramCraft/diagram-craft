@@ -8,26 +8,6 @@
 
 /* Lifecycle states editor */
 
-.swatches {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.swatch {
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
-  padding: 0;
-  border: 1px solid var(--cmp-border);
-  border-radius: 3px;
-  cursor: pointer;
-}
-
-.swatchActive {
-  box-shadow: 0 0 0 2px var(--accent-fg);
-}
-
 .stateRow {
   display: grid;
   grid-template-columns: 1fr auto;

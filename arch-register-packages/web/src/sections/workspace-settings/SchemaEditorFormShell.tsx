@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
-import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
+import { ColorPicker } from '../../components/ColorPicker';
 import { IconPicker } from '../../components/IconPicker';
 import { Panel } from '../../components/Panel';
 import { Stack } from '../../components/Stack';
@@ -82,18 +82,12 @@ export const SchemaEditorFormShell = ({
 
         <div className={styles.appearanceRow}>
           <FormElement label={'Color'}>
-            <div className={styles.colorSwatches}>
-              {SCHEMA_COLORS.map(option => (
-                <button
-                  type="button"
-                  key={option}
-                  className={`${styles.swatch} ${color === option ? styles.swatchActive : ''}`}
-                  style={{ background: option }}
-                  disabled={!canEdit}
-                  onClick={() => onColorChange(option)}
-                />
-              ))}
-            </div>
+            <ColorPicker
+              size="small"
+              value={color}
+              disabled={!canEdit}
+              onChange={c => c && onColorChange(c)}
+            />
           </FormElement>
 
           <FormElement label={'Icon'}>

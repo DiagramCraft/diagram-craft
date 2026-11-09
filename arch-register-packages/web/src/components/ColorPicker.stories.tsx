@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ColorPicker } from './ColorPicker';
 import { useState } from 'react';
-import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
+import { LIFECYCLE_COLOR_PRESETS, SCHEMA_COLORS } from '@arch-register/api-types/colors';
 
 const meta = {
   title: 'Components/ColorPicker',
@@ -162,5 +162,36 @@ export const SizeComparison = {
         </div>
       </div>
     );
+  }
+};
+
+export const LifecyclePalette: Story = {
+  args: {
+    value: LIFECYCLE_COLOR_PRESETS[1]?.value,
+    colors: LIFECYCLE_COLOR_PRESETS,
+    size: 'small',
+    onChange: color => console.log('Selected color:', color)
+  }
+};
+
+export const WithNone: Story = {
+  args: {
+    value: null,
+    noneLabel: 'None',
+    onChange: color => console.log('Selected color:', color)
+  }
+};
+
+export const WidgetTints: Story = {
+  args: {
+    value: 'blue',
+    noneLabel: 'None',
+    size: 'small',
+    colors: ['gray', 'blue', 'green', 'amber', 'red', 'purple'].map(t => ({
+      value: t,
+      label: t,
+      swatch: `var(--${t}-3)`
+    })),
+    onChange: color => console.log('Selected tint:', color)
   }
 };
