@@ -123,31 +123,62 @@ const hasParallelPaths = <V, E, VK, EK>(
     return true;
   }
 
-  // Find all paths from source to sink using DFS
-  let pathCount = 0;
-
-  const dfs = (current: VK, target: VK, path: Set<VK>): void => {
-    if (current === target) {
-      pathCount++;
-      return;
+  // Find one source-to-sink path using BFS
+  const parent = new Map<VK, { from: VK; edge: unknown }>();
+  const seen = new Set<VK>([source]);
+  const queue: VK[] = [source];
+  for (let qi = 0; qi < queue.length && !seen.has(sink); qi++) {
+    const current = queue[qi]!;
+    for (const { vertexId, edge } of adjacencyList.get(current) ?? []) {
+      if (edge.disabled || seen.has(vertexId)) continue;
+      seen.add(vertexId);
+      parent.set(vertexId, { from: current, edge });
+      queue.push(vertexId);
     }
+  }
 
-    if (pathCount > 1) return; // Early exit
+  if (!seen.has(sink)) return false;
 
-    const neighbors = adjacencyList.get(current) ?? [];
-    for (const { vertexId, edge } of neighbors) {
-      if (!edge.disabled && !path.has(vertexId)) {
-        path.add(vertexId);
-        dfs(vertexId, target, path);
-        path.delete(vertexId);
+  const pathVertices: VK[] = [sink];
+  const pathEdges: unknown[] = [];
+  for (let v = sink; v !== source; ) {
+    const p = parent.get(v)!;
+    pathEdges.unshift(p.edge);
+    pathVertices.unshift(p.from);
+    v = p.from;
+  }
+
+  const indexOnPath = new Map<VK, number>();
+  pathVertices.forEach((v, i) => indexOnPath.set(v, i));
+
+  // A second simple path exists iff there is a detour that leaves the path at
+  // vertex i and rejoins it at a later vertex j > i through off-path vertices.
+  for (let i = 0; i < pathVertices.length - 1; i++) {
+    const visited = new Set<VK>();
+    const stack: VK[] = [];
+
+    const explore = (from: VK, isStart: boolean): boolean => {
+      for (const { vertexId, edge } of adjacencyList.get(from) ?? []) {
+        if (edge.disabled) continue;
+        if (isStart && edge === pathEdges[i]) continue;
+        const idx = indexOnPath.get(vertexId);
+        if (idx !== undefined) {
+          if (idx > i) return true;
+        } else if (!visited.has(vertexId)) {
+          visited.add(vertexId);
+          stack.push(vertexId);
+        }
       }
+      return false;
+    };
+
+    if (explore(pathVertices[i]!, true)) return true;
+    while (stack.length > 0) {
+      if (explore(stack.pop()!, false)) return true;
     }
-  };
+  }
 
-  const path = new Set<VK>([source]);
-  dfs(source, sink, path);
-
-  return pathCount > 1;
+  return false;
 };
 
 /**
