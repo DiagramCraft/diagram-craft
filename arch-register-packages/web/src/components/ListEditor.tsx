@@ -2,6 +2,7 @@ import type { ReactNode, RefCallback } from 'react';
 import { useId } from 'react';
 import { TbChevronDown, TbChevronUp, TbGripVertical, TbPlus, TbTrash } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
+import { Scrollable } from '@diagram-craft/app-components/Scrollable';
 import { FieldConfigList } from './FieldConfigList';
 import { FormGroup } from './FormGroup';
 import { useListEditor, type ListEditorApi } from './useListEditor';
@@ -66,6 +67,8 @@ type BaseProps<T> = {
   /** `drag+buttons` adds up/down buttons next to the drag handle for keyboard-accessible reordering */
   reorder?: 'drag' | 'drag+buttons' | 'none';
   disabled?: boolean;
+  /** When set, the items scroll within this max height (e.g. `240` or `'40vh'`); the add button stays visible below the list */
+  scrollable?: React.CSSProperties['maxHeight'];
   canRemove?: (item: T, index: number) => boolean;
   maxItems?: number;
   /** Extra class on each item's outer element (handle, content and actions) */
@@ -98,6 +101,7 @@ export const ListEditor = <T,>(props: ListEditorProps<T>) => {
     layout = 'row',
     reorder = 'none',
     disabled = false,
+    scrollable,
     canRemove,
     maxItems,
     itemClassName,
@@ -171,20 +175,29 @@ export const ListEditor = <T,>(props: ListEditorProps<T>) => {
     />
   );
 
+  const itemsBody =
+    items.length === 0 ? (
+      emptyMessage && <div className={styles.emptyMessage}>{emptyMessage}</div>
+    ) : draggable ? (
+      <FieldConfigList
+        items={entries}
+        getId={entry => entry.key}
+        listId={listId}
+        onReorder={list.move}
+        renderItem={(entry, _index, drag) => renderEntry(entry, drag.ref)}
+      />
+    ) : (
+      entries.map(entry => <div key={entry.key}>{renderEntry(entry)}</div>)
+    );
+
   const body = (
     <div className={styles.root}>
-      {items.length === 0 ? (
-        emptyMessage && <div className={styles.emptyMessage}>{emptyMessage}</div>
-      ) : draggable ? (
-        <FieldConfigList
-          items={entries}
-          getId={entry => entry.key}
-          listId={listId}
-          onReorder={list.move}
-          renderItem={(entry, _index, drag) => renderEntry(entry, drag.ref)}
-        />
+      {scrollable !== undefined && items.length > 0 ? (
+        <Scrollable maxHeight={scrollable} variant="compact">
+          <div className={styles.items}>{itemsBody}</div>
+        </Scrollable>
       ) : (
-        entries.map(entry => <div key={entry.key}>{renderEntry(entry)}</div>)
+        itemsBody
       )}
 
       {!sectioned && addButton && <div className={styles.footer}>{addButton}</div>}

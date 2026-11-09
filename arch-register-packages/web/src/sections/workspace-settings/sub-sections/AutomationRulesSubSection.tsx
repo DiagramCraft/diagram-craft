@@ -17,6 +17,7 @@ import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { Table } from '../../../components/table/Table';
@@ -415,9 +416,11 @@ const EditorDialog = ({
   const [conditions, setConditions] = useState<AutomationCondition[]>([]);
   const [actions, setActions] = useState<AutomationAction[]>([]);
   const [enabled, setEnabled] = useState(true);
+  const [tab, setTab] = useState<'overview' | 'conditions' | 'actions'>('overview');
 
   useEffect(() => {
     if (!rule) return;
+    setTab('overview');
     if (rule === 'new') {
       setName('');
       setDescription('');
@@ -480,160 +483,188 @@ const EditorDialog = ({
         }
       ]}
     >
-      <div className={styles.form}>
-        <FormElement label="Name">
-          <TextInput value={name} onChange={value => setName(value ?? '')} />
-        </FormElement>
-        <FormElement label="Description">
-          <TextInput value={description} onChange={value => setDescription(value ?? '')} />
-        </FormElement>
-        <FormElement label="Resource type">
-          <Select.Root
-            value={resourceType}
-            onChange={value => {
-              const next = (value as 'entity' | 'relation') ?? 'entity';
-              setResourceType(next);
-              setSchemaId('');
-              setTrigger(
-                next === 'relation' ? { kind: 'relation_created' } : { kind: 'entity_created' }
-              );
-            }}
-            style={{ width: '100%' }}
-          >
-            <Select.Item value="entity">Entity</Select.Item>
-            <Select.Item value="relation">Typed relation</Select.Item>
-          </Select.Root>
-        </FormElement>
-        <FormElement label={resourceType === 'relation' ? 'Relation type' : 'Entity type'}>
-          <Select.Root
-            value={schemaId}
-            onChange={value => setSchemaId(value ?? '')}
-            style={{ width: '100%' }}
-          >
-            <Select.Item value="">
-              {resourceType === 'relation' ? 'All relation types' : 'All entity types'}
-            </Select.Item>
-            {availableSchemas.map(schema => (
-              <Select.Item key={schema.id} value={schema.id}>
-                {schema.name}
-              </Select.Item>
-            ))}
-          </Select.Root>
-        </FormElement>
+      <Tabs.Root
+        autoHeight
+        value={tab}
+        onValueChange={value => setTab(value as 'overview' | 'conditions' | 'actions')}
+      >
+        <Tabs.List aria-label="Automation rule sections">
+          <Tabs.Trigger value="overview">Overview</Tabs.Trigger>
+          <Tabs.Trigger value="conditions">Conditions ({conditions.length})</Tabs.Trigger>
+          <Tabs.Trigger value="actions">Actions ({actions.length})</Tabs.Trigger>
+        </Tabs.List>
 
-        <FormElement label="Trigger">
-          <Select.Root
-            value={trigger.kind}
-            onChange={value =>
-              setTrigger(defaultTriggerFor((value as TriggerKind) ?? 'entity_created'))
-            }
-            style={{ width: '100%' }}
-          >
-            {Object.entries(TRIGGER_LABELS)
-              .filter(([value]) =>
-                resourceType === 'relation'
-                  ? value.startsWith('relation_')
-                  : !value.startsWith('relation_')
-              )
-              .map(([value, label]) => (
-                <Select.Item key={value} value={value}>
-                  {label}
+        <Tabs.Content value="overview" style={{ minHeight: '23rem' }}>
+          <div className={styles.form}>
+            <FormElement label="Name">
+              <TextInput value={name} onChange={value => setName(value ?? '')} />
+            </FormElement>
+            <FormElement label="Description">
+              <TextArea
+                value={description}
+                rows={3}
+                style={{ width: '100%' }}
+                onChange={value => setDescription(value ?? '')}
+              />
+            </FormElement>
+            <FormElement label="Resource type">
+              <Select.Root
+                value={resourceType}
+                onChange={value => {
+                  const next = (value as 'entity' | 'relation') ?? 'entity';
+                  setResourceType(next);
+                  setSchemaId('');
+                  setTrigger(
+                    next === 'relation' ? { kind: 'relation_created' } : { kind: 'entity_created' }
+                  );
+                }}
+                style={{ width: '100%' }}
+              >
+                <Select.Item value="entity">Entity</Select.Item>
+                <Select.Item value="relation">Typed relation</Select.Item>
+              </Select.Root>
+            </FormElement>
+            <FormElement label={resourceType === 'relation' ? 'Relation type' : 'Entity type'}>
+              <Select.Root
+                value={schemaId}
+                onChange={value => setSchemaId(value ?? '')}
+                style={{ width: '100%' }}
+              >
+                <Select.Item value="">
+                  {resourceType === 'relation' ? 'All relation types' : 'All entity types'}
                 </Select.Item>
-              ))}
-          </Select.Root>
-        </FormElement>
-
-        {(trigger.kind === 'field_changed' || trigger.kind === 'relation_field_changed') && (
-          <FormElement label="Field id">
-            <TextInput
-              value={trigger.field}
-              onChange={value =>
-                setTrigger(
-                  trigger.kind === 'relation_field_changed'
-                    ? { kind: 'relation_field_changed', field: value ?? '' }
-                    : { kind: 'field_changed', field: value ?? '' }
-                )
-              }
-              placeholder="e.g. _owner, or a custom field id"
-            />
-          </FormElement>
-        )}
-
-        {trigger.kind === 'lifecycle_transition' && (
-          <div className={styles.row}>
-            <FormElement label="From (any if unset)">
-              <Select.Root
-                value={trigger.from ?? ''}
-                onChange={value =>
-                  setTrigger({
-                    kind: 'lifecycle_transition',
-                    from: value === '' ? undefined : (value ?? undefined),
-                    to: trigger.to
-                  })
-                }
-                style={{ width: '100%' }}
-              >
-                <Select.Item value="">Any</Select.Item>
-                {lifecycleStates.map(state => (
-                  <Select.Item key={state.id} value={state.id}>
-                    {state.label}
+                {availableSchemas.map(schema => (
+                  <Select.Item key={schema.id} value={schema.id}>
+                    {schema.name}
                   </Select.Item>
                 ))}
               </Select.Root>
             </FormElement>
-            <FormElement label="To (any if unset)">
+
+            <FormElement label="Trigger">
               <Select.Root
-                value={trigger.to ?? ''}
+                value={trigger.kind}
                 onChange={value =>
-                  setTrigger({
-                    kind: 'lifecycle_transition',
-                    from: trigger.from,
-                    to: value === '' ? undefined : (value ?? undefined)
-                  })
+                  setTrigger(defaultTriggerFor((value as TriggerKind) ?? 'entity_created'))
                 }
                 style={{ width: '100%' }}
               >
-                <Select.Item value="">Any</Select.Item>
-                {lifecycleStates.map(state => (
-                  <Select.Item key={state.id} value={state.id}>
-                    {state.label}
-                  </Select.Item>
-                ))}
+                {Object.entries(TRIGGER_LABELS)
+                  .filter(([value]) =>
+                    resourceType === 'relation'
+                      ? value.startsWith('relation_')
+                      : !value.startsWith('relation_')
+                  )
+                  .map(([value, label]) => (
+                    <Select.Item key={value} value={value}>
+                      {label}
+                    </Select.Item>
+                  ))}
               </Select.Root>
             </FormElement>
+
+            {(trigger.kind === 'field_changed' || trigger.kind === 'relation_field_changed') && (
+              <FormElement label="Field id">
+                <TextInput
+                  value={trigger.field}
+                  onChange={value =>
+                    setTrigger(
+                      trigger.kind === 'relation_field_changed'
+                        ? { kind: 'relation_field_changed', field: value ?? '' }
+                        : { kind: 'field_changed', field: value ?? '' }
+                    )
+                  }
+                  placeholder="e.g. _owner, or a custom field id"
+                />
+              </FormElement>
+            )}
+
+            {trigger.kind === 'lifecycle_transition' && (
+              <div className={styles.row}>
+                <FormElement label="From (any if unset)">
+                  <Select.Root
+                    value={trigger.from ?? ''}
+                    onChange={value =>
+                      setTrigger({
+                        kind: 'lifecycle_transition',
+                        from: value === '' ? undefined : (value ?? undefined),
+                        to: trigger.to
+                      })
+                    }
+                    style={{ width: '100%' }}
+                  >
+                    <Select.Item value="">Any</Select.Item>
+                    {lifecycleStates.map(state => (
+                      <Select.Item key={state.id} value={state.id}>
+                        {state.label}
+                      </Select.Item>
+                    ))}
+                  </Select.Root>
+                </FormElement>
+                <FormElement label="To (any if unset)">
+                  <Select.Root
+                    value={trigger.to ?? ''}
+                    onChange={value =>
+                      setTrigger({
+                        kind: 'lifecycle_transition',
+                        from: trigger.from,
+                        to: value === '' ? undefined : (value ?? undefined)
+                      })
+                    }
+                    style={{ width: '100%' }}
+                  >
+                    <Select.Item value="">Any</Select.Item>
+                    {lifecycleStates.map(state => (
+                      <Select.Item key={state.id} value={state.id}>
+                        {state.label}
+                      </Select.Item>
+                    ))}
+                  </Select.Root>
+                </FormElement>
+              </div>
+            )}
+
+            <label className={styles.check}>
+              <Checkbox value={enabled} onChange={value => setEnabled(value ?? false)} /> Enabled
+            </label>
           </div>
-        )}
+        </Tabs.Content>
 
-        <ListEditor
-          label="Conditions (all must match)"
-          items={conditions}
-          onChange={setConditions}
-          createItem={(): AutomationCondition => ({ field: '', operator: 'equals', value: '' })}
-          addLabel="Add condition"
-          layout="card"
-          renderItem={(condition, { replace }) => (
-            <ConditionRow condition={condition} fields={availableFields} onChange={replace} />
-          )}
-        />
+        <Tabs.Content value="conditions" style={{ minHeight: '23rem' }}>
+          <div className={styles.form}>
+            <ListEditor
+              label="Conditions (all must match)"
+              items={conditions}
+              onChange={setConditions}
+              createItem={(): AutomationCondition => ({ field: '', operator: 'equals', value: '' })}
+              addLabel="Add condition"
+              layout="card"
+              scrollable={'20rem'}
+              renderItem={(condition, { replace }) => (
+                <ConditionRow condition={condition} fields={availableFields} onChange={replace} />
+              )}
+            />
+          </div>
+        </Tabs.Content>
 
-        <ListEditor
-          label="Actions"
-          items={actions}
-          onChange={setActions}
-          createItem={() => defaultActionFor('create_audit_note')}
-          addLabel="Add action"
-          layout="card"
-          renderItem={(action, { replace }) => (
-            <ActionRow action={action} fields={availableFields} onChange={replace} />
-          )}
-        />
-
-        <label className={styles.check}>
-          <Checkbox value={enabled} onChange={value => setEnabled(value ?? false)} /> Enabled
-        </label>
-
-        <MutationError error={error} />
-      </div>
+        <Tabs.Content value="actions" style={{ minHeight: '23rem' }}>
+          <div className={styles.form}>
+            <ListEditor
+              label="Actions"
+              items={actions}
+              onChange={setActions}
+              createItem={() => defaultActionFor('create_audit_note')}
+              addLabel="Add action"
+              layout="card"
+              scrollable={'20rem'}
+              renderItem={(action, { replace }) => (
+                <ActionRow action={action} fields={availableFields} onChange={replace} />
+              )}
+            />
+          </div>
+        </Tabs.Content>
+      </Tabs.Root>
+      <MutationError error={error} />
     </Dialog>
   );
 };
