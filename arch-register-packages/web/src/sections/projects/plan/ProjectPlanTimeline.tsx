@@ -128,8 +128,13 @@ export const ProjectPlanTimeline = ({
       const effectiveDate = getSnapshotEffectiveDate(entry.changeCase, milestonesById);
       if (effectiveDate) dates.push(new Date(`${effectiveDate}T00:00:00`));
     }
+    for (const value of [project.start_date, project.target_date]) {
+      if (value) dates.push(new Date(`${value}T00:00:00`));
+    }
     return dates;
-  }, [datedSnapshots, milestonesById]);
+  }, [datedSnapshots, milestonesById, project.start_date, project.target_date]);
+  const hasProjectDates = !!(project.start_date || project.target_date);
+  const hasTimelineContent = datedSnapshots.length > 0 || hasProjectDates;
 
   const timeline = useSnapshotTimeline({
     dates: timelineDates,
@@ -138,6 +143,30 @@ export const ProjectPlanTimeline = ({
     milestones: milestonesById,
     today
   });
+
+  // Project duration bar; a missing start/end leaves that side open, running to the range edge.
+  const projectBar = useMemo(() => {
+    const start = stringDateToTimelinePx(
+      project.start_date,
+      timeline.rangeStart,
+      timeline.rangeEnd,
+      timeline.totalWidth
+    );
+    const end = stringDateToTimelinePx(
+      project.target_date,
+      timeline.rangeStart,
+      timeline.rangeEnd,
+      timeline.totalWidth
+    );
+    const left = start ?? 0;
+    const right = end ?? timeline.totalWidth;
+    return {
+      left,
+      width: Math.max(right - left, 4),
+      openStart: start === null,
+      openEnd: end === null
+    };
+  }, [project.start_date, project.target_date, timeline]);
 
   const handleSelect = (entry: ChangeCaseMemberEntry | null) => {
     setSelectedSnap(prev => (entry?.member.id === prev?.member.id ? null : entry));
@@ -202,7 +231,7 @@ export const ProjectPlanTimeline = ({
     );
   };
 
-  if (projectEntries.length === 0) {
+  if (projectEntries.length === 0 && !hasProjectDates) {
     return (
       <div className={styles.ptEmpty}>
         <div className={styles.ptEmptyTitle}>No project updates yet</div>
@@ -286,21 +315,40 @@ export const ProjectPlanTimeline = ({
             milestoneLabel: styles.ptlMilestoneLabel
           }}
           cornerLabel={`${totalEntities} entities`}
-          showHeader={datedSnapshots.length > 0}
-          showToday={datedSnapshots.length > 0}
-          showMilestones={datedSnapshots.length > 0}
+          showHeader={hasTimelineContent}
+          showToday={hasTimelineContent}
+          showMilestones={hasTimelineContent}
           milestoneAriaLabel={milestone =>
             `Milestone: ${milestone.name} (${milestone.target_date})`
           }
           todayScrollAlign={0.4}
         >
-          {timeline.milestoneMarkers.length > 0 && datedSnapshots.length > 0 && (
+          {timeline.milestoneMarkers.length > 0 && hasTimelineContent && (
             <div className={styles.ptlMilestoneLane}>
               <div className={styles.ptlMilestoneLaneCorner}>Milestones</div>
               <div
                 className={styles.ptlMilestoneLaneTrack}
                 style={{ width: timeline.totalWidth }}
               />
+            </div>
+          )}
+
+          {hasProjectDates && (
+            <div className={styles.ptlProjectLane}>
+              <div className={styles.ptlProjectLaneCorner} title={project.name}>
+                <span className={styles.ptlName}>{project.name}</span>
+              </div>
+              <div className={styles.ptlProjectLaneTrack} style={{ width: timeline.totalWidth }}>
+                <div
+                  className={`${styles.ptlProjectBar} ${projectBar.openStart ? styles.ptlProjectBarOpenStart : ''} ${projectBar.openEnd ? styles.ptlProjectBarOpenEnd : ''}`}
+                  style={{
+                    left: projectBar.left,
+                    width: projectBar.width,
+                    color: markerColor
+                  }}
+                  title={`${formatTimelineDate(project.start_date)} – ${formatTimelineDate(project.target_date)}`}
+                />
+              </div>
             </div>
           )}
 

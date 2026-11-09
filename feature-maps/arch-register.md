@@ -1254,7 +1254,8 @@
               associate it with a project milestone.
 
             - @id:ar.projects.planned-changes.timeline Users can inspect planned entity changes in project and
-              entity-oriented timeline views alongside historical change information.
+              entity-oriented timeline views alongside historical change information, and see the project's own
+              start-to-target duration as a bar on the project timeline.
 
             - @id:ar.projects.planned-changes.apply Users can apply a planned change case atomically, promoting
               all approved member states into the live entities and relations. Members changed since planning are
