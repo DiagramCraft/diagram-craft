@@ -216,6 +216,57 @@
   flex-shrink: 0;
 }
 
+.ptlProjectLane {
+  display: flex;
+  height: 30px;
+  background: var(--base-bg);
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.ptlProjectLaneCorner {
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  width: 248px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  background: var(--base-bg);
+  border-right: 1px solid var(--panel-border);
+  color: var(--cmp-fg-disabled);
+  font-size: 10px;
+  min-width: 0;
+}
+
+.ptlProjectLaneTrack {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.ptlProjectBar {
+  position: absolute;
+  top: 8px;
+  height: 14px;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  background: color-mix(in oklch, currentColor 25%, transparent);
+}
+
+.ptlProjectBarOpenStart {
+  border-left: none;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  mask-image: linear-gradient(to right, transparent, #000 48px);
+}
+
+.ptlProjectBarOpenEnd {
+  border-right: none;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  mask-image: linear-gradient(to left, transparent, #000 48px);
+}
+
 .ptlMilestoneLine {
   position: absolute;
   top: 34px;
