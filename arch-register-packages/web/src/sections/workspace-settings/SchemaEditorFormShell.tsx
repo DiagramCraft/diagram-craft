@@ -2,10 +2,9 @@ import type { ReactNode } from 'react';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
-import { ICON_MAP } from '../../components/TypeBadge';
+import { IconPicker } from '../../components/IconPicker';
 import { Panel } from '../../components/Panel';
 import { Stack } from '../../components/Stack';
-import { SCHEMA_ICONS } from '../../lib/schemaPresentation';
 import { CategorySelect } from './CategorySelect';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useCanEditSchemas, useSchemaEditor } from './schemaEditorContext';
@@ -98,23 +97,11 @@ export const SchemaEditorFormShell = ({
           </FormElement>
 
           <FormElement label={'Icon'}>
-            <div className={styles.iconPicker}>
-              {SCHEMA_ICONS.map(id => {
-                const Icon = ICON_MAP[id];
-                return (
-                  <button
-                    type="button"
-                    key={id}
-                    className={`${styles.iconOption} ${icon === id ? styles.iconOptionActive : ''}`}
-                    title={id}
-                    disabled={!canEdit}
-                    onClick={() => onIconChange(id)}
-                  >
-                    <Icon size={14} />
-                  </button>
-                );
-              })}
-            </div>
+            <IconPicker
+              value={icon ?? undefined}
+              disabled={!canEdit}
+              onChange={value => value && onIconChange(value)}
+            />
           </FormElement>
         </div>
         {children}

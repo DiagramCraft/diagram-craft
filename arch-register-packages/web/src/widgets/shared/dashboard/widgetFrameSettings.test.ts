@@ -36,9 +36,9 @@ describe('resolveWidgetFrame', () => {
   test('icon override enables icon even when spec hides it', () => {
     const s = spec({ showIcon: false });
     expect(resolveWidgetFrame(s, undefined).showIcon).toBe(false);
-    expect(resolveWidgetFrame(s, { icon: 'TbApi' })).toMatchObject({
+    expect(resolveWidgetFrame(s, { icon: 'api' })).toMatchObject({
       showIcon: true,
-      iconName: 'TbApi'
+      iconName: 'api'
     });
   });
 

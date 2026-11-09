@@ -3173,94 +3173,94 @@ export const APP_DASHBOARD_KEYS_BY_APPLICATION: Record<string, string[]> = {
 /** Rail icon (react-icons/tb component name) and label of each default application dashboard. */
 export const APP_DASHBOARD_RAIL: Record<string, { icon: string; railLabel: string }> = {
   [BUSINESS_GLOSSARY_APP_KEY]: {
-    icon: 'TbBook',
+    icon: 'book',
     railLabel: 'Business glossary'
   },
   [STRATEGY_OVERVIEW_APP_KEY]: {
-    icon: 'TbLayoutDashboard',
+    icon: 'layout-dashboard',
     railLabel: 'Overview'
   },
   [STRATEGY_CAPABILITY_MAP_APP_KEY]: {
-    icon: 'TbGridDots',
+    icon: 'grid-dots',
     railLabel: 'Capability map'
   },
   [STRATEGY_CAPABILITIES_APP_KEY]: {
-    icon: 'TbListDetails',
+    icon: 'list-details',
     railLabel: 'Capabilities'
   },
-  [STRATEGY_STRATEGY_APP_KEY]: { icon: 'TbTargetArrow', railLabel: 'Strategy' },
+  [STRATEGY_STRATEGY_APP_KEY]: { icon: 'target-arrow', railLabel: 'Strategy' },
   [STRATEGY_TRACEABILITY_APP_KEY]: {
-    icon: 'TbRoute',
+    icon: 'route',
     railLabel: 'Traceability'
   },
   [VENDOR_MANAGEMENT_OVERVIEW_APP_KEY]: {
-    icon: 'TbLayoutDashboard',
+    icon: 'layout-dashboard',
     railLabel: 'Overview'
   },
   [VENDOR_MANAGEMENT_VENDORS_APP_KEY]: {
-    icon: 'TbBuilding',
+    icon: 'building',
     railLabel: 'Vendors'
   },
   [VENDOR_MANAGEMENT_CONTRACTS_APP_KEY]: {
-    icon: 'TbFileCertificate',
+    icon: 'certificate',
     railLabel: 'Contracts'
   },
-  [VENDOR_MANAGEMENT_SPEND_APP_KEY]: { icon: 'TbCoin', railLabel: 'Spend' },
+  [VENDOR_MANAGEMENT_SPEND_APP_KEY]: { icon: 'coin', railLabel: 'Spend' },
   [VENDOR_MANAGEMENT_RISK_APP_KEY]: {
-    icon: 'TbAlertTriangle',
+    icon: 'alert-triangle',
     railLabel: 'Risk'
   },
   [RISK_COMPLIANCE_OVERVIEW_APP_KEY]: {
-    icon: 'TbLayoutDashboard',
+    icon: 'layout-dashboard',
     railLabel: 'Overview'
   },
   [RISK_COMPLIANCE_RISKS_APP_KEY]: {
-    icon: 'TbAlertTriangle',
+    icon: 'alert-triangle',
     railLabel: 'Risks'
   },
   [RISK_COMPLIANCE_CONTROLS_APP_KEY]: {
-    icon: 'TbShieldCheck',
+    icon: 'shield-check',
     railLabel: 'Controls'
   },
   [RISK_COMPLIANCE_RETENTION_APP_KEY]: {
-    icon: 'TbArchive',
+    icon: 'archive',
     railLabel: 'Retention'
   },
   [RISK_COMPLIANCE_ASSESSMENTS_APP_KEY]: {
-    icon: 'TbListCheck',
+    icon: 'list-check',
     railLabel: 'Assessments'
   },
   [DATA_STEWARDSHIP_APP_KEY]: {
-    icon: 'TbClipboardCheck',
+    icon: 'clipboard-check',
     railLabel: 'My work'
   },
   [DATA_STEWARDSHIP_STEWARDSHIP_APP_KEY]: {
-    icon: 'TbUserShield',
+    icon: 'user-shield',
     railLabel: 'Stewardship'
   },
   [DATA_STEWARDSHIP_CLASSIFICATION_APP_KEY]: {
-    icon: 'TbTags',
+    icon: 'tags',
     railLabel: 'Classification'
   },
   [DATA_STEWARDSHIP_CHANGE_CASES_APP_KEY]: {
-    icon: 'TbGitPullRequest',
+    icon: 'git-pull-request',
     railLabel: 'Change cases & exceptions'
   },
   [DATA_STEWARDSHIP_ASSESSMENTS_APP_KEY]: {
-    icon: 'TbChecklist',
+    icon: 'checklist',
     railLabel: 'Assessments'
   },
   [API_INTEGRATION_CATALOG_APP_KEY]: {
-    icon: 'TbLayoutDashboard',
+    icon: 'layout-dashboard',
     railLabel: 'Overview'
   },
-  [API_INTEGRATION_CATALOG_APIS_APP_KEY]: { icon: 'TbApi', railLabel: 'APIs' },
+  [API_INTEGRATION_CATALOG_APIS_APP_KEY]: { icon: 'api', railLabel: 'APIs' },
   [API_INTEGRATION_CATALOG_INTEGRATIONS_APP_KEY]: {
-    icon: 'TbPlugConnected',
+    icon: 'plug-connected',
     railLabel: 'Integrations'
   },
   [API_INTEGRATION_CATALOG_IMPACT_APP_KEY]: {
-    icon: 'TbAffiliate',
+    icon: 'affiliate',
     railLabel: 'Impact'
   }
 };

@@ -834,7 +834,7 @@ const validateRelations = async (
 };
 
 const APPLICATION_KEY_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
-const DASHBOARD_ICON_PATTERN = /^Tb[A-Za-z0-9]{1,60}$/;
+const DASHBOARD_ICON_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
 const validateApplications = async (
   db: DatabaseAdapter,
