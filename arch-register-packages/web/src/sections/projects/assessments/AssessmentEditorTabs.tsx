@@ -2,14 +2,11 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { DateInput } from '@diagram-craft/app-components/DateInput';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { MultiSelect } from '@diagram-craft/app-components/MultiSelect';
-import { Menu } from '@diagram-craft/app-components/Menu';
-import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { Select } from '@diagram-craft/app-components/Select';
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
-import { usePortal } from '@diagram-craft/app-components/PortalContext';
 import { TbEdit, TbPlus, TbTrash } from 'react-icons/tb';
 import type { Assessment } from '@arch-register/api-types/assessmentContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
@@ -20,7 +17,7 @@ import { GroupDialog } from '../../../components/GroupsEditor';
 import { PrincipalPicker } from '../../../components/PrincipalPicker';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { AssessmentScopeFilterBuilder } from './AssessmentScopeFilterBuilder';
-import { AssessmentFieldRow, FIELD_TYPE_OPTIONS } from './AssessmentFieldRow';
+import { AssessmentFieldRow } from './AssessmentFieldRow';
 import type { AssessmentEditorController } from './assessmentEditorState';
 import { GroupedListEditor } from '../../../components/GroupedListEditor';
 import styles from './AssessmentEditorTabs.module.css';
@@ -217,26 +214,12 @@ export const AssessmentScopeTab = ({
 };
 
 export const AssessmentFieldsTab = ({ editor }: { editor: AssessmentEditorController }) => {
-  const portal = usePortal();
   const { draft, actions } = editor;
 
   const fieldMenu = (groupId?: string) => (
-    <MenuButton.Root>
-      <MenuButton.Trigger
-        element={
-          <Button size="xs" icon={<TbPlus size={11} />}>
-            {groupId ? 'Add field' : 'Field'}
-          </Button>
-        }
-      />
-      <MenuButton.Menu container={portal}>
-        {FIELD_TYPE_OPTIONS.map(([type, label]) => (
-          <Menu.Item key={type} onClick={() => actions.addField(type, groupId)}>
-            {label}
-          </Menu.Item>
-        ))}
-      </MenuButton.Menu>
-    </MenuButton.Root>
+    <Button size="xs" icon={<TbPlus size={11} />} onClick={() => actions.addField(groupId)}>
+      {groupId ? 'Add field' : 'Field'}
+    </Button>
   );
 
   return (
@@ -254,9 +237,7 @@ export const AssessmentFieldsTab = ({ editor }: { editor: AssessmentEditorContro
         }
       >
         {draft.fields.length === 0 && draft.groups.length === 0 ? (
-          <div className={styles.fieldsEmpty}>
-            No fields yet — add a Rating, Select, or Notes field above.
-          </div>
+          <div className={styles.fieldsEmpty}>No fields yet — add a field above.</div>
         ) : (
           <GroupedListEditor
             className={styles.fieldsList}
@@ -305,6 +286,7 @@ export const AssessmentFieldsTab = ({ editor }: { editor: AssessmentEditorContro
                 field={field}
                 groups={draft.groups}
                 onUpdate={changes => actions.updateField(field.id, changes)}
+                onChangeType={type => actions.changeFieldType(field.id, type)}
                 onRemove={() => actions.removeField(field.id)}
                 dragHandleRef={ctx.dragRef}
               />

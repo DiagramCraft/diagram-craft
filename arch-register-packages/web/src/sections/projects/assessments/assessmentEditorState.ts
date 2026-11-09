@@ -57,7 +57,8 @@ export type AssessmentEditorActions = {
   onResponseWindowDaysChange: (value: string) => void;
   setScope: (ids: string[]) => void;
   onScopeConditionsChange: (conditions: FilterCondition[]) => void;
-  addField: (type: AssessmentField['type'], groupId?: string) => void;
+  addField: (groupId?: string) => void;
+  changeFieldType: (id: string, type: AssessmentField['type']) => void;
   updateField: (id: string, changes: Partial<AssessmentField>) => void;
   removeField: (id: string) => void;
   reorderFields: (bucketFieldIds: string[], fromIndex: number, toIndex: number) => void;
@@ -71,6 +72,27 @@ export type AssessmentEditorActions = {
   selectTemplate: (value: string | undefined) => void;
   applyPendingTemplate: () => void;
   cancelPendingTemplate: () => void;
+};
+
+type FieldBase = Pick<AssessmentField, 'id' | 'label' | 'requirementLevel' | 'groupId'>;
+
+const buildFieldOfType = (
+  base: FieldBase,
+  type: AssessmentField['type'],
+  siblings: AssessmentField[]
+): AssessmentField => {
+  if (type === 'enum') return { ...base, type, enumId: '' };
+  if (type === 'derived') {
+    const inputField = siblings.find(field => field.type !== 'derived' && field.id !== base.id);
+    return {
+      ...base,
+      type,
+      requirementLevel: 'optional',
+      expression: inputField ? `entity.${inputField.id}` : '""',
+      resultType: 'text'
+    };
+  }
+  return { ...base, type };
 };
 
 export type AssessmentEditorController = {
@@ -255,35 +277,40 @@ export const useAssessmentEditorController = ({
       setDraft(current => ({ ...current, scope: ids }));
     },
     onScopeConditionsChange: conditions => updateDraft('scopeConditions', conditions),
-    addField: (type, groupId) => {
+    addField: groupId => {
       markDirty();
       setDraft(current => {
-        const baseId = toFieldId('new_field');
         const id = uniqueAssessmentFieldId(
-          baseId,
+          toFieldId('new_field'),
           current.fields.map(field => field.id)
         );
-        const base = {
-          id,
-          label: '',
-          requirementLevel: 'required' as const,
-          ...(groupId && { groupId })
-        };
-        const inputField = current.fields.find(field => field.type !== 'derived');
-        const nextField: AssessmentField =
-          type === 'enum'
-            ? { ...base, type, enumId: '' }
-            : type === 'derived'
-              ? {
-                  ...base,
-                  type,
-                  requirementLevel: 'optional' as const,
-                  expression: inputField ? `entity.${inputField.id}` : '""',
-                  resultType: 'text' as const
-                }
-              : { ...base, type };
+        const nextField = buildFieldOfType(
+          { id, label: '', requirementLevel: 'required', ...(groupId && { groupId }) },
+          'rating',
+          current.fields
+        );
         return { ...current, fields: [...current.fields, nextField] };
       });
+    },
+    changeFieldType: (id, type) => {
+      markDirty();
+      setDraft(current => ({
+        ...current,
+        fields: current.fields.map(field => {
+          if (field.id !== id || field.type === type) return field;
+          const { id: fieldId, label, groupId } = field;
+          return buildFieldOfType(
+            {
+              id: fieldId,
+              label,
+              requirementLevel: field.type === 'derived' ? 'required' : field.requirementLevel,
+              ...(groupId && { groupId })
+            },
+            type,
+            current.fields
+          );
+        })
+      }));
     },
     updateField: (id, changes) => {
       markDirty();

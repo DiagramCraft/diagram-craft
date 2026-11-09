@@ -1,5 +1,5 @@
 import { useState, type RefCallback } from 'react';
-import { TbAlignLeft, TbDatabase, TbDots, TbEdit, TbStar } from 'react-icons/tb';
+import { TbDots, TbEdit } from 'react-icons/tb';
 import type { AssessmentField, AssessmentGroup } from '@arch-register/api-types/assessmentContract';
 import { Button } from '@diagram-craft/app-components/Button';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
@@ -14,7 +14,6 @@ import {
   AssessmentDerivedExpressionDialog,
   AssessmentInlineEnumDialog
 } from './AssessmentFieldDialogs';
-import styles from './assessment-editor-shared.module.css';
 
 export const FIELD_TYPE_OPTIONS: [AssessmentField['type'], string][] = [
   ['rating', 'Rating'],
@@ -23,22 +22,13 @@ export const FIELD_TYPE_OPTIONS: [AssessmentField['type'], string][] = [
   ['derived', 'Derived']
 ];
 
-export const FIELD_TYPE_META: Record<
-  AssessmentField['type'],
-  { icon: typeof TbStar; hint: string | null }
-> = {
-  rating: { icon: TbStar, hint: '1 – 5' },
-  enum: { icon: TbDatabase, hint: null },
-  text: { icon: TbAlignLeft, hint: 'free text' },
-  derived: { icon: TbDatabase, hint: null }
-};
-
 export const NO_GROUP = '__no_group__';
 
 export type AssessmentFieldRowProps = {
   field: AssessmentField;
   groups: AssessmentGroup[];
   onUpdate: (changes: Partial<AssessmentField>) => void;
+  onChangeType: (type: AssessmentField['type']) => void;
   onRemove: () => void;
   dragHandleRef: RefCallback<HTMLElement>;
 };
@@ -47,6 +37,7 @@ export const AssessmentFieldRow = ({
   field,
   groups,
   onUpdate,
+  onChangeType,
   onRemove,
   dragHandleRef
 }: AssessmentFieldRowProps) => {
@@ -54,8 +45,6 @@ export const AssessmentFieldRow = ({
   const portal = usePortal();
   const [inlineOptionsOpen, setInlineOptionsOpen] = useState(false);
   const [expressionTestOpen, setExpressionTestOpen] = useState(false);
-  const meta = FIELD_TYPE_META[field.type];
-  const Icon = meta.icon;
   const placeholders: Record<AssessmentField['type'], string> = {
     rating: 'Rating label…',
     enum: 'Select label…',
@@ -232,9 +221,17 @@ export const AssessmentFieldRow = ({
         </FieldConfig.Cell>
         <FieldConfig.Cell label="Type" flexBasis={130}>
           <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Icon size={13} />
-            {FIELD_TYPE_OPTIONS.find(([type]) => type === field.type)?.[1]}
-            {meta.hint && <span className={styles.fieldHint}>{meta.hint}</span>}
+            <Select.Root
+              value={field.type}
+              onChange={value => value && onChangeType(value as AssessmentField['type'])}
+              style={{ width: '100%' }}
+            >
+              {FIELD_TYPE_OPTIONS.map(([type, label]) => (
+                <Select.Item key={type} value={type}>
+                  {label}
+                </Select.Item>
+              ))}
+            </Select.Root>
           </span>
         </FieldConfig.Cell>
         <FieldConfig.Cell label="Completeness" flexBasis={120}>
