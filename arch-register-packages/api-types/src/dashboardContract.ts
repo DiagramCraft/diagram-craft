@@ -30,7 +30,7 @@ export const dashboardWidgetFrameSchema = z.object({
     .boolean()
     .optional()
     .describe('Deprecated: replaced by style (false = none, true = header)'),
-  icon: z.string().optional().describe('Icon name overriding the widget default icon')
+  icon: z.string().optional().describe('Icon id overriding the widget default icon')
 });
 
 export const dashboardWidgetSchema = z.object({
@@ -184,7 +184,7 @@ export const workspaceDashboardSchema = z.object({
     .string()
     .nullable()
     .optional()
-    .describe('Icon name shown for the dashboard in the app rail'),
+    .describe('Icon id shown for the dashboard in the app rail'),
   railLabel: z
     .string()
     .nullable()
@@ -207,14 +207,14 @@ export const createDashboardBodySchema = z.object({
     .describe(
       'When set, the dashboard is added to the end of this application instead of the home'
     ),
-  icon: z.string().nullable().optional().describe('Icon name shown in the app rail')
+  icon: z.string().nullable().optional().describe('Icon id shown in the app rail')
 });
 
 export const updateDashboardBodySchema = z.object({
   name: z.string().optional().describe('Dashboard name'),
   key: z.string().optional().describe('URL-safe slug; must stay unique in its scope'),
   description: z.string().optional().describe('Dashboard description'),
-  icon: z.string().nullable().optional().describe('Icon name shown in the app rail'),
+  icon: z.string().nullable().optional().describe('Icon id shown in the app rail'),
   railLabel: z.string().nullable().optional().describe('Label shown in the app rail'),
   widgets: z.array(dashboardWidgetSchema).optional().describe('Dashboard widget layout to persist'),
   sidebar: dashboardSidebarConfigSchema

@@ -9,7 +9,8 @@ import { resolveConfigVariables } from '../../../sections/dashboard/resolveSideb
 
 import { WidgetBodyTitleProvider } from './WidgetBodyTitle';
 import { resolveWidgetFrame } from './widgetFrameSettings';
-import { resolveAppIcon } from '../../../shell/appIcons';
+import { TbLayoutDashboard } from 'react-icons/tb';
+import { resolveIcon } from '../../../lib/icons';
 
 type Props = {
   widget: DashboardWidget;
@@ -44,7 +45,7 @@ export const DashboardWidgetRenderer = ({ widget, isEditing = false, onEdit, onR
     );
   }
   const title = frame.title ?? defaultTitle;
-  const Icon = frame.iconName ? resolveAppIcon(frame.iconName) : definition?.icon;
+  const Icon = frame.iconName ? resolveIcon(frame.iconName, TbLayoutDashboard) : definition?.icon;
   const HeaderActions = dashboard?.headerActionsComponent;
 
   return (
