@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useEditorRef } from 'platejs/react';
 import type { TElement } from 'platejs';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
-import { DialogContent } from '../../../sections/markdown/editor/BlockDialog';
+import { Stack } from '../../../components/Stack';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useMdxContext } from '../../../sections/markdown/MdxContext';
 import { getConfigDialogWidth } from '../configDialog';
@@ -112,14 +112,14 @@ export const MdxWidgetConfigDialog = <E extends TElement, Config extends Record<
         }
       ]}
     >
-      <DialogContent>
+      <Stack>
         <ConfigForm
           config={config}
           onChange={setConfig}
           context={{ mode: 'mdx', surface: projectId ? 'project' : 'workspace' }}
           registerSaveHook={setSaveHook}
         />
-      </DialogContent>
+      </Stack>
     </Dialog>
   );
 };

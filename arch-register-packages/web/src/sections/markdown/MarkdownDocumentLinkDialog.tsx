@@ -3,7 +3,7 @@ import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useContentFile } from '../../hooks/useContentScope';
 import { DocumentPicker } from '../../components/DocumentPicker';
-import { DialogContent } from './editor/BlockDialog';
+import { Stack } from '../../components/Stack';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 
 export const MarkdownDocumentLinkDialog = ({
@@ -43,7 +43,7 @@ export const MarkdownDocumentLinkDialog = ({
         { label: 'Add', type: 'default', disabled: !selectedDocumentId, onClick: handleConfirm }
       ]}
     >
-      <DialogContent>
+      <Stack>
         <FormElement label="Document">
           <DocumentPicker
             selectedDocumentId={selectedDocumentId}
@@ -52,7 +52,7 @@ export const MarkdownDocumentLinkDialog = ({
             onClearDocument={() => setSelectedDocumentId('')}
           />
         </FormElement>
-      </DialogContent>
+      </Stack>
     </Dialog>
   );
 };

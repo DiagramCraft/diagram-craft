@@ -3,7 +3,7 @@ import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 import type { DashboardWidgetWidgetDefinition, WidgetSurface } from '../../widgets/shared/types';
-import { DialogContent } from '../markdown/editor/BlockDialog';
+import { Stack } from '../../components/Stack';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { getConfigDialogWidth } from '../../widgets/shared/configDialog';
 import { getWidgetDefinition, isValidComponentConfig } from '../../widgets/shared/widgetRegistry';
@@ -90,7 +90,7 @@ const WidgetConfigDialogContent = ({
             <Tabs.Trigger value="appearance">Appearance</Tabs.Trigger>
           </Tabs.List>
           <Tabs.Content value="settings" style={tabContentStyle}>
-            <DialogContent>
+            <Stack>
               {ConfigForm ? (
                 <ConfigForm
                   config={config}
@@ -106,16 +106,16 @@ const WidgetConfigDialogContent = ({
                   </div>
                 </FormElement>
               )}
-            </DialogContent>
+            </Stack>
           </Tabs.Content>
           <Tabs.Content value="appearance" style={tabContentStyle}>
-            <DialogContent>
+            <Stack>
               <WidgetFrameSettingsForm
                 frame={frame}
                 onChange={setFrame}
                 defaultTitle={spec.getTitle?.(config as never) ?? definition.name}
               />
-            </DialogContent>
+            </Stack>
           </Tabs.Content>
         </Tabs.Root>
       </div>
