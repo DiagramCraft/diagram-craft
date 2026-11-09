@@ -387,20 +387,20 @@ export const SchemaFieldRow = ({
     <>
       <FieldConfig
         description={
-          <FieldConfig.Cell label="Description">
+          <FormElement label="Description">
             <TextArea
               rows={5}
               value={field.description ?? ''}
               disabled={!canEdit}
               onChange={value => onUpdate({ description: value?.trim() ? value : undefined })}
             />
-          </FieldConfig.Cell>
+          </FormElement>
         }
         dragHandleRef={dragHandleRef}
         options={optionsDisplay()}
         menu={menu}
       >
-        <FieldConfig.Cell label="Id" mono flexBasis={160}>
+        <FormElement label="Id" className={FieldConfig.mono} style={{ flexBasis: 160 }}>
           <TextInput
             value={field.id}
             disabled={!canEdit}
@@ -410,8 +410,8 @@ export const SchemaFieldRow = ({
             }}
             style={{ width: '100%' }}
           />
-        </FieldConfig.Cell>
-        <FieldConfig.Cell label="Label" flexBasis={160}>
+        </FormElement>
+        <FormElement label="Label" style={{ flexBasis: 160 }}>
           <TextInput
             value={field.name}
             disabled={!canEdit}
@@ -421,8 +421,8 @@ export const SchemaFieldRow = ({
             }}
             style={{ width: '100%' }}
           />
-        </FieldConfig.Cell>
-        <FieldConfig.Cell label="Type" flexBasis={140}>
+        </FormElement>
+        <FormElement label="Type" style={{ flexBasis: 140 }}>
           <Select.Root
             value={field.type}
             disabled={!canEdit}
@@ -441,8 +441,8 @@ export const SchemaFieldRow = ({
               </Select.Item>
             ))}
           </Select.Root>
-        </FieldConfig.Cell>
-        <FieldConfig.Cell label="Completeness" flexBasis={120}>
+        </FormElement>
+        <FormElement label="Completeness" style={{ flexBasis: 120 }}>
           <Select.Root
             value={field.requirementLevel ?? 'optional'}
             disabled={!canEdit || field.type === 'derived'}
@@ -463,9 +463,9 @@ export const SchemaFieldRow = ({
             <Select.Item value="expected">Expected</Select.Item>
             <Select.Item value="required">Required</Select.Item>
           </Select.Root>
-        </FieldConfig.Cell>
+        </FormElement>
         {field.type !== 'derived' && (
-          <FieldConfig.Cell label="External" flexBasis={150}>
+          <FormElement label="External" style={{ flexBasis: 150 }}>
             <div style={{ display: 'grid', gap: 4 }}>
               <Select.Root
                 value={field.external_kind ?? NOT_EXTERNAL}
@@ -500,7 +500,7 @@ export const SchemaFieldRow = ({
                 </Select.Root>
               )}
             </div>
-          </FieldConfig.Cell>
+          </FormElement>
         )}
       </FieldConfig>
       {field.type === 'derived' && (

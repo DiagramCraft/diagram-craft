@@ -204,22 +204,22 @@ export const AssessmentFieldRow = ({
   return (
     <>
       <FieldConfig dragHandleRef={dragHandleRef} options={options} menu={menu}>
-        <FieldConfig.Cell label="Id" mono flexBasis={140}>
+        <FormElement label="Id" className={FieldConfig.mono} style={{ flexBasis: 140 }}>
           <TextInput
             value={field.id}
             onChange={value => onUpdate({ id: value ?? field.id })}
             style={{ width: '100%' }}
           />
-        </FieldConfig.Cell>
-        <FieldConfig.Cell label="Label" flexBasis={200}>
+        </FormElement>
+        <FormElement label="Label" style={{ flexBasis: 200 }}>
           <TextInput
             value={field.label}
             onChange={value => onUpdate({ label: value ?? '' })}
             placeholder={placeholders[field.type]}
             style={{ width: '100%' }}
           />
-        </FieldConfig.Cell>
-        <FieldConfig.Cell label="Type" flexBasis={130}>
+        </FormElement>
+        <FormElement label="Type" style={{ flexBasis: 130 }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <Select.Root
               value={field.type}
@@ -233,8 +233,8 @@ export const AssessmentFieldRow = ({
               ))}
             </Select.Root>
           </span>
-        </FieldConfig.Cell>
-        <FieldConfig.Cell label="Completeness" flexBasis={120}>
+        </FormElement>
+        <FormElement label="Completeness" style={{ flexBasis: 120 }}>
           <Select.Root
             value={field.requirementLevel}
             disabled={field.type === 'derived'}
@@ -246,7 +246,7 @@ export const AssessmentFieldRow = ({
             <Select.Item value="required">Required</Select.Item>
             <Select.Item value="optional">Optional</Select.Item>
           </Select.Root>
-        </FieldConfig.Cell>
+        </FormElement>
       </FieldConfig>
       {field.type === 'derived' && (
         <AssessmentDerivedExpressionDialog
