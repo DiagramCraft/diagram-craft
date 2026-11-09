@@ -9,8 +9,6 @@ import { buildDefaultLayout } from '../../lib/detailLayoutDefaults';
 import type { EntityEditorExtra } from './entitySchemaAdapter';
 import { useCanEditSchemas, useSchemaEditor } from './schemaEditorContext';
 import { SchemaLayoutEditor } from './SchemaLayoutEditor';
-import { Checkbox } from '@diagram-craft/app-components/Checkbox';
-import { FormCheckboxList } from '../../components/FormCheckboxList';
 import layoutStyles from './SchemaLayoutEditor.module.css';
 import { FormGroup } from '../../components/FormGroup';
 
