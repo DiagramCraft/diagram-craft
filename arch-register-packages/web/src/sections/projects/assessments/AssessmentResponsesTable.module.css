@@ -15,8 +15,9 @@
 }
 
 .tableWrap {
-  flex: 1;
-  min-height: 0;
+  /* The wrap is overflow-x: auto, which makes it shrinkable in this flex column and would scroll
+     rows inside the table; keep it at content height so the page scrolls instead. */
+  flex-shrink: 0;
 }
 
 .filterGroup {

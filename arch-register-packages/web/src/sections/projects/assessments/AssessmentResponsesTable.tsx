@@ -136,7 +136,7 @@ export const AssessmentResponsesTable = ({
         />
       </div>
 
-      <Table.Root scroll scrollY stickyHeader wrapClassName={styles.tableWrap}>
+      <Table.Root scroll wrapClassName={styles.tableWrap}>
         <Table.Head>
           <Table.Row>
             <Table.SortableHeaderCell
