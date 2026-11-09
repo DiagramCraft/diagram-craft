@@ -24,7 +24,7 @@ import {
 } from '../../../auth/WorkspaceAuthorizationContext';
 import { DashboardGrid } from '../../../sections/dashboard/DashboardGrid';
 import { WidgetConfigDialog } from '../../../sections/dashboard/WidgetConfigDialog';
-import { DialogContent } from '../../../sections/markdown/editor/BlockDialog';
+import { Stack } from '../../../components/Stack';
 import { getConfigDialogWidth } from '../configDialog';
 import { createDefaultConfig, getWidgetDefinition } from '../widgetRegistry';
 import { MdxContext } from '../../../sections/markdown/MdxContext';
@@ -293,13 +293,13 @@ const ConfigDialogPreview = ({
               { label: 'Save', type: 'default', onClick: () => setOpen(false) }
             ]}
           >
-            <DialogContent>
+            <Stack>
               <ConfigForm
                 config={value}
                 onChange={setValue}
                 context={{ mode: 'mdx', surface: 'workspace' }}
               />
-            </DialogContent>
+            </Stack>
           </Dialog>
         )
       )}

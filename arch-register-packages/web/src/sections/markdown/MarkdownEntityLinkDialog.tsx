@@ -3,7 +3,7 @@ import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useEntity } from '../../hooks/useEntities';
 import { EntityPicker } from '../../components/EntityPicker';
-import { DialogContent } from './editor/BlockDialog';
+import { Stack } from '../../components/Stack';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 
 export const MarkdownEntityLinkDialog = ({
@@ -43,7 +43,7 @@ export const MarkdownEntityLinkDialog = ({
         { label: 'Add', type: 'default', disabled: !selectedEntityId, onClick: handleConfirm }
       ]}
     >
-      <DialogContent>
+      <Stack>
         <FormElement label="Entity">
           <EntityPicker
             selectedEntityId={selectedEntityId}
@@ -52,7 +52,7 @@ export const MarkdownEntityLinkDialog = ({
             onClearEntity={() => setSelectedEntityId('')}
           />
         </FormElement>
-      </DialogContent>
+      </Stack>
     </Dialog>
   );
 };

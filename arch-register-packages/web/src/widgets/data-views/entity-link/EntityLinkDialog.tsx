@@ -5,7 +5,7 @@ import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useEntity } from '../../../hooks/useEntities';
 import { EntityPicker } from '../../../components/EntityPicker';
-import { DialogContent } from '../../../sections/markdown/editor/BlockDialog';
+import { Stack } from '../../../components/Stack';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import type { EntityLinkSlateElement } from './types';
 
@@ -63,7 +63,7 @@ export const EntityLinkDialog = ({
         }
       ]}
     >
-      <DialogContent>
+      <Stack>
         <FormElement label="Entity">
           <EntityPicker
             selectedEntityId={selectedEntityId}
@@ -76,7 +76,7 @@ export const EntityLinkDialog = ({
             }}
           />
         </FormElement>
-      </DialogContent>
+      </Stack>
     </Dialog>
   );
 };

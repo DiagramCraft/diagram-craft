@@ -10,7 +10,7 @@ import {
   filterSchemaFields
 } from '../../data-views/entity-card/EntityCard';
 import { EntityPicker } from '../../../components/EntityPicker';
-import { DialogContent } from '../../../sections/markdown/editor/BlockDialog';
+import { Stack } from '../../../components/Stack';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import type { EntityFieldSlateElement } from './types';
 import styles from './EntityFieldDialog.module.css';
@@ -79,7 +79,7 @@ export const EntityFieldDialog = ({
         }
       ]}
     >
-      <DialogContent>
+      <Stack>
         <FormElement label="Entity">
           <EntityPicker
             selectedEntityId={selectedEntityId}
@@ -133,7 +133,7 @@ export const EntityFieldDialog = ({
             </div>
           </FormElement>
         )}
-      </DialogContent>
+      </Stack>
     </Dialog>
   );
 };

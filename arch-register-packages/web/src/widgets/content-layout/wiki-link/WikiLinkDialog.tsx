@@ -5,7 +5,7 @@ import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useContentFile } from '../../../hooks/useContentScope';
 import { DocumentPicker } from '../../../components/DocumentPicker';
-import { DialogContent } from '../../../sections/markdown/editor/BlockDialog';
+import { Stack } from '../../../components/Stack';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import type { WikiLinkSlateElement } from './types';
 
@@ -59,7 +59,7 @@ export const WikiLinkDialog = ({
         { label: 'Save', type: 'default', disabled: !selectedNodeId, onClick: handleConfirm }
       ]}
     >
-      <DialogContent>
+      <Stack>
         <FormElement label="Wiki page">
           <DocumentPicker
             selectedDocumentId={selectedNodeId}
@@ -68,7 +68,7 @@ export const WikiLinkDialog = ({
             onClearDocument={() => setSelectedNodeId('')}
           />
         </FormElement>
-      </DialogContent>
+      </Stack>
     </Dialog>
   );
 };

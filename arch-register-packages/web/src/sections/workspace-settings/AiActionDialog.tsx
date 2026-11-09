@@ -18,7 +18,7 @@ import {
 import { testDocumentAiAction } from '../../hooks/useDocumentAiActions';
 import { SafeMarkdown } from '../../components/SafeMarkdown';
 import { DocumentPicker } from '../../components/DocumentPicker';
-import { DialogContent } from '../markdown/editor/BlockDialog';
+import { Stack } from '../../components/Stack';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import styles from './AiActionDialog.module.css';
 
@@ -211,7 +211,7 @@ export const AiActionDialog = ({
       ]}
     >
       {draft && (
-        <DialogContent>
+        <Stack>
           <Tabs.Root
             autoHeight
             value={tab}
@@ -445,7 +445,7 @@ export const AiActionDialog = ({
               )}
             </Tabs.Content>
           </Tabs.Root>
-        </DialogContent>
+        </Stack>
       )}
     </Dialog>
   );

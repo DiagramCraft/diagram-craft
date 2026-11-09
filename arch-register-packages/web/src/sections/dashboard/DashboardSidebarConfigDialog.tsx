@@ -10,10 +10,11 @@ import { facetKindForField } from './dashboardFacetFields';
 import { useSchemas } from '../../hooks/useSchemas';
 import { useRelationSchemas } from '../../hooks/useRelationSchemas';
 import { ListEditor } from '../../components/ListEditor';
-import { DialogContent } from '../markdown/editor/BlockDialog';
+import { Stack } from '../../components/Stack';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { Tabs } from '@diagram-craft/app-components/Tabs';
 import {
   isFacetsConfigValid,
   isOptionsConfigValid,
@@ -43,6 +44,7 @@ export const DashboardSidebarConfigDialog = ({
   onClose,
   onSave
 }: Props) => {
+  const [tab, setTab] = useState<'overview' | 'items'>('overview');
   const entityPicker = sidebar?.kind === 'entity-picker' ? sidebar : null;
   const facetsSidebar = sidebar?.kind === 'facets' ? sidebar : null;
   const optionsSidebar = sidebar?.kind === 'options' ? sidebar : null;
@@ -99,6 +101,8 @@ export const DashboardSidebarConfigDialog = ({
     );
   };
 
+  const hasItemsTab = kind === 'options' || kind === 'facets';
+
   const canSave =
     kind === 'facets'
       ? isFacetsConfigValid(facetsSchemaName, facets)
@@ -111,7 +115,7 @@ export const DashboardSidebarConfigDialog = ({
       open={open}
       onClose={onClose}
       title="Dashboard sidebar"
-      width={460}
+      width={800}
       footerLeft={
         sidebar && (
           <Button
@@ -161,159 +165,189 @@ export const DashboardSidebarConfigDialog = ({
         }
       ]}
     >
-      <DialogContent>
+      <Stack>
         <FormElement label="Sidebar type">
           <Select.Root
             value={kind}
-            onChange={value => value && setKind(value as DashboardSidebarConfig['kind'])}
+            onChange={value => {
+              if (!value) return;
+              setKind(value as DashboardSidebarConfig['kind']);
+              setTab('overview');
+            }}
           >
             <Select.Item value="entity-picker">Entity picker (single select)</Select.Item>
             <Select.Item value="facets">Facets (multi select)</Select.Item>
             <Select.Item value="options">Fixed options (single select)</Select.Item>
           </Select.Root>
         </FormElement>
-        {kind === 'options' ? (
-          <>
-            <FormElement label="Variable name">
-              <TextInput
-                placeholder="e.g. status"
-                value={optionsVariableName}
-                onChange={value => setOptionsVariableName(value ?? '')}
-              />
-              <div className={styles.hint}>
-                Referenced in widget config as <code>${optionsVariableName || '<name>'}</code>. It
-                is empty when nothing is selected.
-              </div>
-            </FormElement>
-            <FormElement label="List label" required={false}>
-              <TextInput
-                value={optionsItemLabel}
-                onChange={value => setOptionsItemLabel(value ?? '')}
-              />
-            </FormElement>
-            <FormElement label="“All” row label" required={false}>
-              <TextInput
-                placeholder="e.g. All (leave empty for no “All” row)"
-                value={optionsAllLabel}
-                onChange={value => setOptionsAllLabel(value ?? '')}
-              />
-            </FormElement>
-            <ListEditor
-              label="Options"
-              items={options}
-              onChange={setOptions}
-              createItem={() => ({ value: '', label: '' })}
-              addLabel="Add option"
-              layout="card"
-              reorder="drag+buttons"
-              renderItem={(option, { update }) => (
-                <div className={styles.options}>
-                  <TextInput
-                    placeholder="Value"
-                    value={option.value}
-                    onChange={value => update({ value: value ?? '' })}
-                  />
-                  <TextInput
-                    placeholder="Label"
-                    value={option.label}
-                    onChange={value => update({ label: value ?? '' })}
-                  />
-                </div>
-              )}
-            />
-          </>
-        ) : kind === 'facets' ? (
-          <>
-            <FormElement label="Schema">
-              <Select.Root
-                value={facetsSchemaName ? `${facetsSchemaKind}:${facetsSchemaName}` : undefined}
-                placeholder="Select a schema…"
-                onChange={value => changeFacetsSchema(value ?? '')}
-              >
-                {(entitySchemas.data ?? []).map(schema => (
-                  <Select.Item key={`entity:${schema.id}`} value={`entity:${schema.name}`}>
-                    {`Entity schema · ${schema.name}`}
-                  </Select.Item>
-                ))}
-                {(relationSchemas.data ?? []).map(schema => (
-                  <Select.Item key={`relation:${schema.id}`} value={`relation:${schema.name}`}>
-                    {`Relation type · ${schema.name}`}
-                  </Select.Item>
-                ))}
-              </Select.Root>
-            </FormElement>
-            <ListEditor
-              label="Facets"
-              items={facets}
-              onChange={setFacets}
-              createItem={(): DashboardFacetConfig => ({ fieldId: '', variableName: '' })}
-              addLabel="Add facet"
-              layout="card"
-              reorder="drag+buttons"
-              renderItem={(facet, { update }) => (
-                <div className={styles.options}>
+        <Tabs.Root
+          autoHeight
+          value={hasItemsTab ? tab : 'overview'}
+          onValueChange={value => setTab(value as 'overview' | 'items')}
+        >
+          <Tabs.List aria-label="Sidebar sections">
+            <Tabs.Trigger value="overview">Overview</Tabs.Trigger>
+            {kind === 'options' && <Tabs.Trigger value="items">Options</Tabs.Trigger>}
+            {kind === 'facets' && <Tabs.Trigger value="items">Facets</Tabs.Trigger>}
+          </Tabs.List>
+
+          <Tabs.Content value="overview" style={{ minHeight: '23rem' }}>
+            <Stack>
+              {kind === 'options' ? (
+                <>
+                  <FormElement label="Variable name">
+                    <TextInput
+                      placeholder="e.g. status"
+                      value={optionsVariableName}
+                      onChange={value => setOptionsVariableName(value ?? '')}
+                    />
+                    <div className={styles.hint}>
+                      Referenced in widget config as <code>${optionsVariableName || '<name>'}</code>
+                      . It is empty when nothing is selected.
+                    </div>
+                  </FormElement>
+                  <FormElement label="List label" required={false}>
+                    <TextInput
+                      value={optionsItemLabel}
+                      onChange={value => setOptionsItemLabel(value ?? '')}
+                    />
+                  </FormElement>
+                  <FormElement label="“All” row label" required={false}>
+                    <TextInput
+                      placeholder="e.g. All (leave empty for no “All” row)"
+                      value={optionsAllLabel}
+                      onChange={value => setOptionsAllLabel(value ?? '')}
+                    />
+                  </FormElement>
+                </>
+              ) : kind === 'facets' ? (
+                <FormElement label="Schema">
                   <Select.Root
-                    value={facet.fieldId || undefined}
-                    placeholder="Select a field…"
-                    onChange={value => update({ fieldId: value ?? '' })}
+                    value={facetsSchemaName ? `${facetsSchemaKind}:${facetsSchemaName}` : undefined}
+                    placeholder="Select a schema…"
+                    onChange={value => changeFacetsSchema(value ?? '')}
                   >
-                    <Select.Item value="_owner">Owner</Select.Item>
-                    <Select.Item value="_lifecycle">Lifecycle</Select.Item>
-                    {(referenceFieldNames ?? []).map(name => (
-                      <Select.Item key={name} value={name}>
-                        {name}
+                    {(entitySchemas.data ?? []).map(schema => (
+                      <Select.Item key={`entity:${schema.id}`} value={`entity:${schema.name}`}>
+                        {`Entity schema · ${schema.name}`}
+                      </Select.Item>
+                    ))}
+                    {(relationSchemas.data ?? []).map(schema => (
+                      <Select.Item key={`relation:${schema.id}`} value={`relation:${schema.name}`}>
+                        {`Relation type · ${schema.name}`}
                       </Select.Item>
                     ))}
                   </Select.Root>
-                  <TextInput
-                    placeholder="Variable name, e.g. category"
-                    value={facet.variableName}
-                    onChange={value => update({ variableName: value ?? '' })}
-                  />
-                  <TextInput
-                    placeholder="Label (optional)"
-                    value={facet.itemLabel ?? ''}
-                    onChange={value => update({ itemLabel: value ?? '' })}
-                  />
-                </div>
+                </FormElement>
+              ) : (
+                <>
+                  <FormElement label="Entity schema">
+                    <Select.Root
+                      value={schemaName || undefined}
+                      placeholder="Select a schema…"
+                      onChange={value => setSchemaName(value ?? '')}
+                    >
+                      {(entitySchemas.data ?? []).map(schema => (
+                        <Select.Item key={schema.id} value={schema.name}>
+                          {schema.name}
+                        </Select.Item>
+                      ))}
+                    </Select.Root>
+                  </FormElement>
+                  <FormElement label="Variable name">
+                    <TextInput
+                      placeholder="e.g. apiEntityId"
+                      value={variableName}
+                      onChange={value => setVariableName(value ?? '')}
+                    />
+                    <div className={styles.hint}>
+                      Referenced in widget config as <code>${variableName || '<name>'}</code>.
+                    </div>
+                  </FormElement>
+                  <FormElement label="List label" required={false}>
+                    <TextInput
+                      placeholder="e.g. APIs"
+                      value={itemLabel}
+                      onChange={value => setItemLabel(value ?? '')}
+                    />
+                  </FormElement>
+                </>
               )}
-            />
-          </>
-        ) : (
-          <>
-            <FormElement label="Entity schema">
-              <Select.Root
-                value={schemaName || undefined}
-                placeholder="Select a schema…"
-                onChange={value => setSchemaName(value ?? '')}
-              >
-                {(entitySchemas.data ?? []).map(schema => (
-                  <Select.Item key={schema.id} value={schema.name}>
-                    {schema.name}
-                  </Select.Item>
-                ))}
-              </Select.Root>
-            </FormElement>
-            <FormElement label="Variable name">
-              <TextInput
-                placeholder="e.g. apiEntityId"
-                value={variableName}
-                onChange={value => setVariableName(value ?? '')}
-              />
-              <div className={styles.hint}>
-                Referenced in widget config as <code>${variableName || '<name>'}</code>.
-              </div>
-            </FormElement>
-            <FormElement label="List label" required={false}>
-              <TextInput
-                placeholder="e.g. APIs"
-                value={itemLabel}
-                onChange={value => setItemLabel(value ?? '')}
-              />
-            </FormElement>
-          </>
-        )}
-      </DialogContent>
+            </Stack>
+          </Tabs.Content>
+
+          {hasItemsTab && (
+            <Tabs.Content value="items" style={{ minHeight: '23rem' }}>
+              <Stack>
+                {kind === 'options' ? (
+                  <ListEditor
+                    label="Options"
+                    items={options}
+                    onChange={setOptions}
+                    createItem={() => ({ value: '', label: '' })}
+                    addLabel="Add option"
+                    layout="card"
+                    reorder="drag+buttons"
+                    scrollable={'20rem'}
+                    renderItem={(option, { update }) => (
+                      <div className={styles.options}>
+                        <TextInput
+                          placeholder="Value"
+                          value={option.value}
+                          onChange={value => update({ value: value ?? '' })}
+                        />
+                        <TextInput
+                          placeholder="Label"
+                          value={option.label}
+                          onChange={value => update({ label: value ?? '' })}
+                        />
+                      </div>
+                    )}
+                  />
+                ) : (
+                  <ListEditor
+                    label="Facets"
+                    items={facets}
+                    onChange={setFacets}
+                    createItem={(): DashboardFacetConfig => ({ fieldId: '', variableName: '' })}
+                    addLabel="Add facet"
+                    layout="card"
+                    reorder="drag+buttons"
+                    scrollable={'20rem'}
+                    renderItem={(facet, { update }) => (
+                      <div className={styles.options}>
+                        <Select.Root
+                          value={facet.fieldId || undefined}
+                          placeholder="Select a field…"
+                          onChange={value => update({ fieldId: value ?? '' })}
+                        >
+                          <Select.Item value="_owner">Owner</Select.Item>
+                          <Select.Item value="_lifecycle">Lifecycle</Select.Item>
+                          {(referenceFieldNames ?? []).map(name => (
+                            <Select.Item key={name} value={name}>
+                              {name}
+                            </Select.Item>
+                          ))}
+                        </Select.Root>
+                        <TextInput
+                          placeholder="Variable name, e.g. category"
+                          value={facet.variableName}
+                          onChange={value => update({ variableName: value ?? '' })}
+                        />
+                        <TextInput
+                          placeholder="Label (optional)"
+                          value={facet.itemLabel ?? ''}
+                          onChange={value => update({ itemLabel: value ?? '' })}
+                        />
+                      </div>
+                    )}
+                  />
+                )}
+              </Stack>
+            </Tabs.Content>
+          )}
+        </Tabs.Root>
+      </Stack>
     </Dialog>
   );
 };
