@@ -10,7 +10,7 @@ import type {
 import type { RelationConstraintErrorData } from '@arch-register/api-types/relationSchemaContract';
 import type { SharedFieldGroup } from '@arch-register/api-types/fieldGroupContract';
 import type { FieldMigrationChoices } from '../../dialogs/FieldMigrationDialog';
-import { toFieldId } from '../../utils/fieldId';
+import { toFieldId, uniqueFieldId } from '../../utils/fieldId';
 import { moveWithinBucket } from '../../utils/arrayReorder';
 
 export type EditorField = {
@@ -269,12 +269,17 @@ export const useSchemaEditorController = <
 
   const addField = useCallback(
     (groupId?: string) => {
-      const id = toFieldId('new_field');
-      fieldKeysRef.current.set(id, crypto.randomUUID());
-      updateDraft(current => ({
-        ...current,
-        fields: [...current.fields, adapterRef.current.createField(id, groupId)]
-      }));
+      updateDraft(current => {
+        const id = uniqueFieldId(
+          toFieldId('new_field'),
+          current.fields.map(field => field.id)
+        );
+        fieldKeysRef.current.set(id, crypto.randomUUID());
+        return {
+          ...current,
+          fields: [...current.fields, adapterRef.current.createField(id, groupId)]
+        };
+      });
     },
     [updateDraft]
   );

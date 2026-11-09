@@ -9,7 +9,7 @@ import {
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import type { FieldType } from '../../lib/schemaPresentation';
 import { moveInArray } from '../../utils/arrayReorder';
-import { toFieldId } from '../../utils/fieldId';
+import { toFieldId, uniqueFieldId } from '../../utils/fieldId';
 
 /**
  * Draft state and persistence for the shared field group editor: edits, dirty tracking, revert,
@@ -87,8 +87,13 @@ export const useFieldGroupDraft = ({
   };
 
   const addField = () => {
-    const id = toFieldId('new_field');
-    setFields(current => [...current, { id, name: 'new_field', type: 'text' }]);
+    setFields(current => {
+      const id = uniqueFieldId(
+        toFieldId('new_field'),
+        current.map(field => field.id)
+      );
+      return [...current, { id, name: id, type: 'text' }];
+    });
     setDirty(true);
   };
 
