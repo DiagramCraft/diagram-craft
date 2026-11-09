@@ -140,7 +140,5 @@ export type IconId = keyof typeof ICON_MAP;
 export const ICON_IDS = Object.keys(ICON_MAP) as IconId[];
 
 /** Resolves a persisted icon id; unknown or empty ids fall back to `fallback`. */
-export const resolveIcon = (
-  id: string | null | undefined,
-  fallback: IconType = TbBox
-): IconType => (id ? (ICON_MAP as Record<string, IconType>)[id] : undefined) ?? fallback;
+export const resolveIcon = (id: string | null | undefined, fallback: IconType = TbBox): IconType =>
+  (id ? (ICON_MAP as Record<string, IconType>)[id] : undefined) ?? fallback;
