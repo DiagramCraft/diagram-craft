@@ -53,22 +53,20 @@
   margin-top: 1px;
 }
 
-.cell {
+.cells {
+  flex: 1 1 0;
+  min-width: 0;
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  gap: 8px 10px;
+}
+
+.cells > *,
+.grid > * {
   flex: 1 1 0;
   min-width: 0;
 }
 
-.sublabel {
-  font-size: 11px;
-  color: var(--base-fg-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-}
-
-.mono {
+.mono input {
   font-family: var(--font-mono);
 }
 
@@ -79,13 +77,4 @@
   display: flex;
   flex-wrap: wrap;
   gap: 16px;
-}
-
-/* Match FormElement labels used inside the drawer to the .sublabel styling above. */
-.options label {
-  text-transform: uppercase !important;
-  color: var(--base-fg-tertiary) !important;
-  font-weight: 400 !important;
-  letter-spacing: 0.4px !important;
-  font-size: 11px !important;
 }

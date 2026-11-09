@@ -29,7 +29,7 @@ export const FieldConfig = ({
         <TbGripVertical size={14} />
       </span>
       {description === undefined ? (
-        children
+        <div className={styles.cells}>{children}</div>
       ) : (
         <div className={styles.grid}>
           {children}
@@ -42,18 +42,4 @@ export const FieldConfig = ({
   </div>
 );
 
-type FieldConfigCellProps = {
-  label: string;
-  flexBasis?: number | string;
-  mono?: boolean;
-  children: ReactNode;
-};
-
-const Cell = ({ label, flexBasis, mono, children }: FieldConfigCellProps) => (
-  <div className={styles.cell} style={flexBasis === undefined ? undefined : { flexBasis }}>
-    <span className={styles.sublabel}>{label}</span>
-    <span className={mono ? styles.mono : undefined}>{children}</span>
-  </div>
-);
-
-FieldConfig.Cell = Cell;
+FieldConfig.mono = styles.mono;

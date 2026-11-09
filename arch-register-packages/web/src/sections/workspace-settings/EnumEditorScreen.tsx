@@ -171,7 +171,11 @@ export const EnumEditorScreen = () => {
                     </div>
                   }
                 >
-                  <FieldConfig.Cell label="Value" mono flexBasis={180}>
+                  <FormElement
+                    label="Value"
+                    className={FieldConfig.mono}
+                    style={{ flexBasis: 180 }}
+                  >
                     <TextInput
                       value={opt.value}
                       readOnly={!canEdit || opt.originalValue !== undefined}
@@ -179,8 +183,8 @@ export const EnumEditorScreen = () => {
                       style={{ width: '100%' }}
                       onChange={value => updateOption(i, { value: value ?? '' })}
                     />
-                  </FieldConfig.Cell>
-                  <FieldConfig.Cell label="Label" flexBasis={200}>
+                  </FormElement>
+                  <FormElement label="Label" style={{ flexBasis: 200 }}>
                     <TextInput
                       value={opt.label}
                       readOnly={!canEdit}
@@ -188,8 +192,8 @@ export const EnumEditorScreen = () => {
                       style={{ width: '100%' }}
                       onChange={value => updateOption(i, { label: value ?? '' })}
                     />
-                  </FieldConfig.Cell>
-                  <FieldConfig.Cell label="Description" flexBasis={260}>
+                  </FormElement>
+                  <FormElement label="Description" style={{ flexBasis: 260 }}>
                     <TextInput
                       value={opt.description ?? ''}
                       readOnly={!canEdit}
@@ -197,7 +201,7 @@ export const EnumEditorScreen = () => {
                       style={{ width: '100%' }}
                       onChange={value => updateOption(i, { description: value ?? null })}
                     />
-                  </FieldConfig.Cell>
+                  </FormElement>
                 </FieldConfig>
               )}
             />

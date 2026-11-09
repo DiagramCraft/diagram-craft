@@ -54,18 +54,18 @@ export const DocumentFieldRow = ({
           </button>
         }
       >
-        <FieldConfig.Cell label="Id" mono flexBasis={140}>
+        <FormElement label="Id" className={FieldConfig.mono} style={{ flexBasis: 140 }}>
           {field.id}
-        </FieldConfig.Cell>
-        <FieldConfig.Cell label="Label" flexBasis={160}>
+        </FormElement>
+        <FormElement label="Label" style={{ flexBasis: 160 }}>
           {field.name}
-        </FieldConfig.Cell>
-        <FieldConfig.Cell label="Type" flexBasis={130}>
+        </FormElement>
+        <FormElement label="Type" style={{ flexBasis: 130 }}>
           {field.type}
-        </FieldConfig.Cell>
-        <FieldConfig.Cell label="Status" flexBasis={120}>
+        </FormElement>
+        <FormElement label="Status" style={{ flexBasis: 120 }}>
           <Chip tone="ghost">Retired</Chip>
-        </FieldConfig.Cell>
+        </FormElement>
       </FieldConfig>
     );
   }
@@ -141,13 +141,13 @@ export const DocumentFieldRow = ({
   return (
     <FieldConfig
       description={
-        <FieldConfig.Cell label="Description">
+        <FormElement label="Description">
           <TextArea
             rows={5}
             value={field.description ?? ''}
             onChange={value => onUpdate({ description: value?.trim() ? value : undefined })}
           />
-        </FieldConfig.Cell>
+        </FormElement>
       }
       dragHandleRef={dragHandleRef}
       options={options}
@@ -168,7 +168,7 @@ export const DocumentFieldRow = ({
         </MenuButton.Root>
       }
     >
-      <FieldConfig.Cell label="Id" mono flexBasis={140}>
+      <FormElement label="Id" className={FieldConfig.mono} style={{ flexBasis: 140 }}>
         <TextInput
           value={field.id}
           onChange={value => {
@@ -177,8 +177,8 @@ export const DocumentFieldRow = ({
           }}
           style={{ width: '100%' }}
         />
-      </FieldConfig.Cell>
-      <FieldConfig.Cell label="Label" flexBasis={160}>
+      </FormElement>
+      <FormElement label="Label" style={{ flexBasis: 160 }}>
         <TextInput
           value={field.name}
           onChange={value => {
@@ -188,8 +188,8 @@ export const DocumentFieldRow = ({
           }}
           style={{ width: '100%' }}
         />
-      </FieldConfig.Cell>
-      <FieldConfig.Cell label="Type" flexBasis={130}>
+      </FormElement>
+      <FormElement label="Type" style={{ flexBasis: 130 }}>
         <Select.Root
           value={field.type}
           onChange={value =>
@@ -206,8 +206,8 @@ export const DocumentFieldRow = ({
             </Select.Item>
           ))}
         </Select.Root>
-      </FieldConfig.Cell>
-      <FieldConfig.Cell label="Completeness" flexBasis={120}>
+      </FormElement>
+      <FormElement label="Completeness" style={{ flexBasis: 120 }}>
         <Select.Root
           value={field.requirement}
           onChange={value => value && onUpdate({ requirement: value as DocumentRequirement })}
@@ -219,8 +219,8 @@ export const DocumentFieldRow = ({
             </Select.Item>
           ))}
         </Select.Root>
-      </FieldConfig.Cell>
-      <FieldConfig.Cell label="External" flexBasis={150}>
+      </FormElement>
+      <FormElement label="External" style={{ flexBasis: 150 }}>
         <div style={{ display: 'grid', gap: 4 }}>
           <Select.Root
             value={field.external_kind ?? NOT_EXTERNAL}
@@ -253,7 +253,7 @@ export const DocumentFieldRow = ({
             </Select.Root>
           )}
         </div>
-      </FieldConfig.Cell>
+      </FormElement>
     </FieldConfig>
   );
 };
