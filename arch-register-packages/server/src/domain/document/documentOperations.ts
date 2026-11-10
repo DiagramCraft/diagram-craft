@@ -1,3 +1,4 @@
+import { assertDirectSchemaChangeMode } from '../schemaDraft/schemaChangeMode';
 import { randomUUID } from 'node:crypto';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import type { DatabaseAdapter } from '../../db/database';
@@ -175,6 +176,7 @@ export const createDocumentType = async (
     dbErrorMessages,
     operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'ws.settings');
+      await assertDirectSchemaChangeMode(db, ws);
       validateDocumentTypeWrite(input);
       const now = new Date();
       const id = randomUUID();
@@ -219,6 +221,7 @@ export const updateDocumentType = async (
     dbErrorMessages,
     operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'ws.settings');
+      await assertDirectSchemaChangeMode(db, ws);
       validateDocumentTypeWrite(input);
       const current = await db.document.getDocumentType(ws, id);
       httpAssert.present(current, { status: 404, message: `Document type '${id}' not found` });
@@ -432,6 +435,7 @@ export const archiveDocumentType = async (
     dbErrorMessages,
     operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'ws.settings');
+      await assertDirectSchemaChangeMode(db, ws);
       const row = await db.document.archiveDocumentType(ws, id, archived, new Date());
       httpAssert.present(row, { status: 404, message: `Document type '${id}' not found` });
       return toApiType(row);
@@ -452,6 +456,7 @@ export const deleteDocumentType = async (
     dbErrorMessages,
     operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'ws.settings');
+      await assertDirectSchemaChangeMode(db, ws);
       const current = await db.document.getDocumentType(ws, id);
       httpAssert.present(current, { status: 404, message: `Document type '${id}' not found` });
       for (const node of await db.project.contentNodes.listAllContentNodes(ws)) {

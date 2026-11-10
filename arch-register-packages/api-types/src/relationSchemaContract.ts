@@ -342,7 +342,7 @@ const relationSchemaVersionSchema = z.object({
   createdAt: z.string().describe('ISO 8601 timestamp of this version')
 });
 
-const createRelationSchemaBodySchema = z.object({
+export const createRelationSchemaBodySchema = z.object({
   name: z.string().describe('Relation schema name'),
   category_id: z
     .string()
@@ -391,7 +391,7 @@ const createRelationSchemaBodySchema = z.object({
     )
 });
 
-const updateRelationSchemaBodySchema = createRelationSchemaBodySchema.extend({
+export const updateRelationSchemaBodySchema = createRelationSchemaBodySchema.extend({
   fieldMigrations: fieldMigrationsSchema
     .optional()
     .describe(

@@ -1,3 +1,4 @@
+import { assertNoOpenSchemaDraft } from '../schemaDraft/schemaChangeMode';
 import type {
   DefinitionImportDependencyMapping,
   DefinitionImportExecuteRequest,
@@ -143,6 +144,7 @@ export const executeDefinitionImport = async (
     fallback: 'Failed to execute definition import',
     operation: async ({ ws, authCtx }) => {
       requireWorkspaceAdmin(authCtx, 'You must administer the destination workspace');
+      await assertNoOpenSchemaDraft(db, ws);
       const plan = await preparePlan(
         db,
         ws,

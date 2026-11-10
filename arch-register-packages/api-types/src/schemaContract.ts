@@ -524,7 +524,7 @@ const schemaVersionSchema = z.object({
   createdAt: z.string().describe('ISO 8601 timestamp of this version')
 });
 
-const createSchemaBodySchema = z.object({
+export const createSchemaBodySchema = z.object({
   name: z.string().describe('Schema name'),
   category_id: z
     .string()
@@ -576,7 +576,7 @@ const createSchemaBodySchema = z.object({
   default_owner: z.string().nullable().optional().describe('Default owner for new entities')
 });
 
-const updateSchemaBodySchema = createSchemaBodySchema.extend({
+export const updateSchemaBodySchema = createSchemaBodySchema.extend({
   fieldMigrations: fieldMigrationsSchema
     .optional()
     .describe(

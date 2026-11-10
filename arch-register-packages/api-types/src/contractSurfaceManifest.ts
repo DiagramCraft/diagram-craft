@@ -46,6 +46,7 @@ import { publicCatalogConfigContract, publicCatalogContract } from './publicCata
 import { relationChangeContract } from './relationChangeContract';
 import { workspaceRelationContract } from './relationContract';
 import { workspaceRelationSchemaContract } from './relationSchemaContract';
+import { workspaceSchemaDraftContract } from './schemaDraftContract';
 import { relationSyncContract } from './relationSyncContract';
 import { relationVersionContract } from './relationVersionContract';
 import { workspaceSchemaContract } from './schemaContract';
@@ -129,6 +130,7 @@ const coreEntries = [
 const applicationEntries = [
   { id: 'workspaceSchemaContract', contract: workspaceSchemaContract },
   { id: 'workspaceRelationSchemaContract', contract: workspaceRelationSchemaContract },
+  { id: 'workspaceSchemaDraftContract', contract: workspaceSchemaDraftContract },
   { id: 'workspaceRelationContract', contract: workspaceRelationContract },
   { id: 'workspaceEntityContract', contract: workspaceEntityContract },
   { id: 'workspaceEntityTraversalContract', contract: workspaceEntityTraversalContract },

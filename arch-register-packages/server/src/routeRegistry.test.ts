@@ -20,6 +20,7 @@ const expectedRouteIds = [
   'protected-auth',
   'workspace-management',
   'workspace-enums',
+  'workspace-schema-draft',
   'workspace-field-groups',
   'workspace-categories',
   'workspace-schemas',

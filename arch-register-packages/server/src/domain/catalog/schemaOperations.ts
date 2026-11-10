@@ -1,3 +1,4 @@
+import { assertDirectSchemaChangeMode } from '../schemaDraft/schemaChangeMode';
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
@@ -194,6 +195,7 @@ export const createWorkspaceSchema = async (
     dbErrorMessages,
     operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'schema.edit');
+      await assertDirectSchemaChangeMode(db, ws);
       const teamIds = new Set((await db.workspace.listTeams(ws)).map(owner => owner.id));
       const timestamp = new Date();
       const sharedGroups = await db.catalog.listSharedFieldGroups(ws);
@@ -269,6 +271,7 @@ export const updateWorkspaceSchema = async (
     dbErrorMessages,
     operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'schema.edit');
+      await assertDirectSchemaChangeMode(db, ws);
       const oldRow = await db.catalog.getSchema(ws, id);
       httpAssert.present(oldRow, { status: 404, message: `Schema '${id}' not found` });
 
@@ -611,6 +614,7 @@ export const deleteWorkspaceSchema = async (
     dbErrorMessages,
     operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'schema.edit');
+      await assertDirectSchemaChangeMode(db, ws);
       const schema = await db.catalog.getSchema(ws, id);
       httpAssert.present(schema, { status: 404, message: `Schema '${id}' not found` });
 

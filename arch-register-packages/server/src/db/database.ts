@@ -3,6 +3,7 @@ import type { AuditDatabase } from '../domain/audit/db/auditDatabase';
 import type { AuthDatabase } from '../domain/auth/db/authDatabase';
 import type { CatalogDatabase, ViewDatabase } from '../domain/catalog/db/catalogDatabase';
 import type { ApplicationDatabase } from '../domain/application/db/applicationDatabase';
+import type { SchemaDraftDatabase } from '../domain/schemaDraft/db/schemaDraftDatabase';
 import type { DashboardDatabase } from '../domain/dashboard/db/dashboardDatabase';
 import type { PersonalDashboardDatabase } from '../domain/personalDashboard/db/personalDashboardDatabase';
 import type { ProjectDashboardDatabase } from '../domain/dashboard/db/projectDashboardDatabase';
@@ -61,6 +62,7 @@ export type DatabaseAdapter = {
   view: ViewDatabase;
   dashboard: DashboardDatabase;
   application: ApplicationDatabase;
+  schemaDraft: SchemaDraftDatabase;
   personalDashboard: PersonalDashboardDatabase;
   projectDashboard: ProjectDashboardDatabase;
   project: ProjectDatabase;

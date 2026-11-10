@@ -16,6 +16,7 @@ import { PostgresAiDatabase } from '../domain/ai/db/postgresAi';
 import { SERVER_DEFAULTS } from '../constants';
 import { PostgresViewDatabase } from '../domain/catalog/db/postgresView';
 import { PostgresApplicationDatabase } from '../domain/application/db/postgresApplication';
+import { PostgresSchemaDraftDatabase } from '../domain/schemaDraft/db/postgresSchemaDraft';
 import { PostgresDashboardDatabase } from '../domain/dashboard/db/postgresDashboard';
 import { PostgresPersonalDashboardDatabase } from '../domain/personalDashboard/db/postgresPersonalDashboard';
 import { PostgresProjectDashboardDatabase } from '../domain/dashboard/db/postgresProjectDashboard';
@@ -72,6 +73,7 @@ export class PostgresDatabase implements DatabaseAdapter {
   readonly view: PostgresViewDatabase;
   readonly dashboard: PostgresDashboardDatabase;
   readonly application: PostgresApplicationDatabase;
+  readonly schemaDraft: PostgresSchemaDraftDatabase;
   readonly personalDashboard: PostgresPersonalDashboardDatabase;
   readonly projectDashboard: PostgresProjectDashboardDatabase;
   readonly project: PostgresProjectDatabase;
@@ -115,6 +117,7 @@ export class PostgresDatabase implements DatabaseAdapter {
       view: new PostgresViewDatabase(sql),
       dashboard: new PostgresDashboardDatabase(sql),
       application: new PostgresApplicationDatabase(sql),
+      schemaDraft: new PostgresSchemaDraftDatabase(sql),
       personalDashboard: new PostgresPersonalDashboardDatabase(sql),
       projectDashboard: new PostgresProjectDashboardDatabase(sql),
       project: new PostgresProjectDatabase(sql),
@@ -202,6 +205,7 @@ export class PostgresDatabase implements DatabaseAdapter {
     this.view = new PostgresViewDatabase(this.sql);
     this.dashboard = new PostgresDashboardDatabase(this.sql);
     this.application = new PostgresApplicationDatabase(this.sql);
+    this.schemaDraft = new PostgresSchemaDraftDatabase(this.sql);
     this.personalDashboard = new PostgresPersonalDashboardDatabase(this.sql);
     this.projectDashboard = new PostgresProjectDashboardDatabase(this.sql);
     this.project = new PostgresProjectDatabase(this.sql);

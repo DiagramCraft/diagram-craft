@@ -1,3 +1,4 @@
+import { assertDirectSchemaChangeMode } from '../schemaDraft/schemaChangeMode';
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
@@ -106,6 +107,7 @@ export const createWorkspaceSharedFieldGroup = async (
     dbErrorMessages,
     operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'schema.edit');
+      await assertDirectSchemaChangeMode(db, ws);
       const input = buildCreateSharedFieldGroupInput(ws, body, new Date());
       await assertCategoryExists(db, ws, input.category_id);
       const row = await db.catalog.createSharedFieldGroup(input);
@@ -128,6 +130,7 @@ export const updateWorkspaceSharedFieldGroup = async (
     dbErrorMessages,
     operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'schema.edit');
+      await assertDirectSchemaChangeMode(db, ws);
       const oldGroup = await db.catalog.getSharedFieldGroup(ws, id);
       httpAssert.present(oldGroup, { status: 404, message: `Shared fieldgroup '${id}' not found` });
       const next = buildUpdateSharedFieldGroupInput(body, oldGroup, new Date());
@@ -350,6 +353,7 @@ export const deleteWorkspaceSharedFieldGroup = async (
     dbErrorMessages,
     operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'schema.edit');
+      await assertDirectSchemaChangeMode(db, ws);
       const schemas = await db.catalog.listSchemas(ws);
       httpAssert.true(!isSharedFieldGroupReferencedBySchemas(schemas, id), {
         status: 409,

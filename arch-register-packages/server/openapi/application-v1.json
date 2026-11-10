@@ -19625,6 +19625,754 @@
         }
       }
     },
+    "/{workspace}/schema-draft": {
+      "get": {
+        "operationId": "schemaDraft.get",
+        "summary": "Get the workspace schema draft",
+        "description": "Returns the single shared draft (revision 0 and no items when none exists).",
+        "tags": [
+          "Schema Draft",
+          "Schema Draft"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "revision": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "Current draft revision; 0 when no draft exists"
+                    },
+                    "created_by": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "updated_by": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "created_at": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "updated_at": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "entity_schema",
+                              "relation_schema",
+                              "document_type",
+                              "enum",
+                              "field_group",
+                              "category"
+                            ],
+                            "type": "string",
+                            "description": "Kind of schema definition a draft item changes"
+                          },
+                          "item_id": {
+                            "type": "string",
+                            "description": "Id of the live item this entry changes (client-generated for create)"
+                          },
+                          "op": {
+                            "enum": [
+                              "create",
+                              "update",
+                              "delete"
+                            ],
+                            "type": "string",
+                            "description": "Operation the draft item applies on publish"
+                          },
+                          "payload": {
+                            "anyOf": [
+                              {},
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Staged create/update body; null for delete"
+                          },
+                          "base_version": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Live version of the item when it was first staged; null for create"
+                          },
+                          "updated_by": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "updated_at": {
+                            "type": "string",
+                            "description": "ISO 8601 timestamp"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "item_id",
+                          "op",
+                          "base_version",
+                          "updated_by",
+                          "updated_at"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "revision",
+                    "created_by",
+                    "updated_by",
+                    "created_at",
+                    "updated_at",
+                    "items"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "schemaDraft.discard",
+        "summary": "Discard the schema draft",
+        "description": "Deletes the draft and all items. Returns 409 when expectedRevision is stale.",
+        "tags": [
+          "Schema Draft",
+          "Schema Draft"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "expectedRevision",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "success"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/schema-draft/items/{kind}/{itemId}": {
+      "put": {
+        "operationId": "schemaDraft.stage",
+        "summary": "Stage a schema change",
+        "description": "Adds or replaces a draft item. Never changes live definitions. Returns 409 when expectedRevision is stale.",
+        "tags": [
+          "Schema Draft",
+          "Schema Draft"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "enum": [
+                "entity_schema",
+                "relation_schema",
+                "document_type",
+                "enum",
+                "field_group",
+                "category"
+              ],
+              "type": "string",
+              "description": "Kind of schema definition a draft item changes"
+            }
+          },
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "expectedRevision": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                    "description": "Draft revision the caller last saw; 0 when no draft exists. Mismatch returns 409."
+                  },
+                  "op": {
+                    "enum": [
+                      "create",
+                      "update",
+                      "delete"
+                    ],
+                    "type": "string",
+                    "description": "Operation the draft item applies on publish"
+                  },
+                  "payload": {}
+                },
+                "required": [
+                  "expectedRevision",
+                  "op"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "revision": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "Current draft revision; 0 when no draft exists"
+                    },
+                    "created_by": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "updated_by": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "created_at": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "updated_at": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "entity_schema",
+                              "relation_schema",
+                              "document_type",
+                              "enum",
+                              "field_group",
+                              "category"
+                            ],
+                            "type": "string",
+                            "description": "Kind of schema definition a draft item changes"
+                          },
+                          "item_id": {
+                            "type": "string",
+                            "description": "Id of the live item this entry changes (client-generated for create)"
+                          },
+                          "op": {
+                            "enum": [
+                              "create",
+                              "update",
+                              "delete"
+                            ],
+                            "type": "string",
+                            "description": "Operation the draft item applies on publish"
+                          },
+                          "payload": {
+                            "anyOf": [
+                              {},
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Staged create/update body; null for delete"
+                          },
+                          "base_version": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Live version of the item when it was first staged; null for create"
+                          },
+                          "updated_by": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "updated_at": {
+                            "type": "string",
+                            "description": "ISO 8601 timestamp"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "item_id",
+                          "op",
+                          "base_version",
+                          "updated_by",
+                          "updated_at"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "revision",
+                    "created_by",
+                    "updated_by",
+                    "created_at",
+                    "updated_at",
+                    "items"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "schemaDraft.unstage",
+        "summary": "Unstage a schema change",
+        "description": "Removes an item from the draft. Returns 409 when expectedRevision is stale.",
+        "tags": [
+          "Schema Draft",
+          "Schema Draft"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "enum": [
+                "entity_schema",
+                "relation_schema",
+                "document_type",
+                "enum",
+                "field_group",
+                "category"
+              ],
+              "type": "string",
+              "description": "Kind of schema definition a draft item changes"
+            }
+          },
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "expectedRevision",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "revision": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "Current draft revision; 0 when no draft exists"
+                    },
+                    "created_by": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "updated_by": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "created_at": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "updated_at": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "entity_schema",
+                              "relation_schema",
+                              "document_type",
+                              "enum",
+                              "field_group",
+                              "category"
+                            ],
+                            "type": "string",
+                            "description": "Kind of schema definition a draft item changes"
+                          },
+                          "item_id": {
+                            "type": "string",
+                            "description": "Id of the live item this entry changes (client-generated for create)"
+                          },
+                          "op": {
+                            "enum": [
+                              "create",
+                              "update",
+                              "delete"
+                            ],
+                            "type": "string",
+                            "description": "Operation the draft item applies on publish"
+                          },
+                          "payload": {
+                            "anyOf": [
+                              {},
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Staged create/update body; null for delete"
+                          },
+                          "base_version": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Live version of the item when it was first staged; null for create"
+                          },
+                          "updated_by": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "updated_at": {
+                            "type": "string",
+                            "description": "ISO 8601 timestamp"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "item_id",
+                          "op",
+                          "base_version",
+                          "updated_by",
+                          "updated_at"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "revision",
+                    "created_by",
+                    "updated_by",
+                    "created_at",
+                    "updated_at",
+                    "items"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/schema-draft/mode": {
+      "get": {
+        "operationId": "schemaDraft.getMode",
+        "summary": "Get the schema change mode",
+        "tags": [
+          "Schema Draft",
+          "Schema Draft"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "schemaChangeMode": {
+                      "enum": [
+                        "direct",
+                        "draft"
+                      ],
+                      "type": "string",
+                      "description": "Whether schema edits go live immediately (direct) or must be staged in the draft"
+                    }
+                  },
+                  "required": [
+                    "schemaChangeMode"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "schemaDraft.setMode",
+        "summary": "Set the schema change mode",
+        "tags": [
+          "Schema Draft",
+          "Schema Draft"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "schemaChangeMode": {
+                    "enum": [
+                      "direct",
+                      "draft"
+                    ],
+                    "type": "string",
+                    "description": "Whether schema edits go live immediately (direct) or must be staged in the draft"
+                  }
+                },
+                "required": [
+                  "schemaChangeMode"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "schemaChangeMode": {
+                      "enum": [
+                        "direct",
+                        "draft"
+                      ],
+                      "type": "string",
+                      "description": "Whether schema edits go live immediately (direct) or must be staged in the draft"
+                    }
+                  },
+                  "required": [
+                    "schemaChangeMode"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/{workspace}/relations": {
       "get": {
         "operationId": "relations.list",
@@ -156108,7 +156856,8 @@
                           "project_milestone",
                           "relation_schema",
                           "relation",
-                          "automation_note"
+                          "automation_note",
+                          "schema_draft"
                         ],
                         "type": "string",
                         "description": "Type of entity affected"

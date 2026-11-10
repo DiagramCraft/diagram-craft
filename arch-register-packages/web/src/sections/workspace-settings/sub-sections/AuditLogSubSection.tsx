@@ -33,7 +33,8 @@ const AUDIT_ENTITY_TYPES: Array<{ value: '' | AuditEntityType; label: string }> 
   { value: 'assessment_response', label: 'Assessment response' },
   { value: 'relation_schema', label: 'Relation schema' },
   { value: 'relation', label: 'Relation' },
-  { value: 'automation_note', label: 'Automation note' }
+  { value: 'automation_note', label: 'Automation note' },
+  { value: 'schema_draft', label: 'Schema draft' }
 ];
 
 const AUDIT_OPERATIONS: Array<{ value: '' | AuditOperation; label: string }> = [
@@ -56,7 +57,8 @@ const ENTITY_TYPE_TONES: Record<AuditEntityType, string> = {
   project_milestone: styles.typeAssessment ?? '',
   relation_schema: styles.typeSchema ?? '',
   relation: styles.typeEntity ?? '',
-  automation_note: styles.typeAssessment ?? ''
+  automation_note: styles.typeAssessment ?? '',
+  schema_draft: styles.typeSchema ?? ''
 };
 
 const getOperationLabel = (operation: AuditOperation): string => OPERATION_LABELS[operation];

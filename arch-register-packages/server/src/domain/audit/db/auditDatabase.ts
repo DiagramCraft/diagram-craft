@@ -62,7 +62,9 @@ export type AuditEntityType =
   // A note recorded by an automation rule's `create_audit_note` action. Written directly via
   // `db.audit.createAuditLog`, never through `writeAudit`, so it does not re-trigger webhook
   // delivery, watcher notifications, or another round of automation rule evaluation.
-  | 'automation_note';
+  | 'automation_note'
+  // The shared workspace schema draft (staging, unstaging, discarding and mode changes).
+  | 'schema_draft';
 
 const AUDIT_OPERATIONS = [
   'create',
@@ -82,7 +84,8 @@ const AUDIT_ENTITY_TYPES = [
   'project_milestone',
   'relation_schema',
   'relation',
-  'automation_note'
+  'automation_note',
+  'schema_draft'
 ] as const satisfies readonly AuditEntityType[];
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>

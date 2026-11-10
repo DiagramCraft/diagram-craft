@@ -1,0 +1,75 @@
+import { implement } from '@orpc/server';
+import type { DatabaseAdapter } from '../../db/database';
+import type { AuthenticatedEvent } from '../../middleware/auth';
+import { createOrpcHandler } from '../../utils/orpcHandler';
+import { orpcErrorMiddleware } from '../../utils/orpcErrors';
+import { workspaceSchemaDraftContract } from '@arch-register/api-types/schemaDraftContract';
+import {
+  discardSchemaDraft,
+  getSchemaChangeMode,
+  getSchemaDraft,
+  setSchemaChangeMode,
+  stageSchemaDraftItem,
+  unstageSchemaDraftItem
+} from './schemaDraftOperations';
+
+type ORPCContext = {
+  db: DatabaseAdapter;
+  event: AuthenticatedEvent;
+};
+
+const draftRouter = implement(workspaceSchemaDraftContract)
+  .$context<ORPCContext>()
+  .use(orpcErrorMiddleware);
+
+export const workspaceSchemaDraftORPCRouter = draftRouter.router({
+  schemaDraft: {
+    get: draftRouter.schemaDraft.get.handler(({ input, context }) =>
+      getSchemaDraft(context.db, input.params.workspace, context.event)
+    ),
+    stage: draftRouter.schemaDraft.stage.handler(({ input, context }) =>
+      stageSchemaDraftItem(
+        context.db,
+        input.params.workspace,
+        input.params.kind,
+        input.params.itemId,
+        input.body,
+        context.event
+      )
+    ),
+    unstage: draftRouter.schemaDraft.unstage.handler(({ input, context }) =>
+      unstageSchemaDraftItem(
+        context.db,
+        input.params.workspace,
+        input.params.kind,
+        input.params.itemId,
+        input.query.expectedRevision,
+        context.event
+      )
+    ),
+    discard: draftRouter.schemaDraft.discard.handler(({ input, context }) =>
+      discardSchemaDraft(
+        context.db,
+        input.params.workspace,
+        input.query.expectedRevision,
+        context.event
+      )
+    ),
+    getMode: draftRouter.schemaDraft.getMode.handler(({ input, context }) =>
+      getSchemaChangeMode(context.db, input.params.workspace, context.event)
+    ),
+    setMode: draftRouter.schemaDraft.setMode.handler(({ input, context }) =>
+      setSchemaChangeMode(
+        context.db,
+        input.params.workspace,
+        input.body.schemaChangeMode,
+        context.event
+      )
+    )
+  }
+});
+
+export const createWorkspaceSchemaDraftORPCHandler = (db: DatabaseAdapter) =>
+  createOrpcHandler(workspaceSchemaDraftORPCRouter, {
+    context: event => ({ db, event: event as AuthenticatedEvent })
+  });

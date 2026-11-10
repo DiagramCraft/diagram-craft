@@ -29,7 +29,8 @@ const auditLogEntrySchema = z.object({
       'project_milestone',
       'relation_schema',
       'relation',
-      'automation_note'
+      'automation_note',
+      'schema_draft'
     ])
     .describe('Type of entity affected'),
   entity_id: z.string().describe('Identifier of the affected entity'),

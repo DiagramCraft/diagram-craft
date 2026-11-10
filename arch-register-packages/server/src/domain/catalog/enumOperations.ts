@@ -1,3 +1,4 @@
+import { assertDirectSchemaChangeMode } from '../schemaDraft/schemaChangeMode';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { requireWorkspaceCapability } from '../auth/authorization';
@@ -83,6 +84,7 @@ export const createWorkspaceEnum = async (
     dbErrorMessages,
     operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'schema.edit');
+      await assertDirectSchemaChangeMode(db, ws);
       const timestamp = new Date();
       const input = buildCreateEnumInput(ws, body, timestamp);
       const categoryName = await assertCategoryExists(db, ws, input.category_id);
@@ -119,6 +121,7 @@ export const updateWorkspaceEnum = async (
     dbErrorMessages,
     operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'schema.edit');
+      await assertDirectSchemaChangeMode(db, ws);
       const oldRow = await db.catalog.getEnum(ws, id);
       httpAssert.present(oldRow, { status: 404, message: `Enum '${id}' not found` });
 
@@ -167,6 +170,7 @@ export const deleteWorkspaceEnum = async (
     dbErrorMessages,
     operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'schema.edit');
+      await assertDirectSchemaChangeMode(db, ws);
       const [schemas, relationSchemas] = await Promise.all([
         db.catalog.listSchemas(ws),
         db.relation.listRelationSchemas(ws)
