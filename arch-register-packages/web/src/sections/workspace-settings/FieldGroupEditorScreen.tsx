@@ -1,3 +1,4 @@
+import { DraftPill } from './DraftPill';
 import { useCallback } from 'react';
 import { getRouteApi } from '@tanstack/react-router';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
@@ -11,6 +12,8 @@ import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { ListEditor } from '../../components/ListEditor';
 import { EditorActionsMenu, EditorSaveButtons } from './EditorActionsMenu';
 import { useFieldGroupDraft } from './useFieldGroupDraft';
+import { useDraftCategories, useDraftOverlay } from './useDraftOverlay';
+import { blankFieldGroup } from './schemaDraftOverlay';
 import { SchemaFieldRow } from './SchemaFieldRow';
 import { CategorySelect } from './CategorySelect';
 import styles from './SchemaSettingsScreen.module.css';
@@ -22,7 +25,9 @@ const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/schemas');
 export const FieldGroupEditorScreen = () => {
   const navigate = routeApi.useNavigate();
   const search = routeApi.useSearch();
-  const { workspaceSlug, fieldGroups = [], permissions, categories } = useWorkspaceContext();
+  const { workspaceSlug, fieldGroups: liveFieldGroups = [], permissions } = useWorkspaceContext();
+  const categories = useDraftCategories();
+  const fieldGroups = useDraftOverlay('field_group', liveFieldGroups, id => blankFieldGroup(id));
   const selected = fieldGroups.find(group => group.id === search.fieldGroupId) ?? null;
   const isNew = search.fieldGroupId === NEW_FIELD_GROUP_ID;
   const canEdit = permissions.canEditSchemas;
@@ -52,6 +57,7 @@ export const FieldGroupEditorScreen = () => {
           { label: 'Settings' }
         ]}
         eyebrow="Shared field group"
+        chips={<DraftPill kind="field_group" id={selected?.id} />}
         title={editing ? draft.name || 'New field group' : 'Shared fieldgroups'}
         description={
           editing
@@ -73,6 +79,7 @@ export const FieldGroupEditorScreen = () => {
           canEdit && selected ? (
             <EditorActionsMenu
               deleteLabel="Delete fieldgroup"
+              draftItem={{ kind: 'field_group', id: selected.id }}
               onDelete={() => void draft.remove()}
             />
           ) : undefined

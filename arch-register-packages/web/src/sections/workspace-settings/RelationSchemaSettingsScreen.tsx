@@ -1,3 +1,4 @@
+import { DraftPill } from './DraftPill';
 import { useCallback } from 'react';
 import { getRouteApi } from '@tanstack/react-router';
 import { Button } from '@diagram-craft/app-components/Button';
@@ -15,6 +16,8 @@ import { EditorActionsMenu, EditorSaveButtons } from './EditorActionsMenu';
 import { SchemaEditorScreenShell } from './SchemaEditorScreenShell';
 import { SchemaVersionHistorySubSection } from './sub-sections/SchemaVersionHistorySubSection';
 import { useSchemaEditorController } from './schemaEditorState';
+import { useDraftOverlay } from './useDraftOverlay';
+import { blankRelationSchema } from './schemaDraftOverlay';
 
 export const NEW_RELATION_SCHEMA_ID = 'new';
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/schemas');
@@ -26,11 +29,14 @@ export const RelationSchemaSettingsScreen = () => {
   const isNew = selectedRelationSchemaId === NEW_RELATION_SCHEMA_ID;
   const {
     workspaceSlug,
-    relationSchemas,
+    relationSchemas: liveRelationSchemas,
     enums,
     fieldGroups = [],
     permissions
   } = useWorkspaceContext();
+  const relationSchemas = useDraftOverlay('relation_schema', liveRelationSchemas, id =>
+    blankRelationSchema(id)
+  );
   const canEdit = permissions.canEditSchemas;
   const selectedIndex = relationSchemas.findIndex(schema => schema.id === selectedRelationSchemaId);
   const selected = selectedIndex >= 0 ? (relationSchemas[selectedIndex] ?? null) : null;
@@ -75,6 +81,7 @@ export const RelationSchemaSettingsScreen = () => {
           { label: 'Settings' }
         ]}
         eyebrow="Relation"
+        chips={<DraftPill kind="relation_schema" id={selected?.id} />}
         buttons={
           canEdit && draft ? (
             <EditorSaveButtons
@@ -90,6 +97,7 @@ export const RelationSchemaSettingsScreen = () => {
           canEdit && selected ? (
             <EditorActionsMenu
               deleteLabel="Delete type"
+              draftItem={{ kind: 'relation_schema', id: selected.id }}
               onDelete={() => editor.setConfirmDelete(true)}
             />
           ) : undefined

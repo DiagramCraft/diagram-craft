@@ -1,9 +1,12 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getRouteApi } from '@tanstack/react-router';
 import type { WorkspaceEnumOption } from '@arch-register/api-types/enumContract';
 import { useCreateEnum, useDeleteEnum, useUpdateEnum } from '../../hooks/useEnums';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { moveInArray } from '../../utils/arrayReorder';
+import { useSchemaDraftState } from './useSchemaDraftState';
+import { useDraftCategories } from './useDraftOverlay';
+import { enumFromPayload } from './schemaDraftOverlay';
 
 export const NEW_ENUM_ID = 'new';
 
@@ -35,7 +38,29 @@ export const useEnumDraft = () => {
   const navigate = routeApi.useNavigate();
   const search = routeApi.useSearch();
   const selectedEnumId = search.enumId ?? null;
-  const { workspaceSlug, enums } = useWorkspaceContext();
+  const { workspaceSlug, enums: liveEnums } = useWorkspaceContext();
+  const categories = useDraftCategories();
+  const schemaDraft = useSchemaDraftState();
+  const { isDraftMode } = schemaDraft;
+  // Editors read the staged version of an item and fall back to live.
+  const enums = useMemo(() => {
+    const items = (schemaDraft.draft?.items ?? []).filter(i => i.kind === 'enum');
+    const staged = items.filter(i => i.op !== 'delete');
+    const stagedById = new Map(staged.map(i => [i.item_id, i]));
+    const merged = liveEnums.map(e => {
+      const item = stagedById.get(e.id);
+      return item ? enumFromPayload(item.payload, e, e.id, workspaceSlug, categories) : e;
+    });
+    const liveIds = new Set(liveEnums.map(e => e.id));
+    for (const item of staged) {
+      if (item.op === 'create' && !liveIds.has(item.item_id)) {
+        merged.push(
+          enumFromPayload(item.payload, undefined, item.item_id, workspaceSlug, categories)
+        );
+      }
+    }
+    return merged;
+  }, [liveEnums, categories, schemaDraft.draft, workspaceSlug]);
   const isNew = selectedEnumId === NEW_ENUM_ID;
 
   const [name, setName] = useState('');
@@ -88,7 +113,22 @@ export const useEnumDraft = () => {
         ({ originalValue: _originalValue, pendingRemoval: _pendingRemoval, ...option }) => option
       );
     try {
-      if (isNew) {
+      if (isDraftMode) {
+        const body = { name, category_id: categoryId, options: parsedOptions };
+        const id = isNew ? crypto.randomUUID() : selected?.id;
+        if (!id) return;
+        const stagedAsCreate = schemaDraft.itemFor('enum', id)?.op === 'create';
+        await schemaDraft.stage('enum', id, isNew || stagedAsCreate ? 'create' : 'update', body);
+        if (isNew) {
+          navigate({
+            to: '/$workspaceSlug/settings/schemas',
+            params: { workspaceSlug },
+            search: { tab: 'enums', enumId: id }
+          });
+        } else {
+          setDirty(false);
+        }
+      } else if (isNew) {
         const created = await createEnumMutation.mutateAsync({
           name,
           category_id: categoryId,
@@ -113,6 +153,8 @@ export const useEnumDraft = () => {
     isNew,
     selected,
     dirty,
+    isDraftMode,
+    schemaDraft,
     createEnumMutation,
     updateEnumMutation,
     navigate,
@@ -125,7 +167,15 @@ export const useEnumDraft = () => {
   const doDelete = useCallback(async () => {
     if (!selected) return;
     try {
-      await deleteEnumMutation.mutateAsync(selected.id);
+      if (isDraftMode) {
+        if (schemaDraft.itemFor('enum', selected.id)?.op === 'create') {
+          await schemaDraft.unstage('enum', selected.id);
+        } else {
+          await schemaDraft.stage('enum', selected.id, 'delete');
+        }
+      } else {
+        await deleteEnumMutation.mutateAsync(selected.id);
+      }
       navigate({
         to: '/$workspaceSlug/settings/schemas',
         params: { workspaceSlug },
@@ -134,7 +184,7 @@ export const useEnumDraft = () => {
     } catch (cause) {
       setErrorMessage(cause instanceof Error ? cause.message : 'Failed to delete enum');
     }
-  }, [selected, deleteEnumMutation, navigate, workspaceSlug]);
+  }, [selected, isDraftMode, schemaDraft, deleteEnumMutation, navigate, workspaceSlug]);
 
   const addOption = () => {
     setOptions(prev => [...prev, newEditableOption()]);
@@ -164,6 +214,10 @@ export const useEnumDraft = () => {
   return {
     selected,
     isNew,
+    isStaged: selected ? schemaDraft.isStaged('enum', selected.id) : false,
+    revertToLive: async () => {
+      if (selected) await schemaDraft.unstage('enum', selected.id);
+    },
     name,
     categoryId,
     options,

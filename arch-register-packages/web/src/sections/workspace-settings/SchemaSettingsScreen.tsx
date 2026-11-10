@@ -1,3 +1,4 @@
+import { DraftPill } from './DraftPill';
 import { useCallback } from 'react';
 import { getRouteApi } from '@tanstack/react-router';
 import { Button } from '@diagram-craft/app-components/Button';
@@ -18,6 +19,8 @@ import { EntityDrawerDraftProvider, useEntityDrawerDraft } from './entityDrawerD
 import { EditorActionsMenu, EditorSaveButtons } from './EditorActionsMenu';
 import { SchemaEditorScreenShell } from './SchemaEditorScreenShell';
 import { useSchemaEditorController } from './schemaEditorState';
+import { useDraftOverlay } from './useDraftOverlay';
+import { blankEntitySchema } from './schemaDraftOverlay';
 
 export const NEW_SCHEMA_ID = 'new';
 
@@ -29,7 +32,14 @@ export const SchemaSettingsScreen = () => {
   const selectedSchemaId = search.schema;
   const isNew = selectedSchemaId === NEW_SCHEMA_ID;
   const activeTab = search.tab ?? 'types';
-  const { workspaceSlug, schemas, enums, fieldGroups = [], permissions } = useWorkspaceContext();
+  const {
+    workspaceSlug,
+    schemas: liveSchemas,
+    enums,
+    fieldGroups = [],
+    permissions
+  } = useWorkspaceContext();
+  const schemas = useDraftOverlay('entity_schema', liveSchemas, id => blankEntitySchema(id));
   const canEdit = permissions.canEditSchemas;
   const selectedIndex = schemas.findIndex(schema => schema.id === selectedSchemaId);
   const selected = selectedIndex >= 0 ? (schemas[selectedIndex] ?? null) : null;
@@ -109,11 +119,13 @@ export const SchemaSettingsScreen = () => {
             canEdit && selected ? (
               <EditorActionsMenu
                 deleteLabel="Delete type"
+                draftItem={{ kind: 'entity_schema', id: selected.id }}
                 onDelete={() => editor.setConfirmDelete(true)}
               />
             ) : undefined
           }
           titleTestId="schema-editor-title"
+          chips={<DraftPill kind="entity_schema" id={selected?.id} />}
           icon={
             (selected || isNew) && draft ? (
               <TypeBadge

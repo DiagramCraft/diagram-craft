@@ -1,3 +1,4 @@
+import { DraftPill } from './DraftPill';
 import { getRouteApi } from '@tanstack/react-router';
 import styles from './SchemaSettingsScreen.module.css';
 import { EditorActionsMenu, EditorSaveButtons } from './EditorActionsMenu';
@@ -73,10 +74,15 @@ export const EnumEditorScreen = () => {
         }
         menu={
           canEdit && selected ? (
-            <EditorActionsMenu deleteLabel="Delete enum" onDelete={() => setConfirmDelete(true)} />
+            <EditorActionsMenu
+              deleteLabel="Delete enum"
+              onDelete={() => setConfirmDelete(true)}
+              draftItem={{ kind: 'enum', id: selected.id }}
+            />
           ) : undefined
         }
         titleTestId={selected || isNew ? 'enum-editor-title' : undefined}
+        chips={<DraftPill kind="enum" id={selected?.id} />}
         title={selected || isNew ? name || 'New enum' : 'Enums'}
         description={
           selected || isNew

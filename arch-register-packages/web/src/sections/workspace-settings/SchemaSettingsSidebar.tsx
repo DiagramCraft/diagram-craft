@@ -25,9 +25,13 @@ import { TreeRow } from '../../components/TreeRow';
 import { TypeBadge } from '../../components/TypeBadge';
 import { RenameDialog } from '../../components/RenameDialog';
 import { AddCategoryDialog } from './AddCategoryDialog';
+import { useSchemaDraftState, type SchemaDraftKind } from './useSchemaDraftState';
+import { useDraftCategories, useDraftOverlay } from './useDraftOverlay';
 import styles from '../../shell/SidePanel.module.css';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
+import type { SharedFieldGroup } from '@arch-register/api-types/fieldGroupContract';
+import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { Category } from '@arch-register/api-types/categoryContract';
 import { SidebarGroupLabel, SidebarTitleHeader } from '../../components/sidebar/SidebarPrimitives';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
@@ -41,13 +45,38 @@ const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/schemas');
 
 const categoryLabelStyle = { color: 'var(--base-fg)' };
 
+const blankEntity = (id: string) =>
+  ({
+    id,
+    name: '',
+    fields: [],
+    templates: [],
+    groups: [],
+    entity_count: 0,
+    version: 1
+  }) as unknown as EntitySchema;
+const blankEnum = (id: string) =>
+  ({ id, name: '', options: [], category: null }) as unknown as WorkspaceEnum;
+const blankFieldGroup = (id: string) =>
+  ({ id, name: '', fields: [], category: null }) as unknown as SharedFieldGroup;
+const blankRelation = (id: string) =>
+  ({
+    id,
+    name: '',
+    fields: [],
+    groups: [],
+    relation_count: 0,
+    version: 1,
+    category: null
+  }) as unknown as RelationSchema;
+
 // A row for the sidebar's category headers: `id: null` is the synthetic Uncategorized bucket,
 // never a real workspace_category row, so it can't be renamed or deleted.
 type CategoryRow = { id: string | null; name: string };
 
 export const SchemaSettingsSidebar = ({
-  schemas,
-  enums,
+  schemas: liveSchemas,
+  enums: liveEnums,
   workspaceSlug
 }: {
   schemas: EntitySchema[];
@@ -56,10 +85,41 @@ export const SchemaSettingsSidebar = ({
 }) => {
   const navigate = routeApi.useNavigate();
   const search = routeApi.useSearch();
-  const { fieldGroups = [], relationSchemas, permissions, categories } = useWorkspaceContext();
+  const {
+    fieldGroups: liveFieldGroups = [],
+    relationSchemas: liveRelationSchemas,
+    permissions
+  } = useWorkspaceContext();
+  const categories = useDraftCategories();
+  const schemas = useDraftOverlay('entity_schema', liveSchemas, id => blankEntity(id));
+  const enums = useDraftOverlay('enum', liveEnums, id => blankEnum(id));
+  const fieldGroups = useDraftOverlay('field_group', liveFieldGroups, id => blankFieldGroup(id));
+  const relationSchemas = useDraftOverlay('relation_schema', liveRelationSchemas, id =>
+    blankRelation(id)
+  );
   const createCategoryMutation = useCreateCategory(workspaceSlug);
   const updateCategoryMutation = useUpdateCategory(workspaceSlug);
   const deleteCategoryMutation = useDeleteCategory(workspaceSlug);
+  const schemaDraft = useSchemaDraftState();
+  const draftMark = (kind: SchemaDraftKind, id: string) => {
+    const item = schemaDraft.itemFor(kind, id);
+    if (!item) return null;
+    const label =
+      item.op === 'create'
+        ? 'New in draft'
+        : item.op === 'delete'
+          ? 'Deleted in draft'
+          : 'Changed in draft';
+    return (
+      <span
+        title={label}
+        data-testid="changed-in-draft"
+        style={{ marginRight: 6, color: 'var(--warning-fg)' }}
+      >
+        ●
+      </span>
+    );
+  };
 
   const schemaId = search.schema ?? null;
   const enumId = search.enumId ?? null;
@@ -255,7 +315,12 @@ export const SchemaSettingsSidebar = ({
                             })
                           }
                           tagColor={resolveSchemaColor(s, i)}
-                          trailing={<span className="mono">{s.fields.length}</span>}
+                          trailing={
+                            <>
+                              {draftMark('entity_schema', s.id)}
+                              <span className="mono">{s.fields.length}</span>
+                            </>
+                          }
                         />
                       ))}
                     </>
@@ -277,7 +342,12 @@ export const SchemaSettingsSidebar = ({
                               search: { tab: 'enums', enumId: e.id }
                             })
                           }
-                          trailing={<span className="mono">{e.options.length}</span>}
+                          trailing={
+                            <>
+                              {draftMark('enum', e.id)}
+                              <span className="mono">{e.options.length}</span>
+                            </>
+                          }
                         />
                       ))}
                     </>
@@ -299,7 +369,12 @@ export const SchemaSettingsSidebar = ({
                               search: { tab: 'fieldgroups', fieldGroupId: fg.id }
                             })
                           }
-                          trailing={<span className="mono">{fg.fields.length}</span>}
+                          trailing={
+                            <>
+                              {draftMark('field_group', fg.id)}
+                              <span className="mono">{fg.fields.length}</span>
+                            </>
+                          }
                         />
                       ))}
                     </>
@@ -330,7 +405,12 @@ export const SchemaSettingsSidebar = ({
                             })
                           }
                           tagColor={resolveSchemaColor(s, i)}
-                          trailing={<span className="mono">{s.relation_count}</span>}
+                          trailing={
+                            <>
+                              {draftMark('relation_schema', s.id)}
+                              <span className="mono">{s.relation_count}</span>
+                            </>
+                          }
                         />
                       ))}
                     </>
@@ -347,10 +427,31 @@ export const SchemaSettingsSidebar = ({
         })}
       </div>
 
+      {schemaDraft.pendingCount > 0 && (
+        <div
+          data-testid="schema-draft-banner"
+          style={{
+            padding: '10px 12px',
+            borderTop: '1px solid var(--warning-fg)',
+            background: 'color-mix(in oklch, var(--warning-fg) 14%, transparent)',
+            color: 'var(--warning-fg)',
+            fontWeight: 600,
+            fontSize: 12
+          }}
+        >
+          {schemaDraft.pendingCount} pending {schemaDraft.pendingCount === 1 ? 'change' : 'changes'}{' '}
+          in draft
+        </div>
+      )}
+
       <AddCategoryDialog
         open={addCategoryOpen}
         onAdd={name => {
-          createCategoryMutation.mutate(name);
+          if (schemaDraft.isDraftMode) {
+            void schemaDraft.stage('category', crypto.randomUUID(), 'create', { name });
+          } else {
+            createCategoryMutation.mutate(name);
+          }
           setAddCategoryOpen(false);
         }}
         onCancel={() => setAddCategoryOpen(false)}
@@ -415,7 +516,11 @@ export const SchemaSettingsSidebar = ({
           currentName={renameCategoryTarget.name}
           entityType="category"
           onRename={name => {
-            updateCategoryMutation.mutate({ id: renameCategoryTarget.id, name });
+            if (schemaDraft.isDraftMode) {
+              void schemaDraft.stageUpdate('category', renameCategoryTarget.id, { name });
+            } else {
+              updateCategoryMutation.mutate({ id: renameCategoryTarget.id, name });
+            }
             setRenameCategoryTarget(null);
           }}
           onCancel={() => setRenameCategoryTarget(null)}
@@ -434,7 +539,11 @@ export const SchemaSettingsSidebar = ({
         confirmLabel="Delete category"
         onConfirm={() => {
           if (deleteCategoryTarget) {
-            deleteCategoryMutation.mutate(deleteCategoryTarget.id);
+            if (schemaDraft.isDraftMode) {
+              void schemaDraft.stageDelete('category', deleteCategoryTarget.id);
+            } else {
+              deleteCategoryMutation.mutate(deleteCategoryTarget.id);
+            }
             setDeleteCategoryTarget(null);
           }
         }}

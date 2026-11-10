@@ -1,3 +1,4 @@
+import { useSchemaDraftState } from './useSchemaDraftState';
 import { useMemo } from 'react';
 import type {
   RelationEndpoint,
@@ -42,6 +43,7 @@ export const useRelationSchemaAdapter = (workspaceSlug: string) => {
   const createRelationSchemaMutation = useCreateRelationSchema(workspaceSlug);
   const updateRelationSchemaMutation = useUpdateRelationSchema(workspaceSlug);
   const deleteRelationSchemaMutation = useDeleteRelationSchema(workspaceSlug);
+  const { isDraftMode, stageCreate, stageUpdate, stageDelete } = useSchemaDraftState();
 
   const adapter = useMemo<RelationSchemaAdapter>(
     () => ({
@@ -94,6 +96,23 @@ export const useRelationSchemaAdapter = (workspaceSlug: string) => {
         draft.color !== schema.color ||
         draft.icon !== schema.icon,
       save: async (schema, draft, fieldMigrations) => {
+        if (isDraftMode) {
+          await stageUpdate('relation_schema', schema.id, {
+            name: draft.name,
+            category_id: draft.categoryId,
+            description: draft.description,
+            in: draft.inEndpoint,
+            out: draft.outEndpoint,
+            unique_endpoint_pair: draft.uniqueEndpointPair,
+            fields: draft.fields,
+            groups: draft.groups,
+            shared_field_group_links: draft.sharedFieldGroupLinks,
+            validation_rules: draft.validationRules,
+            color: draft.color,
+            icon: draft.icon
+          });
+          return;
+        }
         await updateRelationSchemaMutation.mutateAsync({
           relationSchemaId: schema.id,
           data: {
@@ -113,8 +132,26 @@ export const useRelationSchemaAdapter = (workspaceSlug: string) => {
           }
         });
       },
-      create: draft =>
-        createRelationSchemaMutation.mutateAsync({
+      create: async draft => {
+        if (isDraftMode) {
+          return {
+            id: await stageCreate('relation_schema', {
+              name: draft.name,
+              category_id: draft.categoryId,
+              description: draft.description,
+              in: draft.inEndpoint,
+              out: draft.outEndpoint,
+              unique_endpoint_pair: draft.uniqueEndpointPair,
+              fields: draft.fields,
+              groups: draft.groups,
+              shared_field_group_links: draft.sharedFieldGroupLinks,
+              validation_rules: draft.validationRules,
+              color: draft.color,
+              icon: draft.icon
+            })
+          };
+        }
+        return createRelationSchemaMutation.mutateAsync({
           name: draft.name,
           category_id: draft.categoryId,
           description: draft.description,
@@ -127,12 +164,16 @@ export const useRelationSchemaAdapter = (workspaceSlug: string) => {
           validation_rules: draft.validationRules,
           color: draft.color,
           icon: draft.icon
-        }),
+        });
+      },
       isValid: draft =>
         draft.name.trim() !== '' &&
         isValidEndpoint(draft.inEndpoint) &&
         isValidEndpoint(draft.outEndpoint),
-      remove: schema => deleteRelationSchemaMutation.mutateAsync(schema.id).then(() => undefined),
+      remove: schema =>
+        isDraftMode
+          ? stageDelete('relation_schema', schema.id)
+          : deleteRelationSchemaMutation.mutateAsync(schema.id).then(() => undefined),
       getMigrationRequired: getRelationSchemaMigrationRequired,
       getConstraintViolation: getRelationSchemaConstraintViolation,
       validationRuleDefaults: () => ({
@@ -154,7 +195,15 @@ export const useRelationSchemaAdapter = (workspaceSlug: string) => {
         deleteError: 'Failed to delete'
       }
     }),
-    [createRelationSchemaMutation, deleteRelationSchemaMutation, updateRelationSchemaMutation]
+    [
+      createRelationSchemaMutation,
+      deleteRelationSchemaMutation,
+      updateRelationSchemaMutation,
+      isDraftMode,
+      stageCreate,
+      stageUpdate,
+      stageDelete
+    ]
   );
 
   return {

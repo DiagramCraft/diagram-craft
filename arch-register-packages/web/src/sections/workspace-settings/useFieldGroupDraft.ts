@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSchemaDraftState } from './useSchemaDraftState';
 import type { SharedFieldGroup } from '@arch-register/api-types/fieldGroupContract';
 import type { SchemaField } from '@arch-register/api-types/schemaContract';
 import {
@@ -36,6 +37,8 @@ export const useFieldGroupDraft = ({
   const createMutation = useCreateFieldGroup(workspaceSlug);
   const updateMutation = useUpdateFieldGroup(workspaceSlug);
   const deleteMutation = useDeleteFieldGroup(workspaceSlug);
+  const schemaDraft = useSchemaDraftState();
+  const { isDraftMode } = schemaDraft;
 
   useEffect(() => {
     if (selected) {
@@ -56,7 +59,15 @@ export const useFieldGroupDraft = ({
   const save = async () => {
     if (!dirty) return;
     try {
-      if (isNew) {
+      if (isDraftMode) {
+        const body = { name, category_id: categoryId, description, fields };
+        if (isNew) {
+          onSelect(await schemaDraft.stageCreate('field_group', body));
+        } else if (selected) {
+          await schemaDraft.stageUpdate('field_group', selected.id, body);
+          setDirty(false);
+        }
+      } else if (isNew) {
         const group = await createMutation.mutateAsync({
           name,
           category_id: categoryId,
@@ -79,7 +90,11 @@ export const useFieldGroupDraft = ({
   const remove = async () => {
     if (!selected) return;
     try {
-      await deleteMutation.mutateAsync(selected.id);
+      if (isDraftMode) {
+        await schemaDraft.stageDelete('field_group', selected.id);
+      } else {
+        await deleteMutation.mutateAsync(selected.id);
+      }
       onSelect(undefined);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Failed to delete fieldgroup');

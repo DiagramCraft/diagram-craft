@@ -15,6 +15,7 @@ import {
 import { getDocumentTypeMigrationRequired } from '../../queries/documents';
 import type { FieldMigrationChoices } from '../../dialogs/FieldMigrationDialog';
 import { moveInArray } from '../../utils/arrayReorder';
+import { useSchemaDraftState } from './useSchemaDraftState';
 
 export const NEW_DOCUMENT_TYPE_ID = 'new';
 
@@ -55,6 +56,8 @@ export const useDocumentTypeDraft = ({
   const updateType = useUpdateDocumentType(workspaceSlug);
   const archiveType = useArchiveDocumentType(workspaceSlug);
   const deleteType = useDeleteDocumentType(workspaceSlug);
+  const schemaDraft = useSchemaDraftState();
+  const { isDraftMode } = schemaDraft;
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -131,7 +134,18 @@ export const useDocumentTypeDraft = ({
     if (!dirty) return;
     try {
       const body = { name, description, fields, aiActions, color, icon, fieldMigrations };
-      if (isNew) {
+      if (isDraftMode) {
+        // Field migrations are decided during review/publish, not when staging.
+        const { fieldMigrations: _ignored, ...stagedBody } = body;
+        if (isNew) {
+          onSelect(await schemaDraft.stageCreate('document_type', stagedBody));
+        } else if (selected) {
+          await schemaDraft.stageUpdate('document_type', selected.id, stagedBody);
+          setDirty(false);
+        } else {
+          return;
+        }
+      } else if (isNew) {
         const created = await createType.mutateAsync(body);
         onSelect(created.id);
       } else if (selected) {
@@ -166,7 +180,11 @@ export const useDocumentTypeDraft = ({
     if (!selected) return;
     setConfirmDelete(false);
     try {
-      await deleteType.mutateAsync(selected.id);
+      if (isDraftMode) {
+        await schemaDraft.stageDelete('document_type', selected.id);
+      } else {
+        await deleteType.mutateAsync(selected.id);
+      }
       onDeleted();
     } catch (cause) {
       setErrorMessage(cause instanceof Error ? cause.message : 'Failed to delete document type');

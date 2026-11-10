@@ -10,6 +10,7 @@ type SchemaEditorScreenShellProps = {
   icon?: ReactNode;
   eyebrow?: ReactNode;
   menu?: ReactNode;
+  chips?: ReactNode;
   buttons?: ReactNode;
   title: string;
   titleTestId?: string;
@@ -32,6 +33,7 @@ export const SchemaEditorScreenShell = ({
   icon,
   eyebrow,
   menu,
+  chips,
   buttons,
   title,
   titleTestId,
@@ -55,6 +57,7 @@ export const SchemaEditorScreenShell = ({
           icon={icon}
           eyebrow={eyebrow}
           menu={menu}
+          chips={chips}
           buttons={buttons}
           title={title}
           description={description}
