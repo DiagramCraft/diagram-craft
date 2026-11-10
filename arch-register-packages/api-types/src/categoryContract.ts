@@ -16,7 +16,7 @@ export const categoryRefSchema = z.object({
   name: z.string().describe('Category name')
 });
 
-const categoryBodySchema = z.object({
+export const categoryBodySchema = z.object({
   name: z.string().describe('Category name')
 });
 

@@ -38,7 +38,7 @@ const workspaceEnumSchema = z.object({
   updated_at: z.string().describe('ISO 8601 last update timestamp')
 });
 
-const createEnumBodySchema = z.object({
+export const createEnumBodySchema = z.object({
   name: z.string().describe('Enumeration name (must be unique within workspace)'),
   category_id: z
     .string()

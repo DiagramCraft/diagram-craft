@@ -219,7 +219,7 @@ export const documentTemplateSchema = z.object({
   updated_at: z.string()
 });
 
-const documentTypeWriteSchema = z.object({
+export const documentTypeWriteSchema = z.object({
   name: z.string().min(1),
   description: z.string().default(''),
   fields: z.array(documentFieldSchema),

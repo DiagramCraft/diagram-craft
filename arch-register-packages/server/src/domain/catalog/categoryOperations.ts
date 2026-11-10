@@ -1,3 +1,4 @@
+import { assertDirectSchemaChangeMode } from '../schemaDraft/schemaChangeMode';
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
@@ -54,6 +55,7 @@ export const createCategory = async (
     scope: { kind: 'workspace', workspace },
     operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'schema.edit');
+      await assertDirectSchemaChangeMode(db, ws);
       const normalizedName = name.trim();
       httpAssert.true(normalizedName, { status: 400, message: 'Category name is required' });
       const existing = await db.catalog.getCategoryByName(ws, normalizedName);
@@ -87,6 +89,7 @@ export const updateCategory = async (
     scope: { kind: 'workspace', workspace },
     operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'schema.edit');
+      await assertDirectSchemaChangeMode(db, ws);
       const normalizedName = name.trim();
       httpAssert.true(normalizedName, { status: 400, message: 'Category name is required' });
       const existing = await db.catalog.getCategoryByName(ws, normalizedName);
@@ -132,6 +135,7 @@ export const deleteCategory = async (
     scope: { kind: 'workspace', workspace },
     operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'schema.edit');
+      await assertDirectSchemaChangeMode(db, ws);
       const usageCount = await db.catalog.countCategoryUsage(ws, id);
       httpAssert.true(usageCount === 0, {
         status: 409,

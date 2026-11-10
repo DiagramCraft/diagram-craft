@@ -1,3 +1,4 @@
+import { assertDirectSchemaChangeMode } from '../schemaDraft/schemaChangeMode';
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
@@ -139,6 +140,7 @@ export const createWorkspaceRelationSchema = async (
     dbErrorMessages,
     operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'schema.edit');
+      await assertDirectSchemaChangeMode(db, ws);
       const timestamp = new Date();
       const [entitySchemas, sharedGroups] = await Promise.all([
         db.catalog.listSchemas(ws),
@@ -223,6 +225,7 @@ export const updateWorkspaceRelationSchema = async (
     dbErrorMessages,
     operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'schema.edit');
+      await assertDirectSchemaChangeMode(db, ws);
       const oldRow = await db.relation.getRelationSchema(ws, id);
       httpAssert.present(oldRow, { status: 404, message: `Relation schema '${id}' not found` });
 
@@ -464,6 +467,7 @@ export const deleteWorkspaceRelationSchema = async (
     dbErrorMessages,
     operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'schema.edit');
+      await assertDirectSchemaChangeMode(db, ws);
       const schema = await db.relation.getRelationSchema(ws, id);
       httpAssert.present(schema, { status: 404, message: `Relation schema '${id}' not found` });
 

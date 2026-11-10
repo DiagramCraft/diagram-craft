@@ -26,7 +26,7 @@ const sharedFieldGroupSchema = z.object({
   updated_at: z.string().describe('ISO 8601 last update timestamp')
 });
 
-const sharedFieldGroupBodySchema = z.object({
+export const sharedFieldGroupBodySchema = z.object({
   name: z.string().describe('Fieldgroup name (unique within workspace)'),
   category_id: z
     .string()
@@ -41,7 +41,7 @@ const sharedFieldGroupBodySchema = z.object({
   sort_order: z.number().int().min(0).optional().describe('Display order (0-based)')
 });
 
-const updateSharedFieldGroupBodySchema = sharedFieldGroupBodySchema.extend({
+export const updateSharedFieldGroupBodySchema = sharedFieldGroupBodySchema.extend({
   fieldMigrations: fieldMigrationsSchema
     .optional()
     .describe('Field migration decisions applied to every including schema')
