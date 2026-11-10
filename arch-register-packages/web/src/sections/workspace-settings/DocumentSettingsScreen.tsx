@@ -11,13 +11,17 @@ import { Page } from '../../components/Page';
 
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/documents');
 
+import { useDraftOverlay } from './useDraftOverlay';
+import { blankDocumentType } from './schemaDraftOverlay';
+
 export const DocumentSettingsScreen = () => {
   const navigate = routeApi.useNavigate();
   const search = routeApi.useSearch();
   const { workspaceSlug } = useWorkspaceContext();
   const activeTab = search.tab === 'templates' ? 'templates' : 'types';
 
-  const { data: types = [], isLoading: typesLoading } = useDocumentTypes(workspaceSlug, true);
+  const { data: liveTypes = [], isLoading: typesLoading } = useDocumentTypes(workspaceSlug, true);
+  const types = useDraftOverlay('document_type', liveTypes, id => blankDocumentType(id));
   const { data: templates = [], isLoading: templatesLoading } = useDocumentTemplates(
     workspaceSlug,
     null,

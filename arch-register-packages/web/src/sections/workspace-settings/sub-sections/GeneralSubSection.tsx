@@ -9,6 +9,8 @@ import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
 import { ColorPicker } from '../../../components/ColorPicker';
 import { useUpdateWorkspace } from '../../../hooks/useWorkspaces';
+import { useSchemaChangeMode, useSetSchemaChangeMode } from '../../../hooks/useSchemaDraft';
+import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import {
   Workspace,
   WorkspaceDateFormat,
@@ -43,6 +45,9 @@ export const GeneralSubSection = ({ workspace }: { workspace: Workspace }) => {
   const [timeFormat, setTimeFormat] = useState<WorkspaceTimeFormat>(workspace.time_format);
 
   const updateWorkspaceMutation = useUpdateWorkspace();
+  const canEditSchemas = useWorkspaceContext().permissions.canEditSchemas;
+  const { data: modeData } = useSchemaChangeMode(workspace.url_slug, canEditSchemas);
+  const setModeMutation = useSetSchemaChangeMode(workspace.url_slug);
 
   const isDirty =
     name !== workspace.name ||
@@ -195,6 +200,30 @@ export const GeneralSubSection = ({ workspace }: { workspace: Workspace }) => {
           })}
         </SettingsBlockField>
       </SettingsBlock>
+
+      {canEditSchemas && (
+        <SettingsBlock
+          title="Schema changes"
+          description="Whether edits to entity types, relation types, document types, enums, field groups and categories go live immediately or are staged in a shared draft."
+        >
+          <SettingsBlockField
+            label="Change mode"
+            hint="Applies immediately. An existing draft is kept when switching back to direct."
+          >
+            <Select.Root
+              value={modeData?.schemaChangeMode ?? 'direct'}
+              onChange={value => {
+                if (value === 'direct' || value === 'draft') setModeMutation.mutate(value);
+              }}
+              style={{ width: '340px' }}
+            >
+              <Select.Item value="direct">Direct (changes go live when saved)</Select.Item>
+              <Select.Item value="draft">Draft (stage changes, then publish)</Select.Item>
+            </Select.Root>
+          </SettingsBlockField>
+          <MutationError error={setModeMutation.error} />
+        </SettingsBlock>
+      )}
     </>
   );
 };

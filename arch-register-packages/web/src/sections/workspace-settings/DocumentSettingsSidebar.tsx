@@ -10,6 +10,9 @@ import { SidebarGroupLabel, SidebarHeader } from '../../components/sidebar/Sideb
 
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/documents');
 
+import { useDraftOverlay } from './useDraftOverlay';
+import { blankDocumentType } from './schemaDraftOverlay';
+
 export const DocumentSettingsSidebar = ({ workspaceSlug }: { workspaceSlug: string }) => {
   const navigate = routeApi.useNavigate();
   const search = routeApi.useSearch();
@@ -18,7 +21,8 @@ export const DocumentSettingsSidebar = ({ workspaceSlug }: { workspaceSlug: stri
   const typeId = search.type ?? null;
   const templateId = search.template ?? null;
 
-  const { data: types = [] } = useDocumentTypes(workspaceSlug, true);
+  const { data: liveTypes = [] } = useDocumentTypes(workspaceSlug, true);
+  const types = useDraftOverlay('document_type', liveTypes, id => blankDocumentType(id));
   const { data: templates = [] } = useDocumentTemplates(workspaceSlug, null, true);
 
   const typeColor = new Map<string, string>(

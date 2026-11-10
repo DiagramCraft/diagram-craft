@@ -19,6 +19,7 @@ import {
   updateTemplateFieldId
 } from './schemaSettingsHelpers';
 import { firstRemainingId, type SchemaEditorAdapter } from './schemaEditorState';
+import { useSchemaDraftState } from './useSchemaDraftState';
 
 /** Entity-type specific draft fields on top of the shared schema editor draft. */
 export type EntityEditorExtra = {
@@ -43,6 +44,8 @@ export const useEntitySchemaAdapter = (workspaceSlug: string) => {
   const createSchemaMutation = useCreateSchema(workspaceSlug);
   const updateSchemaMutation = useUpdateSchema(workspaceSlug);
   const deleteSchemaMutation = useDeleteSchema(workspaceSlug);
+  const schemaDraft = useSchemaDraftState();
+  const { isDraftMode, stageCreate, stageUpdate, stageDelete } = schemaDraft;
 
   const adapter = useMemo<EntitySchemaAdapter>(
     () => ({
@@ -110,6 +113,23 @@ export const useEntitySchemaAdapter = (workspaceSlug: string) => {
         draft.color !== schema.color ||
         draft.icon !== schema.icon,
       save: async (schema, draft, fieldMigrations) => {
+        if (isDraftMode) {
+          await stageUpdate('entity_schema', schema.id, {
+            name: draft.name,
+            key_prefix: draft.keyPrefix,
+            category_id: draft.categoryId,
+            description: draft.description,
+            fields: draft.fields,
+            templates: draft.templates,
+            groups: draft.groups,
+            shared_field_group_links: draft.sharedFieldGroupLinks,
+            validation_rules: draft.validationRules,
+            detail_layout: draft.detailLayoutEnabled ? (draft.detailLayout ?? null) : null,
+            color: draft.color,
+            icon: draft.icon
+          });
+          return;
+        }
         await updateSchemaMutation.mutateAsync({
           schemaId: schema.id,
           data: {
@@ -129,8 +149,25 @@ export const useEntitySchemaAdapter = (workspaceSlug: string) => {
           }
         });
       },
-      create: draft =>
-        createSchemaMutation.mutateAsync({
+      create: async draft => {
+        if (isDraftMode) {
+          const id = await stageCreate('entity_schema', {
+            name: draft.name,
+            key_prefix: draft.keyPrefix,
+            category_id: draft.categoryId,
+            description: draft.description,
+            fields: draft.fields,
+            templates: draft.templates,
+            groups: draft.groups,
+            shared_field_group_links: draft.sharedFieldGroupLinks,
+            validation_rules: draft.validationRules,
+            detail_layout: draft.detailLayoutEnabled ? (draft.detailLayout ?? null) : null,
+            color: draft.color,
+            icon: draft.icon
+          });
+          return { id };
+        }
+        return createSchemaMutation.mutateAsync({
           name: draft.name,
           key_prefix: draft.keyPrefix,
           category_id: draft.categoryId,
@@ -143,9 +180,13 @@ export const useEntitySchemaAdapter = (workspaceSlug: string) => {
           detail_layout: draft.detailLayoutEnabled ? (draft.detailLayout ?? null) : null,
           color: draft.color,
           icon: draft.icon
-        }),
+        });
+      },
       isValid: draft => draft.name.trim() !== '' && /^[A-Z]{2,5}$/.test(draft.keyPrefix),
-      remove: schema => deleteSchemaMutation.mutateAsync(schema.id).then(() => undefined),
+      remove: schema =>
+        isDraftMode
+          ? stageDelete('entity_schema', schema.id)
+          : deleteSchemaMutation.mutateAsync(schema.id).then(() => undefined),
       getMigrationRequired: getSchemaMigrationRequired,
       validationRuleDefaults: () => ({
         id: `rule-${Date.now()}`,
@@ -167,7 +208,15 @@ export const useEntitySchemaAdapter = (workspaceSlug: string) => {
         deleteError: 'Failed to delete'
       }
     }),
-    [createSchemaMutation, deleteSchemaMutation, updateSchemaMutation]
+    [
+      createSchemaMutation,
+      deleteSchemaMutation,
+      updateSchemaMutation,
+      isDraftMode,
+      stageCreate,
+      stageUpdate,
+      stageDelete
+    ]
   );
 
   return {

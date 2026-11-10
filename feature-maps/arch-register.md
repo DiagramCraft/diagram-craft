@@ -219,8 +219,11 @@
               changes to entity schemas, relation schemas, document types, enums, shared field groups and categories
               are staged in one shared workspace draft instead of being saved, and the direct edit routes are
               refused; staging, unstaging and discarding never change live definitions. Concurrent edits to the
-              draft are rejected when stale, and definition import is blocked while a draft is open. Only available
-              through the API for now; reviewing and publishing a draft are not yet available.
+              draft are rejected when stale, and definition import is blocked while a draft is open. The mode is set in
+              the General workspace settings; in draft mode the schema, relation, enum, field group, document type
+              and category editors stage their changes instead of saving them, staged items are marked as changed
+              in the sidebar and editor and can be reverted to live individually, and the schema settings show
+              the number of pending changes. Reviewing and publishing a draft are not yet available.
 
             - @id:ar.workspace.configuration.entity-drawers Administrators can configure a schema-scoped,
               read-only entity drawer with ordered, collapsible sections (an optional `stat-grid` layout alongside

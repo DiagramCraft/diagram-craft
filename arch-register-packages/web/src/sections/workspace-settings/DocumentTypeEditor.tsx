@@ -1,3 +1,4 @@
+import { DraftPill } from './DraftPill';
 import { useState } from 'react';
 import { getRouteApi } from '@tanstack/react-router';
 import { TbArchive, TbEye, TbInfoCircle, TbPlus } from 'react-icons/tb';
@@ -158,6 +159,7 @@ export const DocumentTypeEditor = ({
               { label: 'Settings' }
             ]}
             eyebrow="Document type"
+            chips={<DraftPill kind="document_type" id={selected?.id} />}
             icon={
               <TypeBadge
                 color={
@@ -188,6 +190,7 @@ export const DocumentTypeEditor = ({
               selected ? (
                 <EditorActionsMenu
                   deleteLabel="Delete type"
+                  draftItem={{ kind: 'document_type', id: selected.id }}
                   onDelete={() => draft.setConfirmDelete(true)}
                   extraItems={[
                     {
