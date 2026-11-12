@@ -1,4 +1,5 @@
 import { DraftPill } from './DraftPill';
+import { SchemaDraftReviewScreen } from './SchemaDraftReviewScreen';
 import { useCallback } from 'react';
 import { getRouteApi } from '@tanstack/react-router';
 import { Button } from '@diagram-craft/app-components/Button';
@@ -83,6 +84,7 @@ export const SchemaSettingsScreen = () => {
     editor.showHistory && selected ? (selectedSchemaId ?? null) : null
   );
 
+  if (search.review) return <SchemaDraftReviewScreen />;
   if (activeTab === 'enums') return <EnumEditorScreen />;
   if (activeTab === 'fieldgroups') return <FieldGroupEditorScreen />;
   if (activeTab === 'relation-types') return <RelationSchemaSettingsScreen />;

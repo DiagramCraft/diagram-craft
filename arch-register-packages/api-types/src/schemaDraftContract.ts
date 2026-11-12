@@ -44,6 +44,89 @@ export const schemaDraftSchema = z.object({
   items: z.array(schemaDraftItemSchema)
 });
 
+const migrationChangeSchema = z.object({
+  fieldId: z.string(),
+  fieldName: z.string(),
+  kind: z.enum(['removed', 'renamed', 'type-changed', 'newly-required']),
+  renamedToId: z.string().optional(),
+  recordCount: z.number().int().describe('Records with a value in the field'),
+  decision: z.enum(['rename', 'remove', 'archive']).optional()
+});
+
+export const schemaDraftReviewSchema = z.object({
+  revision: z.number().int().describe('Draft revision the review was computed for'),
+  items: z.array(
+    z.object({
+      kind: schemaDraftKindSchema,
+      itemId: z.string(),
+      op: schemaDraftOpSchema,
+      name: z.string().nullable().describe('Name after the draft is applied'),
+      liveName: z.string().nullable().describe('Current live name; null for create')
+    })
+  ),
+  migrations: z.array(
+    z.object({
+      kind: schemaDraftKindSchema,
+      itemId: z.string(),
+      name: z.string(),
+      recordCount: z.number().int(),
+      hardBlocks: z.array(migrationChangeSchema.extend({ message: z.string() })),
+      unresolved: z.array(migrationChangeSchema),
+      resolved: z.array(migrationChangeSchema)
+    })
+  ),
+  findings: z.array(
+    z.object({
+      severity: z.enum(['blocking', 'warning']),
+      category: z.string(),
+      draftItem: z.object({
+        kind: schemaDraftKindSchema,
+        itemId: z.string(),
+        name: z.string().nullable()
+      }),
+      subject: z.object({ type: z.string(), id: z.string(), name: z.string() }),
+      message: z.string()
+    })
+  ),
+  recordValidation: z
+    .object({ jobRunId: z.string() })
+    .describe('Background job validating existing records; poll reviewRecords for the result'),
+  summary: z.object({
+    blocking: z.number().int(),
+    warnings: z.number().int(),
+    unresolvedMigrations: z.number().int(),
+    hardBlockedMigrations: z.number().int()
+  })
+});
+
+const recordProblemGroupSchema = z.object({
+  schemaId: z.string(),
+  schemaName: z.string(),
+  recordType: z.enum(['entity', 'relation']),
+  fieldId: z.string().nullable(),
+  fieldName: z.string().nullable(),
+  problem: z.enum([
+    'schema_deleted',
+    'required_missing',
+    'invalid_option',
+    'endpoint_not_allowed',
+    'validation_rule'
+  ]),
+  count: z.number().int(),
+  examples: z.array(z.object({ recordId: z.string(), message: z.string() }))
+});
+
+export const schemaDraftRecordReviewSchema = z.object({
+  status: z.enum(['queued', 'running', 'succeeded', 'failed', 'cancelled']),
+  error: z.string().nullable(),
+  stale: z.boolean().describe('True when the draft changed after the job was enqueued'),
+  revision: z.number().int(),
+  entitiesChecked: z.number().int(),
+  relationsChecked: z.number().int(),
+  problemCount: z.number().int(),
+  groups: z.array(recordProblemGroupSchema)
+});
+
 const itemParams = ws.extend({ kind: schemaDraftKindSchema, itemId: z.string().min(1) });
 
 export const workspaceSchemaDraftContract = oc.tag('Schema Draft').router({
@@ -112,6 +195,28 @@ export const workspaceSchemaDraftContract = oc.tag('Schema Draft').router({
         })
       )
       .output(z.object({ success: z.boolean() })),
+    review: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/schema-draft/review',
+        inputStructure: 'detailed',
+        summary: 'Review the impact of the schema draft',
+        description:
+          'Computes a draft catalog overlay and reports required migrations, blocking conflicts and warnings. Read-only: never changes live definitions or data.',
+        tags: ['Schema Draft']
+      })
+      .input(z.object({ params: ws }))
+      .output(schemaDraftReviewSchema),
+    reviewRecords: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/schema-draft/review/records/{jobRunId}',
+        inputStructure: 'detailed',
+        summary: 'Get record validation results for a draft review',
+        tags: ['Schema Draft']
+      })
+      .input(z.object({ params: ws.extend({ jobRunId: z.string().min(1) }) }))
+      .output(schemaDraftRecordReviewSchema),
     getMode: oc
       .route({
         method: 'GET',
@@ -136,3 +241,5 @@ export const workspaceSchemaDraftContract = oc.tag('Schema Draft').router({
 });
 
 export type SchemaDraft = z.infer<typeof schemaDraftSchema>;
+export type SchemaDraftRecordReview = z.infer<typeof schemaDraftRecordReviewSchema>;
+export type SchemaDraftReview = z.infer<typeof schemaDraftReviewSchema>;

@@ -8,6 +8,8 @@ import {
   discardSchemaDraft,
   getSchemaChangeMode,
   getSchemaDraft,
+  reviewSchemaDraft,
+  getSchemaDraftRecordReview,
   setSchemaChangeMode,
   stageSchemaDraftItem,
   unstageSchemaDraftItem
@@ -52,6 +54,17 @@ export const workspaceSchemaDraftORPCRouter = draftRouter.router({
         context.db,
         input.params.workspace,
         input.query.expectedRevision,
+        context.event
+      )
+    ),
+    review: draftRouter.schemaDraft.review.handler(({ input, context }) =>
+      reviewSchemaDraft(context.db, input.params.workspace, context.event)
+    ),
+    reviewRecords: draftRouter.schemaDraft.reviewRecords.handler(({ input, context }) =>
+      getSchemaDraftRecordReview(
+        context.db,
+        input.params.workspace,
+        input.params.jobRunId,
         context.event
       )
     ),

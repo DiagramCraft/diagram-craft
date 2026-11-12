@@ -27,7 +27,17 @@ import {
 } from '@arch-register/api-types/fieldGroupContract';
 import { categoryBodySchema } from '@arch-register/api-types/categoryContract';
 import { documentTypeWriteSchema } from '@arch-register/api-types/documentContract';
-import type { SchemaDraft } from '@arch-register/api-types/schemaDraftContract';
+import type { SchemaDraft, SchemaDraftReview } from '@arch-register/api-types/schemaDraftContract';
+import { analyzeDraftIntegrations } from './draftIntegrationAnalysis';
+import { buildDraftCatalog } from './draftCatalog';
+import { buildMigrationReport } from './draftMigrationReport';
+import { analyzeDraftDependencies, type QueryConsumer } from './draftDependencyAnalyzer';
+import { enqueueOneOffJobRun } from '../jobs/jobOperations';
+import {
+  SCHEMA_DRAFT_REVIEW_JOB_TYPE,
+  SCHEMA_DRAFT_REVIEW_SYSTEM_IDENTITY
+} from './schemaDraftReviewJob';
+import { createMigrationUsageProvider } from './draftMigrationUsage';
 
 const REVISION_CONFLICT = 'The schema draft was changed by someone else; reload it and try again';
 
@@ -325,5 +335,112 @@ export const setSchemaChangeMode = async (
         metadata: { action: 'set_mode' }
       });
       return { schemaChangeMode: mode };
+    }
+  });
+
+/**
+ * Computes the impact of the draft against the live catalog and data. Strictly read-only.
+ */
+export const reviewSchemaDraft = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  event: AuthenticatedEvent
+): Promise<SchemaDraftReview> =>
+  runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'workspace', workspace },
+    fallback: 'Failed to review schema draft',
+    operation: async ({ ws, authCtx }) => {
+      requireWorkspaceCapability(authCtx, 'schema.edit');
+      const [draft, items] = await Promise.all([
+        db.schemaDraft.getDraft(ws),
+        db.schemaDraft.listItems(ws)
+      ]);
+      const catalog = await buildDraftCatalog(db, ws, items);
+
+      const payloads = new Map(
+        items.map(item => [
+          `${item.kind}:${item.item_id}`,
+          (item.payload ?? {}) as { fieldMigrations?: never }
+        ])
+      );
+      const migrations = await buildMigrationReport(
+        catalog,
+        payloads,
+        createMigrationUsageProvider(db, ws)
+      );
+
+      // Workspace views plus every project's own views.
+      const projects = await db.project.projects.listProjects(ws);
+      const viewLists = await Promise.all([
+        db.view.listSavedViews(ws, { includeWorkspace: true }),
+        ...projects.map(project => db.view.listSavedViews(ws, { projectId: project.id }))
+      ]);
+      const views = [...new Map(viewLists.flat().map(view => [view.id, view])).values()];
+      const queryConsumers: QueryConsumer[] = views.map(view => ({
+        type: 'saved_view',
+        id: view.id,
+        name: view.name,
+        query: view.filters
+      }));
+      const findings = [
+        ...analyzeDraftDependencies(catalog, { queryConsumers }),
+        ...(await analyzeDraftIntegrations(db, ws, catalog))
+      ];
+
+      const revision = draft?.revision ?? 0;
+      const run = await enqueueOneOffJobRun(db, {
+        workspace: ws,
+        jobType: SCHEMA_DRAFT_REVIEW_JOB_TYPE,
+        systemIdentity: SCHEMA_DRAFT_REVIEW_SYSTEM_IDENTITY,
+        payload: { revision }
+      });
+
+      return {
+        revision,
+        recordValidation: { jobRunId: run.id },
+        items: catalog.changes,
+        migrations,
+        findings,
+        summary: {
+          blocking: findings.filter(f => f.severity === 'blocking').length,
+          warnings: findings.filter(f => f.severity === 'warning').length,
+          unresolvedMigrations: migrations.reduce((n, m) => n + m.unresolved.length, 0),
+          hardBlockedMigrations: migrations.reduce((n, m) => n + m.hardBlocks.length, 0)
+        }
+      };
+    }
+  });
+
+export const getSchemaDraftRecordReview = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  jobRunId: string,
+  event: AuthenticatedEvent
+) =>
+  runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'workspace', workspace },
+    fallback: 'Failed to load record validation',
+    operation: async ({ ws, authCtx }) => {
+      requireWorkspaceCapability(authCtx, 'schema.edit');
+      const run = await db.jobs.getRun(jobRunId);
+      httpAssert.true(
+        run != null && run.workspace === ws && run.job_type === SCHEMA_DRAFT_REVIEW_JOB_TYPE,
+        { status: 404, message: 'Record validation run not found' }
+      );
+      const result = (run!.result ?? {}) as Record<string, unknown>;
+      return {
+        status: run!.status,
+        error: run!.error,
+        stale: result['stale'] === true,
+        revision: typeof result['revision'] === 'number' ? result['revision'] : 0,
+        entitiesChecked: (result['entitiesChecked'] as number | undefined) ?? 0,
+        relationsChecked: (result['relationsChecked'] as number | undefined) ?? 0,
+        problemCount: (result['problemCount'] as number | undefined) ?? 0,
+        groups: (result['groups'] as never[] | undefined) ?? []
+      };
     }
   });

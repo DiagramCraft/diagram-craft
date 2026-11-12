@@ -20262,6 +20262,604 @@
         }
       }
     },
+    "/{workspace}/schema-draft/review": {
+      "post": {
+        "operationId": "schemaDraft.review",
+        "summary": "Review the impact of the schema draft",
+        "description": "Computes a draft catalog overlay and reports required migrations, blocking conflicts and warnings. Read-only: never changes live definitions or data.",
+        "tags": [
+          "Schema Draft",
+          "Schema Draft"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "revision": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "Draft revision the review was computed for"
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "entity_schema",
+                              "relation_schema",
+                              "document_type",
+                              "enum",
+                              "field_group",
+                              "category"
+                            ],
+                            "type": "string",
+                            "description": "Kind of schema definition a draft item changes"
+                          },
+                          "itemId": {
+                            "type": "string"
+                          },
+                          "op": {
+                            "enum": [
+                              "create",
+                              "update",
+                              "delete"
+                            ],
+                            "type": "string",
+                            "description": "Operation the draft item applies on publish"
+                          },
+                          "name": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Name after the draft is applied"
+                          },
+                          "liveName": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Current live name; null for create"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "itemId",
+                          "op",
+                          "name",
+                          "liveName"
+                        ]
+                      }
+                    },
+                    "migrations": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "entity_schema",
+                              "relation_schema",
+                              "document_type",
+                              "enum",
+                              "field_group",
+                              "category"
+                            ],
+                            "type": "string",
+                            "description": "Kind of schema definition a draft item changes"
+                          },
+                          "itemId": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "recordCount": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "hardBlocks": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "fieldId": {
+                                  "type": "string"
+                                },
+                                "fieldName": {
+                                  "type": "string"
+                                },
+                                "kind": {
+                                  "enum": [
+                                    "removed",
+                                    "renamed",
+                                    "type-changed",
+                                    "newly-required"
+                                  ],
+                                  "type": "string"
+                                },
+                                "renamedToId": {
+                                  "type": "string"
+                                },
+                                "recordCount": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Records with a value in the field"
+                                },
+                                "decision": {
+                                  "enum": [
+                                    "rename",
+                                    "remove",
+                                    "archive"
+                                  ],
+                                  "type": "string"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "fieldId",
+                                "fieldName",
+                                "kind",
+                                "recordCount",
+                                "message"
+                              ]
+                            }
+                          },
+                          "unresolved": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "fieldId": {
+                                  "type": "string"
+                                },
+                                "fieldName": {
+                                  "type": "string"
+                                },
+                                "kind": {
+                                  "enum": [
+                                    "removed",
+                                    "renamed",
+                                    "type-changed",
+                                    "newly-required"
+                                  ],
+                                  "type": "string"
+                                },
+                                "renamedToId": {
+                                  "type": "string"
+                                },
+                                "recordCount": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Records with a value in the field"
+                                },
+                                "decision": {
+                                  "enum": [
+                                    "rename",
+                                    "remove",
+                                    "archive"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "fieldId",
+                                "fieldName",
+                                "kind",
+                                "recordCount"
+                              ]
+                            }
+                          },
+                          "resolved": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "fieldId": {
+                                  "type": "string"
+                                },
+                                "fieldName": {
+                                  "type": "string"
+                                },
+                                "kind": {
+                                  "enum": [
+                                    "removed",
+                                    "renamed",
+                                    "type-changed",
+                                    "newly-required"
+                                  ],
+                                  "type": "string"
+                                },
+                                "renamedToId": {
+                                  "type": "string"
+                                },
+                                "recordCount": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Records with a value in the field"
+                                },
+                                "decision": {
+                                  "enum": [
+                                    "rename",
+                                    "remove",
+                                    "archive"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "fieldId",
+                                "fieldName",
+                                "kind",
+                                "recordCount"
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "itemId",
+                          "name",
+                          "recordCount",
+                          "hardBlocks",
+                          "unresolved",
+                          "resolved"
+                        ]
+                      }
+                    },
+                    "findings": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "severity": {
+                            "enum": [
+                              "blocking",
+                              "warning"
+                            ],
+                            "type": "string"
+                          },
+                          "category": {
+                            "type": "string"
+                          },
+                          "draftItem": {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "enum": [
+                                  "entity_schema",
+                                  "relation_schema",
+                                  "document_type",
+                                  "enum",
+                                  "field_group",
+                                  "category"
+                                ],
+                                "type": "string",
+                                "description": "Kind of schema definition a draft item changes"
+                              },
+                              "itemId": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "itemId",
+                              "name"
+                            ]
+                          },
+                          "subject": {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string"
+                              },
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "type",
+                              "id",
+                              "name"
+                            ]
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "severity",
+                          "category",
+                          "draftItem",
+                          "subject",
+                          "message"
+                        ]
+                      }
+                    },
+                    "recordValidation": {
+                      "type": "object",
+                      "properties": {
+                        "jobRunId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "jobRunId"
+                      ],
+                      "description": "Background job validating existing records; poll reviewRecords for the result"
+                    },
+                    "summary": {
+                      "type": "object",
+                      "properties": {
+                        "blocking": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "warnings": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "unresolvedMigrations": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "hardBlockedMigrations": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "blocking",
+                        "warnings",
+                        "unresolvedMigrations",
+                        "hardBlockedMigrations"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "revision",
+                    "items",
+                    "migrations",
+                    "findings",
+                    "recordValidation",
+                    "summary"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/schema-draft/review/records/{jobRunId}": {
+      "get": {
+        "operationId": "schemaDraft.reviewRecords",
+        "summary": "Get record validation results for a draft review",
+        "tags": [
+          "Schema Draft",
+          "Schema Draft"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "jobRunId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "enum": [
+                        "queued",
+                        "running",
+                        "succeeded",
+                        "failed",
+                        "cancelled"
+                      ],
+                      "type": "string"
+                    },
+                    "error": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "stale": {
+                      "type": "boolean",
+                      "description": "True when the draft changed after the job was enqueued"
+                    },
+                    "revision": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "entitiesChecked": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "relationsChecked": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "problemCount": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "groups": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "schemaId": {
+                            "type": "string"
+                          },
+                          "schemaName": {
+                            "type": "string"
+                          },
+                          "recordType": {
+                            "enum": [
+                              "entity",
+                              "relation"
+                            ],
+                            "type": "string"
+                          },
+                          "fieldId": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "fieldName": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "problem": {
+                            "enum": [
+                              "schema_deleted",
+                              "required_missing",
+                              "invalid_option",
+                              "endpoint_not_allowed",
+                              "validation_rule"
+                            ],
+                            "type": "string"
+                          },
+                          "count": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "examples": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "recordId": {
+                                  "type": "string"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "recordId",
+                                "message"
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "schemaId",
+                          "schemaName",
+                          "recordType",
+                          "fieldId",
+                          "fieldName",
+                          "problem",
+                          "count",
+                          "examples"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "error",
+                    "stale",
+                    "revision",
+                    "entitiesChecked",
+                    "relationsChecked",
+                    "problemCount",
+                    "groups"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/{workspace}/schema-draft/mode": {
       "get": {
         "operationId": "schemaDraft.getMode",

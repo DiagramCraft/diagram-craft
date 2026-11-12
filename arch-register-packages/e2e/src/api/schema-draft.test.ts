@@ -208,4 +208,23 @@ test.describe('schema draft', () => {
       anonOrpc.schemaDraft.get({ params: { workspace: 'default' } })
     ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
   });
+  test('reviews a draft without changing live definitions', async ({ orpc }) => {
+    const workspace = await newWorkspace(orpc);
+    const params = { workspace: workspace.url_slug };
+    const itemId = randomUUID();
+    await orpc.schemaDraft.stage({
+      params: { ...params, kind: 'enum', itemId },
+      body: { expectedRevision: 0, op: 'create', payload: { name: 'Reviewed', options: [] } }
+    });
+    const enumsBefore = await orpc.enums.list({ params });
+
+    const review = await orpc.schemaDraft.review({ params });
+    expect(review.revision).toBe(1);
+    expect(review.items).toMatchObject([{ kind: 'enum', itemId, op: 'create', name: 'Reviewed' }]);
+    expect(review.summary).toMatchObject({ blocking: 0, unresolvedMigrations: 0 });
+    expect(review.recordValidation.jobRunId).toBeTruthy();
+
+    expect(await orpc.enums.list({ params })).toEqual(enumsBefore);
+    expect((await orpc.schemaDraft.get({ params })).revision).toBe(1);
+  });
 });

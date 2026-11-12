@@ -9,8 +9,10 @@ import {
   TbPencil,
   TbTrash,
   TbChevronsDown,
-  TbChevronsUp
+  TbChevronsUp,
+  TbArrowRight
 } from 'react-icons/tb';
+import { Button } from '@diagram-craft/app-components/Button';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { Menu } from '@diagram-craft/app-components/Menu';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
@@ -431,16 +433,45 @@ export const SchemaSettingsSidebar = ({
         <div
           data-testid="schema-draft-banner"
           style={{
-            padding: '10px 12px',
+            padding: '10px 5px 10px 12px',
             borderTop: '1px solid var(--warning-fg)',
             background: 'color-mix(in oklch, var(--warning-fg) 14%, transparent)',
             color: 'var(--warning-fg)',
             fontWeight: 600,
-            fontSize: 12
+            fontSize: 12,
+            display: 'flex',
+            flexDirection: 'row',
+            gap: '8px',
+            alignItems: 'center',
+            cursor: 'pointer'
           }}
+          onClick={() =>
+            navigate({
+              to: '/$workspaceSlug/settings/schemas',
+              params: { workspaceSlug },
+              search: { review: 'true' }
+            })
+          }
         >
-          {schemaDraft.pendingCount} pending {schemaDraft.pendingCount === 1 ? 'change' : 'changes'}{' '}
-          in draft
+          <div>
+            {schemaDraft.pendingCount} pending{' '}
+            {schemaDraft.pendingCount === 1 ? 'change' : 'changes'} in draft
+          </div>
+          <Button
+            data-testid="schema-draft-review-button"
+            size={'xs'}
+            variant="icon-only"
+            style={{ marginLeft: 'auto', color: 'var(--warning-fg)' }}
+            onClick={() =>
+              navigate({
+                to: '/$workspaceSlug/settings/schemas',
+                params: { workspaceSlug },
+                search: { review: 'true' }
+              })
+            }
+          >
+            <TbArrowRight />
+          </Button>
         </div>
       )}
 
