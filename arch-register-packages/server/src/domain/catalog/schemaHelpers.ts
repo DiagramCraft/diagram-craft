@@ -724,6 +724,7 @@ export const toApiSchemaVersion = (
     color: string | null;
     icon: string | null;
     change_summary: Record<string, unknown>;
+    publication_id?: string | null;
     created_by: string | null;
     created_at: Date;
   },
@@ -741,6 +742,7 @@ export const toApiSchemaVersion = (
   color: row.color,
   icon: row.icon,
   changeSummary: row.change_summary,
+  publicationId: row.publication_id ?? null,
   createdBy: row.created_by,
   createdAt: row.created_at.toISOString()
 });

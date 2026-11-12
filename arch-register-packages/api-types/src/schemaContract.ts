@@ -520,6 +520,11 @@ const schemaVersionSchema = z.object({
   changeSummary: z
     .record(z.string(), z.unknown())
     .describe('Summary of what changed relative to the previous version'),
+  publicationId: z
+    .string()
+    .nullable()
+    .optional()
+    .describe('Schema publication that produced this version, if any'),
   createdBy: z.string().nullable().describe('User id who made this change'),
   createdAt: z.string().describe('ISO 8601 timestamp of this version')
 });

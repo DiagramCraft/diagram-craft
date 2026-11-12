@@ -193,7 +193,7 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
 
   async createRelationSchemaVersion(input: RelationSchemaVersionDbCreate) {
     this.run(
-      'INSERT INTO relation_schema_version (id, workspace, schema_id, version, name, category, description, in_schema_ids, out_schema_ids, in_label, out_label, fields, groups, validation_rules, color, icon, unique_endpoint_pair, change_summary, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO relation_schema_version (id, workspace, schema_id, version, name, category, description, in_schema_ids, out_schema_ids, in_label, out_label, fields, groups, validation_rules, color, icon, unique_endpoint_pair, change_summary, publication_id, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.workspace,
@@ -213,6 +213,7 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
         input.icon,
         input.unique_endpoint_pair === true ? 1 : 0,
         JSON.stringify(input.change_summary),
+        input.publication_id ?? null,
         input.created_by,
         input.created_at.toISOString()
       ]

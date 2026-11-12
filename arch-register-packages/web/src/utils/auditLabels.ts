@@ -20,5 +20,6 @@ export const ENTITY_TYPE_LABELS: Record<AuditEntityType, string> = {
   relation_schema: 'relation schema',
   relation: 'relation',
   automation_note: 'automation note',
-  schema_draft: 'schema draft'
+  schema_draft: 'schema draft',
+  schema_publication: 'schema publication'
 };

@@ -14,6 +14,8 @@ import { SchemaEditorDialogs } from './SchemaEditorDialogs';
 import { SchemaEditorProvider } from './schemaEditorContext';
 import { EditorActionsMenu, EditorSaveButtons } from './EditorActionsMenu';
 import { SchemaEditorScreenShell } from './SchemaEditorScreenShell';
+import { TbHistory } from 'react-icons/tb';
+import { VersionHistoryDialog } from './sub-sections/VersionHistoryDialog';
 import { SchemaVersionHistorySubSection } from './sub-sections/SchemaVersionHistorySubSection';
 import { useSchemaEditorController } from './schemaEditorState';
 import { useDraftOverlay } from './useDraftOverlay';
@@ -99,6 +101,13 @@ export const RelationSchemaSettingsScreen = () => {
               deleteLabel="Delete type"
               draftItem={{ kind: 'relation_schema', id: selected.id }}
               onDelete={() => editor.setConfirmDelete(true)}
+              extraItems={[
+                {
+                  label: 'Version history',
+                  icon: <TbHistory size={14} />,
+                  onClick: () => editor.setShowHistory(true)
+                }
+              ]}
             />
           ) : undefined
         }
@@ -124,13 +133,6 @@ export const RelationSchemaSettingsScreen = () => {
             ? `${selected.relation_count} relations · version ${selected.version}`
             : undefined
         }
-        showHistory={editor.showHistory}
-        onShowHistoryChange={selected ? editor.setShowHistory : undefined}
-        history={
-          editor.showHistory ? (
-            <SchemaVersionHistorySubSection versions={versions} isLoading={versionsLoading} />
-          ) : null
-        }
         editor={
           (selected || isNew) && draft ? (
             <RelationEditorForm key={selectedRelationSchemaId} />
@@ -151,14 +153,26 @@ export const RelationSchemaSettingsScreen = () => {
           ) : null
         }
         dialogs={
-          <SchemaEditorDialogs
-            extraDialogs={
-              <RelationConstraintDialog
-                data={editor.constraintViolations}
-                onClose={() => editor.setConstraintViolations(null)}
+          <>
+            <SchemaEditorDialogs
+              extraDialogs={
+                <RelationConstraintDialog
+                  data={editor.constraintViolations}
+                  onClose={() => editor.setConstraintViolations(null)}
+                />
+              }
+            />
+            <VersionHistoryDialog
+              open={editor.showHistory && Boolean(selected)}
+              onClose={() => editor.setShowHistory(false)}
+            >
+              <SchemaVersionHistorySubSection
+                versions={versions}
+                isLoading={versionsLoading}
+                rollback={selected ? { kind: 'relation_schema', itemId: selected.id } : undefined}
               />
-            }
-          />
+            </VersionHistoryDialog>
+          </>
         }
       />
     </SchemaEditorProvider>

@@ -1,4 +1,7 @@
+import { useState } from 'react';
+import { TbHistory } from 'react-icons/tb';
 import { DraftPill } from './DraftPill';
+import { SnapshotVersionHistoryDialog } from './sub-sections/SnapshotVersionHistoryDialog';
 import { getRouteApi } from '@tanstack/react-router';
 import styles from './SchemaSettingsScreen.module.css';
 import { EditorActionsMenu, EditorSaveButtons } from './EditorActionsMenu';
@@ -27,6 +30,7 @@ export const EnumEditorScreen = () => {
   const navigate = routeApi.useNavigate();
   const { workspaceSlug, permissions, categories } = useWorkspaceContext();
   const canEdit = permissions.canEditSchemas;
+  const [historyOpen, setHistoryOpen] = useState(false);
   const {
     selected,
     isNew,
@@ -76,6 +80,13 @@ export const EnumEditorScreen = () => {
           canEdit && selected ? (
             <EditorActionsMenu
               deleteLabel="Delete enum"
+              extraItems={[
+                {
+                  label: 'Version history',
+                  icon: <TbHistory size={14} />,
+                  onClick: () => setHistoryOpen(true)
+                }
+              ]}
               onDelete={() => setConfirmDelete(true)}
               draftItem={{ kind: 'enum', id: selected.id }}
             />
@@ -243,6 +254,14 @@ export const EnumEditorScreen = () => {
         message={errorMessage}
         onClose={() => setErrorMessage(null)}
       />
+      {selected && (
+        <SnapshotVersionHistoryDialog
+          open={historyOpen}
+          kind="enum"
+          itemId={selected.id}
+          onClose={() => setHistoryOpen(false)}
+        />
+      )}
     </Page>
   );
 };

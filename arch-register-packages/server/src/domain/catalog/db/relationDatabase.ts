@@ -83,6 +83,7 @@ export type RelationSchemaVersionDbResult = {
   /** Whether active relations must have a unique ordered (in, out) endpoint pair at this version. */
   unique_endpoint_pair?: boolean;
   change_summary: Record<string, unknown>;
+  publication_id?: string | null;
   created_by: string | null;
   created_at: Date;
 };
@@ -246,6 +247,7 @@ export const relationMappers = {
       {},
       'relation_schema_version.change_summary'
     ),
+    publication_id: row['publication_id'] == null ? null : String(row['publication_id']),
     created_by: row['created_by'] == null ? null : String(row['created_by']),
     created_at: databaseDate(row['created_at'])
   }),

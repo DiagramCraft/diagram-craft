@@ -1,7 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { SchemaDraft } from '@arch-register/api-types/schemaDraftContract';
 import { orpcClient } from '../lib/orpcClient';
-import { schemaChangeModeQuery, schemaDraftKeys, schemaDraftQuery } from '../queries/schemaDraft';
+import {
+  schemaChangeModeQuery,
+  schemaDraftKeys,
+  schemaDraftQuery,
+  schemaPublicationsQuery,
+  snapshotVersionsQuery
+} from '../queries/schemaDraft';
 
 type Kind = SchemaDraft['items'][number]['kind'];
 type Op = SchemaDraft['items'][number]['op'];
@@ -67,6 +73,20 @@ export const useUnstageSchemaItem = (workspaceSlug: string) => {
   });
 };
 
+/** Discards the whole draft, reverting every staged change to live. */
+export const useDiscardSchemaDraft = (workspaceSlug: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () =>
+      orpcClient.schemaDraft.discard({
+        params: { workspace: workspaceSlug },
+        query: { expectedRevision: currentRevision(queryClient, workspaceSlug) }
+      }),
+    onSettled: () =>
+      queryClient.invalidateQueries({ queryKey: schemaDraftKeys.draft(workspaceSlug) })
+  });
+};
+
 /** Computes the impact of the draft. Read-only; also starts the background record validation. */
 export const useReviewSchemaDraft = (workspaceSlug: string) =>
   useMutation({
@@ -90,3 +110,52 @@ export const useSchemaDraftRecordReview = (workspaceSlug: string, jobRunId: stri
         ? false
         : 2000
   });
+
+export const useSchemaPublications = (workspaceSlug: string, enabled = true) =>
+  useQuery(schemaPublicationsQuery(workspaceSlug, enabled));
+
+export const useSnapshotVersions = (
+  workspaceSlug: string,
+  kind: 'enum' | 'field_group' | 'category',
+  itemId: string,
+  enabled = true
+) => useQuery(snapshotVersionsQuery(workspaceSlug, kind, itemId, enabled));
+
+/**
+ * Publishes the draft. Publishing changes live definitions of every kind, so on success the whole
+ * query cache is refreshed rather than a hand-picked set of keys.
+ */
+export const usePublishSchemaDraft = (workspaceSlug: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (summary: string) =>
+      orpcClient.schemaDraft.publish({
+        params: { workspace: workspaceSlug },
+        body: {
+          expectedRevision: currentRevision(queryClient, workspaceSlug),
+          summary,
+          migrationDecisions: []
+        }
+      }),
+    onSettled: () => queryClient.invalidateQueries()
+  });
+};
+
+/** Stages a draft item that restores an item to a previously published version. */
+export const useRollbackToVersion = (workspaceSlug: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ kind, itemId, version }: { kind: Kind; itemId: string; version: number }) =>
+      orpcClient.schemaDraft.fromVersion({
+        params: { workspace: workspaceSlug },
+        body: {
+          expectedRevision: currentRevision(queryClient, workspaceSlug),
+          kind,
+          itemId,
+          version
+        }
+      }),
+    onSuccess: draft => queryClient.setQueryData(schemaDraftKeys.draft(workspaceSlug), draft),
+    onError: () => queryClient.invalidateQueries({ queryKey: schemaDraftKeys.draft(workspaceSlug) })
+  });
+};

@@ -139,7 +139,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async createSchemaVersion(input: SchemaVersionDbCreate) {
     this.run(
-      'INSERT INTO entity_schema_version (id, workspace, schema_id, version, name, category, description, fields, templates, groups, shared_field_group_links, validation_rules, color, icon, change_summary, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO entity_schema_version (id, workspace, schema_id, version, name, category, description, fields, templates, groups, shared_field_group_links, validation_rules, color, icon, change_summary, publication_id, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.workspace,
@@ -156,6 +156,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
         input.color,
         input.icon,
         JSON.stringify(input.change_summary),
+        input.publication_id ?? null,
         input.created_by,
         input.created_at.toISOString()
       ]

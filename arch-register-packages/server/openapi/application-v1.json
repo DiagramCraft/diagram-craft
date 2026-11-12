@@ -12655,6 +12655,17 @@
                         "additionalProperties": {},
                         "description": "Summary of what changed relative to the previous version"
                       },
+                      "publicationId": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Schema publication that produced this version, if any"
+                      },
                       "createdBy": {
                         "anyOf": [
                           {
@@ -19585,6 +19596,17 @@
                         "additionalProperties": {},
                         "description": "Summary of what changed relative to the previous version"
                       },
+                      "publicationId": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Schema publication that produced this version, if any"
+                      },
                       "createdBy": {
                         "anyOf": [
                           {
@@ -20860,6 +20882,543 @@
         }
       }
     },
+    "/{workspace}/schema-draft/publish": {
+      "post": {
+        "operationId": "schemaDraft.publish",
+        "summary": "Publish the schema draft",
+        "description": "Atomically applies every draft item to the live catalog and records a publication. Requires schema.publish. Returns 409 when the draft revision is stale, a live item changed after it was staged, or unresolved migrations / blocking conflicts remain; nothing is applied in that case.",
+        "tags": [
+          "Schema Draft",
+          "Schema Draft"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "expectedRevision": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                    "description": "Draft revision the caller last saw; 0 when no draft exists. Mismatch returns 409."
+                  },
+                  "summary": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2000,
+                    "description": "What this publication changes"
+                  },
+                  "migrationDecisions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "enum": [
+                            "entity_schema",
+                            "relation_schema",
+                            "document_type",
+                            "enum",
+                            "field_group",
+                            "category"
+                          ],
+                          "type": "string",
+                          "description": "Kind of schema definition a draft item changes"
+                        },
+                        "itemId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "fieldMigrations": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {
+                            "type": "object",
+                            "properties": {
+                              "action": {
+                                "enum": [
+                                  "rename",
+                                  "remove",
+                                  "archive"
+                                ],
+                                "type": "string",
+                                "description": "Migration action for this field"
+                              },
+                              "renameTo": {
+                                "type": "string",
+                                "description": "New field id when action is \"rename\""
+                              }
+                            },
+                            "required": [
+                              "action"
+                            ],
+                            "description": "How to migrate a changed/removed field"
+                          },
+                          "description": "Migration decisions keyed by the old field id"
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "itemId",
+                        "fieldMigrations"
+                      ]
+                    },
+                    "default": [],
+                    "description": "Field migration decisions, overriding any staged on the draft item"
+                  }
+                },
+                "required": [
+                  "expectedRevision",
+                  "summary"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "number": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "Sequential publication number within the workspace"
+                    },
+                    "summary": {
+                      "type": "string"
+                    },
+                    "author": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "publishedAt": {
+                      "type": "string",
+                      "description": "ISO 8601 timestamp"
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "entity_schema",
+                              "relation_schema",
+                              "document_type",
+                              "enum",
+                              "field_group",
+                              "category"
+                            ],
+                            "type": "string",
+                            "description": "Kind of schema definition a draft item changes"
+                          },
+                          "itemId": {
+                            "type": "string"
+                          },
+                          "op": {
+                            "enum": [
+                              "create",
+                              "update",
+                              "delete"
+                            ],
+                            "type": "string",
+                            "description": "Operation the draft item applies on publish"
+                          },
+                          "name": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Name of the item as published; null for delete"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "itemId",
+                          "op",
+                          "name"
+                        ]
+                      }
+                    },
+                    "migrationDetails": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "entity_schema",
+                              "relation_schema",
+                              "document_type",
+                              "enum",
+                              "field_group",
+                              "category"
+                            ],
+                            "type": "string",
+                            "description": "Kind of schema definition a draft item changes"
+                          },
+                          "itemId": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "recordCount": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "fieldMigrations": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "propertyNames": {
+                                  "type": "string"
+                                },
+                                "additionalProperties": {
+                                  "type": "object",
+                                  "properties": {
+                                    "action": {
+                                      "enum": [
+                                        "rename",
+                                        "remove",
+                                        "archive"
+                                      ],
+                                      "type": "string",
+                                      "description": "Migration action for this field"
+                                    },
+                                    "renameTo": {
+                                      "type": "string",
+                                      "description": "New field id when action is \"rename\""
+                                    }
+                                  },
+                                  "required": [
+                                    "action"
+                                  ],
+                                  "description": "How to migrate a changed/removed field"
+                                },
+                                "description": "Migration decisions keyed by the old field id"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "changes": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "fieldId": {
+                                  "type": "string"
+                                },
+                                "fieldName": {
+                                  "type": "string"
+                                },
+                                "kind": {
+                                  "enum": [
+                                    "removed",
+                                    "renamed",
+                                    "type-changed",
+                                    "newly-required"
+                                  ],
+                                  "type": "string"
+                                },
+                                "renamedToId": {
+                                  "type": "string"
+                                },
+                                "recordCount": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Records with a value in the field"
+                                },
+                                "decision": {
+                                  "enum": [
+                                    "rename",
+                                    "remove",
+                                    "archive"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "fieldId",
+                                "fieldName",
+                                "kind",
+                                "recordCount"
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "itemId",
+                          "name",
+                          "recordCount",
+                          "fieldMigrations",
+                          "changes"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "number",
+                    "summary",
+                    "author",
+                    "publishedAt",
+                    "items",
+                    "migrationDetails"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/schema-draft/from-version": {
+      "post": {
+        "operationId": "schemaDraft.fromVersion",
+        "summary": "Stage a rollback to a previous published version",
+        "description": "Stages an update (or create, when the item no longer exists) that restores the item to a previous version. Data migrations are not reversed.",
+        "tags": [
+          "Schema Draft",
+          "Schema Draft"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "expectedRevision": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                    "description": "Draft revision the caller last saw; 0 when no draft exists. Mismatch returns 409."
+                  },
+                  "kind": {
+                    "enum": [
+                      "entity_schema",
+                      "relation_schema",
+                      "document_type",
+                      "enum",
+                      "field_group",
+                      "category"
+                    ],
+                    "type": "string",
+                    "description": "Kind of schema definition a draft item changes"
+                  },
+                  "itemId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "version": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "expectedRevision",
+                  "kind",
+                  "itemId",
+                  "version"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "revision": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "Current draft revision; 0 when no draft exists"
+                    },
+                    "created_by": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "updated_by": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "created_at": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "updated_at": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "entity_schema",
+                              "relation_schema",
+                              "document_type",
+                              "enum",
+                              "field_group",
+                              "category"
+                            ],
+                            "type": "string",
+                            "description": "Kind of schema definition a draft item changes"
+                          },
+                          "item_id": {
+                            "type": "string",
+                            "description": "Id of the live item this entry changes (client-generated for create)"
+                          },
+                          "op": {
+                            "enum": [
+                              "create",
+                              "update",
+                              "delete"
+                            ],
+                            "type": "string",
+                            "description": "Operation the draft item applies on publish"
+                          },
+                          "payload": {
+                            "anyOf": [
+                              {},
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Staged create/update body; null for delete"
+                          },
+                          "base_version": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Live version of the item when it was first staged; null for create"
+                          },
+                          "updated_by": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "updated_at": {
+                            "type": "string",
+                            "description": "ISO 8601 timestamp"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "item_id",
+                          "op",
+                          "base_version",
+                          "updated_by",
+                          "updated_at"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "revision",
+                    "created_by",
+                    "updated_by",
+                    "created_at",
+                    "updated_at",
+                    "items"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/{workspace}/schema-draft/mode": {
       "get": {
         "operationId": "schemaDraft.getMode",
@@ -20964,6 +21523,605 @@
                   "required": [
                     "schemaChangeMode"
                   ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/schema-publications": {
+      "get": {
+        "operationId": "schemaPublication.list",
+        "summary": "List schema publications",
+        "tags": [
+          "Schema Draft",
+          "Schema Draft"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "number": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991,
+                        "description": "Sequential publication number within the workspace"
+                      },
+                      "summary": {
+                        "type": "string"
+                      },
+                      "author": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "publishedAt": {
+                        "type": "string",
+                        "description": "ISO 8601 timestamp"
+                      },
+                      "items": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "enum": [
+                                "entity_schema",
+                                "relation_schema",
+                                "document_type",
+                                "enum",
+                                "field_group",
+                                "category"
+                              ],
+                              "type": "string",
+                              "description": "Kind of schema definition a draft item changes"
+                            },
+                            "itemId": {
+                              "type": "string"
+                            },
+                            "op": {
+                              "enum": [
+                                "create",
+                                "update",
+                                "delete"
+                              ],
+                              "type": "string",
+                              "description": "Operation the draft item applies on publish"
+                            },
+                            "name": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "description": "Name of the item as published; null for delete"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "itemId",
+                            "op",
+                            "name"
+                          ]
+                        }
+                      },
+                      "migrationDetails": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "enum": [
+                                "entity_schema",
+                                "relation_schema",
+                                "document_type",
+                                "enum",
+                                "field_group",
+                                "category"
+                              ],
+                              "type": "string",
+                              "description": "Kind of schema definition a draft item changes"
+                            },
+                            "itemId": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "recordCount": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "fieldMigrations": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "propertyNames": {
+                                    "type": "string"
+                                  },
+                                  "additionalProperties": {
+                                    "type": "object",
+                                    "properties": {
+                                      "action": {
+                                        "enum": [
+                                          "rename",
+                                          "remove",
+                                          "archive"
+                                        ],
+                                        "type": "string",
+                                        "description": "Migration action for this field"
+                                      },
+                                      "renameTo": {
+                                        "type": "string",
+                                        "description": "New field id when action is \"rename\""
+                                      }
+                                    },
+                                    "required": [
+                                      "action"
+                                    ],
+                                    "description": "How to migrate a changed/removed field"
+                                  },
+                                  "description": "Migration decisions keyed by the old field id"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "changes": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "fieldId": {
+                                    "type": "string"
+                                  },
+                                  "fieldName": {
+                                    "type": "string"
+                                  },
+                                  "kind": {
+                                    "enum": [
+                                      "removed",
+                                      "renamed",
+                                      "type-changed",
+                                      "newly-required"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "renamedToId": {
+                                    "type": "string"
+                                  },
+                                  "recordCount": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991,
+                                    "description": "Records with a value in the field"
+                                  },
+                                  "decision": {
+                                    "enum": [
+                                      "rename",
+                                      "remove",
+                                      "archive"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "fieldId",
+                                  "fieldName",
+                                  "kind",
+                                  "recordCount"
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "itemId",
+                            "name",
+                            "recordCount",
+                            "fieldMigrations",
+                            "changes"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "number",
+                      "summary",
+                      "author",
+                      "publishedAt",
+                      "items",
+                      "migrationDetails"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/schema-publications/{number}": {
+      "get": {
+        "operationId": "schemaPublication.get",
+        "summary": "Get a schema publication",
+        "tags": [
+          "Schema Draft",
+          "Schema Draft"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "number": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "Sequential publication number within the workspace"
+                    },
+                    "summary": {
+                      "type": "string"
+                    },
+                    "author": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "publishedAt": {
+                      "type": "string",
+                      "description": "ISO 8601 timestamp"
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "entity_schema",
+                              "relation_schema",
+                              "document_type",
+                              "enum",
+                              "field_group",
+                              "category"
+                            ],
+                            "type": "string",
+                            "description": "Kind of schema definition a draft item changes"
+                          },
+                          "itemId": {
+                            "type": "string"
+                          },
+                          "op": {
+                            "enum": [
+                              "create",
+                              "update",
+                              "delete"
+                            ],
+                            "type": "string",
+                            "description": "Operation the draft item applies on publish"
+                          },
+                          "name": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Name of the item as published; null for delete"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "itemId",
+                          "op",
+                          "name"
+                        ]
+                      }
+                    },
+                    "migrationDetails": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "entity_schema",
+                              "relation_schema",
+                              "document_type",
+                              "enum",
+                              "field_group",
+                              "category"
+                            ],
+                            "type": "string",
+                            "description": "Kind of schema definition a draft item changes"
+                          },
+                          "itemId": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "recordCount": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "fieldMigrations": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "propertyNames": {
+                                  "type": "string"
+                                },
+                                "additionalProperties": {
+                                  "type": "object",
+                                  "properties": {
+                                    "action": {
+                                      "enum": [
+                                        "rename",
+                                        "remove",
+                                        "archive"
+                                      ],
+                                      "type": "string",
+                                      "description": "Migration action for this field"
+                                    },
+                                    "renameTo": {
+                                      "type": "string",
+                                      "description": "New field id when action is \"rename\""
+                                    }
+                                  },
+                                  "required": [
+                                    "action"
+                                  ],
+                                  "description": "How to migrate a changed/removed field"
+                                },
+                                "description": "Migration decisions keyed by the old field id"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "changes": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "fieldId": {
+                                  "type": "string"
+                                },
+                                "fieldName": {
+                                  "type": "string"
+                                },
+                                "kind": {
+                                  "enum": [
+                                    "removed",
+                                    "renamed",
+                                    "type-changed",
+                                    "newly-required"
+                                  ],
+                                  "type": "string"
+                                },
+                                "renamedToId": {
+                                  "type": "string"
+                                },
+                                "recordCount": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Records with a value in the field"
+                                },
+                                "decision": {
+                                  "enum": [
+                                    "rename",
+                                    "remove",
+                                    "archive"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "fieldId",
+                                "fieldName",
+                                "kind",
+                                "recordCount"
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "itemId",
+                          "name",
+                          "recordCount",
+                          "fieldMigrations",
+                          "changes"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "number",
+                    "summary",
+                    "author",
+                    "publishedAt",
+                    "items",
+                    "migrationDetails"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/schema-versions/{kind}/{itemId}": {
+      "get": {
+        "operationId": "schemaSnapshotVersion.list",
+        "summary": "List published versions of an enum, field group or category",
+        "tags": [
+          "Schema Draft",
+          "Schema Draft"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "enum": [
+                "enum",
+                "field_group",
+                "category"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "version": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      "snapshot": {
+                        "description": "The item as it was at this version"
+                      },
+                      "changeSummary": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "publicationId": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "createdBy": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "createdAt": {
+                        "type": "string",
+                        "description": "ISO 8601 timestamp"
+                      }
+                    },
+                    "required": [
+                      "version",
+                      "changeSummary",
+                      "publicationId",
+                      "createdBy",
+                      "createdAt"
+                    ]
+                  }
                 }
               }
             }
@@ -157455,7 +158613,8 @@
                           "relation_schema",
                           "relation",
                           "automation_note",
-                          "schema_draft"
+                          "schema_draft",
+                          "schema_publication"
                         ],
                         "type": "string",
                         "description": "Type of entity affected"
@@ -193838,6 +194997,17 @@
                         },
                         "additionalProperties": {},
                         "description": "Summary of what changed relative to the previous version"
+                      },
+                      "publicationId": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Schema publication that produced this version, if any"
                       },
                       "createdBy": {
                         "anyOf": [

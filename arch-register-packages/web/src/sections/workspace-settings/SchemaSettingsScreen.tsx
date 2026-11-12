@@ -8,6 +8,8 @@ import { TypeBadge } from '../../components/TypeBadge';
 import { EnumEditorScreen } from './EnumEditorScreen';
 import { FieldGroupEditorScreen } from './FieldGroupEditorScreen';
 import { RelationSchemaSettingsScreen } from './RelationSchemaSettingsScreen';
+import { TbHistory } from 'react-icons/tb';
+import { VersionHistoryDialog } from './sub-sections/VersionHistoryDialog';
 import { SchemaVersionHistorySubSection } from './sub-sections/SchemaVersionHistorySubSection';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { resolveSchemaColor } from '../../lib/schemaPresentation';
@@ -123,6 +125,13 @@ export const SchemaSettingsScreen = () => {
                 deleteLabel="Delete type"
                 draftItem={{ kind: 'entity_schema', id: selected.id }}
                 onDelete={() => editor.setConfirmDelete(true)}
+                extraItems={[
+                  {
+                    label: 'Version history',
+                    icon: <TbHistory size={14} />,
+                    onClick: () => editor.setShowHistory(true)
+                  }
+                ]}
               />
             ) : undefined
           }
@@ -147,16 +156,6 @@ export const SchemaSettingsScreen = () => {
           description={
             selected ? `${selected.entity_count} entities · version ${selected.version}` : undefined
           }
-          showHistory={editor.showHistory}
-          onShowHistoryChange={selected ? editor.setShowHistory : undefined}
-          history={
-            editor.showHistory ? (
-              <SchemaVersionHistorySubSection
-                versions={schemaVersions}
-                isLoading={schemaVersionsLoading}
-              />
-            ) : null
-          }
           editor={(selected || isNew) && draft ? <SchemaEditorForm key={selectedSchemaId} /> : null}
           emptyIcon={<TbCode size={22} />}
           emptyTitle="No type selected"
@@ -172,7 +171,21 @@ export const SchemaSettingsScreen = () => {
               </Button>
             ) : null
           }
-          dialogs={<SchemaEditorDialogs />}
+          dialogs={
+            <>
+              <SchemaEditorDialogs />
+              <VersionHistoryDialog
+                open={editor.showHistory && Boolean(selected)}
+                onClose={() => editor.setShowHistory(false)}
+              >
+                <SchemaVersionHistorySubSection
+                  versions={schemaVersions}
+                  isLoading={schemaVersionsLoading}
+                  rollback={selected ? { kind: 'entity_schema', itemId: selected.id } : undefined}
+                />
+              </VersionHistoryDialog>
+            </>
+          }
         />
       </EntityDrawerDraftProvider>
     </SchemaEditorProvider>

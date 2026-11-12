@@ -5,6 +5,7 @@ import type { AuthenticatedEvent } from '../../middleware/auth';
 import { requireWorkspaceCapability } from '../auth/authorization';
 import { runAuthorizedOperation } from '../operation';
 import { httpAssert } from '../../utils/httpAssert';
+import { recordSnapshotVersion } from '../schemaDraft/snapshotVersions';
 import type { CategoryDbResult } from './db/catalogDatabase';
 import type { Category } from '@arch-register/api-types/categoryContract';
 import type { CategoryLookup } from './schemaHelpers';
@@ -25,6 +26,83 @@ const toApiCategory = (category: CategoryDbResult): Category => ({
   createdAt: category.created_at.toISOString(),
   updatedAt: category.updated_at.toISOString()
 });
+
+type CategoryApplyContext = {
+  userId: string;
+  /** Set when applied as part of a schema draft publication. */
+  publicationId?: string | null;
+};
+
+const recordCategoryVersion = (
+  db: DatabaseAdapter,
+  ws: string,
+  row: CategoryDbResult,
+  ctx: CategoryApplyContext,
+  baseline?: CategoryDbResult
+) => recordSnapshotVersion(db, 'category', ws, row, ctx, baseline);
+
+/**
+ * Authorization-free category writes. They are shared by the direct operations below and by
+ * schema draft publish, which calls them with its transaction handle.
+ */
+export const applyCreateCategory = async (
+  db: DatabaseAdapter,
+  ws: string,
+  input: { id: string; name: string },
+  ctx: CategoryApplyContext
+): Promise<CategoryDbResult> => {
+  const normalizedName = input.name.trim();
+  httpAssert.true(normalizedName, { status: 400, message: 'Category name is required' });
+  const existing = await db.catalog.getCategoryByName(ws, normalizedName);
+  httpAssert.true(!existing, {
+    status: 409,
+    message: 'A category with this name already exists'
+  });
+  const now = new Date();
+  const row = await db.catalog.createCategory({
+    id: input.id,
+    workspace: ws,
+    name: normalizedName,
+    created_at: now,
+    updated_at: now
+  });
+  await recordCategoryVersion(db, ws, row, ctx);
+  return row;
+};
+
+export const applyUpdateCategory = async (
+  db: DatabaseAdapter,
+  ws: string,
+  id: string,
+  input: { name: string },
+  ctx: CategoryApplyContext
+): Promise<CategoryDbResult> => {
+  const normalizedName = input.name.trim();
+  httpAssert.true(normalizedName, { status: 400, message: 'Category name is required' });
+  const existing = await db.catalog.getCategoryByName(ws, normalizedName);
+  httpAssert.true(!existing || existing.id === id, {
+    status: 409,
+    message: 'A category with this name already exists'
+  });
+  const before = await db.catalog.getCategory(ws, id);
+  const updated = await db.catalog.updateCategory(ws, id, {
+    name: normalizedName,
+    updated_at: new Date()
+  });
+  httpAssert.present(updated, { status: 404, message: 'Category not found' });
+  await recordCategoryVersion(db, ws, updated, ctx, before ?? undefined);
+  return updated;
+};
+
+export const applyDeleteCategory = async (db: DatabaseAdapter, ws: string, id: string) => {
+  const usageCount = await db.catalog.countCategoryUsage(ws, id);
+  httpAssert.true(usageCount === 0, {
+    status: 409,
+    message: 'Category is not empty and cannot be deleted'
+  });
+  const deleted = await db.catalog.deleteCategory(ws, id);
+  httpAssert.present(deleted, { status: 404, message: 'Category not found' });
+};
 
 export const listCategories = async (
   db: DatabaseAdapter,
@@ -56,22 +134,9 @@ export const createCategory = async (
     operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'schema.edit');
       await assertDirectSchemaChangeMode(db, ws);
-      const normalizedName = name.trim();
-      httpAssert.true(normalizedName, { status: 400, message: 'Category name is required' });
-      const existing = await db.catalog.getCategoryByName(ws, normalizedName);
-      httpAssert.true(!existing, {
-        status: 409,
-        message: 'A category with this name already exists'
-      });
-      const now = new Date();
-      const category = await db.catalog.createCategory({
-        id: randomUUID(),
-        workspace: ws,
-        name: normalizedName,
-        created_at: now,
-        updated_at: now
-      });
-      return toApiCategory(category);
+      return toApiCategory(
+        await applyCreateCategory(db, ws, { id: randomUUID(), name }, { userId: authCtx.userId })
+      );
     }
   });
 };
@@ -90,19 +155,9 @@ export const updateCategory = async (
     operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'schema.edit');
       await assertDirectSchemaChangeMode(db, ws);
-      const normalizedName = name.trim();
-      httpAssert.true(normalizedName, { status: 400, message: 'Category name is required' });
-      const existing = await db.catalog.getCategoryByName(ws, normalizedName);
-      httpAssert.true(!existing || existing.id === id, {
-        status: 409,
-        message: 'A category with this name already exists'
-      });
-      const updated = await db.catalog.updateCategory(ws, id, {
-        name: normalizedName,
-        updated_at: new Date()
-      });
-      httpAssert.present(updated, { status: 404, message: 'Category not found' });
-      return toApiCategory(updated);
+      return toApiCategory(
+        await applyUpdateCategory(db, ws, id, { name }, { userId: authCtx.userId })
+      );
     }
   });
 };
@@ -136,13 +191,7 @@ export const deleteCategory = async (
     operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'schema.edit');
       await assertDirectSchemaChangeMode(db, ws);
-      const usageCount = await db.catalog.countCategoryUsage(ws, id);
-      httpAssert.true(usageCount === 0, {
-        status: 409,
-        message: 'Category is not empty and cannot be deleted'
-      });
-      const deleted = await db.catalog.deleteCategory(ws, id);
-      httpAssert.present(deleted, { status: 404, message: 'Category not found' });
+      await applyDeleteCategory(db, ws, id);
       return { success: true, message: 'Category deleted' };
     }
   });

@@ -1,4 +1,7 @@
+import { useState } from 'react';
+import { TbHistory } from 'react-icons/tb';
 import { DraftPill } from './DraftPill';
+import { SnapshotVersionHistoryDialog } from './sub-sections/SnapshotVersionHistoryDialog';
 import { useCallback } from 'react';
 import { getRouteApi } from '@tanstack/react-router';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
@@ -45,6 +48,7 @@ export const FieldGroupEditorScreen = () => {
 
   const draft = useFieldGroupDraft({ workspaceSlug, selected, isNew, onSelect: selectGroup });
   const editing = Boolean(selected || isNew);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   return (
     <Page>
@@ -79,6 +83,13 @@ export const FieldGroupEditorScreen = () => {
           canEdit && selected ? (
             <EditorActionsMenu
               deleteLabel="Delete fieldgroup"
+              extraItems={[
+                {
+                  label: 'Version history',
+                  icon: <TbHistory size={14} />,
+                  onClick: () => setHistoryOpen(true)
+                }
+              ]}
               draftItem={{ kind: 'field_group', id: selected.id }}
               onDelete={() => void draft.remove()}
             />
@@ -146,6 +157,14 @@ export const FieldGroupEditorScreen = () => {
         </Panel>
       ) : (
         <div className={styles.fieldsEmpty}>Select a fieldgroup or create a new one.</div>
+      )}
+      {selected && (
+        <SnapshotVersionHistoryDialog
+          open={historyOpen}
+          kind="field_group"
+          itemId={selected.id}
+          onClose={() => setHistoryOpen(false)}
+        />
       )}
     </Page>
   );

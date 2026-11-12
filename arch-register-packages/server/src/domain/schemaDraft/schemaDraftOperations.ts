@@ -57,7 +57,7 @@ const PAYLOAD_SCHEMAS: Record<SchemaDraftKind, { create: z.ZodType; update: z.Zo
  * Returns the live row's version token, or `null` when the item does not exist. Kinds without a
  * version counter use their updated_at timestamp, which publish re-checks the same way.
  */
-const getLiveVersion = async (
+export const getLiveVersion = async (
   db: DatabaseAdapter,
   ws: string,
   kind: SchemaDraftKind,
@@ -137,6 +137,74 @@ export const getSchemaDraft = async (
     }
   });
 
+/** Validates and stages a draft item. Callers are responsible for authorization. */
+export const stageSchemaDraftItemInternal = async (
+  db: DatabaseAdapter,
+  ws: string,
+  userId: string,
+  kind: SchemaDraftKind,
+  itemId: string,
+  body: { expectedRevision: number; op: SchemaDraftOp; payload?: unknown }
+): Promise<SchemaDraft> => {
+  let payload: unknown | null = null;
+  if (body.op !== 'delete') {
+    const parsed = PAYLOAD_SCHEMAS[kind][body.op].safeParse(body.payload);
+    httpAssert.true(parsed.success, {
+      status: 400,
+      message: `Invalid ${kind} payload: ${parsed.success ? '' : parsed.error.message}`
+    });
+    payload = parsed.success ? parsed.data : null;
+  }
+
+  const liveVersion = await getLiveVersion(db, ws, kind, itemId);
+  if (body.op === 'create') {
+    httpAssert.true(liveVersion === null, {
+      status: 409,
+      message: `A ${kind} with id '${itemId}' already exists`
+    });
+  } else {
+    httpAssert.true(liveVersion !== null, {
+      status: 404,
+      message: `${kind} '${itemId}' not found`
+    });
+  }
+
+  // The base version is fixed when an item is first staged, so publish can detect live
+  // changes made after the draft diverged.
+  const existing = (await db.schemaDraft.listItems(ws)).find(
+    i => i.kind === kind && i.item_id === itemId
+  );
+  const baseVersion = body.op === 'create' ? null : (existing?.base_version ?? liveVersion);
+
+  const result = await db.core.transaction(async tx => {
+    const draft = await tx.schemaDraft.stageItem(
+      {
+        workspace: ws,
+        kind,
+        item_id: itemId,
+        op: body.op,
+        payload,
+        base_version: baseVersion,
+        updated_by: userId ?? null
+      },
+      body.expectedRevision
+    );
+    httpAssert.present(draft, { status: 409, message: REVISION_CONFLICT });
+    await logAudit(tx, {
+      userId,
+      workspace: ws,
+      operation: 'update',
+      entityType: 'schema_draft',
+      entityId: ws,
+      entityName: 'Schema draft',
+      changes: {},
+      metadata: { action: 'stage', kind, itemId, op: body.op, revision: draft.revision }
+    });
+    return loadDraft(tx, ws);
+  });
+  return result;
+};
+
 export const stageSchemaDraftItem = async (
   db: DatabaseAdapter,
   workspace: string,
@@ -153,63 +221,7 @@ export const stageSchemaDraftItem = async (
     operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'schema.edit');
 
-      let payload: unknown | null = null;
-      if (body.op !== 'delete') {
-        const parsed = PAYLOAD_SCHEMAS[kind][body.op].safeParse(body.payload);
-        httpAssert.true(parsed.success, {
-          status: 400,
-          message: `Invalid ${kind} payload: ${parsed.success ? '' : parsed.error.message}`
-        });
-        payload = parsed.success ? parsed.data : null;
-      }
-
-      const liveVersion = await getLiveVersion(db, ws, kind, itemId);
-      if (body.op === 'create') {
-        httpAssert.true(liveVersion === null, {
-          status: 409,
-          message: `A ${kind} with id '${itemId}' already exists`
-        });
-      } else {
-        httpAssert.true(liveVersion !== null, {
-          status: 404,
-          message: `${kind} '${itemId}' not found`
-        });
-      }
-
-      // The base version is fixed when an item is first staged, so publish can detect live
-      // changes made after the draft diverged.
-      const existing = (await db.schemaDraft.listItems(ws)).find(
-        i => i.kind === kind && i.item_id === itemId
-      );
-      const baseVersion = body.op === 'create' ? null : (existing?.base_version ?? liveVersion);
-
-      const result = await db.core.transaction(async tx => {
-        const draft = await tx.schemaDraft.stageItem(
-          {
-            workspace: ws,
-            kind,
-            item_id: itemId,
-            op: body.op,
-            payload,
-            base_version: baseVersion,
-            updated_by: authCtx.userId ?? null
-          },
-          body.expectedRevision
-        );
-        httpAssert.present(draft, { status: 409, message: REVISION_CONFLICT });
-        await logAudit(tx, {
-          userId: authCtx.userId,
-          workspace: ws,
-          operation: 'update',
-          entityType: 'schema_draft',
-          entityId: ws,
-          entityName: 'Schema draft',
-          changes: {},
-          metadata: { action: 'stage', kind, itemId, op: body.op, revision: draft.revision }
-        });
-        return loadDraft(tx, ws);
-      });
-      return result;
+      return stageSchemaDraftItemInternal(db, ws, authCtx.userId, kind, itemId, body);
     }
   });
 
@@ -339,6 +351,49 @@ export const setSchemaChangeMode = async (
   });
 
 /**
+ * Shared by review and publish: builds the draft catalog and derives migrations and findings from
+ * it. Read-only.
+ */
+export const analyzeSchemaDraft = async (
+  db: DatabaseAdapter,
+  ws: string,
+  items: SchemaDraftItemDbResult[]
+) => {
+  const catalog = await buildDraftCatalog(db, ws, items);
+
+  const payloads = new Map(
+    items.map(item => [
+      `${item.kind}:${item.item_id}`,
+      (item.payload ?? {}) as { fieldMigrations?: never }
+    ])
+  );
+  const migrations = await buildMigrationReport(
+    catalog,
+    payloads,
+    createMigrationUsageProvider(db, ws)
+  );
+
+  // Workspace views plus every project's own views.
+  const projects = await db.project.projects.listProjects(ws);
+  const viewLists = await Promise.all([
+    db.view.listSavedViews(ws, { includeWorkspace: true }),
+    ...projects.map(project => db.view.listSavedViews(ws, { projectId: project.id }))
+  ]);
+  const views = [...new Map(viewLists.flat().map(view => [view.id, view])).values()];
+  const queryConsumers: QueryConsumer[] = views.map(view => ({
+    type: 'saved_view',
+    id: view.id,
+    name: view.name,
+    query: view.filters
+  }));
+  const findings = [
+    ...analyzeDraftDependencies(catalog, { queryConsumers }),
+    ...(await analyzeDraftIntegrations(db, ws, catalog))
+  ];
+  return { catalog, migrations, findings };
+};
+
+/**
  * Computes the impact of the draft against the live catalog and data. Strictly read-only.
  */
 export const reviewSchemaDraft = async (
@@ -357,37 +412,7 @@ export const reviewSchemaDraft = async (
         db.schemaDraft.getDraft(ws),
         db.schemaDraft.listItems(ws)
       ]);
-      const catalog = await buildDraftCatalog(db, ws, items);
-
-      const payloads = new Map(
-        items.map(item => [
-          `${item.kind}:${item.item_id}`,
-          (item.payload ?? {}) as { fieldMigrations?: never }
-        ])
-      );
-      const migrations = await buildMigrationReport(
-        catalog,
-        payloads,
-        createMigrationUsageProvider(db, ws)
-      );
-
-      // Workspace views plus every project's own views.
-      const projects = await db.project.projects.listProjects(ws);
-      const viewLists = await Promise.all([
-        db.view.listSavedViews(ws, { includeWorkspace: true }),
-        ...projects.map(project => db.view.listSavedViews(ws, { projectId: project.id }))
-      ]);
-      const views = [...new Map(viewLists.flat().map(view => [view.id, view])).values()];
-      const queryConsumers: QueryConsumer[] = views.map(view => ({
-        type: 'saved_view',
-        id: view.id,
-        name: view.name,
-        query: view.filters
-      }));
-      const findings = [
-        ...analyzeDraftDependencies(catalog, { queryConsumers }),
-        ...(await analyzeDraftIntegrations(db, ws, catalog))
-      ];
+      const { catalog, migrations, findings } = await analyzeSchemaDraft(db, ws, items);
 
       const revision = draft?.revision ?? 0;
       const run = await enqueueOneOffJobRun(db, {

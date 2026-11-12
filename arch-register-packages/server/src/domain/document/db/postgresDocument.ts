@@ -55,6 +55,7 @@ const typeVersionMapper = (row: DatabaseRow): DocumentTypeVersionDbResult => ({
     {},
     'document_type_version.change_summary'
   ),
+  publication_id: row['publication_id'] == null ? null : String(row['publication_id']),
   created_by: row['created_by'] == null ? null : String(row['created_by']),
   created_at: databaseDate(row['created_at'])
 });
@@ -231,9 +232,9 @@ export class PostgresDocumentDatabase extends PostgresDatabaseBase implements Do
   async createDocumentTypeVersion(input: DocumentTypeVersionDbCreate) {
     const [row] = (await this.sql`
       INSERT INTO document_type_version
-        (id, workspace, document_type_id, version, name, description, fields, ai_actions, color, icon, change_summary, created_by, created_at)
+        (id, workspace, document_type_id, version, name, description, fields, ai_actions, color, icon, change_summary, publication_id, created_by, created_at)
       VALUES
-        (${input.id}, ${input.workspace}, ${input.document_type_id}, ${input.version}, ${input.name}, ${input.description}, ${this.json(input.fields)}, ${this.json(input.aiActions ?? [])}, ${input.color}, ${input.icon}, ${this.json(input.change_summary)}, ${input.created_by}, ${input.created_at})
+        (${input.id}, ${input.workspace}, ${input.document_type_id}, ${input.version}, ${input.name}, ${input.description}, ${this.json(input.fields)}, ${this.json(input.aiActions ?? [])}, ${input.color}, ${input.icon}, ${this.json(input.change_summary)}, ${input.publication_id ?? null}, ${input.created_by}, ${input.created_at})
       RETURNING *
     `) as DatabaseRow[];
     return typeVersionMapper(row!);

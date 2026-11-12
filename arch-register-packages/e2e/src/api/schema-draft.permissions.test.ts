@@ -29,4 +29,23 @@ test.describe('schema draft permissions', () => {
       orpc.schemaDraft.setMode({ params, body: { schemaChangeMode: 'draft' } })
     ).rejects.toMatchObject({ code: 'FORBIDDEN' });
   });
+
+  test('viewer cannot publish or stage a rollback but can read publications', async ({
+    personas
+  }) => {
+    const { orpc } = personas.workspaceViewer;
+    await expect(
+      orpc.schemaDraft.publish({
+        params,
+        body: { expectedRevision: 0, summary: 'x', migrationDecisions: [] }
+      })
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(
+      orpc.schemaDraft.fromVersion({
+        params,
+        body: { expectedRevision: 0, kind: 'enum', itemId: randomUUID(), version: 1 }
+      })
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    expect(await orpc.schemaPublication.list({ params })).toEqual(expect.any(Array));
+  });
 });

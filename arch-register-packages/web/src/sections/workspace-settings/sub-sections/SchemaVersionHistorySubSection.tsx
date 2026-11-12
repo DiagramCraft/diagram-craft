@@ -1,72 +1,55 @@
-import { formatRelativeTime } from '../../../utils/dateFormat';
-import { EmptyState } from '../../../components/EmptyState';
-import { LoadingState } from '../../../components/LoadingState';
-import { TbHistory } from 'react-icons/tb';
+import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
+import { useSchemaPublications } from '../../../hooks/useSchemaDraft';
+import { summarizeFieldChanges } from './fieldChangeSummary';
+import { RollbackButton, type RollbackTarget } from './RollbackButton';
+import { VersionHistoryList } from './VersionHistoryList';
 
 type VersionEntryLike = {
   version: number;
   createdAt: string;
   changeSummary: Record<string, unknown>;
-};
-
-const summarizeChange = (changeSummary: Record<string, unknown>): string => {
-  const parts: string[] = [];
-  const added = changeSummary.added as string[] | undefined;
-  const removed = changeSummary.removed as string[] | undefined;
-  const renamed = changeSummary.renamed as Array<{ from: string; to: string }> | undefined;
-  const archived = changeSummary.archived as string[] | undefined;
-
-  if (added?.length) parts.push(`Added ${added.join(', ')}`);
-  if (removed?.length) parts.push(`Removed ${removed.join(', ')}`);
-  if (renamed?.length) {
-    parts.push(`Renamed ${renamed.map(r => `${r.from} → ${r.to}`).join(', ')}`);
-  }
-  if (archived?.length) parts.push(`Archived ${archived.join(', ')}`);
-
-  return parts.length > 0 ? parts.join(' · ') : 'No field changes';
+  publicationId?: string | null;
 };
 
 export const SchemaVersionHistorySubSection = ({
   versions,
-  isLoading
+  isLoading,
+  rollback
 }: {
   versions: VersionEntryLike[] | undefined;
   isLoading: boolean;
+  /** When set, each version offers staging a rollback draft for this item. */
+  rollback?: RollbackTarget;
 }) => {
-  if (isLoading) return <LoadingState text="Loading version history..." />;
-
-  if (!versions || versions.length === 0) {
-    return (
-      <EmptyState
-        icon={<TbHistory size={22} />}
-        title="No version history yet"
-        subtitle="Changes to this schema will show up here."
-      />
-    );
-  }
+  const { workspaceSlug } = useWorkspaceContext();
+  const { data: publications } = useSchemaPublications(workspaceSlug);
+  const latestVersion = Math.max(0, ...(versions ?? []).map(v => v.version));
+  const publicationsById = new Map((publications ?? []).map(p => [p.id, p]));
 
   return (
-    <div style={{ display: 'grid', gap: 12 }}>
-      {versions.map(version => (
-        <div
-          key={version.version}
-          style={{
-            display: 'grid',
-            gap: 4,
-            padding: '12px 16px',
-            border: '1px solid var(--cmp-border)',
-            borderRadius: 6
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-            <span style={{ fontWeight: 600 }}>Version {version.version}</span>
-            <span className="dim">{formatRelativeTime(version.createdAt)}</span>
-          </div>
-          <div className="dim" style={{ fontSize: 12 }}>
-            {summarizeChange(version.changeSummary)}
-          </div>
-        </div>
-      ))}
-    </div>
+    <VersionHistoryList
+      isLoading={isLoading}
+      emptySubtitle="Changes to this schema will show up here."
+      entries={versions?.map(version => {
+        const publication = version.publicationId
+          ? publicationsById.get(version.publicationId)
+          : undefined;
+        return {
+          version: version.version,
+          createdAt: version.createdAt,
+          lines: [
+            ...(publication ? [publication.summary] : []),
+            summarizeFieldChanges(version.changeSummary)
+          ],
+          action: rollback ? (
+            <RollbackButton
+              target={rollback}
+              version={version.version}
+              isLatest={version.version === latestVersion}
+            />
+          ) : undefined
+        };
+      })}
+    />
   );
 };

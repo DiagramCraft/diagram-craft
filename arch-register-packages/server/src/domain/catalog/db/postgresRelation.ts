@@ -204,9 +204,9 @@ export class PostgresRelationDatabase extends PostgresDatabaseBase implements Re
   async createRelationSchemaVersion(input: RelationSchemaVersionDbCreate) {
     const [row] = (await this.sql`
       INSERT INTO relation_schema_version
-        (id, workspace, schema_id, version, name, category, description, in_schema_ids, out_schema_ids, in_label, out_label, fields, groups, validation_rules, color, icon, unique_endpoint_pair, change_summary, created_by, created_at)
+        (id, workspace, schema_id, version, name, category, description, in_schema_ids, out_schema_ids, in_label, out_label, fields, groups, validation_rules, color, icon, unique_endpoint_pair, change_summary, publication_id, created_by, created_at)
       VALUES
-        (${input.id}, ${input.workspace}, ${input.schema_id}, ${input.version}, ${input.name}, ${input.category ?? null}, ${input.description}, ${this.json(input.in_schema_ids)}, ${this.json(input.out_schema_ids)}, ${input.in_label ?? null}, ${input.out_label ?? null}, ${this.json(input.fields)}, ${this.json(input.groups)}, ${this.json(input.validation_rules ?? [])}, ${input.color}, ${input.icon}, ${input.unique_endpoint_pair ?? false}, ${this.json(input.change_summary)}, ${input.created_by}, ${input.created_at})
+        (${input.id}, ${input.workspace}, ${input.schema_id}, ${input.version}, ${input.name}, ${input.category ?? null}, ${input.description}, ${this.json(input.in_schema_ids)}, ${this.json(input.out_schema_ids)}, ${input.in_label ?? null}, ${input.out_label ?? null}, ${this.json(input.fields)}, ${this.json(input.groups)}, ${this.json(input.validation_rules ?? [])}, ${input.color}, ${input.icon}, ${input.unique_endpoint_pair ?? false}, ${this.json(input.change_summary)}, ${input.publication_id ?? null}, ${input.created_by}, ${input.created_at})
       RETURNING *
     `) as DatabaseRow[];
     return relationMappers.relationSchemaVersion(row!);

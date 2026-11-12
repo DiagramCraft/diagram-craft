@@ -126,6 +126,316 @@ export const getWorkspaceRelationSchema = async (
   });
 };
 
+type RelationSchemaApplyContext = {
+  userId: string;
+  /** Set when applied as part of a schema draft publication. */
+  publicationId?: string | null;
+  /** Publish runs derived recalculation and post-commit scheduling once for the whole publication. */
+  skipRecalc?: boolean;
+  /** Id for a created relation schema; defaults to a generated one. */
+  id?: string;
+};
+
+/**
+ * Authorization-free relation schema writes, shared by the direct operations and schema draft
+ * publish (which passes its transaction handle as `db`).
+ */
+export const applyCreateRelationSchema = async (
+  db: DatabaseAdapter,
+  ws: string,
+  body: CreateRelationSchemaRequest,
+  ctx: RelationSchemaApplyContext
+) => {
+  const timestamp = new Date();
+  const [entitySchemas, sharedGroups] = await Promise.all([
+    db.catalog.listSchemas(ws),
+    db.catalog.listSharedFieldGroups(ws)
+  ]);
+  const knownEntitySchemaIds = new Set(entitySchemas.map(schema => schema.id));
+  const requested = {
+    ...buildCreateRelationSchemaInput(ws, body, knownEntitySchemaIds, timestamp),
+    ...(ctx.id ? { id: ctx.id } : {})
+  };
+  const { relation_approval_policy, ...schemaInput } = requested;
+  const categoryName = await assertCategoryExists(db, ws, schemaInput.category_id);
+  const compiled = compileRelationSchemaWithSharedGroups(schemaInput, sharedGroups);
+  validateDerivedFieldGroupAccess(compiled.fields, compiled.groups ?? [], 'relation');
+  const row = await db.relation.createRelationSchema(compiled);
+  await upsertRelationApprovalPolicy(
+    db,
+    ws,
+    row.id,
+    relation_approval_policy,
+    timestamp,
+    ctx.userId
+  );
+
+  await db.relation.createRelationSchemaVersion({
+    id: randomUUID(),
+    workspace: ws,
+    schema_id: row.id,
+    version: row.version ?? 1,
+    name: row.name,
+    category: categoryName,
+    description: row.description,
+    in_schema_ids: row.in_schema_ids,
+    out_schema_ids: row.out_schema_ids,
+    in_label: row.in_label,
+    out_label: row.out_label,
+    fields: row.fields,
+    groups: row.groups ?? [],
+    validation_rules: row.validation_rules ?? [],
+    color: row.color,
+    icon: row.icon,
+    unique_endpoint_pair: row.unique_endpoint_pair ?? false,
+    change_summary: {
+      ...buildFieldChangeSummary(null, toFieldMigrationFields(row.fields)),
+      ...(row.unique_endpoint_pair
+        ? { constraints: { unique_endpoint_pair: { from: false, to: true } } }
+        : {})
+    },
+    publication_id: ctx.publicationId ?? null,
+    created_by: ctx.userId,
+    created_at: timestamp
+  });
+
+  await logAudit(db, {
+    userId: ctx.userId,
+    workspace: ws,
+    operation: 'create',
+    entityType: 'relation_schema',
+    entityId: row.id,
+    entityName: row.name,
+    changes: { new: extractEntityFields(row) }
+  });
+
+  if (!ctx.skipRecalc) await ensureDerivedRecalculationScheduleExists(db, ws, new Date());
+  return { row, categoryName, relation_approval_policy };
+};
+
+export const applyUpdateRelationSchema = async (
+  db: DatabaseAdapter,
+  ws: string,
+  id: string,
+  body: UpdateRelationSchemaRequest,
+  ctx: RelationSchemaApplyContext
+) => {
+  const oldRow = await db.relation.getRelationSchema(ws, id);
+  httpAssert.present(oldRow, { status: 404, message: `Relation schema '${id}' not found` });
+
+  const [entitySchemas, sharedGroups] = await Promise.all([
+    db.catalog.listSchemas(ws),
+    db.catalog.listSharedFieldGroups(ws)
+  ]);
+  const knownEntitySchemaIds = new Set(entitySchemas.map(schema => schema.id));
+  const next = buildUpdateRelationSchemaInput(body, oldRow, knownEntitySchemaIds, new Date());
+  const categoryName = await assertCategoryExists(db, ws, next.category_id);
+  const compiledNext = compileRelationSchemaWithSharedGroups(
+    { ...oldRow, ...next, shared_field_group_links: next.shared_field_group_links },
+    sharedGroups
+  );
+  const fieldMigrations = body.fieldMigrations;
+
+  const relationCount = await db.relation.countRelationsForSchema(ws, id);
+
+  const finalFields = [...compiledNext.fields];
+  const fieldMigrationPlan = planFieldMigrations(
+    toFieldMigrationFields(oldRow.fields),
+    toFieldMigrationFields(compiledNext.fields),
+    fieldMigrations,
+    {
+      decisionRequiredFieldIds: relationCount > 0 ? undefined : new Set<string>(),
+      applicableFieldIds: relationCount > 0 ? undefined : new Set<string>()
+    }
+  );
+  const dataMigrations = relationCount > 0 ? fieldMigrationPlan.dataMigrations : [];
+
+  if (relationCount > 0) {
+    httpAssert.true(fieldMigrationPlan.hardBlocked.length === 0, {
+      status: 409,
+      message: `Cannot update relation schema: ${fieldMigrationPlan.hardBlocked
+        .map(change => describeHardBlockedChange(change))
+        .join('; ')}`
+    });
+
+    const unresolved = fieldMigrationPlan.unresolved;
+    if (unresolved.length > 0) {
+      const pendingChanges: PendingFieldChange[] = unresolved.map(change => ({
+        fieldId: change.fieldId,
+        fieldName: change.fieldName,
+        kind: change.kind,
+        renamedToId: change.renamedToId,
+        entityCount: 0
+      }));
+      httpAssert.true(false, {
+        status: 409,
+        message: `Cannot update relation schema: field changes require a migration decision (${pendingChanges.map(c => c.fieldName).join(', ')})`,
+        data: { code: 'SCHEMA_MIGRATION_REQUIRED', pendingChanges }
+      });
+    }
+
+    const oldFieldsById = new Map(oldRow.fields.map(field => [field.id, field]));
+    for (const fieldId of fieldMigrationPlan.archiveFieldIds) {
+      const oldField = oldFieldsById.get(fieldId);
+      if (oldField && !finalFields.some(field => field.id === oldField.id)) {
+        finalFields.push({ ...oldField, archived: true });
+      }
+    }
+  }
+
+  validateDerivedFieldGroupAccess(finalFields, compiledNext.groups ?? [], 'relation');
+
+  const row = await db.core.transaction(async tx => {
+    await tx.relation.lockRelationSchemaForConstraintMutation?.(ws, id);
+    for (const migration of dataMigrations) {
+      if (migration.action === 'rename') {
+        await tx.relation.renameRelationDataField(
+          ws,
+          id,
+          migration.oldFieldId,
+          migration.newFieldId
+        );
+      } else {
+        await tx.relation.removeRelationDataField(ws, id, migration.oldFieldId);
+        await tx.governanceCaseConfig.deleteCaseConfigForSubkindOrDescendants(
+          ws,
+          encodeCaseSubkind(id, migration.oldFieldId)
+        );
+      }
+    }
+
+    const updated = await tx.relation.updateRelationSchema(ws, id, {
+      name: next.name,
+      category_id: next.category_id,
+      description: next.description,
+      in_schema_ids: next.in_schema_ids,
+      out_schema_ids: next.out_schema_ids,
+      fields: finalFields,
+      groups: compiledNext.groups,
+      validation_rules: compiledNext.validation_rules ?? [],
+      shared_field_group_links: compiledNext.shared_field_group_links ?? [],
+      color: next.color,
+      icon: next.icon,
+      unique_endpoint_pair: next.unique_endpoint_pair,
+      version: (oldRow.version ?? 1) + 1,
+      updated_at: next.updated_at
+    });
+    httpAssert.present(updated, { status: 404, message: `Relation schema '${id}' not found` });
+    if (next.relation_approval_policy !== undefined) {
+      await upsertRelationApprovalPolicy(
+        tx,
+        ws,
+        id,
+        next.relation_approval_policy,
+        next.updated_at,
+        ctx.userId
+      );
+    }
+
+    if (updated.unique_endpoint_pair) {
+      const duplicates = await listDuplicateRelationEndpointPairs(tx, ws, id);
+      if (duplicates.length > 0) {
+        throwRelationConstraintError(
+          duplicates.map(pair => ({
+            kind: 'endpoint_pair_unique' as const,
+            relation_schema_id: id,
+            in_entity_id: pair.in_entity_id,
+            out_entity_id: pair.out_entity_id,
+            existing_count: pair.relation_count,
+            projected_count: pair.relation_count
+          }))
+        );
+      }
+    }
+    await tx.relation.setRelationEndpointPairKeys?.(ws, id, updated.unique_endpoint_pair === true);
+
+    await tx.relation.createRelationSchemaVersion({
+      id: randomUUID(),
+      workspace: ws,
+      schema_id: id,
+      version: updated.version ?? 1,
+      name: updated.name,
+      category: categoryName,
+      description: updated.description,
+      in_schema_ids: updated.in_schema_ids,
+      out_schema_ids: updated.out_schema_ids,
+      in_label: updated.in_label,
+      out_label: updated.out_label,
+      fields: updated.fields,
+      groups: updated.groups ?? [],
+      validation_rules: updated.validation_rules ?? [],
+      color: updated.color,
+      icon: updated.icon,
+      unique_endpoint_pair: updated.unique_endpoint_pair ?? false,
+      change_summary: relationSchemaChangeSummary(
+        toFieldMigrationFields(oldRow.fields),
+        toFieldMigrationFields(finalFields),
+        oldRow.unique_endpoint_pair,
+        updated.unique_endpoint_pair,
+        fieldMigrations
+      ),
+      publication_id: ctx.publicationId ?? null,
+      created_by: ctx.userId,
+      created_at: next.updated_at
+    });
+
+    return updated;
+  });
+
+  // A derived-field or its dependency may have been added/changed/removed — re-materialize
+  // relation derived values across the workspace, mirroring the entity schema update path.
+  const derivedFieldsTouched =
+    oldRow.fields.some(field => field.type === 'derived') ||
+    row.fields.some(field => field.type === 'derived');
+  if (!ctx.skipRecalc && relationCount > 0 && derivedFieldsTouched) {
+    await recalculateEntityDerivedFields(db, ws);
+  }
+  if (!ctx.skipRecalc) await ensureDerivedRecalculationScheduleExists(db, ws, next.updated_at);
+
+  const changes = computeChanges(extractEntityFields(oldRow), extractEntityFields(row));
+
+  await logAudit(db, {
+    userId: ctx.userId,
+    workspace: ws,
+    operation: 'update',
+    entityType: 'relation_schema',
+    entityId: id,
+    entityName: row.name,
+    changes,
+    metadata: fieldMigrations ? { fieldMigrations } : undefined
+  });
+  return { row, categoryName, relationCount };
+};
+
+export const applyDeleteRelationSchema = async (
+  db: DatabaseAdapter,
+  ws: string,
+  id: string,
+  ctx: RelationSchemaApplyContext
+) => {
+  const schema = await db.relation.getRelationSchema(ws, id);
+  httpAssert.present(schema, { status: 404, message: `Relation schema '${id}' not found` });
+
+  const relationCount = await db.relation.countRelationsForSchema(ws, id);
+  httpAssert.true(relationCount === 0, {
+    status: 409,
+    message: 'Cannot delete relation schema: relation instances still reference it'
+  });
+
+  await db.relation.deleteRelationSchema(ws, id);
+  await db.governanceCaseConfig.deleteCaseConfigForSubkindOrDescendants(ws, id);
+
+  await logAudit(db, {
+    userId: ctx.userId,
+    workspace: ws,
+    operation: 'delete',
+    entityType: 'relation_schema',
+    entityId: id,
+    entityName: schema.name,
+    changes: { old: extractEntityFields(schema) }
+  });
+};
+
 export const createWorkspaceRelationSchema = async (
   db: DatabaseAdapter,
   workspace: string,
@@ -141,66 +451,12 @@ export const createWorkspaceRelationSchema = async (
     operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'schema.edit');
       await assertDirectSchemaChangeMode(db, ws);
-      const timestamp = new Date();
-      const [entitySchemas, sharedGroups] = await Promise.all([
-        db.catalog.listSchemas(ws),
-        db.catalog.listSharedFieldGroups(ws)
-      ]);
-      const knownEntitySchemaIds = new Set(entitySchemas.map(schema => schema.id));
-      const requested = buildCreateRelationSchemaInput(ws, body, knownEntitySchemaIds, timestamp);
-      const { relation_approval_policy, ...schemaInput } = requested;
-      const categoryName = await assertCategoryExists(db, ws, schemaInput.category_id);
-      const compiled = compileRelationSchemaWithSharedGroups(schemaInput, sharedGroups);
-      validateDerivedFieldGroupAccess(compiled.fields, compiled.groups ?? [], 'relation');
-      const row = await db.relation.createRelationSchema(compiled);
-      await upsertRelationApprovalPolicy(
+      const { row, categoryName, relation_approval_policy } = await applyCreateRelationSchema(
         db,
         ws,
-        row.id,
-        relation_approval_policy,
-        timestamp,
-        authCtx.userId
+        body,
+        { userId: authCtx.userId }
       );
-
-      await db.relation.createRelationSchemaVersion({
-        id: randomUUID(),
-        workspace: ws,
-        schema_id: row.id,
-        version: row.version ?? 1,
-        name: row.name,
-        category: categoryName,
-        description: row.description,
-        in_schema_ids: row.in_schema_ids,
-        out_schema_ids: row.out_schema_ids,
-        in_label: row.in_label,
-        out_label: row.out_label,
-        fields: row.fields,
-        groups: row.groups ?? [],
-        validation_rules: row.validation_rules ?? [],
-        color: row.color,
-        icon: row.icon,
-        unique_endpoint_pair: row.unique_endpoint_pair ?? false,
-        change_summary: {
-          ...buildFieldChangeSummary(null, toFieldMigrationFields(row.fields)),
-          ...(row.unique_endpoint_pair
-            ? { constraints: { unique_endpoint_pair: { from: false, to: true } } }
-            : {})
-        },
-        created_by: authCtx.userId,
-        created_at: timestamp
-      });
-
-      await logAudit(db, {
-        userId: authCtx.userId,
-        workspace: ws,
-        operation: 'create',
-        entityType: 'relation_schema',
-        entityId: row.id,
-        entityName: row.name,
-        changes: { new: extractEntityFields(row) }
-      });
-
-      await ensureDerivedRecalculationScheduleExists(db, ws, new Date());
 
       const enums = await db.catalog.listEnums(ws);
       const categories: CategoryLookup =
@@ -226,193 +482,15 @@ export const updateWorkspaceRelationSchema = async (
     operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'schema.edit');
       await assertDirectSchemaChangeMode(db, ws);
-      const oldRow = await db.relation.getRelationSchema(ws, id);
-      httpAssert.present(oldRow, { status: 404, message: `Relation schema '${id}' not found` });
-
-      const [entitySchemas, sharedGroups] = await Promise.all([
-        db.catalog.listSchemas(ws),
-        db.catalog.listSharedFieldGroups(ws)
-      ]);
-      const knownEntitySchemaIds = new Set(entitySchemas.map(schema => schema.id));
-      const next = buildUpdateRelationSchemaInput(body, oldRow, knownEntitySchemaIds, new Date());
-      const categoryName = await assertCategoryExists(db, ws, next.category_id);
-      const compiledNext = compileRelationSchemaWithSharedGroups(
-        { ...oldRow, ...next, shared_field_group_links: next.shared_field_group_links },
-        sharedGroups
-      );
-      const fieldMigrations = body.fieldMigrations;
-
-      const relationCount = await db.relation.countRelationsForSchema(ws, id);
-
-      const finalFields = [...compiledNext.fields];
-      const fieldMigrationPlan = planFieldMigrations(
-        toFieldMigrationFields(oldRow.fields),
-        toFieldMigrationFields(compiledNext.fields),
-        fieldMigrations,
+      const { row, categoryName, relationCount } = await applyUpdateRelationSchema(
+        db,
+        ws,
+        id,
+        body,
         {
-          decisionRequiredFieldIds: relationCount > 0 ? undefined : new Set<string>(),
-          applicableFieldIds: relationCount > 0 ? undefined : new Set<string>()
+          userId: authCtx.userId
         }
       );
-      const dataMigrations = relationCount > 0 ? fieldMigrationPlan.dataMigrations : [];
-
-      if (relationCount > 0) {
-        httpAssert.true(fieldMigrationPlan.hardBlocked.length === 0, {
-          status: 409,
-          message: `Cannot update relation schema: ${fieldMigrationPlan.hardBlocked
-            .map(change => describeHardBlockedChange(change))
-            .join('; ')}`
-        });
-
-        const unresolved = fieldMigrationPlan.unresolved;
-        if (unresolved.length > 0) {
-          const pendingChanges: PendingFieldChange[] = unresolved.map(change => ({
-            fieldId: change.fieldId,
-            fieldName: change.fieldName,
-            kind: change.kind,
-            renamedToId: change.renamedToId,
-            entityCount: 0
-          }));
-          httpAssert.true(false, {
-            status: 409,
-            message: `Cannot update relation schema: field changes require a migration decision (${pendingChanges.map(c => c.fieldName).join(', ')})`,
-            data: { code: 'SCHEMA_MIGRATION_REQUIRED', pendingChanges }
-          });
-        }
-
-        const oldFieldsById = new Map(oldRow.fields.map(field => [field.id, field]));
-        for (const fieldId of fieldMigrationPlan.archiveFieldIds) {
-          const oldField = oldFieldsById.get(fieldId);
-          if (oldField && !finalFields.some(field => field.id === oldField.id)) {
-            finalFields.push({ ...oldField, archived: true });
-          }
-        }
-      }
-
-      validateDerivedFieldGroupAccess(finalFields, compiledNext.groups ?? [], 'relation');
-
-      const row = await db.core.transaction(async tx => {
-        await tx.relation.lockRelationSchemaForConstraintMutation?.(ws, id);
-        for (const migration of dataMigrations) {
-          if (migration.action === 'rename') {
-            await tx.relation.renameRelationDataField(
-              ws,
-              id,
-              migration.oldFieldId,
-              migration.newFieldId
-            );
-          } else {
-            await tx.relation.removeRelationDataField(ws, id, migration.oldFieldId);
-            await tx.governanceCaseConfig.deleteCaseConfigForSubkindOrDescendants(
-              ws,
-              encodeCaseSubkind(id, migration.oldFieldId)
-            );
-          }
-        }
-
-        const updated = await tx.relation.updateRelationSchema(ws, id, {
-          name: next.name,
-          category_id: next.category_id,
-          description: next.description,
-          in_schema_ids: next.in_schema_ids,
-          out_schema_ids: next.out_schema_ids,
-          fields: finalFields,
-          groups: compiledNext.groups,
-          validation_rules: compiledNext.validation_rules ?? [],
-          shared_field_group_links: compiledNext.shared_field_group_links ?? [],
-          color: next.color,
-          icon: next.icon,
-          unique_endpoint_pair: next.unique_endpoint_pair,
-          version: (oldRow.version ?? 1) + 1,
-          updated_at: next.updated_at
-        });
-        httpAssert.present(updated, { status: 404, message: `Relation schema '${id}' not found` });
-        if (next.relation_approval_policy !== undefined) {
-          await upsertRelationApprovalPolicy(
-            tx,
-            ws,
-            id,
-            next.relation_approval_policy,
-            next.updated_at,
-            authCtx.userId
-          );
-        }
-
-        if (updated.unique_endpoint_pair) {
-          const duplicates = await listDuplicateRelationEndpointPairs(tx, ws, id);
-          if (duplicates.length > 0) {
-            throwRelationConstraintError(
-              duplicates.map(pair => ({
-                kind: 'endpoint_pair_unique' as const,
-                relation_schema_id: id,
-                in_entity_id: pair.in_entity_id,
-                out_entity_id: pair.out_entity_id,
-                existing_count: pair.relation_count,
-                projected_count: pair.relation_count
-              }))
-            );
-          }
-        }
-        await tx.relation.setRelationEndpointPairKeys?.(
-          ws,
-          id,
-          updated.unique_endpoint_pair === true
-        );
-
-        await tx.relation.createRelationSchemaVersion({
-          id: randomUUID(),
-          workspace: ws,
-          schema_id: id,
-          version: updated.version ?? 1,
-          name: updated.name,
-          category: categoryName,
-          description: updated.description,
-          in_schema_ids: updated.in_schema_ids,
-          out_schema_ids: updated.out_schema_ids,
-          in_label: updated.in_label,
-          out_label: updated.out_label,
-          fields: updated.fields,
-          groups: updated.groups ?? [],
-          validation_rules: updated.validation_rules ?? [],
-          color: updated.color,
-          icon: updated.icon,
-          unique_endpoint_pair: updated.unique_endpoint_pair ?? false,
-          change_summary: relationSchemaChangeSummary(
-            toFieldMigrationFields(oldRow.fields),
-            toFieldMigrationFields(finalFields),
-            oldRow.unique_endpoint_pair,
-            updated.unique_endpoint_pair,
-            fieldMigrations
-          ),
-          created_by: authCtx.userId,
-          created_at: next.updated_at
-        });
-
-        return updated;
-      });
-
-      // A derived-field or its dependency may have been added/changed/removed — re-materialize
-      // relation derived values across the workspace, mirroring the entity schema update path.
-      const derivedFieldsTouched =
-        oldRow.fields.some(field => field.type === 'derived') ||
-        row.fields.some(field => field.type === 'derived');
-      if (relationCount > 0 && derivedFieldsTouched) {
-        await recalculateEntityDerivedFields(db, ws);
-      }
-      await ensureDerivedRecalculationScheduleExists(db, ws, next.updated_at);
-
-      const changes = computeChanges(extractEntityFields(oldRow), extractEntityFields(row));
-
-      await logAudit(db, {
-        userId: authCtx.userId,
-        workspace: ws,
-        operation: 'update',
-        entityType: 'relation_schema',
-        entityId: id,
-        entityName: row.name,
-        changes,
-        metadata: fieldMigrations ? { fieldMigrations } : undefined
-      });
 
       const enums = await db.catalog.listEnums(ws);
       const categories: CategoryLookup =
@@ -468,27 +546,7 @@ export const deleteWorkspaceRelationSchema = async (
     operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'schema.edit');
       await assertDirectSchemaChangeMode(db, ws);
-      const schema = await db.relation.getRelationSchema(ws, id);
-      httpAssert.present(schema, { status: 404, message: `Relation schema '${id}' not found` });
-
-      const relationCount = await db.relation.countRelationsForSchema(ws, id);
-      httpAssert.true(relationCount === 0, {
-        status: 409,
-        message: 'Cannot delete relation schema: relation instances still reference it'
-      });
-
-      await db.relation.deleteRelationSchema(ws, id);
-      await db.governanceCaseConfig.deleteCaseConfigForSubkindOrDescendants(ws, id);
-
-      await logAudit(db, {
-        userId: authCtx.userId,
-        workspace: ws,
-        operation: 'delete',
-        entityType: 'relation_schema',
-        entityId: id,
-        entityName: schema.name,
-        changes: { old: extractEntityFields(schema) }
-      });
+      await applyDeleteRelationSchema(db, ws, id, { userId: authCtx.userId });
 
       return { success: true, message: `Relation schema '${id}' deleted` };
     }
