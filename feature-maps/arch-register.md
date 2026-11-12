@@ -223,7 +223,12 @@
               the General workspace settings; in draft mode the schema, relation, enum, field group, document type
               and category editors stage their changes instead of saving them, staged items are marked as changed
               in the sidebar and editor and can be reverted to live individually, and the schema settings show
-              the number of pending changes. Reviewing and publishing a draft are not yet available.
+              the number of pending changes. A draft can be reviewed before publishing: the review screen lists
+              each change, the field migrations it needs (with blocked changes and a dialog to make the missing
+              decisions), conflicts with saved views, validation rules, derived fields, templates, relation
+              endpoints and enum or category references, and the existing entities and relations the draft would
+              invalidate, validated in a background job. Reviewing never changes live definitions or data.
+              Publishing a draft is not yet available.
 
             - @id:ar.workspace.configuration.entity-drawers Administrators can configure a schema-scoped,
               read-only entity drawer with ordered, collapsible sections (an optional `stat-grid` layout alongside

@@ -237,7 +237,8 @@ const schemaSettingsSearchSchema = defineSearchParamSchema({
   schema: stringCodec,
   enumId: stringCodec,
   fieldGroupId: stringCodec,
-  relationSchema: stringCodec
+  relationSchema: stringCodec,
+  review: enumCodec(['true'] as const)
 });
 
 export type SchemaSettingsSearchParams = SearchParamsFromSchema<typeof schemaSettingsSearchSchema>;

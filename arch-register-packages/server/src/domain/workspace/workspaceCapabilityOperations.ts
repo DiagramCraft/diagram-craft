@@ -49,6 +49,10 @@ const getTarget = async (
   }
 };
 
+export type CapabilityTargetResolver = (
+  target: WorkspaceCapabilityTarget
+) => Promise<Awaited<ReturnType<typeof getTarget>>>;
+
 const getTargetFields = (target: Awaited<ReturnType<typeof getTarget>>) =>
   target && 'fields' in target
     ? target.fields.map(field => ({
@@ -67,7 +71,9 @@ export const validateWorkspaceCapabilityConfiguration = async (
   db: DatabaseAdapter,
   workspace: string,
   type: string,
-  input: WorkspaceCapabilityConfigurationInput
+  input: WorkspaceCapabilityConfigurationInput,
+  /** Overrides where binding targets are looked up, e.g. to validate against a draft catalog. */
+  resolveTarget: CapabilityTargetResolver = target => getTarget(db, workspace, target)
 ): Promise<WorkspaceCapabilityDiagnostic[]> => {
   const definition = getWorkspaceCapabilityDefinition(type);
   if (!definition) {
@@ -109,7 +115,7 @@ export const validateWorkspaceCapabilityConfiguration = async (
       continue;
     }
 
-    const target = await getTarget(db, workspace, binding.target);
+    const target = await resolveTarget(binding.target);
     if (!target) {
       diagnostics.push({
         code: 'unknown_target',

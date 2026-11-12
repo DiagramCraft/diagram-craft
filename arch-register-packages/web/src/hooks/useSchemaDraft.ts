@@ -66,3 +66,27 @@ export const useUnstageSchemaItem = (workspaceSlug: string) => {
     onError: () => queryClient.invalidateQueries({ queryKey: schemaDraftKeys.draft(workspaceSlug) })
   });
 };
+
+/** Computes the impact of the draft. Read-only; also starts the background record validation. */
+export const useReviewSchemaDraft = (workspaceSlug: string) =>
+  useMutation({
+    mutationFn: () => orpcClient.schemaDraft.review({ params: { workspace: workspaceSlug } })
+  });
+
+/** Polls the background record validation until it finishes. */
+export const useSchemaDraftRecordReview = (workspaceSlug: string, jobRunId: string | undefined) =>
+  useQuery({
+    queryKey: [...schemaDraftKeys.all, 'record-review', workspaceSlug, jobRunId],
+    queryFn: () =>
+      orpcClient.schemaDraft.reviewRecords({
+        params: { workspace: workspaceSlug, jobRunId: jobRunId! }
+      }),
+    enabled: !!jobRunId,
+    // Stop after ~1 minute so a job that never runs (no job server) does not poll forever.
+    refetchInterval: query =>
+      (query.state.data &&
+        ['succeeded', 'failed', 'cancelled'].includes(query.state.data.status)) ||
+      query.state.dataUpdateCount >= 30
+        ? false
+        : 2000
+  });

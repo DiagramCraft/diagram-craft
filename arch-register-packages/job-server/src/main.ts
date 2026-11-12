@@ -34,6 +34,10 @@ import {
   ASSESSMENT_RECURRENCE_JOB_TYPE
 } from '@arch-register/server/domain/project/assessmentRecurrenceJob';
 import {
+  createSchemaDraftReviewJobHandler,
+  SCHEMA_DRAFT_REVIEW_JOB_TYPE
+} from '@arch-register/server/domain/schemaDraft/schemaDraftReviewJob';
+import {
   createEntityCompletenessJobHandler,
   ENTITY_COMPLETENESS_JOB_TYPE,
   ENTITY_COMPLETENESS_SCAN_JOB_TYPE
@@ -122,6 +126,7 @@ const main = async () => {
   const entityCompletenessJobHandler = createEntityCompletenessJobHandler(db);
   handlers.set(ENTITY_COMPLETENESS_JOB_TYPE, entityCompletenessJobHandler);
   handlers.set(ENTITY_COMPLETENESS_SCAN_JOB_TYPE, entityCompletenessJobHandler);
+  handlers.set(SCHEMA_DRAFT_REVIEW_JOB_TYPE, createSchemaDraftReviewJobHandler(db));
   handlers.set(DERIVED_RECALC_SCAN_JOB_TYPE, createDerivedRecalculationJobHandler(db));
   handlers.set(
     NOTIFICATION_DELIVERY_JOB_TYPE,
