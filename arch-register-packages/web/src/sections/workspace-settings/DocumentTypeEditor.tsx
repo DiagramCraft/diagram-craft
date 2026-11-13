@@ -1,7 +1,7 @@
 import { DraftPill } from './DraftPill';
 import { useState } from 'react';
 import { getRouteApi } from '@tanstack/react-router';
-import { TbArchive, TbEye, TbInfoCircle, TbPlus } from 'react-icons/tb';
+import { TbArchive, TbEye, TbHistory, TbInfoCircle, TbPlus } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
@@ -16,6 +16,7 @@ import { Panel } from '../../components/Panel';
 import { Stack } from '../../components/Stack';
 import { ColorPicker } from '../../components/ColorPicker';
 import { FieldMigrationDialog } from '../../dialogs/FieldMigrationDialog';
+import { VersionHistoryDialog } from './sub-sections/VersionHistoryDialog';
 import { DocumentTypeVersionHistorySubSection } from './sub-sections/DocumentTypeVersionHistorySubSection';
 import { ListEditor } from '../../components/ListEditor';
 import { DocumentAiActionsSection } from './DocumentAiActionsSection';
@@ -194,6 +195,11 @@ export const DocumentTypeEditor = ({
                   onDelete={() => draft.setConfirmDelete(true)}
                   extraItems={[
                     {
+                      label: 'Version history',
+                      icon: <TbHistory size={14} />,
+                      onClick: () => draft.setShowHistory(true)
+                    },
+                    {
                       label: selected.archived ? 'Unarchive' : 'Archive',
                       icon: selected.archived ? <TbEye size={14} /> : <TbArchive size={14} />,
                       onClick: () => void draft.toggleArchived()
@@ -204,27 +210,7 @@ export const DocumentTypeEditor = ({
             }
           />
 
-          {selected ? (
-            <Tabs.Root
-              autoHeight
-              value={draft.showHistory ? 'history' : 'edit'}
-              onValueChange={value => draft.setShowHistory(value === 'history')}
-            >
-              <Tabs.List aria-label="Editor views">
-                <Tabs.Trigger value="edit">Edit</Tabs.Trigger>
-                <Tabs.Trigger value="history">Version history</Tabs.Trigger>
-              </Tabs.List>
-              <Tabs.Content value="edit">{editorBody}</Tabs.Content>
-              <Tabs.Content value="history">
-                <DocumentTypeVersionHistorySubSection
-                  workspaceId={workspaceSlug}
-                  documentTypeId={selected.id}
-                />
-              </Tabs.Content>
-            </Tabs.Root>
-          ) : (
-            editorBody
-          )}
+          {editorBody}
         </>
       ) : (
         <EmptyState
@@ -240,6 +226,15 @@ export const DocumentTypeEditor = ({
             </Button>
           }
         />
+      )}
+
+      {selected && (
+        <VersionHistoryDialog open={draft.showHistory} onClose={() => draft.setShowHistory(false)}>
+          <DocumentTypeVersionHistorySubSection
+            workspaceId={workspaceSlug}
+            documentTypeId={selected.id}
+          />
+        </VersionHistoryDialog>
       )}
 
       <DeleteConfirmationDialog

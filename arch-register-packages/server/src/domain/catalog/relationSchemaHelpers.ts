@@ -372,6 +372,7 @@ export const toApiRelationSchemaVersion = (
   icon: row.icon,
   unique_endpoint_pair: row.unique_endpoint_pair ?? false,
   changeSummary: row.change_summary,
+  publicationId: row.publication_id ?? null,
   createdBy: row.created_by,
   createdAt: row.created_at.toISOString()
 });

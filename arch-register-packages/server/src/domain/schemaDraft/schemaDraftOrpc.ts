@@ -14,6 +14,13 @@ import {
   stageSchemaDraftItem,
   unstageSchemaDraftItem
 } from './schemaDraftOperations';
+import {
+  getSchemaPublication,
+  listSchemaPublications,
+  listSnapshotVersions,
+  publishSchemaDraft,
+  stageSchemaDraftFromVersion
+} from './schemaDraftPublish';
 
 type ORPCContext = {
   db: DatabaseAdapter;
@@ -68,6 +75,12 @@ export const workspaceSchemaDraftORPCRouter = draftRouter.router({
         context.event
       )
     ),
+    publish: draftRouter.schemaDraft.publish.handler(({ input, context }) =>
+      publishSchemaDraft(context.db, input.params.workspace, input.body, context.event)
+    ),
+    fromVersion: draftRouter.schemaDraft.fromVersion.handler(({ input, context }) =>
+      stageSchemaDraftFromVersion(context.db, input.params.workspace, input.body, context.event)
+    ),
     getMode: draftRouter.schemaDraft.getMode.handler(({ input, context }) =>
       getSchemaChangeMode(context.db, input.params.workspace, context.event)
     ),
@@ -76,6 +89,25 @@ export const workspaceSchemaDraftORPCRouter = draftRouter.router({
         context.db,
         input.params.workspace,
         input.body.schemaChangeMode,
+        context.event
+      )
+    )
+  },
+  schemaPublication: {
+    list: draftRouter.schemaPublication.list.handler(({ input, context }) =>
+      listSchemaPublications(context.db, input.params.workspace, context.event)
+    ),
+    get: draftRouter.schemaPublication.get.handler(({ input, context }) =>
+      getSchemaPublication(context.db, input.params.workspace, input.params.number, context.event)
+    )
+  },
+  schemaSnapshotVersion: {
+    list: draftRouter.schemaSnapshotVersion.list.handler(({ input, context }) =>
+      listSnapshotVersions(
+        context.db,
+        input.params.workspace,
+        input.params.kind,
+        input.params.itemId,
         context.event
       )
     )

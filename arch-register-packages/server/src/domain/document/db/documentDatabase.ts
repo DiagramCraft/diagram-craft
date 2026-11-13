@@ -44,6 +44,7 @@ export type DocumentTypeVersionDbResult = {
   color: string | null;
   icon: string | null;
   change_summary: Record<string, unknown>;
+  publication_id?: string | null;
   created_by: string | null;
   created_at: Date;
 };

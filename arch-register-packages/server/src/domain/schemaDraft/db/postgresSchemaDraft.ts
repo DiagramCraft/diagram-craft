@@ -1,11 +1,20 @@
 import { randomUUID } from 'node:crypto';
 import type {
   SchemaChangeMode,
+  SchemaPublicationCreateInput,
+  SnapshotVersionCreateInput,
+  SnapshotVersionKind,
   SchemaDraftDatabase,
   SchemaDraftKind,
   SchemaDraftStageInput
 } from './schemaDraftDatabase';
-import { mapSchemaDraftItemRow, mapSchemaDraftRow } from './schemaDraftDatabase';
+import {
+  mapSchemaDraftItemRow,
+  mapSchemaDraftRow,
+  mapSchemaPublicationRow,
+  mapSnapshotVersionRow,
+  SNAPSHOT_VERSION_TABLES
+} from './schemaDraftDatabase';
 import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
 
 export class PostgresSchemaDraftDatabase
@@ -118,5 +127,78 @@ export class PostgresSchemaDraftDatabase
     } catch (error) {
       return normalizePostgresError(error);
     }
+  }
+
+  async createPublication(input: SchemaPublicationCreateInput) {
+    try {
+      const [row] = await this.sql<Record<string, unknown>[]>`
+        INSERT INTO schema_publication (id, workspace, number, summary, author, published_at, migration_details, items)
+        VALUES (
+          ${randomUUID()}, ${input.workspace},
+          (SELECT COALESCE(MAX(number), 0) + 1 FROM schema_publication WHERE workspace = ${input.workspace}),
+          ${input.summary}, ${input.author}, ${new Date()},
+          ${this.sql.json(input.migration_details as never)}, ${this.sql.json(input.items as never)}
+        )
+        RETURNING *
+      `;
+      return mapSchemaPublicationRow(row!);
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async listPublications(workspace: string) {
+    const rows = await this.sql<Record<string, unknown>[]>`
+      SELECT * FROM schema_publication WHERE workspace = ${workspace} ORDER BY number DESC
+    `;
+    return rows.map(mapSchemaPublicationRow);
+  }
+
+  async getPublication(workspace: string, number: number) {
+    const [row] = await this.sql<Record<string, unknown>[]>`
+      SELECT * FROM schema_publication WHERE workspace = ${workspace} AND number = ${number}
+    `;
+    return row ? mapSchemaPublicationRow(row) : null;
+  }
+
+  async createSnapshotVersion(kind: SnapshotVersionKind, input: SnapshotVersionCreateInput) {
+    try {
+      const table = this.sql(SNAPSHOT_VERSION_TABLES[kind]);
+      const [row] = await this.sql<Record<string, unknown>[]>`
+        INSERT INTO ${table} (id, workspace, item_id, version, snapshot, change_summary, publication_id, created_by, created_at)
+        VALUES (
+          ${randomUUID()}, ${input.workspace}, ${input.item_id},
+          (SELECT COALESCE(MAX(version), 0) + 1 FROM ${table}
+             WHERE workspace = ${input.workspace} AND item_id = ${input.item_id}),
+          ${this.sql.json(input.snapshot as never)}, ${input.change_summary}, ${input.publication_id},
+          ${input.created_by}, ${new Date()}
+        )
+        RETURNING *
+      `;
+      return mapSnapshotVersionRow(row!);
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async listSnapshotVersions(kind: SnapshotVersionKind, workspace: string, itemId: string) {
+    const rows = await this.sql<Record<string, unknown>[]>`
+      SELECT * FROM ${this.sql(SNAPSHOT_VERSION_TABLES[kind])}
+      WHERE workspace = ${workspace} AND item_id = ${itemId} ORDER BY version DESC
+    `;
+    return rows.map(mapSnapshotVersionRow);
+  }
+
+  async getSnapshotVersion(
+    kind: SnapshotVersionKind,
+    workspace: string,
+    itemId: string,
+    version: number
+  ) {
+    const [row] = await this.sql<Record<string, unknown>[]>`
+      SELECT * FROM ${this.sql(SNAPSHOT_VERSION_TABLES[kind])}
+      WHERE workspace = ${workspace} AND item_id = ${itemId} AND version = ${version}
+    `;
+    return row ? mapSnapshotVersionRow(row) : null;
   }
 }

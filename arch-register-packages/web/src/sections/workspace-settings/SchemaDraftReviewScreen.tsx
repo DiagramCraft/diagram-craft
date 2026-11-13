@@ -2,7 +2,11 @@ import { Fragment, useEffect, useState } from 'react';
 import { getRouteApi } from '@tanstack/react-router';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
-import { TbRefresh } from 'react-icons/tb';
+import { MenuButton } from '@diagram-craft/app-components/MenuButton';
+import { Menu } from '@diagram-craft/app-components/Menu';
+import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
+import { TbArrowBackUp, TbDots, TbRefresh, TbRocket } from 'react-icons/tb';
+import styles from './SchemaSettingsScreen.module.css';
 import type { SchemaDraftReview } from '@arch-register/api-types/schemaDraftContract';
 import { Banner } from '../../components/Banner';
 import { Chip } from '../../components/Chip';
@@ -13,11 +17,16 @@ import { Title } from '../../components/Title';
 import { LoadingState } from '../../components/LoadingState';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import {
+  usePublishSchemaDraft,
   useReviewSchemaDraft,
   useSchemaDraft,
+  useDiscardSchemaDraft,
   useSchemaDraftRecordReview,
-  useStageSchemaItem
+  useStageSchemaItem,
+  useUnstageSchemaItem
 } from '../../hooks/useSchemaDraft';
+import { PublishSchemaDraftDialog } from '../../dialogs/PublishSchemaDraftDialog';
+import { PublicationHistorySubSection } from './sub-sections/PublicationHistorySubSection';
 import {
   FieldMigrationDialog,
   type FieldMigrationChoices
@@ -34,7 +43,7 @@ const KIND_LABELS: Record<string, string> = {
   category: 'Category'
 };
 
-type ReviewTab = 'changes' | 'migrations' | 'findings';
+type ReviewTab = 'changes' | 'migrations' | 'findings' | 'history';
 
 const OP_LABELS = { create: 'New', update: 'Changed', delete: 'Deleted' } as const;
 
@@ -49,6 +58,11 @@ export const SchemaDraftReviewScreen = () => {
   const { workspaceSlug } = useWorkspaceContext();
   const review = useReviewSchemaDraft(workspaceSlug);
   const stage = useStageSchemaItem(workspaceSlug);
+  const publish = usePublishSchemaDraft(workspaceSlug);
+  const unstage = useUnstageSchemaItem(workspaceSlug);
+  const discard = useDiscardSchemaDraft(workspaceSlug);
+  const [confirmRevertAll, setConfirmRevertAll] = useState(false);
+  const [publishOpen, setPublishOpen] = useState(false);
   const { data: draft } = useSchemaDraft(workspaceSlug);
   const [tab, setTab] = useState<ReviewTab>('changes');
   const [resolving, setResolving] = useState<SchemaDraftReview['migrations'][number] | null>(null);
@@ -70,6 +84,34 @@ export const SchemaDraftReviewScreen = () => {
     const timer = setTimeout(() => setWaitedTooLong(true), 62_000);
     return () => clearTimeout(timer);
   }, [jobRunId]);
+
+  const canPublish =
+    !!result &&
+    result.items.length > 0 &&
+    result.summary.blocking === 0 &&
+    result.summary.unresolvedMigrations === 0 &&
+    result.summary.hardBlockedMigrations === 0 &&
+    !publish.isPending;
+
+  const onPublish = (summary: string) =>
+    publish.mutate(summary, {
+      onSuccess: () => {
+        setPublishOpen(false);
+        navigate({ search: {} });
+      }
+    });
+
+  const revertItem = (kind: SchemaDraftReview['items'][number]['kind'], itemId: string) =>
+    unstage.mutate({ kind, itemId }, { onSuccess: () => run() });
+
+  const revertAll = () =>
+    discard.mutate(undefined, {
+      onSuccess: () => {
+        setConfirmRevertAll(false);
+        navigate({ search: {} });
+      },
+      onError: () => setConfirmRevertAll(false)
+    });
 
   const resolve = async (choices: FieldMigrationChoices) => {
     const migration = resolving;
@@ -108,9 +150,31 @@ export const SchemaDraftReviewScreen = () => {
         titleTestId="schema-draft-review"
         description="See what publishing the schema draft would change and break."
         buttons={
-          <Button icon={<TbRefresh size={13} />} onClick={() => run()}>
-            Refresh
-          </Button>
+          <>
+            <Button icon={<TbRefresh size={13} />} onClick={() => run()}>
+              Refresh
+            </Button>
+            <Button
+              icon={<TbArrowBackUp size={13} />}
+              disabled={(draft?.items.length ?? 0) === 0 || discard.isPending}
+              onClick={() => setConfirmRevertAll(true)}
+              data-testid="schema-draft-revert-all-button"
+            >
+              Revert all
+            </Button>
+            <Button
+              variant="primary"
+              icon={<TbRocket size={13} />}
+              disabled={!canPublish}
+              onClick={() => {
+                publish.reset();
+                setPublishOpen(true);
+              }}
+              data-testid="schema-draft-publish-button"
+            >
+              Publish
+            </Button>
+          </>
         }
       />
 
@@ -203,7 +267,11 @@ export const SchemaDraftReviewScreen = () => {
                 Field migrations ({result.migrations.length})
               </Tabs.Trigger>
               <Tabs.Trigger value="findings">Conflicts ({result.findings.length})</Tabs.Trigger>
+              <Tabs.Trigger value="history">History</Tabs.Trigger>
             </Tabs.List>
+            <Tabs.Content value="history">
+              <PublicationHistorySubSection />
+            </Tabs.Content>
             <Tabs.Content value="changes">
               <div data-testid="review-changes">
                 {result.items.length === 0 && <div>The draft is empty.</div>}
@@ -214,6 +282,7 @@ export const SchemaDraftReviewScreen = () => {
                         <Table.HeaderCell>Change</Table.HeaderCell>
                         <Table.HeaderCell>Kind</Table.HeaderCell>
                         <Table.HeaderCell>Name</Table.HeaderCell>
+                        <Table.HeaderCell />
                       </Table.Row>
                     </Table.Head>
                     <Table.Body>
@@ -229,6 +298,26 @@ export const SchemaDraftReviewScreen = () => {
                               item.liveName &&
                               item.name &&
                               item.liveName !== item.name && <span> (was “{item.liveName}”)</span>}
+                          </Table.Cell>
+                          <Table.Cell>
+                            <MenuButton.Root>
+                              <MenuButton.Trigger
+                                element={
+                                  <button
+                                    type="button"
+                                    className={styles.iconBtn}
+                                    aria-label="Change actions"
+                                  >
+                                    <TbDots size={13} />
+                                  </button>
+                                }
+                              />
+                              <MenuButton.Menu>
+                                <Menu.Item onClick={() => revertItem(item.kind, item.itemId)}>
+                                  Revert change
+                                </Menu.Item>
+                              </MenuButton.Menu>
+                            </MenuButton.Root>
                           </Table.Cell>
                         </Table.Row>
                       ))}
@@ -345,6 +434,23 @@ export const SchemaDraftReviewScreen = () => {
           </Tabs.Root>
         </>
       )}
+
+      <DeleteConfirmationDialog
+        open={confirmRevertAll}
+        title="Revert all changes?"
+        message="Every change in the draft will be discarded and the live definitions stay as they are."
+        confirmLabel="Revert all"
+        onConfirm={revertAll}
+        onCancel={() => setConfirmRevertAll(false)}
+      />
+
+      <PublishSchemaDraftDialog
+        open={publishOpen}
+        pending={publish.isPending}
+        error={publish.isError ? publish.error.message : undefined}
+        onCancel={() => setPublishOpen(false)}
+        onConfirm={onPublish}
+      />
 
       <FieldMigrationDialog
         open={resolving != null}

@@ -48,6 +48,7 @@ const toApiTypeVersion = (row: DocumentTypeVersionDbResult): DocumentTypeVersion
   color: row.color,
   icon: row.icon,
   changeSummary: row.change_summary,
+  publicationId: row.publication_id ?? null,
   createdBy: row.created_by,
   createdAt: row.created_at.toISOString()
 });
@@ -162,6 +163,267 @@ export const getDocumentType = async (
     }
   });
 
+type DocumentTypeApplyContext = {
+  userId: string;
+  /** Set when applied as part of a schema draft publication. */
+  publicationId?: string | null;
+};
+
+/**
+ * Authorization-free document type writes, shared by the direct operations and schema draft
+ * publish (which passes its transaction handle as `db`).
+ */
+export const applyCreateDocumentType = async (
+  db: DatabaseAdapter,
+  ws: string,
+  id: string,
+  input: DocumentTypeWrite,
+  ctx: DocumentTypeApplyContext
+) => {
+  validateDocumentTypeWrite(input);
+  const now = new Date();
+  const row = await db.document.createDocumentType({
+    ...input,
+    id,
+    workspace: ws,
+    created_at: now,
+    updated_at: now
+  });
+  await db.document.createDocumentTypeVersion({
+    id: randomUUID(),
+    workspace: ws,
+    document_type_id: row.id,
+    version: row.version ?? 1,
+    name: row.name,
+    description: row.description,
+    fields: row.fields,
+    aiActions: row.aiActions,
+    color: row.color,
+    icon: row.icon,
+    change_summary: buildFieldChangeSummary(null, toFieldMigrationFields(row.fields)),
+    publication_id: ctx.publicationId ?? null,
+    created_by: ctx.userId,
+    created_at: now
+  });
+  return row;
+};
+
+export const applyUpdateDocumentType = async (
+  db: DatabaseAdapter,
+  ws: string,
+  id: string,
+  input: DocumentTypeWrite,
+  ctx: DocumentTypeApplyContext
+) => {
+  validateDocumentTypeWrite(input);
+  const current = await db.document.getDocumentType(ws, id);
+  httpAssert.present(current, { status: 404, message: `Document type '${id}' not found` });
+
+  const fieldMigrations = input.fieldMigrations;
+  const templatesForType = (await db.document.listDocumentTemplates(ws, undefined, true)).filter(
+    template => template.document_type_id === id
+  );
+
+  const usedFieldIds = new Set<string>();
+  const currentFieldDataCounts = new Map<string, number>();
+  for (const node of await db.project.contentNodes.listAllContentNodes(ws)) {
+    const metadata = await db.document.getDocumentMetadata(ws, node.id);
+    if (metadata?.document_type_id === id) {
+      for (const field of current.fields) {
+        if (metadata.values[field.id] !== undefined) {
+          usedFieldIds.add(field.id);
+          currentFieldDataCounts.set(field.id, (currentFieldDataCounts.get(field.id) ?? 0) + 1);
+        }
+      }
+    }
+    for (const revision of await db.project.markdownRevisions.listMarkdownRevisions(ws, node.id)) {
+      if (revision.document_type_id !== id) continue;
+      for (const field of current.fields)
+        if (revision.metadata[field.id] !== undefined) usedFieldIds.add(field.id);
+    }
+  }
+  for (const template of templatesForType) {
+    for (const field of current.fields)
+      if (template.metadata_defaults[field.id] !== undefined) usedFieldIds.add(field.id);
+  }
+
+  // Unlike entity schemas, document types don't block making a field required while
+  // documents of that type exist: metadata is validated (and can block) at the point a
+  // document is actually saved or a revision restored, not at the type-definition level.
+  const fieldMigrationPlan = planFieldMigrations(
+    toFieldMigrationFields(current.fields),
+    toFieldMigrationFields(input.fields),
+    fieldMigrations,
+    { decisionRequiredFieldIds: usedFieldIds, applicableFieldIds: usedFieldIds }
+  );
+  const blocked = fieldMigrationPlan.hardBlocked.filter(
+    change => change.kind === 'type-changed' && usedFieldIds.has(change.fieldId)
+  );
+  httpAssert.true(blocked.length === 0, {
+    status: 409,
+    message: `Cannot update document type: ${blocked
+      .map(change => describeHardBlockedChange(change, 'document data'))
+      .join('; ')}`
+  });
+
+  const unresolved = fieldMigrationPlan.unresolved;
+  if (unresolved.length > 0) {
+    const pendingChanges: PendingFieldChange[] = unresolved.map(change => ({
+      fieldId: change.fieldId,
+      fieldName: change.fieldName,
+      kind: change.kind,
+      renamedToId: change.renamedToId,
+      entityCount: currentFieldDataCounts.get(change.fieldId) ?? 0
+    }));
+    httpAssert.true(false, {
+      status: 409,
+      message: `Cannot update document type: field changes require a migration decision (${pendingChanges.map(c => c.fieldName).join(', ')})`,
+      data: { code: 'DOCUMENT_TYPE_MIGRATION_REQUIRED', pendingChanges }
+    });
+  }
+
+  const oldFieldsById = new Map(current.fields.map(field => [field.id, field]));
+  const finalFields = [...input.fields];
+  for (const fieldId of fieldMigrationPlan.archiveFieldIds) {
+    const oldField = oldFieldsById.get(fieldId);
+    if (oldField && !finalFields.some(field => field.id === oldField.id)) {
+      finalFields.push({ ...oldField, retired: true });
+    }
+  }
+  const dataMigrations = fieldMigrationPlan.dataMigrations;
+
+  const changeSummary = buildFieldChangeSummary(
+    toFieldMigrationFields(current.fields),
+    toFieldMigrationFields(finalFields),
+    fieldMigrations
+  );
+  const now = new Date();
+
+  const row = await db.core.transaction(async tx => {
+    for (const migration of dataMigrations) {
+      if (migration.action === 'rename') {
+        await tx.document.renameDocumentMetadataField(
+          ws,
+          id,
+          migration.oldFieldId,
+          migration.newFieldId
+        );
+        const oldSubkind = encodeCaseSubkind(id, migration.oldFieldId);
+        const config = await tx.governanceCaseConfig.getCaseConfig(
+          ws,
+          'document.status',
+          oldSubkind
+        );
+        if (config) {
+          await tx.governanceCaseConfig.upsertCaseConfig({
+            workspace: ws,
+            case_kind: config.case_kind,
+            case_subkinds: [encodeCaseSubkind(id, migration.newFieldId)],
+            name: config.name,
+            description: config.description,
+            enabled: config.enabled,
+            config: config.config,
+            updated_at: now,
+            updated_by: ctx.userId
+          });
+          await tx.governanceCaseConfig.deleteCaseConfigForSubkindOrDescendants(ws, oldSubkind);
+        }
+      } else {
+        await tx.document.removeDocumentMetadataField(ws, id, migration.oldFieldId);
+        await tx.governanceCaseConfig.deleteCaseConfigForSubkindOrDescendants(
+          ws,
+          encodeCaseSubkind(id, migration.oldFieldId)
+        );
+      }
+      for (const template of templatesForType) {
+        if (template.metadata_defaults[migration.oldFieldId] === undefined) continue;
+        const nextDefaults = { ...template.metadata_defaults };
+        if (migration.action === 'rename') {
+          nextDefaults[migration.newFieldId] = nextDefaults[migration.oldFieldId]!;
+        }
+        delete nextDefaults[migration.oldFieldId];
+        await tx.document.updateDocumentTemplate(ws, template.id, {
+          name: template.name,
+          body: template.body,
+          document_type_id: template.document_type_id,
+          metadata_defaults: nextDefaults,
+          project_id: template.project_id,
+          updated_at: now
+        });
+      }
+    }
+
+    const updated = await tx.document.updateDocumentType(ws, id, {
+      ...input,
+      fields: finalFields,
+      version: (current.version ?? 1) + 1,
+      updated_at: now
+    });
+    httpAssert.present(updated, { status: 404, message: `Document type '${id}' not found` });
+
+    // Any document-type change can affect what a generator produces (prompt, target field,
+    // or field definitions), so conservatively mark every existing result outdated. This does
+    // not enqueue generation — that only happens on the next actual document edit.
+    await tx.document.markGeneratedMetadataOutdatedForDocumentType(ws, id);
+
+    await tx.document.createDocumentTypeVersion({
+      id: randomUUID(),
+      workspace: ws,
+      document_type_id: id,
+      version: updated.version ?? 1,
+      name: updated.name,
+      description: updated.description,
+      fields: updated.fields,
+      aiActions: updated.aiActions,
+      color: updated.color,
+      icon: updated.icon,
+      change_summary: changeSummary,
+      publication_id: ctx.publicationId ?? null,
+      created_by: ctx.userId,
+      created_at: now
+    });
+
+    return updated;
+  });
+  return row;
+};
+
+export const applyDeleteDocumentType = async (db: DatabaseAdapter, ws: string, id: string) => {
+  const current = await db.document.getDocumentType(ws, id);
+  httpAssert.present(current, { status: 404, message: `Document type '${id}' not found` });
+  for (const node of await db.project.contentNodes.listAllContentNodes(ws)) {
+    const metadata = await db.document.getDocumentMetadata(ws, node.id);
+    if (metadata?.document_type_id === id) {
+      httpAssert.true(false, {
+        status: 409,
+        message: 'Document type is in use and must be archived'
+      });
+    }
+    if (
+      (await db.project.markdownRevisions.listMarkdownRevisions(ws, node.id)).some(
+        revision => revision.document_type_id === id
+      )
+    ) {
+      httpAssert.true(false, {
+        status: 409,
+        message: 'Document type is referenced by revision history and must be archived'
+      });
+    }
+  }
+  if (
+    (await db.document.listDocumentTemplates(ws, undefined, true)).some(
+      template => template.document_type_id === id
+    )
+  ) {
+    httpAssert.true(false, {
+      status: 409,
+      message: 'Document type is used by a template and must be archived'
+    });
+  }
+  await db.document.deleteDocumentType(ws, id);
+  await db.governanceCaseConfig.deleteCaseConfigForSubkindOrDescendants(ws, id);
+};
+
 export const createDocumentType = async (
   db: DatabaseAdapter,
   workspace: string,
@@ -177,30 +439,8 @@ export const createDocumentType = async (
     operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'ws.settings');
       await assertDirectSchemaChangeMode(db, ws);
-      validateDocumentTypeWrite(input);
-      const now = new Date();
-      const id = randomUUID();
-      const row = await db.document.createDocumentType({
-        ...input,
-        id,
-        workspace: ws,
-        created_at: now,
-        updated_at: now
-      });
-      await db.document.createDocumentTypeVersion({
-        id: randomUUID(),
-        workspace: ws,
-        document_type_id: row.id,
-        version: row.version ?? 1,
-        name: row.name,
-        description: row.description,
-        fields: row.fields,
-        aiActions: row.aiActions,
-        color: row.color,
-        icon: row.icon,
-        change_summary: buildFieldChangeSummary(null, toFieldMigrationFields(row.fields)),
-        created_by: authCtx.userId,
-        created_at: now
+      const row = await applyCreateDocumentType(db, ws, randomUUID(), input, {
+        userId: authCtx.userId
       });
       return toApiType(row);
     }
@@ -222,179 +462,7 @@ export const updateDocumentType = async (
     operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'ws.settings');
       await assertDirectSchemaChangeMode(db, ws);
-      validateDocumentTypeWrite(input);
-      const current = await db.document.getDocumentType(ws, id);
-      httpAssert.present(current, { status: 404, message: `Document type '${id}' not found` });
-
-      const fieldMigrations = input.fieldMigrations;
-      const templatesForType = (
-        await db.document.listDocumentTemplates(ws, undefined, true)
-      ).filter(template => template.document_type_id === id);
-
-      const usedFieldIds = new Set<string>();
-      const currentFieldDataCounts = new Map<string, number>();
-      for (const node of await db.project.contentNodes.listAllContentNodes(ws)) {
-        const metadata = await db.document.getDocumentMetadata(ws, node.id);
-        if (metadata?.document_type_id === id) {
-          for (const field of current.fields) {
-            if (metadata.values[field.id] !== undefined) {
-              usedFieldIds.add(field.id);
-              currentFieldDataCounts.set(field.id, (currentFieldDataCounts.get(field.id) ?? 0) + 1);
-            }
-          }
-        }
-        for (const revision of await db.project.markdownRevisions.listMarkdownRevisions(
-          ws,
-          node.id
-        )) {
-          if (revision.document_type_id !== id) continue;
-          for (const field of current.fields)
-            if (revision.metadata[field.id] !== undefined) usedFieldIds.add(field.id);
-        }
-      }
-      for (const template of templatesForType) {
-        for (const field of current.fields)
-          if (template.metadata_defaults[field.id] !== undefined) usedFieldIds.add(field.id);
-      }
-
-      // Unlike entity schemas, document types don't block making a field required while
-      // documents of that type exist: metadata is validated (and can block) at the point a
-      // document is actually saved or a revision restored, not at the type-definition level.
-      const fieldMigrationPlan = planFieldMigrations(
-        toFieldMigrationFields(current.fields),
-        toFieldMigrationFields(input.fields),
-        fieldMigrations,
-        { decisionRequiredFieldIds: usedFieldIds, applicableFieldIds: usedFieldIds }
-      );
-      const blocked = fieldMigrationPlan.hardBlocked.filter(
-        change => change.kind === 'type-changed' && usedFieldIds.has(change.fieldId)
-      );
-      httpAssert.true(blocked.length === 0, {
-        status: 409,
-        message: `Cannot update document type: ${blocked
-          .map(change => describeHardBlockedChange(change, 'document data'))
-          .join('; ')}`
-      });
-
-      const unresolved = fieldMigrationPlan.unresolved;
-      if (unresolved.length > 0) {
-        const pendingChanges: PendingFieldChange[] = unresolved.map(change => ({
-          fieldId: change.fieldId,
-          fieldName: change.fieldName,
-          kind: change.kind,
-          renamedToId: change.renamedToId,
-          entityCount: currentFieldDataCounts.get(change.fieldId) ?? 0
-        }));
-        httpAssert.true(false, {
-          status: 409,
-          message: `Cannot update document type: field changes require a migration decision (${pendingChanges.map(c => c.fieldName).join(', ')})`,
-          data: { code: 'DOCUMENT_TYPE_MIGRATION_REQUIRED', pendingChanges }
-        });
-      }
-
-      const oldFieldsById = new Map(current.fields.map(field => [field.id, field]));
-      const finalFields = [...input.fields];
-      for (const fieldId of fieldMigrationPlan.archiveFieldIds) {
-        const oldField = oldFieldsById.get(fieldId);
-        if (oldField && !finalFields.some(field => field.id === oldField.id)) {
-          finalFields.push({ ...oldField, retired: true });
-        }
-      }
-      const dataMigrations = fieldMigrationPlan.dataMigrations;
-
-      const changeSummary = buildFieldChangeSummary(
-        toFieldMigrationFields(current.fields),
-        toFieldMigrationFields(finalFields),
-        fieldMigrations
-      );
-      const now = new Date();
-
-      const row = await db.core.transaction(async tx => {
-        for (const migration of dataMigrations) {
-          if (migration.action === 'rename') {
-            await tx.document.renameDocumentMetadataField(
-              ws,
-              id,
-              migration.oldFieldId,
-              migration.newFieldId
-            );
-            const oldSubkind = encodeCaseSubkind(id, migration.oldFieldId);
-            const config = await tx.governanceCaseConfig.getCaseConfig(
-              ws,
-              'document.status',
-              oldSubkind
-            );
-            if (config) {
-              await tx.governanceCaseConfig.upsertCaseConfig({
-                workspace: ws,
-                case_kind: config.case_kind,
-                case_subkinds: [encodeCaseSubkind(id, migration.newFieldId)],
-                name: config.name,
-                description: config.description,
-                enabled: config.enabled,
-                config: config.config,
-                updated_at: now,
-                updated_by: authCtx.userId
-              });
-              await tx.governanceCaseConfig.deleteCaseConfigForSubkindOrDescendants(ws, oldSubkind);
-            }
-          } else {
-            await tx.document.removeDocumentMetadataField(ws, id, migration.oldFieldId);
-            await tx.governanceCaseConfig.deleteCaseConfigForSubkindOrDescendants(
-              ws,
-              encodeCaseSubkind(id, migration.oldFieldId)
-            );
-          }
-          for (const template of templatesForType) {
-            if (template.metadata_defaults[migration.oldFieldId] === undefined) continue;
-            const nextDefaults = { ...template.metadata_defaults };
-            if (migration.action === 'rename') {
-              nextDefaults[migration.newFieldId] = nextDefaults[migration.oldFieldId]!;
-            }
-            delete nextDefaults[migration.oldFieldId];
-            await tx.document.updateDocumentTemplate(ws, template.id, {
-              name: template.name,
-              body: template.body,
-              document_type_id: template.document_type_id,
-              metadata_defaults: nextDefaults,
-              project_id: template.project_id,
-              updated_at: now
-            });
-          }
-        }
-
-        const updated = await tx.document.updateDocumentType(ws, id, {
-          ...input,
-          fields: finalFields,
-          version: (current.version ?? 1) + 1,
-          updated_at: now
-        });
-        httpAssert.present(updated, { status: 404, message: `Document type '${id}' not found` });
-
-        // Any document-type change can affect what a generator produces (prompt, target field,
-        // or field definitions), so conservatively mark every existing result outdated. This does
-        // not enqueue generation — that only happens on the next actual document edit.
-        await tx.document.markGeneratedMetadataOutdatedForDocumentType(ws, id);
-
-        await tx.document.createDocumentTypeVersion({
-          id: randomUUID(),
-          workspace: ws,
-          document_type_id: id,
-          version: updated.version ?? 1,
-          name: updated.name,
-          description: updated.description,
-          fields: updated.fields,
-          aiActions: updated.aiActions,
-          color: updated.color,
-          icon: updated.icon,
-          change_summary: changeSummary,
-          created_by: authCtx.userId,
-          created_at: now
-        });
-
-        return updated;
-      });
-
+      const row = await applyUpdateDocumentType(db, ws, id, input, { userId: authCtx.userId });
       return toApiType(row);
     }
   });
@@ -457,39 +525,7 @@ export const deleteDocumentType = async (
     operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'ws.settings');
       await assertDirectSchemaChangeMode(db, ws);
-      const current = await db.document.getDocumentType(ws, id);
-      httpAssert.present(current, { status: 404, message: `Document type '${id}' not found` });
-      for (const node of await db.project.contentNodes.listAllContentNodes(ws)) {
-        const metadata = await db.document.getDocumentMetadata(ws, node.id);
-        if (metadata?.document_type_id === id) {
-          httpAssert.true(false, {
-            status: 409,
-            message: 'Document type is in use and must be archived'
-          });
-        }
-        if (
-          (await db.project.markdownRevisions.listMarkdownRevisions(ws, node.id)).some(
-            revision => revision.document_type_id === id
-          )
-        ) {
-          httpAssert.true(false, {
-            status: 409,
-            message: 'Document type is referenced by revision history and must be archived'
-          });
-        }
-      }
-      if (
-        (await db.document.listDocumentTemplates(ws, undefined, true)).some(
-          template => template.document_type_id === id
-        )
-      ) {
-        httpAssert.true(false, {
-          status: 409,
-          message: 'Document type is used by a template and must be archived'
-        });
-      }
-      await db.document.deleteDocumentType(ws, id);
-      await db.governanceCaseConfig.deleteCaseConfigForSubkindOrDescendants(ws, id);
+      await applyDeleteDocumentType(db, ws, id);
       return { deleted: true };
     }
   });

@@ -214,7 +214,7 @@
               derived fields, and other query-driven behavior. Parsing, compilation, entity visibility, and field-group
               redaction use the same query and authorization pipeline as the entity browser.
 
-            - @id:ar.workspace.configuration.schema-draft @status:partial Administrators can switch a workspace's
+            - @id:ar.workspace.configuration.schema-draft Administrators can switch a workspace's
               schema change mode between direct (edits go live immediately, the default) and draft. In draft mode
               changes to entity schemas, relation schemas, document types, enums, shared field groups and categories
               are staged in one shared workspace draft instead of being saved, and the direct edit routes are
@@ -228,7 +228,16 @@
               decisions), conflicts with saved views, validation rules, derived fields, templates, relation
               endpoints and enum or category references, and the existing entities and relations the draft would
               invalidate, validated in a background job. Reviewing never changes live definitions or data.
-              Publishing a draft is not yet available.
+              Publishing (requires the publish-breaking-changes permission) applies the whole draft in one
+              all-or-nothing step with a required summary: it is refused while blocking conflicts, unresolved
+              migration decisions or blocked changes remain, and fails if the draft is stale or a live item
+              changed after it was staged. Each publication keeps its author, time, summary and migration
+              decisions, and is listed in a publication history on the review screen. Entity types, relation
+              types and document types keep per-item version history linked to the publication that produced
+              each version, and enums, shared field groups and categories gain their own version history.
+              Any earlier version can be rolled back by staging a draft that restores it (recreating the item
+              if it was deleted); data migrations are not reversed, and the restore is reviewed and published
+              like any other change.
 
             - @id:ar.workspace.configuration.entity-drawers Administrators can configure a schema-scoped,
               read-only entity drawer with ordered, collapsible sections (an optional `stat-grid` layout alongside

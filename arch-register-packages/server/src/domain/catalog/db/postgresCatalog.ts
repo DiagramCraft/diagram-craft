@@ -141,9 +141,9 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   async createSchemaVersion(input: SchemaVersionDbCreate) {
     const [row] = (await this.sql`
       INSERT INTO entity_schema_version
-        (id, workspace, schema_id, version, name, category, description, fields, templates, groups, shared_field_group_links, validation_rules, color, icon, change_summary, created_by, created_at)
+        (id, workspace, schema_id, version, name, category, description, fields, templates, groups, shared_field_group_links, validation_rules, color, icon, change_summary, publication_id, created_by, created_at)
       VALUES
-        (${input.id}, ${input.workspace}, ${input.schema_id}, ${input.version}, ${input.name}, ${input.category ?? null}, ${input.description}, ${this.json(input.fields)}, ${this.json(input.templates)}, ${this.json(input.groups)}, ${this.json(input.shared_field_group_links ?? [])}, ${this.json(input.validation_rules ?? [])}, ${input.color}, ${input.icon}, ${this.json(input.change_summary)}, ${input.created_by}, ${input.created_at})
+        (${input.id}, ${input.workspace}, ${input.schema_id}, ${input.version}, ${input.name}, ${input.category ?? null}, ${input.description}, ${this.json(input.fields)}, ${this.json(input.templates)}, ${this.json(input.groups)}, ${this.json(input.shared_field_group_links ?? [])}, ${this.json(input.validation_rules ?? [])}, ${input.color}, ${input.icon}, ${this.json(input.change_summary)}, ${input.publication_id ?? null}, ${input.created_by}, ${input.created_at})
       RETURNING *
     `) as DatabaseRow[];
     return catalogMappers.schemaVersion(row!);

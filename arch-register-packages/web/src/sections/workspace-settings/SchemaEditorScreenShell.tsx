@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react';
-import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { EmptyState } from '../../components/EmptyState';
 import { Title, type TitleBreadcrumbItem } from '../../components/Title';
 import { Page } from '../../components/Page';
@@ -15,10 +14,6 @@ type SchemaEditorScreenShellProps = {
   title: string;
   titleTestId?: string;
   description?: ReactNode;
-  /** When set, an Edit / Version history tab bar is shown below the title. */
-  showHistory?: boolean;
-  onShowHistoryChange?: (showHistory: boolean) => void;
-  history?: ReactNode;
   editor: ReactNode;
   emptyIcon?: ReactNode;
   emptyTitle: string;
@@ -38,9 +33,6 @@ export const SchemaEditorScreenShell = ({
   title,
   titleTestId,
   description,
-  showHistory = false,
-  onShowHistoryChange,
-  history,
   editor,
   emptyIcon,
   emptyTitle,
@@ -62,22 +54,7 @@ export const SchemaEditorScreenShell = ({
           title={title}
           description={description}
         />
-        {onShowHistoryChange ? (
-          <Tabs.Root
-            autoHeight
-            value={showHistory ? 'history' : 'edit'}
-            onValueChange={value => onShowHistoryChange(value === 'history')}
-          >
-            <Tabs.List aria-label="Editor views">
-              <Tabs.Trigger value="edit">Edit</Tabs.Trigger>
-              <Tabs.Trigger value="history">Version history</Tabs.Trigger>
-            </Tabs.List>
-            <Tabs.Content value="edit">{editor}</Tabs.Content>
-            <Tabs.Content value="history">{history ?? editor}</Tabs.Content>
-          </Tabs.Root>
-        ) : (
-          editor
-        )}
+        {editor}
       </>
     ) : (
       <EmptyState

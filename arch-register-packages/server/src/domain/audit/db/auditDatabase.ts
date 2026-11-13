@@ -64,7 +64,8 @@ export type AuditEntityType =
   // delivery, watcher notifications, or another round of automation rule evaluation.
   | 'automation_note'
   // The shared workspace schema draft (staging, unstaging, discarding and mode changes).
-  | 'schema_draft';
+  | 'schema_draft'
+  | 'schema_publication';
 
 const AUDIT_OPERATIONS = [
   'create',
@@ -85,7 +86,8 @@ const AUDIT_ENTITY_TYPES = [
   'relation_schema',
   'relation',
   'automation_note',
-  'schema_draft'
+  'schema_draft',
+  'schema_publication'
 ] as const satisfies readonly AuditEntityType[];
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
