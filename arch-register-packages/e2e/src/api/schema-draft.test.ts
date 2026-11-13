@@ -1,17 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import { test, expect, createTestORPCClient } from '../helpers/fixtures';
+import { createIsolatedWorkspace, randomBadge } from '../helpers/isolatedWorkspace';
 
 type TestClient = ReturnType<typeof createTestORPCClient>;
 
-const randomBadge = () =>
-  Array.from({ length: 5 }, () => String.fromCharCode(65 + Math.floor(Math.random() * 26))).join(
-    ''
-  );
-
-const newWorkspace = async (orpc: TestClient) =>
-  orpc.workspaces.create({
-    body: { name: `Draft workspace ${randomUUID()}`, badge: randomBadge() }
-  });
+const newWorkspace = (orpc: TestClient) => createIsolatedWorkspace(orpc, 'Draft workspace');
 
 test.describe('schema draft', () => {
   test('returns an empty draft at revision 0', async ({ orpc }) => {

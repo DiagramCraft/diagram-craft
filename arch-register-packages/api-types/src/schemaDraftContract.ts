@@ -365,6 +365,11 @@ export const workspaceSchemaDraftContract = oc.tag('Schema Draft').router({
 });
 
 export type SchemaDraft = z.infer<typeof schemaDraftSchema>;
+export type SchemaDraftItem = z.infer<typeof schemaDraftItemSchema>;
+export type SchemaDraftKind = z.infer<typeof schemaDraftKindSchema>;
+export type SchemaDraftOp = z.infer<typeof schemaDraftOpSchema>;
+export type SchemaChangeMode = z.infer<typeof schemaChangeModeSchema>;
+export type SnapshotVersionKind = z.infer<typeof snapshotVersionKindSchema>;
 export type SchemaDraftRecordReview = z.infer<typeof schemaDraftRecordReviewSchema>;
 export type SchemaDraftReview = z.infer<typeof schemaDraftReviewSchema>;
 export type SchemaPublication = z.infer<typeof schemaPublicationSchema>;

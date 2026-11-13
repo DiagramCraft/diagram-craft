@@ -1,5 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { SchemaDraft } from '@arch-register/api-types/schemaDraftContract';
+import type {
+  SchemaChangeMode,
+  SchemaDraft,
+  SchemaDraftKind,
+  SchemaDraftOp,
+  SnapshotVersionKind
+} from '@arch-register/api-types/schemaDraftContract';
 import { orpcClient } from '../lib/orpcClient';
 import {
   schemaChangeModeQuery,
@@ -8,9 +14,6 @@ import {
   schemaPublicationsQuery,
   snapshotVersionsQuery
 } from '../queries/schemaDraft';
-
-type Kind = SchemaDraft['items'][number]['kind'];
-type Op = SchemaDraft['items'][number]['op'];
 
 export const useSchemaDraft = (workspaceSlug: string, enabled = true) =>
   useQuery(schemaDraftQuery(workspaceSlug, enabled));
@@ -21,7 +24,7 @@ export const useSchemaChangeMode = (workspaceSlug: string, enabled = true) =>
 export const useSetSchemaChangeMode = (workspaceSlug: string) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (schemaChangeMode: 'direct' | 'draft') =>
+    mutationFn: (schemaChangeMode: SchemaChangeMode) =>
       orpcClient.schemaDraft.setMode({
         params: { workspace: workspaceSlug },
         body: { schemaChangeMode }
@@ -35,43 +38,52 @@ export const useSetSchemaChangeMode = (workspaceSlug: string) => {
 const currentRevision = (queryClient: ReturnType<typeof useQueryClient>, ws: string) =>
   queryClient.getQueryData<SchemaDraft>(schemaDraftKeys.draft(ws))?.revision ?? 0;
 
-/** Stages (adds or replaces) a draft item; never touches live definitions. */
-export const useStageSchemaItem = (workspaceSlug: string) => {
+/**
+ * A mutation that returns the updated draft. The draft cache is replaced with the result, or
+ * refetched when the call fails (typically a stale revision).
+ */
+const useDraftMutation = <Variables>(
+  workspaceSlug: string,
+  mutationFn: (variables: Variables, revision: number) => Promise<SchemaDraft>
+) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({
-      kind,
-      itemId,
-      op,
-      payload
-    }: {
-      kind: Kind;
-      itemId: string;
-      op: Op;
-      payload?: unknown;
-    }) =>
-      orpcClient.schemaDraft.stage({
-        params: { workspace: workspaceSlug, kind, itemId },
-        body: { expectedRevision: currentRevision(queryClient, workspaceSlug), op, payload }
-      }),
+    mutationFn: (variables: Variables) =>
+      mutationFn(variables, currentRevision(queryClient, workspaceSlug)),
     onSuccess: draft => queryClient.setQueryData(schemaDraftKeys.draft(workspaceSlug), draft),
     onError: () => queryClient.invalidateQueries({ queryKey: schemaDraftKeys.draft(workspaceSlug) })
   });
 };
 
+/** Stages (adds or replaces) a draft item; never touches live definitions. */
+export const useStageSchemaItem = (workspaceSlug: string) =>
+  useDraftMutation(
+    workspaceSlug,
+    (
+      {
+        kind,
+        itemId,
+        op,
+        payload
+      }: { kind: SchemaDraftKind; itemId: string; op: SchemaDraftOp; payload?: unknown },
+      expectedRevision
+    ) =>
+      orpcClient.schemaDraft.stage({
+        params: { workspace: workspaceSlug, kind, itemId },
+        body: { expectedRevision, op, payload }
+      })
+  );
+
 /** Removes an item from the draft, i.e. reverts it to the live version. */
-export const useUnstageSchemaItem = (workspaceSlug: string) => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ kind, itemId }: { kind: Kind; itemId: string }) =>
+export const useUnstageSchemaItem = (workspaceSlug: string) =>
+  useDraftMutation(
+    workspaceSlug,
+    ({ kind, itemId }: { kind: SchemaDraftKind; itemId: string }, expectedRevision) =>
       orpcClient.schemaDraft.unstage({
         params: { workspace: workspaceSlug, kind, itemId },
-        query: { expectedRevision: currentRevision(queryClient, workspaceSlug) }
-      }),
-    onSuccess: draft => queryClient.setQueryData(schemaDraftKeys.draft(workspaceSlug), draft),
-    onError: () => queryClient.invalidateQueries({ queryKey: schemaDraftKeys.draft(workspaceSlug) })
-  });
-};
+        query: { expectedRevision }
+      })
+  );
 
 /** Discards the whole draft, reverting every staged change to live. */
 export const useDiscardSchemaDraft = (workspaceSlug: string) => {
@@ -116,7 +128,7 @@ export const useSchemaPublications = (workspaceSlug: string, enabled = true) =>
 
 export const useSnapshotVersions = (
   workspaceSlug: string,
-  kind: 'enum' | 'field_group' | 'category',
+  kind: SnapshotVersionKind,
   itemId: string,
   enabled = true
 ) => useQuery(snapshotVersionsQuery(workspaceSlug, kind, itemId, enabled));
@@ -142,20 +154,15 @@ export const usePublishSchemaDraft = (workspaceSlug: string) => {
 };
 
 /** Stages a draft item that restores an item to a previously published version. */
-export const useRollbackToVersion = (workspaceSlug: string) => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ kind, itemId, version }: { kind: Kind; itemId: string; version: number }) =>
+export const useRollbackToVersion = (workspaceSlug: string) =>
+  useDraftMutation(
+    workspaceSlug,
+    (
+      { kind, itemId, version }: { kind: SchemaDraftKind; itemId: string; version: number },
+      expectedRevision
+    ) =>
       orpcClient.schemaDraft.fromVersion({
         params: { workspace: workspaceSlug },
-        body: {
-          expectedRevision: currentRevision(queryClient, workspaceSlug),
-          kind,
-          itemId,
-          version
-        }
-      }),
-    onSuccess: draft => queryClient.setQueryData(schemaDraftKeys.draft(workspaceSlug), draft),
-    onError: () => queryClient.invalidateQueries({ queryKey: schemaDraftKeys.draft(workspaceSlug) })
-  });
-};
+        body: { expectedRevision, kind, itemId, version }
+      })
+  );

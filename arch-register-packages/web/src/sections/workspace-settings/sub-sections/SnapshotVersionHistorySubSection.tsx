@@ -1,3 +1,4 @@
+import type { SnapshotVersionKind } from '@arch-register/api-types/schemaDraftContract';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useSchemaPublications, useSnapshotVersions } from '../../../hooks/useSchemaDraft';
 import { RollbackButton } from './RollbackButton';
@@ -8,7 +9,7 @@ export const SnapshotVersionHistorySubSection = ({
   kind,
   itemId
 }: {
-  kind: 'enum' | 'field_group' | 'category';
+  kind: SnapshotVersionKind;
   itemId: string;
 }) => {
   const { workspaceSlug } = useWorkspaceContext();

@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { expect, type Page } from '@playwright/test';
+import { randomBadge } from '../../helpers/isolatedWorkspace';
 import { test } from '../fixtures';
 import { workspaceModelRoute } from '../support/routes';
 
@@ -8,11 +9,8 @@ const api = (page: Page, path: string) =>
 
 // Uses a fresh workspace in draft mode so the seeded workspaces are left untouched
 const setupDraftWorkspace = async (page: Page) => {
-  const badge = Array.from({ length: 5 }, () =>
-    String.fromCharCode(65 + Math.floor(Math.random() * 26))
-  ).join('');
   const created = await page.request.post(api(page, '/workspaces'), {
-    data: { name: `Draft UI ${randomUUID()}`, badge }
+    data: { name: `Draft UI ${randomUUID()}`, badge: randomBadge() }
   });
   expect(created.ok()).toBeTruthy();
   const { url_slug: slug } = (await created.json()) as { url_slug: string };

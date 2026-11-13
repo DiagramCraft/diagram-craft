@@ -136,6 +136,9 @@ export const blankRelationSchema = (id: string) =>
     icon: null
   }) as unknown as RelationSchema;
 
+export const blankCategory = (id: string, workspaceId: string) =>
+  ({ id, workspaceId, name: '', createdAt: '', updatedAt: '' }) as Category;
+
 export const blankFieldGroup = (id: string) =>
   ({ id, name: '', description: '', fields: [], category: null }) as unknown as SharedFieldGroup;
 

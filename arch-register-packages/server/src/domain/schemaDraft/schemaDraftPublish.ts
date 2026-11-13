@@ -1,7 +1,6 @@
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { requireSchemaRead, requireWorkspaceCapability } from '../auth/authorization';
-import { runAuthorizedOperation } from '../operation';
+import { runDraftOperation } from './draftOperation';
 import { httpAssert } from '../../utils/httpAssert';
 import { logAudit } from '../audit/db/auditLogging';
 import type {
@@ -22,6 +21,8 @@ import {
   getLiveVersion,
   stageSchemaDraftItemInternal
 } from './schemaDraftOperations';
+import { createLogger } from '../../utils/logger';
+import { revisionConflictError } from './revisionConflict';
 import { recalculateEntityDerivedFields } from '../derived/derivedRecalculation';
 import { ensureDerivedRecalculationScheduleExists } from '../derived/derivedRecalculationJob';
 import { enqueueOneOffJobRun } from '../jobs/jobOperations';
@@ -57,7 +58,7 @@ import {
   applyUpdateDocumentType
 } from '../document/documentOperations';
 
-const REVISION_CONFLICT = 'The schema draft was changed by someone else; reload it and try again';
+const logger = createLogger('schema-draft-publish');
 
 /** Creates and updates run in this order; deletes run afterwards in the reverse order. */
 const APPLY_ORDER: SchemaDraftKind[] = [
@@ -76,64 +77,82 @@ type ApplyContext = {
 
 type Payload = Record<string, unknown>;
 
+type ApplyArgs = {
+  tx: DatabaseAdapter;
+  ws: string;
+  id: string;
+  payload: Payload;
+  /** Context for kinds that have no derived-field recalculation of their own. */
+  ctx: ApplyContext;
+  /** Like `ctx`, but defers derived recalculation and scheduling to the end of the publication. */
+  writeCtx: ApplyContext & { skipRecalc: true };
+};
+
+type Applier = {
+  create: (args: ApplyArgs) => Promise<unknown>;
+  update: (args: ApplyArgs) => Promise<unknown>;
+  delete: (args: ApplyArgs) => Promise<unknown>;
+};
+
+// Payloads were validated against the kind's write schema when they were staged.
+const APPLIERS: Record<SchemaDraftKind, Applier> = {
+  category: {
+    create: ({ tx, ws, id, payload, ctx }) =>
+      applyCreateCategory(tx, ws, { id, name: String(payload['name'] ?? '') }, ctx),
+    update: ({ tx, ws, id, payload, ctx }) =>
+      applyUpdateCategory(tx, ws, id, { name: String(payload['name'] ?? '') }, ctx),
+    delete: ({ tx, ws, id }) => applyDeleteCategory(tx, ws, id)
+  },
+  enum: {
+    create: ({ tx, ws, id, payload, ctx }) =>
+      applyCreateEnum(tx, ws, payload as never, { ...ctx, id }),
+    update: ({ tx, ws, id, payload, ctx }) => applyUpdateEnum(tx, ws, id, payload as never, ctx),
+    delete: ({ tx, ws, id, ctx }) => applyDeleteEnum(tx, ws, id, ctx)
+  },
+  field_group: {
+    create: ({ tx, ws, id, payload, writeCtx }) =>
+      applyCreateSharedFieldGroup(tx, ws, payload as never, { ...writeCtx, id }),
+    update: ({ tx, ws, id, payload, writeCtx }) =>
+      applyUpdateSharedFieldGroup(tx, ws, id, payload as never, writeCtx),
+    delete: ({ tx, ws, id }) => applyDeleteSharedFieldGroup(tx, ws, id)
+  },
+  entity_schema: {
+    create: ({ tx, ws, id, payload, writeCtx }) =>
+      applyCreateSchema(tx, ws, payload as never, { ...writeCtx, id }),
+    update: ({ tx, ws, id, payload, writeCtx }) =>
+      applyUpdateSchema(tx, ws, id, payload as never, writeCtx),
+    delete: ({ tx, ws, id, writeCtx }) => applyDeleteSchema(tx, ws, id, writeCtx)
+  },
+  relation_schema: {
+    create: ({ tx, ws, id, payload, writeCtx }) =>
+      applyCreateRelationSchema(tx, ws, payload as never, { ...writeCtx, id }),
+    update: ({ tx, ws, id, payload, writeCtx }) =>
+      applyUpdateRelationSchema(tx, ws, id, payload as never, writeCtx),
+    delete: ({ tx, ws, id, writeCtx }) => applyDeleteRelationSchema(tx, ws, id, writeCtx)
+  },
+  document_type: {
+    create: ({ tx, ws, id, payload, ctx }) =>
+      applyCreateDocumentType(tx, ws, id, payload as never, ctx),
+    update: ({ tx, ws, id, payload, ctx }) =>
+      applyUpdateDocumentType(tx, ws, id, payload as never, ctx),
+    delete: ({ tx, ws, id }) => applyDeleteDocumentType(tx, ws, id)
+  }
+};
+
 const applyItem = async (
   tx: DatabaseAdapter,
   ws: string,
   item: SchemaDraftItemDbResult,
   ctx: ApplyContext
 ): Promise<void> => {
-  const id = item.item_id;
-  const payload = (item.payload ?? {}) as Payload;
-  // Derived recalculation and post-commit scheduling run once for the whole publication.
-  const writeCtx = { ...ctx, skipRecalc: true };
-
-  switch (item.kind) {
-    case 'category':
-      if (item.op === 'create') {
-        await applyCreateCategory(tx, ws, { id, name: String(payload['name'] ?? '') }, ctx);
-      } else if (item.op === 'update') {
-        await applyUpdateCategory(tx, ws, id, { name: String(payload['name'] ?? '') }, ctx);
-      } else {
-        await applyDeleteCategory(tx, ws, id);
-      }
-      return;
-    case 'enum':
-      if (item.op === 'create') await applyCreateEnum(tx, ws, payload as never, { ...ctx, id });
-      else if (item.op === 'update') await applyUpdateEnum(tx, ws, id, payload as never, ctx);
-      else await applyDeleteEnum(tx, ws, id, ctx);
-      return;
-    case 'field_group':
-      if (item.op === 'create') {
-        await applyCreateSharedFieldGroup(tx, ws, payload as never, { ...writeCtx, id });
-      } else if (item.op === 'update') {
-        await applyUpdateSharedFieldGroup(tx, ws, id, payload as never, writeCtx);
-      } else {
-        await applyDeleteSharedFieldGroup(tx, ws, id);
-      }
-      return;
-    case 'entity_schema':
-      if (item.op === 'create')
-        await applyCreateSchema(tx, ws, payload as never, { ...writeCtx, id });
-      else if (item.op === 'update')
-        await applyUpdateSchema(tx, ws, id, payload as never, writeCtx);
-      else await applyDeleteSchema(tx, ws, id, writeCtx);
-      return;
-    case 'relation_schema':
-      if (item.op === 'create') {
-        await applyCreateRelationSchema(tx, ws, payload as never, { ...writeCtx, id });
-      } else if (item.op === 'update') {
-        await applyUpdateRelationSchema(tx, ws, id, payload as never, writeCtx);
-      } else {
-        await applyDeleteRelationSchema(tx, ws, id, writeCtx);
-      }
-      return;
-    case 'document_type':
-      if (item.op === 'create') await applyCreateDocumentType(tx, ws, id, payload as never, ctx);
-      else if (item.op === 'update')
-        await applyUpdateDocumentType(tx, ws, id, payload as never, ctx);
-      else await applyDeleteDocumentType(tx, ws, id);
-      return;
-  }
+  await APPLIERS[item.kind][item.op]({
+    tx,
+    ws,
+    id: item.item_id,
+    payload: (item.payload ?? {}) as Payload,
+    ctx,
+    writeCtx: { ...ctx, skipRecalc: true }
+  });
 };
 
 const orderItems = (items: SchemaDraftItemDbResult[]) => {
@@ -163,14 +182,13 @@ export const publishSchemaDraft = async (
   body: PublishSchemaDraftBody,
   event: AuthenticatedEvent
 ): Promise<SchemaPublication> =>
-  runAuthorizedOperation({
+  runDraftOperation({
     db,
     event,
-    scope: { kind: 'workspace', workspace },
+    workspace,
     fallback: 'Failed to publish schema draft',
+    access: 'schema.publish',
     operation: async ({ ws, authCtx }) => {
-      requireWorkspaceCapability(authCtx, 'schema.publish');
-
       const [draft, storedItems] = await Promise.all([
         db.schemaDraft.getDraft(ws),
         db.schemaDraft.listItems(ws)
@@ -179,11 +197,7 @@ export const publishSchemaDraft = async (
         status: 404,
         message: 'There is no schema draft to publish'
       });
-      httpAssert.true(draft!.revision === body.expectedRevision, {
-        status: 409,
-        message: REVISION_CONFLICT,
-        data: { code: 'REVISION_CONFLICT' }
-      });
+      httpAssert.true(draft!.revision === body.expectedRevision, revisionConflictError());
 
       // Migration decisions supplied with the request override those staged on the item.
       const items = storedItems.map(item => ({ ...item }));
@@ -232,11 +246,7 @@ export const publishSchemaDraft = async (
       const publication = await db.core.transaction(async tx => {
         // Anything staged since the review bumps the revision, so this also guards `items`.
         const current = await tx.schemaDraft.getDraft(ws);
-        httpAssert.true(current?.revision === body.expectedRevision, {
-          status: 409,
-          message: REVISION_CONFLICT,
-          data: { code: 'REVISION_CONFLICT' }
-        });
+        httpAssert.true(current?.revision === body.expectedRevision, revisionConflictError());
 
         // The live item must be exactly as it was when the draft first diverged from it.
         for (const item of items) {
@@ -287,7 +297,7 @@ export const publishSchemaDraft = async (
         await recalculateEntityDerivedFields(tx, ws);
 
         const discarded = await tx.schemaDraft.discard(ws, body.expectedRevision);
-        httpAssert.true(discarded, { status: 409, message: REVISION_CONFLICT });
+        httpAssert.true(discarded, revisionConflictError());
 
         await logAudit(tx, {
           userId,
@@ -302,20 +312,33 @@ export const publishSchemaDraft = async (
         return created;
       });
 
-      await ensureDerivedRecalculationScheduleExists(db, ws, now);
-      for (const item of items) {
-        if (item.kind !== 'entity_schema' || item.op !== 'update') continue;
-        await ensureEntityCompletenessScanScheduleExists(db, ws, now);
-        await enqueueOneOffJobRun(
-          db,
-          {
-            workspace: ws,
-            jobType: ENTITY_COMPLETENESS_JOB_TYPE,
-            systemIdentity: ENTITY_COMPLETENESS_SYSTEM_IDENTITY,
-            payload: { schemaId: item.item_id }
-          },
-          now
-        );
+      // The publication is committed; a failure to schedule follow-up work must not fail it.
+      const updatedSchemaIds = items
+        .filter(item => item.kind === 'entity_schema' && item.op === 'update')
+        .map(item => item.item_id);
+      try {
+        await ensureDerivedRecalculationScheduleExists(db, ws, now);
+        if (updatedSchemaIds.length > 0) {
+          await ensureEntityCompletenessScanScheduleExists(db, ws, now);
+        }
+        for (const schemaId of updatedSchemaIds) {
+          await enqueueOneOffJobRun(
+            db,
+            {
+              workspace: ws,
+              jobType: ENTITY_COMPLETENESS_JOB_TYPE,
+              systemIdentity: ENTITY_COMPLETENESS_SYSTEM_IDENTITY,
+              payload: { schemaId }
+            },
+            now
+          );
+        }
+      } catch (error) {
+        logger.warn('Failed to schedule follow-up jobs after schema publication', {
+          workspace: ws,
+          publicationId: publication.id,
+          error
+        });
       }
 
       return toApiPublication(publication);
@@ -327,13 +350,13 @@ export const listSchemaPublications = async (
   workspace: string,
   event: AuthenticatedEvent
 ): Promise<SchemaPublication[]> =>
-  runAuthorizedOperation({
+  runDraftOperation({
     db,
     event,
-    scope: { kind: 'workspace', workspace },
+    workspace,
     fallback: 'Failed to list schema publications',
-    operation: async ({ ws, authCtx }) => {
-      requireSchemaRead(authCtx);
+    access: 'read',
+    operation: async ({ ws }) => {
       return (await db.schemaDraft.listPublications(ws)).map(toApiPublication);
     }
   });
@@ -344,13 +367,13 @@ export const getSchemaPublication = async (
   number: number,
   event: AuthenticatedEvent
 ): Promise<SchemaPublication> =>
-  runAuthorizedOperation({
+  runDraftOperation({
     db,
     event,
-    scope: { kind: 'workspace', workspace },
+    workspace,
     fallback: 'Failed to load schema publication',
-    operation: async ({ ws, authCtx }) => {
-      requireSchemaRead(authCtx);
+    access: 'read',
+    operation: async ({ ws }) => {
       const row = await db.schemaDraft.getPublication(ws, number);
       httpAssert.present(row, { status: 404, message: `Publication #${number} not found` });
       return toApiPublication(row);
@@ -373,13 +396,13 @@ export const listSnapshotVersions = async (
   itemId: string,
   event: AuthenticatedEvent
 ): Promise<SchemaSnapshotVersion[]> =>
-  runAuthorizedOperation({
+  runDraftOperation({
     db,
     event,
-    scope: { kind: 'workspace', workspace },
+    workspace,
     fallback: 'Failed to list versions',
-    operation: async ({ ws, authCtx }) => {
-      requireSchemaRead(authCtx);
+    access: 'read',
+    operation: async ({ ws }) => {
       return (await db.schemaDraft.listSnapshotVersions(kind, ws, itemId)).map(
         toApiSnapshotVersion
       );
@@ -488,13 +511,13 @@ export const stageSchemaDraftFromVersion = async (
   },
   event: AuthenticatedEvent
 ): Promise<SchemaDraft> =>
-  runAuthorizedOperation({
+  runDraftOperation({
     db,
     event,
-    scope: { kind: 'workspace', workspace },
+    workspace,
     fallback: 'Failed to stage rollback',
+    access: 'schema.edit',
     operation: async ({ ws, authCtx }) => {
-      requireWorkspaceCapability(authCtx, 'schema.edit');
       const payload = await versionToPayload(db, ws, body.kind, body.itemId, body.version);
       // A deleted item is restored as a create with its original id.
       const exists = (await getLiveVersion(db, ws, body.kind, body.itemId)) !== null;

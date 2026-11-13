@@ -1,3 +1,4 @@
+import type { SnapshotVersionKind } from '@arch-register/api-types/schemaDraftContract';
 import { queryOptions, type QueryClient } from '@tanstack/react-query';
 import { orpcClient } from '../lib/orpcClient';
 
@@ -34,7 +35,7 @@ export const schemaPublicationsQuery = (workspaceId: string, enabled = true) =>
 
 export const snapshotVersionsQuery = (
   workspaceId: string,
-  kind: 'enum' | 'field_group' | 'category',
+  kind: SnapshotVersionKind,
   itemId: string,
   enabled = true
 ) =>

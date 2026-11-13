@@ -64,6 +64,9 @@ In draft mode:
   blocked while there are blocking conflicts or unresolved migrations.
 - **Publish** applies every staged change atomically and records a publication with your description. The
   history tab lists earlier publications.
+- To roll an item back, open its version history and choose **Restore** on an earlier version. This stages the
+  restored version in the draft, so nothing changes until you review and publish. Restoring does not reverse data
+  migrations; the review flags any field changes that need them.
 - If a live item changed after it was staged, or the draft was edited by someone else in the meantime, the publish is
   rejected and nothing is applied. Reload and review again.
 

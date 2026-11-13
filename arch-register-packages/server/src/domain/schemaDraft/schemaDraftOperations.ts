@@ -1,10 +1,8 @@
 import type { z } from 'zod';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { requireSchemaRead, requireWorkspaceCapability } from '../auth/authorization';
-import { runAuthorizedOperation } from '../operation';
+import { runDraftOperation, logDraftAudit } from './draftOperation';
 import { httpAssert } from '../../utils/httpAssert';
-import { logAudit } from '../audit/db/auditLogging';
 import type {
   SchemaChangeMode,
   SchemaDraftDbResult,
@@ -38,8 +36,7 @@ import {
   SCHEMA_DRAFT_REVIEW_SYSTEM_IDENTITY
 } from './schemaDraftReviewJob';
 import { createMigrationUsageProvider } from './draftMigrationUsage';
-
-const REVISION_CONFLICT = 'The schema draft was changed by someone else; reload it and try again';
+import { revisionConflictError } from './revisionConflict';
 
 const PAYLOAD_SCHEMAS: Record<SchemaDraftKind, { create: z.ZodType; update: z.ZodType }> = {
   entity_schema: { create: createSchemaBodySchema, update: updateSchemaBodySchema },
@@ -126,13 +123,13 @@ export const getSchemaDraft = async (
   workspace: string,
   event: AuthenticatedEvent
 ): Promise<SchemaDraft> =>
-  runAuthorizedOperation({
+  runDraftOperation({
     db,
     event,
-    scope: { kind: 'workspace', workspace },
+    workspace,
     fallback: 'Failed to load schema draft',
-    operation: async ({ ws, authCtx }) => {
-      requireSchemaRead(authCtx);
+    access: 'read',
+    operation: async ({ ws }) => {
       return loadDraft(db, ws);
     }
   });
@@ -176,7 +173,7 @@ export const stageSchemaDraftItemInternal = async (
   );
   const baseVersion = body.op === 'create' ? null : (existing?.base_version ?? liveVersion);
 
-  const result = await db.core.transaction(async tx => {
+  return db.core.transaction(async tx => {
     const draft = await tx.schemaDraft.stageItem(
       {
         workspace: ws,
@@ -185,24 +182,19 @@ export const stageSchemaDraftItemInternal = async (
         op: body.op,
         payload,
         base_version: baseVersion,
-        updated_by: userId ?? null
+        updated_by: userId
       },
       body.expectedRevision
     );
-    httpAssert.present(draft, { status: 409, message: REVISION_CONFLICT });
-    await logAudit(tx, {
+    httpAssert.present(draft, revisionConflictError());
+    await logDraftAudit(tx, {
       userId,
       workspace: ws,
       operation: 'update',
-      entityType: 'schema_draft',
-      entityId: ws,
-      entityName: 'Schema draft',
-      changes: {},
       metadata: { action: 'stage', kind, itemId, op: body.op, revision: draft.revision }
     });
     return loadDraft(tx, ws);
   });
-  return result;
 };
 
 export const stageSchemaDraftItem = async (
@@ -213,14 +205,13 @@ export const stageSchemaDraftItem = async (
   body: { expectedRevision: number; op: SchemaDraftOp; payload?: unknown },
   event: AuthenticatedEvent
 ): Promise<SchemaDraft> =>
-  runAuthorizedOperation({
+  runDraftOperation({
     db,
     event,
-    scope: { kind: 'workspace', workspace },
+    workspace,
     fallback: 'Failed to stage schema change',
+    access: 'schema.edit',
     operation: async ({ ws, authCtx }) => {
-      requireWorkspaceCapability(authCtx, 'schema.edit');
-
       return stageSchemaDraftItemInternal(db, ws, authCtx.userId, kind, itemId, body);
     }
   });
@@ -233,13 +224,13 @@ export const unstageSchemaDraftItem = async (
   expectedRevision: number,
   event: AuthenticatedEvent
 ): Promise<SchemaDraft> =>
-  runAuthorizedOperation({
+  runDraftOperation({
     db,
     event,
-    scope: { kind: 'workspace', workspace },
+    workspace,
     fallback: 'Failed to unstage schema change',
+    access: 'schema.edit',
     operation: async ({ ws, authCtx }) => {
-      requireWorkspaceCapability(authCtx, 'schema.edit');
       return db.core.transaction(async tx => {
         const items = await tx.schemaDraft.listItems(ws);
         const draftExists = (await tx.schemaDraft.getDraft(ws)) !== null;
@@ -252,17 +243,13 @@ export const unstageSchemaDraftItem = async (
           kind,
           itemId,
           expectedRevision,
-          authCtx.userId ?? null
+          authCtx.userId
         );
-        httpAssert.present(draft, { status: 409, message: REVISION_CONFLICT });
-        await logAudit(tx, {
+        httpAssert.present(draft, revisionConflictError());
+        await logDraftAudit(tx, {
           userId: authCtx.userId,
           workspace: ws,
           operation: 'update',
-          entityType: 'schema_draft',
-          entityId: ws,
-          entityName: 'Schema draft',
-          changes: {},
           metadata: { action: 'unstage', kind, itemId, revision: draft.revision }
         });
         return loadDraft(tx, ws);
@@ -276,28 +263,24 @@ export const discardSchemaDraft = async (
   expectedRevision: number,
   event: AuthenticatedEvent
 ): Promise<{ success: boolean }> =>
-  runAuthorizedOperation({
+  runDraftOperation({
     db,
     event,
-    scope: { kind: 'workspace', workspace },
+    workspace,
     fallback: 'Failed to discard schema draft',
+    access: 'schema.edit',
     operation: async ({ ws, authCtx }) => {
-      requireWorkspaceCapability(authCtx, 'schema.edit');
       return db.core.transaction(async tx => {
         httpAssert.true(expectedRevision > 0 && (await tx.schemaDraft.getDraft(ws)) !== null, {
           status: 404,
           message: 'There is no schema draft to discard'
         });
         const discarded = await tx.schemaDraft.discard(ws, expectedRevision);
-        httpAssert.true(discarded, { status: 409, message: REVISION_CONFLICT });
-        await logAudit(tx, {
+        httpAssert.true(discarded, revisionConflictError());
+        await logDraftAudit(tx, {
           userId: authCtx.userId,
           workspace: ws,
           operation: 'delete',
-          entityType: 'schema_draft',
-          entityId: ws,
-          entityName: 'Schema draft',
-          changes: {},
           metadata: { action: 'discard', revision: expectedRevision }
         });
         return { success: true };
@@ -310,13 +293,13 @@ export const getSchemaChangeMode = async (
   workspace: string,
   event: AuthenticatedEvent
 ): Promise<{ schemaChangeMode: SchemaChangeMode }> =>
-  runAuthorizedOperation({
+  runDraftOperation({
     db,
     event,
-    scope: { kind: 'workspace', workspace },
+    workspace,
     fallback: 'Failed to load schema change mode',
-    operation: async ({ ws, authCtx }) => {
-      requireSchemaRead(authCtx);
+    access: 'read',
+    operation: async ({ ws }) => {
       return { schemaChangeMode: await db.schemaDraft.getSchemaChangeMode(ws) };
     }
   });
@@ -327,22 +310,19 @@ export const setSchemaChangeMode = async (
   mode: SchemaChangeMode,
   event: AuthenticatedEvent
 ): Promise<{ schemaChangeMode: SchemaChangeMode }> =>
-  runAuthorizedOperation({
+  runDraftOperation({
     db,
     event,
-    scope: { kind: 'workspace', workspace },
+    workspace,
     fallback: 'Failed to set schema change mode',
+    access: 'schema.edit',
     operation: async ({ ws, authCtx }) => {
-      requireWorkspaceCapability(authCtx, 'schema.edit');
       const previous = await db.schemaDraft.getSchemaChangeMode(ws);
-      await db.schemaDraft.setSchemaChangeMode(ws, mode, authCtx.userId ?? null);
-      await logAudit(db, {
+      await db.schemaDraft.setSchemaChangeMode(ws, mode, authCtx.userId);
+      await logDraftAudit(db, {
         userId: authCtx.userId,
         workspace: ws,
         operation: 'update',
-        entityType: 'schema_draft',
-        entityId: ws,
-        entityName: 'Schema draft',
         changes: { old: { schemaChangeMode: previous }, new: { schemaChangeMode: mode } },
         metadata: { action: 'set_mode' }
       });
@@ -401,13 +381,13 @@ export const reviewSchemaDraft = async (
   workspace: string,
   event: AuthenticatedEvent
 ): Promise<SchemaDraftReview> =>
-  runAuthorizedOperation({
+  runDraftOperation({
     db,
     event,
-    scope: { kind: 'workspace', workspace },
+    workspace,
     fallback: 'Failed to review schema draft',
-    operation: async ({ ws, authCtx }) => {
-      requireWorkspaceCapability(authCtx, 'schema.edit');
+    access: 'schema.edit',
+    operation: async ({ ws }) => {
       const [draft, items] = await Promise.all([
         db.schemaDraft.getDraft(ws),
         db.schemaDraft.listItems(ws)
@@ -444,22 +424,21 @@ export const getSchemaDraftRecordReview = async (
   jobRunId: string,
   event: AuthenticatedEvent
 ) =>
-  runAuthorizedOperation({
+  runDraftOperation({
     db,
     event,
-    scope: { kind: 'workspace', workspace },
+    workspace,
     fallback: 'Failed to load record validation',
-    operation: async ({ ws, authCtx }) => {
-      requireWorkspaceCapability(authCtx, 'schema.edit');
-      const run = await db.jobs.getRun(jobRunId);
-      httpAssert.true(
-        run != null && run.workspace === ws && run.job_type === SCHEMA_DRAFT_REVIEW_JOB_TYPE,
-        { status: 404, message: 'Record validation run not found' }
-      );
-      const result = (run!.result ?? {}) as Record<string, unknown>;
+    access: 'schema.edit',
+    operation: async ({ ws }) => {
+      const found = await db.jobs.getRun(jobRunId);
+      const run =
+        found?.workspace === ws && found.job_type === SCHEMA_DRAFT_REVIEW_JOB_TYPE ? found : null;
+      httpAssert.present(run, { status: 404, message: 'Record validation run not found' });
+      const result = (run.result ?? {}) as Record<string, unknown>;
       return {
-        status: run!.status,
-        error: run!.error,
+        status: run.status,
+        error: run.error,
         stale: result['stale'] === true,
         revision: typeof result['revision'] === 'number' ? result['revision'] : 0,
         entitiesChecked: (result['entitiesChecked'] as number | undefined) ?? 0,
