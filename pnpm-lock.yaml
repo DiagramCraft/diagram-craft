@@ -134,8 +134,8 @@ importers:
         specifier: 2.0.8
         version: 2.0.8
       postgres:
-        specifier: ^3.4.5
-        version: 3.4.9
+        specifier: ^4.1.1
+        version: 4.1.1
     devDependencies:
       '@playwright/test':
         specifier: ^1.62.1
@@ -288,8 +288,8 @@ importers:
         specifier: ^6.8.8
         version: 6.8.9
       postgres:
-        specifier: ^3.4.5
-        version: 3.4.9
+        specifier: ^4.1.1
+        version: 4.1.1
       resend:
         specifier: ^6.27.0
         version: 6.27.0
@@ -8920,9 +8920,9 @@ packages:
     resolution: {integrity: sha512-LJlKCCAUFKOuZxipUdYw1NzIITEsPcgyOG9LkvRJvuKj/bRzbuRY0ARXvL0pWGpsZvn8jku+LMep2eU0seHp8g==}
     engines: {node: ^10 || ^12 || >=14}
 
-  postgres@3.4.9:
-    resolution: {integrity: sha512-GD3qdB0x1z9xgFI6cdRD6xu2Sp2WCOEoe3mtnyB5Ee0XrrL5Pe+e4CCnJrRMnL1zYtRDZmQQVbvOttLnKDLnaw==}
-    engines: {node: '>=12'}
+  postgres@4.1.1:
+    resolution: {integrity: sha512-1kJDojqNZC+iTHHXh6eif0J98LUtyLAePe/qkW1GK35eh2JixlsAiIKq3FGI+xqI+SUGTNodzf7TScVeIIyUug==}
+    engines: {node: '>=18'}
 
   postject@1.0.0-alpha.6:
     resolution: {integrity: sha512-b9Eb8h2eVqNE8edvKdwqkrY6O7kAwmI8kcnBv1NScolYJbo59XUF0noFq+lxbC1yN20bmC0WBEbDC5H/7ASb0A==}
@@ -20591,7 +20591,7 @@ snapshots:
       picocolors: 1.1.1
       source-map-js: 1.2.2
 
-  postgres@3.4.9: {}
+  postgres@4.1.1: {}
 
   postject@1.0.0-alpha.6:
     dependencies:
