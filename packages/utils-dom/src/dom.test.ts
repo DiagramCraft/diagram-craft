@@ -127,6 +127,29 @@ describe('resolveCssColor', () => {
     expect(resolveCssColor('var(--canvas-fg)', [first, second])).toBe('#111111');
   });
 
+  it('resolves inherited stylesheet variables and reflects stylesheet changes', () => {
+    const style = document.createElement('style');
+    style.textContent = '.dom-test-css-variable-parent { --canvas-fg: #123456; }';
+    document.head.appendChild(style);
+
+    const parent = document.createElement('div');
+    parent.className = 'dom-test-css-variable-parent';
+    const child = document.createElement('div');
+    parent.appendChild(child);
+    document.body.appendChild(parent);
+
+    try {
+      expect(resolveCssColor('var(--canvas-fg)', [child])).toBe('#123456');
+
+      style.textContent = '.dom-test-css-variable-parent { --canvas-fg: #654321; }';
+
+      expect(resolveCssColor('var(--canvas-fg)', [child])).toBe('#654321');
+    } finally {
+      style.remove();
+      parent.remove();
+    }
+  });
+
   it('falls through to later elements when earlier ones do not resolve the variable', () => {
     const first = document.createElement('div');
     const second = document.createElement('div');
