@@ -429,6 +429,7 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
       sup="New workspace"
       title="Create a workspace"
       width={620}
+      scrollable={true}
       footerLeft={
         <KbdHints
           hints={[

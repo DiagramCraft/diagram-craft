@@ -92,6 +92,9 @@ Document types are designed to evolve without invalidating document history:
 When changing the type of an existing document, use the migration flow. The document must be brought into
 compliance with the new type, including removing metadata that is not defined by that type.
 
+If the workspace uses draft mode, changes to document types are staged and published together with other schema
+changes. See [Changing Schemas With Drafts And Publishing](schemas-model-overview#changing-schemas-with-drafts-and-publishing).
+
 ## Create A Document Template
 
 A document template belongs to one document type, or to **Untyped Markdown**, and contains:

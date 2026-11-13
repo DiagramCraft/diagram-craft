@@ -1,3 +1,4 @@
+import type { SnapshotVersionKind } from '@arch-register/api-types/schemaDraftContract';
 import { SnapshotVersionHistorySubSection } from './SnapshotVersionHistorySubSection';
 import { VersionHistoryDialog } from './VersionHistoryDialog';
 
@@ -9,7 +10,7 @@ export const SnapshotVersionHistoryDialog = ({
   onClose
 }: {
   open: boolean;
-  kind: 'enum' | 'field_group' | 'category';
+  kind: SnapshotVersionKind;
   itemId: string;
   onClose: () => void;
 }) => (

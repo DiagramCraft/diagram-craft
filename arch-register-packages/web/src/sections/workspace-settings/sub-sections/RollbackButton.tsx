@@ -1,10 +1,11 @@
+import type { SchemaDraftKind } from '@arch-register/api-types/schemaDraftContract';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbArrowBackUp } from 'react-icons/tb';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useRollbackToVersion, useSchemaDraft } from '../../../hooks/useSchemaDraft';
 
 export type RollbackTarget = {
-  kind: 'entity_schema' | 'relation_schema' | 'document_type' | 'enum' | 'field_group' | 'category';
+  kind: SchemaDraftKind;
   itemId: string;
 };
 

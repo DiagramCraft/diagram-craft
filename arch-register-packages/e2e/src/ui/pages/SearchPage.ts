@@ -7,7 +7,7 @@ export class SearchPage extends WorkspacePage {
     await this.page.goto(workspaceSearchRoute(this.workspaceSlug));
   };
 
-  searchInput = () => this.page.getByPlaceholder('Search entities, diagrams, projects, schema…');
+  searchInput = () => this.page.getByPlaceholder('Search entities, diagrams, projects, wiki…');
   searchResultCount = () => this.page.getByTestId('search-result-count');
   entitiesCategoryCount = () => this.page.getByTestId('entities-result-count');
   resultRow = (name: string) =>

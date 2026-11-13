@@ -1,5 +1,10 @@
 import { useCallback, useMemo } from 'react';
-import type { SchemaDraft } from '@arch-register/api-types/schemaDraftContract';
+import type {
+  SchemaDraft,
+  SchemaDraftItem,
+  SchemaDraftKind,
+  SchemaDraftOp
+} from '@arch-register/api-types/schemaDraftContract';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import {
   useSchemaChangeMode,
@@ -8,9 +13,7 @@ import {
   useUnstageSchemaItem
 } from '../../hooks/useSchemaDraft';
 
-export type SchemaDraftItem = SchemaDraft['items'][number];
-export type SchemaDraftKind = SchemaDraftItem['kind'];
-export type SchemaDraftOp = SchemaDraftItem['op'];
+export type { SchemaDraftItem, SchemaDraftKind, SchemaDraftOp };
 
 export type SchemaDraftState = {
   /** True when saves must be staged instead of written live. */
