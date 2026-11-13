@@ -52,7 +52,7 @@
     "lib0": "^0.2.117",
     "nodemailer": "^10.1.4",
     "openid-client": "^6.8.8",
-    "postgres": "^3.4.5",
+    "postgres": "^4.1.1",
     "resend": "^6.27.0",
     "unzipper": "^0.12.5",
     "ws": "^8.21.1",
