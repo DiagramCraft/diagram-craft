@@ -55,8 +55,12 @@ test.describe('settings section', () => {
 
     await page.getByText('API & Integration Catalog', { exact: true }).click();
     await page.getByRole('tab', { name: 'Access', exact: true }).click();
+    // The field label is a sibling of the control, not a <label>, so scope to the field row
     await expect(
-      page.getByRole('checkbox', { name: 'All workspace members', exact: true })
+      page
+        .getByText('All workspace members', { exact: true })
+        .locator('../..')
+        .getByRole('checkbox')
     ).toBeVisible();
   });
 
@@ -74,7 +78,11 @@ test.describe('settings section', () => {
     // The new application is selected and shows its General tab.
     await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
     await page.getByRole('tab', { name: 'General', exact: true }).click();
-    await page.getByText('Name', { exact: true }).locator('..').getByRole('textbox').fill(renamed);
+    await page
+      .getByText('Name', { exact: true })
+      .locator('../..')
+      .getByRole('textbox')
+      .fill(renamed);
     await page.getByRole('button', { name: 'Save changes', exact: true }).click();
     await expect(page.getByRole('heading', { name: renamed, exact: true })).toBeVisible();
 

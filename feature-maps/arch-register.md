@@ -271,7 +271,8 @@
               optional restricted/sensitive marker, ordering, and a retired state that preserves historical values while
               keeping them out of new record edits. Removing an unused option deletes it; an option still in use is
               automatically retained as retired. Enum names and field references provide context without a hard-coded
-              enum category set.
+              enum category set. When the workspace is in draft mode, schema changes are staged, reviewed, and
+              published together (see @id:ar.workspace.configuration.schema-draft).
               reusable shared fieldgroups, relationships, and schema-specific behavior, including currency and duration fields (an amount plus a day, week, month, or year unit,
               shown as e.g. "3 years" and filtered by its length in days) and
               ordered multi-valued scalar fields (text, long text, boolean, date, number, currency, and select) with
@@ -346,7 +347,8 @@
               versions, validation rules, and AI actions for structured content, including marking a field as externally
               managed (by AI, an integration, or an internal automation) with a refresh mode of on-change or scheduled.
               Administrators can edit actions, select their read-only architecture tools, and test an unsaved action
-              against an existing document of the same type without persistence.
+              against an existing document of the same type without persistence. In draft mode, document type changes
+              are staged and published like other schema changes (see @id:ar.workspace.configuration.schema-draft).
 
         - @id:ar.workspace.lifecycle Workspaces can define lifecycle states, designate one as the deprecated state, and
           use them as part of entity and project review workflows.

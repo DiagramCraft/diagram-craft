@@ -49,6 +49,28 @@ generic field-and-metadata drawer.
   }}
 />
 
+## Changing Schemas With Drafts And Publishing
+
+By default, schema changes go live as soon as they are saved. To review changes before they affect records, open
+**Settings → General** and switch **Schema changes** from _Direct_ to _Draft_.
+
+In draft mode:
+
+- Edits to schemas, enums, field groups, categories, and document types are staged in a draft instead of going live.
+  Staged items are marked as changed in draft, and a banner shows how many changes are pending.
+- Use **Revert to live** on an item to drop its staged change, or **Revert all** on the review screen to discard the
+  whole draft. Live definitions are untouched either way.
+- Open the review screen from the banner to see the changes, required field migrations, and conflicts. Publishing is
+  blocked while there are blocking conflicts or unresolved migrations.
+- **Publish** applies every staged change atomically and records a publication with your description. The
+  history tab lists earlier publications.
+- If a live item changed after it was staged, or the draft was edited by someone else in the meantime, the publish is
+  rejected and nothing is applied. Reload and review again.
+
+Staging requires the `schema.edit` capability. Publishing requires `schema.publish`; see
+[Roles and Permissions](roles-permissions). Direct schema changes and definition import are unavailable while a
+draft is open.
+
 ## Modeling Guidance
 
 Use:

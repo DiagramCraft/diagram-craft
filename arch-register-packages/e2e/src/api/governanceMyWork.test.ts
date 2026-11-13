@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { createApiTest, expect } from '../helpers/fixtures';
 import { seedIds, TEST_ADMIN } from '../helpers/seedHelper';
 
@@ -7,8 +8,10 @@ test.describe('My work submission count', () => {
   test('counts open and request-changes submissions only', async ({ server, orpc }) => {
     const workspace = seedIds.workspace.default;
     const createdAt = new Date();
-    const createCase = (id: string) =>
-      server.db.governance.createCase({
+    // Case ids are UUIDs in Postgres
+    const createCase = async () => {
+      const id = randomUUID();
+      await server.db.governance.createCase({
         id,
         workspace,
         case_kind: 'test.my-work',
@@ -24,18 +27,16 @@ test.describe('My work submission count', () => {
         created_at: createdAt,
         due_at: null
       });
+      return id;
+    };
 
-    await createCase('my-work-open');
-    await createCase('my-work-request-changes');
-    await server.db.governance.completeCaseIfOpen(
-      'my-work-request-changes',
-      'request_changes',
-      createdAt
-    );
-    await createCase('my-work-approved');
-    await server.db.governance.completeCaseIfOpen('my-work-approved', 'approve', createdAt);
-    await createCase('my-work-cancelled');
-    await server.db.governance.cancelCaseIfOpen('my-work-cancelled', createdAt);
+    await createCase();
+    const requestChangesId = await createCase();
+    await server.db.governance.completeCaseIfOpen(requestChangesId, 'request_changes', createdAt);
+    const approvedId = await createCase();
+    await server.db.governance.completeCaseIfOpen(approvedId, 'approve', createdAt);
+    const cancelledId = await createCase();
+    await server.db.governance.cancelCaseIfOpen(cancelledId, createdAt);
 
     const result = await orpc.governance.submissions.count({
       params: { workspace: 'default' }
