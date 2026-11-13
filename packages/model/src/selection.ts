@@ -22,16 +22,23 @@ type SelectionSource = {
 };
 
 export type SelectionEvents = {
-  /* The selection has changed, e.g. recalculating bounding box
-   * This is implicitly triggered by adding/removing elements, as the bounding box
-   * is changed - but this should not be relied upon
+  /**
+   * General selection-state notification, not a per-operation log. Bounding-box
+   * recalculations and `forceRotation` calls with a rotation value are emitted asynchronously
+   * and coalesced in a microtask; `setDragging` and `filterSelectionToVisibleElements` also
+   * emit synchronously. `add` and `remove` report membership changes made through
+   * `setElements`; visibility filtering reports its change through this event instead.
    */
   change: { selection: Selection };
 
-  /* Elements have been added to the selection */
+  /** Emitted synchronously when `setElements` adds an element to the selection. */
   add: { element: DiagramElement };
 
-  /* Elements have been removed from the selection */
+  /**
+   * Emitted asynchronously when `setElements` removes an element. Notifications are
+   * microtask-debounced, so rapid removals may be coalesced; do not treat this as a
+   * one-event-per-removal log.
+   */
   remove: { element: DiagramElement };
 };
 
@@ -105,6 +112,12 @@ export class Selection extends EventEmitter<SelectionEvents> implements Releasab
     return this.#dragging;
   }
 
+  /**
+   * The baseline snapshot used by selection transforms and `isChanged()`.
+   * It contains the element IDs, individual bounds, and combined bounding box captured
+   * by the most recent `rebaseline()` call. It can differ from the current selection
+   * after a caller changes elements or geometry without rebaselining.
+   */
   get source() {
     return this.#source;
   }
@@ -202,6 +215,14 @@ export class Selection extends EventEmitter<SelectionEvents> implements Releasab
     this.setElements(elements.map(e => this.diagram.lookup(e)));
   }
 
+  /**
+   * Replaces the selected elements and, by default, records them as a new source baseline.
+   * Pass `false` to preserve the existing baseline, for example while temporarily replacing
+   * the selection during a transform operation.
+   *
+   * @param elements - Elements to select; undefined entries are ignored.
+   * @param rebaseline - Whether to capture the resulting selection as the new source snapshot. Defaults to `true`.
+   */
   setElements(elements: ReadonlyArray<DiagramElement | undefined>, rebaseline = true) {
     if (elements.some(e => e?.isEffectivelyLocked())) return;
     this.#forcedRotation = false;
@@ -242,8 +263,10 @@ export class Selection extends EventEmitter<SelectionEvents> implements Releasab
     return parents;
   }
 
-  /* To be used once a transform operation on the selection has been completed.
-   * It resets the source elements that are used for tracking changes.
+  /**
+   * Captures the current selected element IDs and bounds as the source snapshot.
+   * Call this after a transform is complete to make `isChanged()` compare against the
+   * updated geometry; `setElements` does this automatically unless `rebaseline` is `false`.
    */
   rebaseline() {
     this.#source.elementBoxes = this.#elements.map(e => e.bounds);
