@@ -99,6 +99,7 @@ export class Selection extends EventEmitter<SelectionEvents> implements Releasab
       return this.diagram.layers.visible.includes(e.layer);
     });
     this.recalculateBoundingBox();
+    this.rebaseline();
     this.emit('change', { selection: this });
   }
 
