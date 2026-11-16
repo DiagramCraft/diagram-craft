@@ -228,17 +228,18 @@ export class Selection extends EventEmitter<SelectionEvents> implements Releasab
     this.#forcedRotation = false;
 
     const oldElements = [...this.#elements];
-    this.#elements = elements
+    const newElements = elements
       .filter(e => e !== undefined)
       // Ensure we cannot select children in case one of their ancestors is selected
       .filter(e => !getAncestors(e).some(p => elements.includes(p)));
+    this.#elements = newElements;
 
-    this.#elements.forEach(e => {
+    newElements.forEach(e => {
       if (oldElements.includes(e)) return;
       this.emit('add', { element: e });
     });
     oldElements.forEach(e => {
-      if (elements.includes(e)) return;
+      if (newElements.includes(e)) return;
       this.emitAsyncWithDebounce('remove', { element: e });
     });
 
