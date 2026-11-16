@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 export default defineConfig({
   test: {
     environment: 'node',
+    setupFiles: ['../../nodeSetup.ts'],
     include: ['**/*.contract.test.ts'],
     exclude: [
       ...configDefaults.exclude,

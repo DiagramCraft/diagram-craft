@@ -1,13 +1,16 @@
 import nodemailer from 'nodemailer';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
-  createEmailDeliveryConfigFromEnv,
+  NoOpEmailProvider,
   PermanentEmailError,
   RetryableEmailError,
-  ResendEmailProvider,
-  SmtpEmailProvider,
   overrideRecipientDomain
 } from './emailDelivery';
+import {
+  createEmailDeliveryConfigFromEnv,
+  ResendEmailProvider,
+  SmtpEmailProvider
+} from './emailProviders';
 
 const message = {
   to: 'alice@example.com',
@@ -219,5 +222,12 @@ describe('SMTP environment configuration', () => {
     vi.stubEnv('SMTP_PASSWORD', 'smtp-password');
     vi.stubEnv('SMTP_PORT', 'not-a-port');
     expect(() => createEmailDeliveryConfigFromEnv()).toThrow("Invalid SMTP_PORT 'not-a-port'");
+  });
+});
+
+describe('NoOpEmailProvider', () => {
+  it('accepts messages without sending them', async () => {
+    const result = await new NoOpEmailProvider().send(message, new AbortController().signal);
+    expect(result.id).toMatch(/^noop-/);
   });
 });

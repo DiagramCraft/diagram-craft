@@ -4,11 +4,8 @@ import {
 } from '@arch-register/permissions';
 import type { TeamRole } from '@arch-register/permissions';
 import { httpAssert } from '../../utils/httpAssert';
-import { verifyPassword } from '../../utils/password';
+import { getDummyPasswordHash, verifyPassword } from '../../utils/password';
 import { GlobalRole, UserDbResult } from './db/authDatabase';
-
-const DUMMY_PASSWORD_HASH =
-  '$argon2id$v=19$m=65536,t=3,p=4$Px/0E4/Uidg2/8aJ6c08zA$bYyBAz45tuMYV2oXsOeQzlXH1WMNAApkAxtr8wR9pJo';
 
 type RefreshBody = {
   refresh_token?: string;
@@ -55,7 +52,7 @@ export const verifyLoginPassword = async (
   password: string
 ): Promise<boolean> => {
   if (!user?.password_hash || user.auth_provider !== 'local') {
-    await verifyPassword(DUMMY_PASSWORD_HASH, password);
+    await verifyPassword(getDummyPasswordHash(), password);
     return false;
   }
   return verifyPassword(user.password_hash, password);
