@@ -2,9 +2,23 @@ import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import yaml from '@rollup/plugin-yaml';
 import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
+import { readdirSync, readFileSync } from 'node:fs';
 
 const local = rel => fileURLToPath(new URL(`./src/local/stubs/${rel}`, import.meta.url));
 const server = rel => fileURLToPath(new URL(`../server/src/${rel}`, import.meta.url));
+
+// Hash of the migration files, so a browser's persisted demo DB is discarded (and re-seeded) only
+// when the schema changes, not on every build.
+const migrationsHash = () => {
+  const dir = fileURLToPath(new URL('../server/src/db/migrations', import.meta.url));
+  const hash = createHash('sha256');
+  for (const file of readdirSync(dir).sort()) {
+    hash.update(file);
+    hash.update(readFileSync(`${dir}/${file}`));
+  }
+  return hash.digest('hex').slice(0, 12);
+};
 
 // In demo mode the h3/oRPC server runs in a browser Worker. Node-only modules are swapped for
 // browser implementations or inert stubs so the Worker bundle contains no Node dependencies.
@@ -40,7 +54,8 @@ export default defineConfig(({ mode }) => {
     // react-draggable (via react-grid-layout) reads process.env.DRAGGABLE_DEBUG unconditionally,
     // which throws in the browser since process isn't polyfilled without this.
     define: {
-      'process.env': {}
+      'process.env': {},
+      'import.meta.env.VITE_DEMO_BUILD_ID': JSON.stringify(demo ? migrationsHash() : 'dev')
     },
     worker: { format: 'es', plugins: () => [yaml()] },
     resolve: {
