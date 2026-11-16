@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { toolDefinition } from '@tanstack/ai';
 import { useChat, fetchServerSentEvents } from '@tanstack/ai-react';
+import { apiFetch } from '../lib/apiTransport';
 import type { UIMessage } from '@tanstack/ai-react';
 import {
   createEntityChatToolInputSchema,
@@ -55,7 +56,8 @@ export const useAiChat = (
   const connection = useMemo(
     () =>
       fetchServerSentEvents(url, {
-        credentials: 'include' as RequestCredentials
+        credentials: 'include' as RequestCredentials,
+        fetchClient: apiFetch
       }),
     [url]
   );

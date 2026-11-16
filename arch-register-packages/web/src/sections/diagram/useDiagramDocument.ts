@@ -16,6 +16,7 @@ import {
   rememberMarkdownDiagramOriginal,
   updateMarkdownDiagramSessionRecord
 } from '../markdown/markdownDiagramSession';
+import { apiFetch } from '../../lib/apiTransport';
 import { findDiagramFile, loadDiagramContent, saveDiagramContent } from './diagramFileApi';
 import {
   ARCH_REGISTER_PUBLIC_PROVIDER_ID,
@@ -155,7 +156,7 @@ export const useDiagramDocument = ({
                 avatar: config.awareness.avatar()
               };
 
-        const publicSchemasResponse = await fetch(
+        const publicSchemasResponse = await apiFetch(
           `/api/adapters/diagram-craft/${workspaceId}/schemas`
         );
         if (!publicSchemasResponse.ok) throw new Error('Failed to load public schemas');
