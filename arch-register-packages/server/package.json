@@ -15,6 +15,7 @@
     "lint:runtime-boundaries": "node --import tsx ./src/scripts/checkRuntimeTypeBoundaries.ts",
     "query:sql": "node --import tsx ./src/scripts/printEntityQuerySql.ts",
     "test:db-contract": "vitest run --config src/db/contract-tests/vitest.config.ts",
+    "test:db-contract:wasm": "vitest run --config src/db/contract-tests/vitest.wasm.config.ts",
     "test:db-contract:watch": "vitest watch --config src/db/contract-tests/vitest.config.ts"
   },
   "keywords": [],
@@ -56,12 +57,13 @@
     "resend": "^6.27.0",
     "unzipper": "^0.12.5",
     "ws": "^8.21.1",
-    "yaml": "^2.9.0",
     "y-protocols": "^1.0.7",
+    "yaml": "^2.9.0",
     "yjs": "^13.6.31",
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@sqlite.org/sqlite-wasm": "3.54.1-build1",
     "@types/archiver": "^8.0.0",
     "@types/better-sqlite3": "^9.6.0",
     "@types/jsonwebtoken": "^9.0.5",

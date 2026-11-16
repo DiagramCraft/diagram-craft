@@ -100,13 +100,10 @@ run_e2e_api_tests() {
 }
 
 run_database_contract_tests() {
-  if [ "$USE_POSTGRES" = true ]; then
-    run_step "Running Arch Register DB contract suite with SQLite and PostgreSQL..." \
-      pnpm --filter @arch-register/server test:db-contract
-  else
-    run_step "Running Arch Register DB contract suite with SQLite..." \
-      pnpm --filter @arch-register/server test:db-contract
-  fi
+  run_step "Running Arch Register DB contract suite with SQLite/Postgres..." \
+    pnpm --filter @arch-register/server test:db-contract
+  run_step "Running Arch Register DB contract suite with SQLite WASM..." \
+    pnpm --filter @arch-register/server test:db-contract:wasm
 }
 
 run_e2e_ui_tests() {
