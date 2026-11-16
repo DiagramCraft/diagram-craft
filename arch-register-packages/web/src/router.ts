@@ -1,4 +1,5 @@
-import { createRouter } from '@tanstack/react-router';
+import { createHashHistory, createRouter } from '@tanstack/react-router';
+import { isDemoMode } from './lib/demoMode';
 import { routeTree } from './routes/routes';
 import { queryClient } from './lib/queryClient';
 import type { RouterContext } from './routerContext';
@@ -6,6 +7,8 @@ import { RoutePendingComponent } from './routes/RoutePendingComponent';
 
 export const router = createRouter({
   routeTree,
+  // The static demo is served from any path with no SPA fallback, so route via the URL hash
+  history: isDemoMode ? createHashHistory() : undefined,
   context: {
     queryClient,
     auth: {

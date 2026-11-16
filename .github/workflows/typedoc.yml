@@ -45,12 +45,17 @@ jobs:
       - name: Build
         run: VITE_FS_PROVIDER=none VITE_STENCIL_ROOT=. pnpm run client:build
 
+      - name: Build Arch Register demo
+        run: VITE_DEMO_BASE=/diagram-craft/arch-register-demo/ pnpm run ar:demo:build
+
       - name: Copy files
         run: |
           mkdir -p ./output/typedoc
           cp -r ./docs-site/build/* ./output/typedoc
           mkdir -p ./output/typedoc/app
           cp -r ./packages/main/dist/* ./output/typedoc/app
+          mkdir -p ./output/typedoc/arch-register-demo
+          cp -r ./arch-register-packages/web/dist/* ./output/typedoc/arch-register-demo
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

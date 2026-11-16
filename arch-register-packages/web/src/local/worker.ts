@@ -1,8 +1,8 @@
-import { Buffer } from 'buffer';
+import { installBuffer } from './installBuffer';
 import type { FromWorkerMessage, MessagePortLike } from './workerProtocol';
 
 // Server code reads process.env / Buffer at import time, so shim before importing it
-(globalThis as Record<string, unknown>)['Buffer'] ??= Buffer;
+installBuffer();
 (globalThis as Record<string, unknown>)['process'] ??= {
   env: {},
   versions: {},

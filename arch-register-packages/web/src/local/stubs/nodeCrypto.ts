@@ -1,3 +1,4 @@
+import { sha1 } from '@noble/hashes/legacy.js';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { hmac } from '@noble/hashes/hmac.js';
 import { bytesToHex } from '@noble/hashes/utils.js';
@@ -34,14 +35,23 @@ const collect = (finish: (all: Uint8Array) => Uint8Array): HashLike => {
   return self;
 };
 
+// sha1 is used for deterministic ids (schema key prefixes, workspace remapping), not for security
+const hashes = { sha1, sha256 } as const;
+
+const hashFor = (algorithm: string) => {
+  const hash = hashes[algorithm as keyof typeof hashes];
+  if (!hash) throw new Error(`Hash ${algorithm} is not supported in the demo`);
+  return hash;
+};
+
 export const createHash = (algorithm: string): HashLike => {
-  if (algorithm !== 'sha256') throw new Error(`Hash ${algorithm} is not supported in the demo`);
-  return collect(all => sha256(all));
+  const hash = hashFor(algorithm);
+  return collect(all => hash(all));
 };
 
 export const createHmac = (algorithm: string, key: string | Uint8Array): HashLike => {
-  if (algorithm !== 'sha256') throw new Error(`HMAC ${algorithm} is not supported in the demo`);
-  return collect(all => hmac(sha256, toBytes(key), all));
+  const hash = hashFor(algorithm);
+  return collect(all => hmac(hash, toBytes(key), all));
 };
 
 const unsupported = (name: string) => () => {

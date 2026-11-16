@@ -12,6 +12,7 @@ const sidebars: SidebarsConfig = {
       label: 'Getting Started',
       items: [
         'getting-started/intro',
+        'getting-started/online-demo',
         'getting-started/first-workspace',
         'getting-started/first-entity',
         'getting-started/first-project-diagram',

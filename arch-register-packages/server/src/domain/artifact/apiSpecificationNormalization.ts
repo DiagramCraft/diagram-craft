@@ -1,5 +1,4 @@
 import { createHash } from 'node:crypto';
-import { Parser as AsyncApiParser } from '@asyncapi/parser';
 import { validate as validateOpenApi } from '@scalar/openapi-parser';
 import { parseDocument } from 'yaml';
 import type {
@@ -314,6 +313,8 @@ const runAsyncApiValidation = async (
 ) => {
   if (containsExternalReference(root)) return;
   try {
+    // Loaded on demand: the parser (and its schema/ajv dependencies) is large and rarely used
+    const { Parser: AsyncApiParser } = await import('@asyncapi/parser');
     const parser = new AsyncApiParser();
     const results = await parser.validate(root as never);
     for (const result of results) {
