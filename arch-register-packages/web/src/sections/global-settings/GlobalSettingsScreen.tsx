@@ -64,11 +64,7 @@ export const GlobalSettingsScreen = () => {
   const meta = SECTION_META[section];
 
   const isDemoSection = section === 'demo' && isDemoMode;
-  if (
-    section !== 'global-permissions' &&
-    !isDemoSection &&
-    (!authConfigLoaded || !canManageUsers)
-  )
+  if (section !== 'global-permissions' && !isDemoSection && (!authConfigLoaded || !canManageUsers))
     return null;
 
   return (
