@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { useNavigate, useRouter, useSearch } from '@tanstack/react-router';
 import { useAuth } from '../auth/AuthContext';
 import { Banner } from '../components/Banner';
 import { LoadingState } from '../components/LoadingState';
@@ -17,6 +17,7 @@ export const LoginScreen = () => {
   const { login, loginWithOidc, isLoading } = useAuth();
   const { data: authConfig, isLoading: isLoadingConfig } = useAuthConfig();
   const navigate = useNavigate();
+  const router = useRouter();
   const search = useSearch({ from: '/login' });
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -44,10 +45,10 @@ export const LoginScreen = () => {
     setIsSubmitting(true);
     try {
       await login(username, password);
-      // Redirect to the original destination or home
-      // A full-page redirect would restart the in-browser demo server, so navigate in-app instead
-      if (search.redirect && !isDemoMode) {
-        window.location.href = search.redirect;
+      // Redirect to the original destination or home, via the router (a full-page load would
+      // restart the in-browser demo server)
+      if (search.redirect) {
+        router.history.push(search.redirect);
       } else {
         navigate({ to: '/' });
       }

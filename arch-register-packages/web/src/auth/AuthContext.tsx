@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { AuthorizationDataProvider } from './AuthorizationDataContext';
 import type { User, GlobalPermission, GlobalRole, WorkspaceTeam, AuthBaseData } from './types';
+import { isDemoMode } from '../lib/demoMode';
 import { formatThrottledLoginMessage } from './loginThrottleMessage';
 import {
   clearAccessTokenExpiry,
@@ -201,15 +202,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return registerSessionExpiredHandler(({ redirectTo, reason }) => {
       clearAuthState();
 
-      if (window.location.pathname === '/login') {
+      // In demo mode the router uses hash history, so the route lives in the hash and a full page
+      // load would restart the in-browser server
+      const routerPath = isDemoMode ? window.location.hash.replace(/^#/, '') || '/' : undefined;
+      const currentPath = routerPath ?? window.location.pathname;
+      if (currentPath === '/login' || currentPath.startsWith('/login?')) {
         return;
       }
 
       const params = new URLSearchParams({
-        redirect: redirectTo,
+        redirect: routerPath ?? redirectTo,
         reason
       });
-      window.location.assign(`/login?${params.toString()}`);
+      if (isDemoMode) {
+        window.location.hash = `/login?${params.toString()}`;
+      } else {
+        window.location.assign(`/login?${params.toString()}`);
+      }
     });
   }, [clearAuthState]);
 
