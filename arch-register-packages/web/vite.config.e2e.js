@@ -2,6 +2,9 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import yaml from '@rollup/plugin-yaml';
 
+// index.html references %VITE_DEMO_MODE%; default it so Vite doesn't warn when it is unset.
+process.env['VITE_DEMO_MODE'] ??= 'false';
+
 // Dedicated Vite config for e2e tests.
 // Uses port 5175 (avoids conflict with the regular dev server on 5174)
 // and proxies API traffic to the e2e test server on port 3011.

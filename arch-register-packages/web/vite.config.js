@@ -42,6 +42,9 @@ const demoAliases = [
   { find: /^(unzipper|openid-client)$/, replacement: local('default-export.ts') }
 ];
 
+// index.html references %VITE_DEMO_MODE%; default it so Vite doesn't warn when it is unset.
+process.env['VITE_DEMO_MODE'] ??= 'false';
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   const demo = (env['VITE_DEMO_MODE'] ?? process.env['VITE_DEMO_MODE']) === 'true';
