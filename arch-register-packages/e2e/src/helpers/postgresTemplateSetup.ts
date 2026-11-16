@@ -9,6 +9,7 @@ import {
   dropPostgresDatabase,
   withDatabaseName
 } from '@arch-register/server/db/testSupport/provisionDatabase';
+import '@arch-register/server/nodeSetup';
 import { seedMinimal } from './seedHelper';
 
 export type PgTemplates = { empty: string; minimal: string };
