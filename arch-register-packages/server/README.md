@@ -149,6 +149,10 @@ It signs in automatically as `globaladmin`; collaboration and AI are disabled an
 Node-only modules are replaced via aliases in `web/vite.config.js` (stubs in `web/src/local/stubs`), and SQL
 files are bundled through `src/db/sqliteSqlSource.browser.ts`.
 
+Run it from the repo root with `pnpm ar:demo:dev`, or build and serve the static version with
+`pnpm ar:demo:build` and `pnpm ar:demo:preview`. The Worker migrates and seeds the database on every start, which takes
+about a second and is logged to the console as `[demo] server ready in ...`.
+
 Run the SQLite contract tests against the shim:
 
 ```bash

@@ -7,6 +7,9 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
+    "demo:dev": "VITE_DEMO_MODE=true vite",
+    "demo:build": "VITE_DEMO_MODE=true vite build",
+    "demo:preview": "VITE_DEMO_MODE=true vite preview --outDir dist",
     "storybook": "storybook dev -p 6007 --no-open",
     "storybook:start": "storybook dev -p 6007 --no-open",
     "build-storybook": "storybook build"

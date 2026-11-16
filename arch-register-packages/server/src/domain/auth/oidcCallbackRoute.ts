@@ -20,7 +20,8 @@ export const createOidcCallbackRoute = (db: DatabaseAdapter) => {
     },
     5 * 60 * 1000
   );
-  cleanupTimer.unref();
+  // Don't keep the Node process alive for cleanup; browser timers (demo Worker) have no unref
+  cleanupTimer.unref?.();
 
   const app = new H3();
 

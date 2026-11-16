@@ -11,6 +11,7 @@ const server = rel => fileURLToPath(new URL(`../server/src/${rel}`, import.meta.
 const demoAliases = [
   { find: /^better-sqlite3$/, replacement: server('db/wasm/betterSqlite3Shim.ts') },
   { find: /^\.\/sqliteSqlSource$/, replacement: server('db/sqliteSqlSource.browser.ts') },
+  { find: /^node:async_hooks$/, replacement: local('nodeAsyncHooks.ts') },
   { find: /^node:path$/, replacement: local('nodePath.ts') },
   { find: /^node:crypto$/, replacement: local('nodeCrypto.ts') },
   { find: /^node:url$/, replacement: local('nodeUrl.ts') },
@@ -33,6 +34,8 @@ export default defineConfig(({ mode }) => {
   const arServerPort = env['VITE_AR_SERVER_PORT'] ?? process.env['VITE_AR_SERVER_PORT'] ?? '3010';
 
   return {
+    // The static demo is hosted under an arbitrary path (e.g. a GitHub Pages subpath)
+    base: demo ? (env['VITE_DEMO_BASE'] ?? process.env['VITE_DEMO_BASE'] ?? './') : '/',
     plugins: [react(), yaml()],
     // react-draggable (via react-grid-layout) reads process.env.DRAGGABLE_DEBUG unconditionally,
     // which throws in the browser since process isn't polyfilled without this.

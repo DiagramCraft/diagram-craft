@@ -11,24 +11,42 @@ import { createApp } from '@arch-register/server/app';
 
 /**
  * Builds the in-browser server: demo auth services, WASM SQLite (in-memory, via the
- * `better-sqlite3` alias) and in-memory storage, seeded with the demo dataset.
+ * `better-sqlite3` alias) and in-memory storage, migrated and seeded with the demo dataset.
  * Order matters: demo mode and auth services must be configured before seeding.
  */
 export const createLocalServer = async () => {
+  const timings: [string, number][] = [];
+  const startedAt = performance.now();
+  let phaseStart = startedAt;
+  const lap = (name: string) => {
+    const now = performance.now();
+    timings.push([name, now - phaseStart]);
+    phaseStart = now;
+  };
+
   configureDemoMode(true);
   configureAuthServices({
     passwordHasher: demoPasswordHasher,
     tokenService: createDemoTokenService()
   });
 
-  const db = new SqliteDatabase(':memory:');
   const storage = new MemoryStorage();
+  const db = new SqliteDatabase(':memory:');
+  lap('create schema + migrations');
+
   await seedBootstrapData(db, storage, { dataset: 'demo' });
+  lap('seed');
 
   const { app, dispose } = createApp(db, storage, {
     // AI is disabled in the demo
     routeOverrides: { aiChat: { resolveAiConfigImpl: async () => null } }
   });
+  lap('create app');
+
+  const summary = timings.map(([name, ms]) => `${name}: ${ms.toFixed(0)} ms`).join(', ');
+  console.info(
+    `[demo] server ready in ${(performance.now() - startedAt).toFixed(0)} ms (${summary})`
+  );
 
   return { fetch: (req: Request) => app.fetch(req), db, storage, dispose };
 };
