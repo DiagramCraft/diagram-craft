@@ -1,9 +1,9 @@
-import { readFileSync } from 'node:fs';
 import Database from 'better-sqlite3';
 import { instrumentSqliteDatabase } from '../dev/devTrace';
 import { isDevTracingEnabled } from '../domain/dev/devMode';
 import type { ArtifactProjectionDatabases, DatabaseAdapter } from './database';
 import { runSqliteMigrations } from './migrate';
+import { readSqliteSchema } from './sqliteSqlSource';
 import { SqliteAuditDatabase } from '../domain/audit/db/sqliteAudit';
 import { SqliteCatalogDatabase } from '../domain/catalog/db/sqliteCatalog';
 import { SqliteAuthDatabase } from '../domain/auth/db/sqliteAuth';
@@ -261,8 +261,7 @@ export class SqliteDatabase implements DatabaseAdapter {
       .get();
 
     if (!tableExists) {
-      const schemaSql = readFileSync(new URL('./schema.sqlite.sql', import.meta.url), 'utf8');
-      this.db.exec(schemaSql);
+      this.db.exec(readSqliteSchema());
     }
   }
 }

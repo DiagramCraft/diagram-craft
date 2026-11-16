@@ -25,6 +25,7 @@ import { DialogContextProvider } from '@diagram-craft/app-components/Dialog';
 import { PortalContextProvider } from '@diagram-craft/app-components/PortalContext';
 import { GlobalErrorBoundary } from './components/GlobalErrorBoundary';
 import { DevTools } from './dev/DevTools';
+import { isDemoMode } from './lib/demoMode';
 
 const InnerApp = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -77,18 +78,26 @@ const InnerApp = () => {
   );
 };
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <QueryClientProvider client={queryClient}>
-    <GlobalErrorBoundary>
-      <AuthProvider>
-        <WorkspaceAuthorizationProvider>
-          <DialogContextProvider onDialogShow={() => {}} onDialogHide={() => {}}>
-            <PortalContextProvider>
-              <InnerApp />
-            </PortalContextProvider>
-          </DialogContextProvider>
-        </WorkspaceAuthorizationProvider>
-      </AuthProvider>
-    </GlobalErrorBoundary>
-  </QueryClientProvider>
-);
+const renderApp = () =>
+  ReactDOM.createRoot(document.getElementById('root')!).render(
+    <QueryClientProvider client={queryClient}>
+      <GlobalErrorBoundary>
+        <AuthProvider>
+          <WorkspaceAuthorizationProvider>
+            <DialogContextProvider onDialogShow={() => {}} onDialogHide={() => {}}>
+              <PortalContextProvider>
+                <InnerApp />
+              </PortalContextProvider>
+            </DialogContextProvider>
+          </WorkspaceAuthorizationProvider>
+        </AuthProvider>
+      </GlobalErrorBoundary>
+    </QueryClientProvider>
+  );
+
+if (isDemoMode) {
+  // The in-browser server must be up before AuthProvider fetches /api/auth/me
+  void import('./local/startLocalServer').then(m => m.startLocalServer()).then(renderApp);
+} else {
+  renderApp();
+}

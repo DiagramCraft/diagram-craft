@@ -1,4 +1,5 @@
 import { bootstrapDiagramCraft } from '@diagram-craft/main/embed/bootstrapDiagramCraft';
+import { isDemoMode } from './lib/demoMode';
 
 let _currentWorkspaceId: string | undefined;
 
@@ -7,10 +8,12 @@ export const initializeDiagramCraft = (workspaceId: string) => {
   const wsUrl = `${wsProtocol}//${window.location.host}/ws`;
 
   const instance = bootstrapDiagramCraft({
-    collaboration: { backend: 'yjs', url: wsUrl }
+    // The demo has no collaboration server; documents are saved explicitly
+    collaboration: isDemoMode ? { backend: 'noop' } : { backend: 'yjs', url: wsUrl }
   });
 
-  if (workspaceId !== _currentWorkspaceId) {
+  // AI is disabled in the demo
+  if (!isDemoMode && workspaceId !== _currentWorkspaceId) {
     instance.updateConfig({
       ai: { provider: 'remote', endpoint: `/api/adapters/diagram-craft/${workspaceId}` }
     });
