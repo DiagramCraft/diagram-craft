@@ -7,6 +7,7 @@ import {
   integrationClientContracts
 } from '@arch-register/api-types/contractSurfaceManifest';
 import { fetchWithAuthResponse } from '../auth/authClient';
+import { apiFetch } from './apiTransport';
 import { resolveApiUrl } from './apiUrl';
 import { normalizeApiError } from './http';
 import {
@@ -117,7 +118,7 @@ const mergeClientSurfaces = (
 export const publicCatalogOpenAPISpecUrl = () => resolveORPCBaseUrl('/api/public/v1/openapi.json');
 
 export const publicCatalogRequest = async <T>(path: string, init?: RequestInit): Promise<T> => {
-  const response = await fetch(resolveApiUrl(`${PUBLIC_CATALOG_API_PATH}${path}`), {
+  const response = await apiFetch(resolveApiUrl(`${PUBLIC_CATALOG_API_PATH}${path}`), {
     ...init,
     headers: {
       accept: 'application/json',

@@ -1,3 +1,4 @@
+import { apiFetch } from '../lib/apiTransport';
 import { resolveApiUrl } from '../lib/apiUrl';
 
 type RefreshTokenResponse = {
@@ -40,7 +41,7 @@ const notifySessionExpired = () => {
 };
 
 const fetchWithCredentials = (target: AuthRequestTarget, init?: RequestInit) =>
-  fetch(toRequestUrl(target), { ...init, credentials: 'include' });
+  apiFetch(toRequestUrl(target), { ...init, credentials: 'include' });
 
 const throwIfAborted = (signal?: AbortSignal) => {
   if (signal?.aborted) {
