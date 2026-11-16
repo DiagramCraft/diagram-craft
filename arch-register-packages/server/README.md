@@ -141,6 +141,14 @@ pnpm --filter @arch-register/server test:db-contract
 It is for the standalone browser demo only and is swapped in through a bundler alias (`better-sqlite3` → the shim);
 the regular server never loads it. The database path is ignored and data is never persisted.
 
+### Browser demo
+
+With `VITE_DEMO_MODE=true` the web app (`pnpm --filter @arch-register/web dev` or `build`) runs this server in a
+browser Worker (`web/src/local/worker.ts`): WASM SQLite, in-memory storage, demo auth services and the demo dataset.
+It signs in automatically as `globaladmin`; collaboration and AI are disabled and no `/api` requests leave the browser.
+Node-only modules are replaced via aliases in `web/vite.config.js` (stubs in `web/src/local/stubs`), and SQL
+files are bundled through `src/db/sqliteSqlSource.browser.ts`.
+
 Run the SQLite contract tests against the shim:
 
 ```bash

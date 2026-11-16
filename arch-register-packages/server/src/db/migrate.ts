@@ -1,9 +1,9 @@
-import { readdirSync, readFileSync } from 'node:fs';
 import { readdir, readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Database as SqliteDatabase } from 'better-sqlite3';
 import type { PostgresSqlClient } from './postgresBase';
+import { readSqliteMigrations } from './sqliteSqlSource';
 import { createLogger } from '../utils/logger';
 
 const migrationsDir = join(dirname(fileURLToPath(import.meta.url)), 'migrations');
@@ -24,21 +24,9 @@ export const runSqliteMigrations = (db: SqliteDatabase): void => {
     )
   );
 
-  let files: string[];
-  try {
-    files = readdirSync(migrationsDir);
-  } catch {
-    return;
-  }
+  const pending = readSqliteMigrations().filter(m => !applied.has(m.version));
 
-  const pending = files
-    .filter(f => f.endsWith('.sqlite.sql'))
-    .sort()
-    .filter(f => !applied.has(f.replace('.sqlite.sql', '')));
-
-  for (const file of pending) {
-    const version = file.replace('.sqlite.sql', '');
-    const sql = readFileSync(join(migrationsDir, file), 'utf8');
+  for (const { version, sql } of pending) {
     db.transaction(() => {
       db.exec(sql);
       db.prepare('INSERT INTO schema_migrations (version, applied_at) VALUES (?, ?)').run(

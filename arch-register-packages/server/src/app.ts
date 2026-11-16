@@ -1,4 +1,3 @@
-import { readFile } from 'node:fs/promises';
 import { defineHandler, getMethod, getRequestPath, H3, handleCors } from 'h3';
 import type { DatabaseAdapter } from './db/database';
 import type { StorageAdapter } from './storage/storage';
@@ -75,6 +74,8 @@ export const createApp = (
   app.use(
     '/openapi.yaml',
     defineHandler(async () => {
+      // Loaded lazily so the browser demo Worker never needs node:fs
+      const { readFile } = await import('node:fs/promises');
       const body = await readFile(openApiSpecUrl, 'utf8');
       return new Response(body, {
         headers: {

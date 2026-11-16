@@ -1,0 +1,24 @@
+import stub from './empty';
+export default stub;
+export const readFile = (...args: unknown[]) =>
+  (stub as unknown as (...a: unknown[]) => unknown)(...args);
+export const readdir = (...args: unknown[]) =>
+  (stub as unknown as (...a: unknown[]) => unknown)(...args);
+export const stat = (...args: unknown[]) =>
+  (stub as unknown as (...a: unknown[]) => unknown)(...args);
+export const unlink = (...args: unknown[]) =>
+  (stub as unknown as (...a: unknown[]) => unknown)(...args);
+export const mkdir = (...args: unknown[]) =>
+  (stub as unknown as (...a: unknown[]) => unknown)(...args);
+export const mkdtemp = (...args: unknown[]) =>
+  (stub as unknown as (...a: unknown[]) => unknown)(...args);
+export const rm = (...args: unknown[]) =>
+  (stub as unknown as (...a: unknown[]) => unknown)(...args);
+export const writeFile = (...args: unknown[]) =>
+  (stub as unknown as (...a: unknown[]) => unknown)(...args);
+export const utimes = (...args: unknown[]) =>
+  (stub as unknown as (...a: unknown[]) => unknown)(...args);
+export const access = (...args: unknown[]) =>
+  (stub as unknown as (...a: unknown[]) => unknown)(...args);
+export const rename = (...args: unknown[]) =>
+  (stub as unknown as (...a: unknown[]) => unknown)(...args);
