@@ -41,13 +41,81 @@ describe('Line', () => {
     expect(Line.isHorizontal(Line.of({ x: 0, y: 0 }, { x: 10, y: 10 }))).toBe(false);
   });
 
-  test('intersection', () => {
-    expect(
-      Line.intersection(
-        Line.of({ x: 0, y: 0 }, { x: 10, y: 0 }),
-        Line.of({ x: 5, y: -5 }, { x: 5, y: 5 })
-      )
-    ).toStrictEqual({ x: 5, y: 0 });
+  describe('intersection', () => {
+    const horizontal = Line.of({ x: 0, y: 0 }, { x: 10, y: 0 });
+
+    test('finds an intersection within both segments', () => {
+      expect(Line.intersection(horizontal, Line.of({ x: 5, y: -5 }, { x: 5, y: 5 }))).toStrictEqual(
+        {
+          x: 5,
+          y: 0
+        }
+      );
+    });
+
+    test('returns an intersection at a shared endpoint', () => {
+      expect(
+        Line.intersection(horizontal, Line.of({ x: 10, y: -5 }, { x: 10, y: 5 }))
+      ).toStrictEqual({
+        x: 10,
+        y: 0
+      });
+    });
+
+    test('returns undefined when segments do not reach the intersection', () => {
+      expect(
+        Line.intersection(horizontal, Line.of({ x: 15, y: -5 }, { x: 15, y: -1 }))
+      ).toBeUndefined();
+    });
+
+    test('finds intersections outside the segments when extended', () => {
+      expect(
+        Line.intersection(horizontal, Line.of({ x: 15, y: -5 }, { x: 15, y: -1 }), true)
+      ).toStrictEqual({
+        x: 15,
+        y: 0
+      });
+    });
+
+    test('returns undefined for parallel lines when extended', () => {
+      expect(
+        Line.intersection(horizontal, Line.of({ x: 0, y: 1 }, { x: 10, y: 1 }), true)
+      ).toBeUndefined();
+      expect(Line.intersection(horizontal, horizontal, true)).toBeUndefined();
+    });
+  });
+
+  describe('projectPoint', () => {
+    const line = Line.of({ x: 0, y: 0 }, { x: 10, y: 0 });
+
+    test('projects onto the segment', () => {
+      expect(Line.projectPoint(line, { x: 5, y: 4 })).toStrictEqual({ x: 5, y: 0 });
+    });
+
+    test('clamps projections to the segment endpoints', () => {
+      expect(Line.projectPoint(line, { x: -5, y: 4 })).toStrictEqual(line.from);
+      expect(Line.projectPoint(line, { x: 15, y: 4 })).toStrictEqual(line.to);
+    });
+  });
+
+  describe('isOn', () => {
+    const line = Line.of({ x: 0, y: 0 }, { x: 10, y: 0 });
+
+    test('returns true for a point on the segment', () => {
+      expect(Line.isOn({ x: 5, y: 0 }, line)).toBe(true);
+    });
+
+    test('returns false for a point away from the segment', () => {
+      expect(Line.isOn({ x: 5, y: 1 }, line)).toBe(false);
+      expect(Line.isOn({ x: 15, y: 0 }, line)).toBe(false);
+    });
+  });
+
+  describe('isVertical', () => {
+    test('returns true for a vertical line and false for a diagonal line', () => {
+      expect(Line.isVertical(Line.of({ x: 5, y: 0 }, { x: 5, y: 10 }))).toBe(true);
+      expect(Line.isVertical(Line.of({ x: 0, y: 0 }, { x: 10, y: 10 }))).toBe(false);
+    });
   });
 
   describe('length', () => {
@@ -159,6 +227,21 @@ describe('Line', () => {
       const l2 = Line.of({ x: 5, y: 5 }, { x: 15, y: 15 });
 
       const expected = Line.of({ x: 5, y: 5 }, { x: 10, y: 10 });
+      assertLinesEqual(Line.overlap(l1, l2), expected);
+    });
+
+    test('should not report short separated parallel lines as overlapping', () => {
+      const l1 = Line.of({ x: 0, y: 0 }, { x: 0.001, y: 0 });
+      const l2 = Line.of({ x: 0, y: 1 }, { x: 0.001, y: 1 });
+
+      expect(Line.overlap(l1, l2)).toBeUndefined();
+    });
+
+    test('should find overlap between short collinear lines', () => {
+      const l1 = Line.of({ x: 0, y: 0 }, { x: 0.003, y: 0 });
+      const l2 = Line.of({ x: 0.001, y: 0 }, { x: 0.004, y: 0 });
+
+      const expected = Line.of({ x: 0.001, y: 0 }, { x: 0.003, y: 0 });
       assertLinesEqual(Line.overlap(l1, l2), expected);
     });
 

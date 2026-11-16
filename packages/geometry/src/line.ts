@@ -9,12 +9,16 @@
  * const line = Line.of({ x: 0, y: 0 }, { x: 100, y: 100 });
  *
  * // Find intersection of two lines
- * const intersection = Line.intersection(line1, line2);
+ * const crossingLine = Line.of({ x: 0, y: 100 }, { x: 100, y: 0 });
+ * const intersection = Line.intersection(line, crossingLine);
  *
  * // Project a point onto a line
+ * const mousePosition = { x: 25, y: 50 };
  * const projected = Line.projectPoint(line, mousePosition);
  *
  * // Check if lines overlap
+ * const edge1 = Line.of({ x: 0, y: 0 }, { x: 100, y: 0 });
+ * const edge2 = Line.of({ x: 50, y: 0 }, { x: 150, y: 0 });
  * const overlap = Line.overlap(edge1, edge2);
  * if (overlap) {
  *   console.log('Lines overlap by', Line.length(overlap));
@@ -161,16 +165,18 @@ export const Line = {
    * @returns The intersection point, or undefined if the lines don't intersect
    */
   intersection: (l1: Line, l2: Line, extend = false) => {
+    const denominator =
+      (l1.from.x - l1.to.x) * (l2.from.y - l2.to.y) - (l1.from.y - l1.to.y) * (l2.from.x - l2.to.x);
+    if (denominator === 0) return undefined;
+
     const t =
       ((l1.from.x - l2.from.x) * (l2.from.y - l2.to.y) -
         (l1.from.y - l2.from.y) * (l2.from.x - l2.to.x)) /
-      ((l1.from.x - l1.to.x) * (l2.from.y - l2.to.y) -
-        (l1.from.y - l1.to.y) * (l2.from.x - l2.to.x));
+      denominator;
     const u =
       ((l1.from.x - l2.from.x) * (l1.from.y - l1.to.y) -
         (l1.from.y - l2.from.y) * (l1.from.x - l1.to.x)) /
-      ((l1.from.x - l1.to.x) * (l2.from.y - l2.to.y) -
-        (l1.from.y - l1.to.y) * (l2.from.x - l2.to.x));
+      denominator;
 
     if (Number.isNaN(t) || Number.isNaN(u)) return undefined;
     if (!extend && (t < 0 || t > 1 || u < 0 || u > 1)) return undefined;
@@ -196,7 +202,7 @@ export const Line = {
     const cross1 = Vector.crossProduct(v1, v2);
     const cross2 = Vector.crossProduct(v1, v3);
 
-    if (!isSame(cross1, 0) || !isSame(cross2, 0)) return undefined;
+    if (cross1 !== 0 || cross2 !== 0) return undefined;
     if (Line.length(l1) === 0 || Line.length(l2) === 0) return undefined;
 
     // Project points onto first line
