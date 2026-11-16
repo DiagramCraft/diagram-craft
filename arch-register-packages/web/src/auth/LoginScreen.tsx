@@ -254,9 +254,7 @@ export const LoginScreen = () => {
                         clearError();
                       }}
                     >
-                      <span className={styles.demoRole}>
-                        {u.role}
-                      </span>
+                      <span className={styles.demoRole}>{u.role}</span>
                       <span className={styles.demoCred}>
                         {u.username} / {u.password}
                       </span>
