@@ -17,6 +17,12 @@ const keyOf = (workspace: string, projectId: string, fileId: string) =>
  */
 export class MemoryStorage implements StorageAdapter {
   private readonly files = new Map<string, Buffer>();
+  private version = 0;
+
+  /** Increases on every mutation; lets the browser demo detect when a snapshot is stale. */
+  changeCount() {
+    return this.version;
+  }
 
   async exists(workspace: string, projectId: string, fileId: string) {
     return this.files.has(keyOf(workspace, projectId, fileId));
@@ -31,17 +37,22 @@ export class MemoryStorage implements StorageAdapter {
 
   async write(workspace: string, projectId: string, fileId: string, content: Buffer) {
     this.files.set(keyOf(workspace, projectId, fileId), Buffer.from(content));
+    this.version++;
   }
 
   async delete(workspace: string, projectId: string, fileId: string) {
     const key = keyOf(workspace, projectId, fileId);
     if (!this.files.delete(key)) throw notFound(key);
+    this.version++;
   }
 
   async deleteAll(workspace: string, projectId: string) {
     const prefix = `${keyOf(workspace, projectId, '')}`;
     for (const key of [...this.files.keys()]) {
-      if (key.startsWith(prefix)) this.files.delete(key);
+      if (key.startsWith(prefix)) {
+        this.files.delete(key);
+        this.version++;
+      }
     }
   }
 
@@ -59,12 +70,14 @@ export class MemoryStorage implements StorageAdapter {
       commit: async () => {
         previous = this.files.get(key);
         this.files.set(key, staged);
+        this.version++;
         committed = true;
       },
       rollback: async () => {
         if (!committed) return;
         if (previous) this.files.set(key, previous);
         else this.files.delete(key);
+        this.version++;
       },
       finalize: async () => {}
     };
@@ -82,10 +95,14 @@ export class MemoryStorage implements StorageAdapter {
       commit: async () => {
         previous = this.files.get(key);
         this.files.delete(key);
+        this.version++;
         committed = true;
       },
       rollback: async () => {
-        if (committed && previous) this.files.set(key, previous);
+        if (committed && previous) {
+          this.files.set(key, previous);
+          this.version++;
+        }
       },
       finalize: async () => {}
     };
@@ -105,6 +122,7 @@ export class MemoryStorage implements StorageAdapter {
 
   importSnapshot(snapshot: Record<string, Uint8Array>) {
     this.files.clear();
+    this.version++;
     for (const [key, content] of Object.entries(snapshot)) {
       this.files.set(key, Buffer.from(content));
     }

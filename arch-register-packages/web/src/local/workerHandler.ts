@@ -12,7 +12,12 @@ type Handler = (request: Request) => Response | Promise<Response>;
  * Serves requests arriving on `port` using `handler` (typically `app.fetch` of the h3 app),
  * streaming response bodies back chunk by chunk.
  */
-export const serveRequests = (port: MessagePortLike, handler: Handler) => {
+export const serveRequests = (
+  port: MessagePortLike,
+  handler: Handler,
+  /** Called after each request completes (successfully or not) */
+  onSettled?: () => void
+) => {
   const inFlight = new Map<number, AbortController>();
   const post = (msg: FromWorkerMessage, transfer: Transferable[] = []) =>
     port.postMessage(msg, transfer);
@@ -63,6 +68,7 @@ export const serveRequests = (port: MessagePortLike, handler: Handler) => {
       }
     } finally {
       inFlight.delete(msg.id);
+      onSettled?.();
     }
   };
 

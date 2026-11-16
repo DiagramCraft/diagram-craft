@@ -10,7 +10,10 @@ diagrams straight away.
 
 The demo is meant for exploring. Keep these limits in mind:
 
-- **Data stays in your browser tab.** Changes are lost when you reload the page.
+- **Data stays in your browser.** Changes are saved to this browser a couple of seconds after you make them, so they
+  survive a reload. They are never sent anywhere, and clearing site data removes them. Use **Global Settings → Demo
+  data → Reset demo** to start over with the sample data. If you open the demo in several tabs, the tab that saves last
+  wins.
 - **No real-time collaboration.** Diagrams are saved explicitly.
 - **No AI assistant, email, webhooks, automation or background jobs.**
 - **No real security.** Sign-in is automatic and passwords are not protected, so do not enter sensitive data.
@@ -33,6 +36,7 @@ pnpm ar:demo:build      # builds the static site into arch-register-packages/web
 pnpm ar:demo:preview    # serves the build locally
 ```
 
-The sample workspace is created in your browser each time the page loads, which takes about a second. To host the
+The sample workspace is created in your browser on first load (about a second) and restored from the saved copy
+afterwards. A saved copy from an older build of the demo is discarded automatically. To host the
 output under a subpath, set `VITE_DEMO_BASE` when building, for example
 `VITE_DEMO_BASE=/my/path/ pnpm ar:demo:build`. Without it, the build works from any location.

@@ -9,7 +9,16 @@ export type WorkerRequestMessage = {
 
 export type WorkerAbortMessage = { type: 'abort'; id: number };
 
-export type ToWorkerMessage = WorkerRequestMessage | WorkerAbortMessage;
+/** Save any unsaved changes now (page is being hidden or closed) */
+export type WorkerFlushMessage = { type: 'flush' };
+/** Discard the persisted snapshot and stop saving; the page reloads afterwards */
+export type WorkerResetMessage = { type: 'reset' };
+
+export type ToWorkerMessage =
+  | WorkerRequestMessage
+  | WorkerAbortMessage
+  | WorkerFlushMessage
+  | WorkerResetMessage;
 
 export type WorkerReadyMessage = { type: 'ready' };
 export type WorkerHeadMessage = {
@@ -23,8 +32,11 @@ export type WorkerChunkMessage = { type: 'chunk'; id: number; data: Uint8Array }
 export type WorkerEndMessage = { type: 'end'; id: number };
 export type WorkerErrorMessage = { type: 'error'; id: number; message: string };
 
+export type WorkerResetDoneMessage = { type: 'reset-done' };
+
 export type FromWorkerMessage =
   | WorkerReadyMessage
+  | WorkerResetDoneMessage
   | WorkerHeadMessage
   | WorkerChunkMessage
   | WorkerEndMessage
