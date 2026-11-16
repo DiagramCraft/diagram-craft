@@ -3,6 +3,7 @@
 import { createServer } from 'node:http';
 import { mkdir, rm } from 'node:fs/promises';
 import { dirname } from 'node:path';
+import '@arch-register/server/nodeSetup';
 import postgres from 'postgres';
 import { toNodeHandler } from 'h3/node';
 import { seedBootstrapData } from '@arch-register/server/db/bootstrapSeed';
