@@ -14,10 +14,16 @@ describe('sanitizeRedirect', () => {
     expect(sanitizeRedirect('/')).toBe('/');
   });
 
-  it.each(['//evil.com', '/\\evil.com', 'https://evil.com', 'javascript:alert(1)', 'a/b', '/a\nb', '', undefined])(
-    'rejects %s',
-    value => {
-      expect(sanitizeRedirect(value)).toBeUndefined();
-    }
-  );
+  it.each([
+    '//evil.com',
+    '/\\evil.com',
+    'https://evil.com',
+    'javascript:alert(1)',
+    'a/b',
+    '/a\nb',
+    '',
+    undefined
+  ])('rejects %s', value => {
+    expect(sanitizeRedirect(value)).toBeUndefined();
+  });
 });
