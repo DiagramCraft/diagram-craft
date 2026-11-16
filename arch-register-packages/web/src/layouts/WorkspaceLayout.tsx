@@ -12,6 +12,7 @@ import { AddWorkspaceDialog } from '../dialogs/AddWorkspaceDialog';
 import { AddEntityDialog } from '../dialogs/AddEntityDialog';
 import { AddProjectDialog } from '../dialogs/AddProjectDialog';
 import { useWorkspaces } from '../hooks/useWorkspaces';
+import { isDemoMode } from '../lib/demoMode';
 import { invalidateProjectList } from '../queries/projects';
 import { invalidateWorkspaceList } from '../queries/workspaces';
 import { useSchemas } from '../hooks/useSchemas';
@@ -154,8 +155,9 @@ export const WorkspaceLayout = () => {
       ...(canManageMembers ? ['roles', 'members'] : []),
       ...(canAdministerWorkspace ? ['api-tokens'] : []),
       ...(canManageWorkspaces ? ['ai', 'workflows', 'public-catalog'] : []),
-      ...(canManageJobs ? ['webhooks', 'automation', 'jobs'] : []),
-      ...(canViewAudit || canManageWorkspaces ? ['analytics', 'audit', 'integration-sync'] : [])
+      ...(canManageJobs && !isDemoMode ? ['webhooks', 'automation', 'jobs'] : []),
+      ...(canViewAudit || canManageWorkspaces ? ['analytics', 'audit'] : []),
+      ...((canViewAudit || canManageWorkspaces) && !isDemoMode ? ['integration-sync'] : [])
     ],
     [
       canManageWorkspaces,

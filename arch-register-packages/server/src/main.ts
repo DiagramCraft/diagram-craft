@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import './nodeSetup';
 import { createServer } from 'node:http';
 import { toNodeHandler } from 'h3/node';
 import { createDatabase } from './db/factory';

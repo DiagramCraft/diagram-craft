@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseExpiryToSeconds } from './jwt';
+import { parseExpiryToSeconds } from '../auth/expiry';
 
 describe('parseExpiryToSeconds', () => {
   it('converts seconds', () => {

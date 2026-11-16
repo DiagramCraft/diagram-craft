@@ -2,12 +2,16 @@
 import { defineConfig } from 'vitest/config';
 import yaml from '@rollup/plugin-yaml';
 import codspeedPlugin from '@codspeed/vitest-plugin';
+import { fileURLToPath } from 'node:url';
 
 export default defineConfig({
   // @ts-ignore
   plugins: [yaml(), ...(!!process.env.CI ? [codspeedPlugin()] : [])],
   test: {
     environment: 'node',
+    setupFiles: [
+      fileURLToPath(new URL('./arch-register-packages/server/src/nodeSetup.ts', import.meta.url))
+    ],
     exclude: [
       '**/*.spec.ts',
       '**/node_modules/**',

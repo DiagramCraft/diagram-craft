@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import '../nodeSetup';
 import { resolve } from 'node:path';
 import type { DatabaseAdapter } from '../db/database';
 import { createDatabase } from '../db/factory';

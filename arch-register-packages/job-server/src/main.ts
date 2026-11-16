@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import '@arch-register/server/nodeSetup';
 import { hostname } from 'node:os';
 import { randomUUID } from 'node:crypto';
 import { createDatabase } from '@arch-register/server/db/factory';
@@ -47,8 +48,8 @@ import {
   DERIVED_RECALC_SCAN_JOB_TYPE
 } from '@arch-register/server/domain/derived/derivedRecalculationJob';
 import { METADATA_GENERATION_SCAN_JOB_TYPE } from '@arch-register/server/domain/document/aiMetadataGenerationConstants';
+import { createEmailDeliveryConfigFromEnv } from '@arch-register/server/domain/notification/emailProviders';
 import {
-  createEmailDeliveryConfigFromEnv,
   createNotificationDeliveryJobHandler,
   ensureAllNotificationDeliverySchedules,
   NOTIFICATION_DELIVERY_JOB_TYPE

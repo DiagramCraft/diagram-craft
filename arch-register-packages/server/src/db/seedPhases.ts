@@ -38,7 +38,6 @@ import { seedGovernanceCaseConfigs } from './seedData/governanceCaseConfigs';
 import { seedSavedViews } from './seedData/views';
 import { seededTestPassword } from './seedFixtures';
 import { hashPassword } from '../utils/password';
-import { randomUUID } from 'node:crypto';
 import {
   ENTITY_CHANGE_CASE_KIND,
   entityState,
@@ -245,7 +244,7 @@ export const seedCatalogDefinitions = async (
     for (const schema of seedSchemas) {
       const createdSchema = await db.catalog.createSchema(schema);
       await db.catalog.createSchemaVersion({
-        id: randomUUID(),
+        id: globalThis.crypto.randomUUID(),
         workspace: createdSchema.workspace,
         schema_id: createdSchema.id,
         version: createdSchema.version ?? 1,
@@ -433,7 +432,7 @@ export const seedDemoEntityChangeCases = async (db: DatabaseAdapter): Promise<vo
 
     await db.core.transaction(async tx => {
       const proposal = await tx.entityChange.createApproval({
-        id: randomUUID(),
+        id: globalThis.crypto.randomUUID(),
         workspace: WORKSPACE_ID,
         entity_id: entity.id,
         status: 'open',
@@ -443,7 +442,7 @@ export const seedDemoEntityChangeCases = async (db: DatabaseAdapter): Promise<vo
         closed_at: null
       });
       const revision = await tx.entityChange.createApprovalRevision({
-        id: randomUUID(),
+        id: globalThis.crypto.randomUUID(),
         proposal_id: proposal.id,
         workspace: WORKSPACE_ID,
         entity_id: entity.id,

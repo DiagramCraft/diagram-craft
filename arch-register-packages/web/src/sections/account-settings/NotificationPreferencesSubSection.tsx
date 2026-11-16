@@ -1,3 +1,4 @@
+import { isDemoMode } from '../../lib/demoMode';
 import styles from './NotificationPreferencesSubSection.module.css';
 import { useEffect, useMemo, useState } from 'react';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
@@ -52,9 +53,9 @@ export const NotificationPreferencesSubSection = () => {
       emailByType[type.notificationType] !== savedPreferences.email[type.notificationType]
   );
 
-  const emailImplemented = data?.channels.some(
-    channel => channel.channel === EMAIL_CHANNEL && channel.implemented
-  );
+  const emailImplemented =
+    !isDemoMode &&
+    data?.channels.some(channel => channel.channel === EMAIL_CHANNEL && channel.implemented);
 
   const handleSave = async () => {
     if (!data) return;

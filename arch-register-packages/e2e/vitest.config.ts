@@ -21,6 +21,7 @@ export default defineConfig({
   plugins: [stubViteOnlyImports],
   test: {
     environment: 'node',
+    setupFiles: ['../server/src/nodeSetup.ts'],
     globalSetup: ['./src/helpers/postgresTemplateSetup.ts'],
     include: ['src/api/**/*.test.ts', 'src/app/**/*.test.ts'],
     testTimeout: 15000,
