@@ -134,6 +134,22 @@ export DATABASE_URL=postgresql://arch_register:yourpassword@localhost:5432/arch_
 pnpm --filter @arch-register/server test:db-contract
 ```
 
+### WASM SQLite shim
+
+`src/db/wasm/betterSqlite3Shim.ts` implements the subset of the `better-sqlite3` API the server uses
+(`prepare().all/get/run`, `exec`, `pragma`, `transaction`, `close`) on top of in-memory `@sqlite.org/sqlite-wasm`.
+It is for the standalone browser demo only and is swapped in through a bundler alias (`better-sqlite3` → the shim);
+the regular server never loads it. The database path is ignored and data is never persisted.
+
+Run the SQLite contract tests against the shim:
+
+```bash
+pnpm --filter @arch-register/server test:db-contract:wasm
+```
+
+Known limitation: `entityTraversalGraphDiff` is excluded because its CTE-heavy query exceeds the WASM build's
+compile-time nesting limit.
+
 ## Installation
 
 From the repo root or this directory:
