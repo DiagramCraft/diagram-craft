@@ -169,6 +169,30 @@ describe('selection', () => {
     expect(selection.isEmpty()).toBe(true);
   });
 
+  test('setElements() emits remove for child pruned by selected parent', () => {
+    const selection = new Selection(diagram);
+    const parent = layer.addNode();
+    const child = layer.createNode();
+    UnitOfWork.execute(diagram, uow => parent.addChild(child, uow));
+
+    selection.setElements([child]);
+    vi.advanceTimersByTime(1);
+
+    const addCb = vi.fn();
+    const removeCb = vi.fn();
+    selection.on('add', addCb);
+    selection.on('remove', removeCb);
+
+    selection.setElements([parent, child]);
+    vi.advanceTimersByTime(1);
+
+    expect(selection.elements).toEqual([parent]);
+    expect(addCb).toHaveBeenCalledTimes(1);
+    expect(addCb).toHaveBeenCalledWith({ element: parent });
+    expect(removeCb).toHaveBeenCalledTimes(1);
+    expect(removeCb).toHaveBeenCalledWith({ element: child });
+  });
+
   test('getParents()', () => {
     const selection = new Selection(diagram);
     const parent = layer.addNode();
