@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthContext';
 import { Banner } from '../components/Banner';
 import { LoadingState } from '../components/LoadingState';
 import { useAuthConfig } from '../hooks/useAuthConfig';
+import { isDemoMode } from '../lib/demoMode';
 import styles from './LoginScreen.module.css';
 
 export const LoginScreen = () => {
@@ -38,7 +39,8 @@ export const LoginScreen = () => {
     try {
       await login(username, password);
       // Redirect to the original destination or home
-      if (search.redirect) {
+      // A full-page redirect would restart the in-browser demo server, so navigate in-app instead
+      if (search.redirect && !isDemoMode) {
         window.location.href = search.redirect;
       } else {
         navigate({ to: '/' });
