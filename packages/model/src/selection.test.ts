@@ -234,6 +234,20 @@ describe('selection', () => {
     expect(selection.elements).toContain(node1);
   });
 
+  test('rebaselines selection after a selected layer is hidden', () => {
+    const layer2 = diagram.newLayer();
+    const node1 = layer.addNode({ bounds: { x: 10, y: 20, w: 30, h: 40, r: 0 } });
+    const node2 = layer2.addNode({ bounds: { x: 100, y: 200, w: 50, h: 60, r: 0 } });
+
+    diagram.selection.setElements([node1, node2]);
+    UnitOfWork.execute(diagram, uow => diagram.layers.toggleVisibility(layer2, uow));
+
+    expect(diagram.selection.elements).toEqual([node1]);
+    expect(diagram.selection.source.elementIds).toEqual([node1.id]);
+    expect(diagram.selection.source.elementBoxes).toEqual([node1.bounds]);
+    expect(diagram.selection.source.boundingBox).toEqual(node1.bounds);
+  });
+
   test('locked elements', () => {
     const selection = new Selection(diagram);
     const lockedLayer = diagram.newLayer();
