@@ -316,3 +316,50 @@
   flex-direction: column;
   gap: 10px;
 }
+
+/* ── Demo accounts ───────────────────────────────────────────── */
+
+.demoBox {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--panel-border, rgba(128, 128, 128, 0.25));
+}
+
+.demoTitle {
+  font-size: 11px;
+  color: var(--panel-fg-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 2px;
+}
+
+.demoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--base-fg);
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.demoRow:hover:not(:disabled) {
+  background: rgba(128, 128, 128, 0.12);
+}
+
+.demoRole {
+  color: var(--base-fg);
+}
+
+.demoCred {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--panel-fg-tertiary);
+}

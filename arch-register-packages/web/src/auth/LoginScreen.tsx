@@ -7,6 +7,12 @@ import { useAuthConfig } from '../hooks/useAuthConfig';
 import { isDemoMode } from '../lib/demoMode';
 import styles from './LoginScreen.module.css';
 
+const DEMO_USERS = [
+  { username: 'globaladmin', password: 'test', role: 'Global admin' },
+  { username: 'workspaceadmin', password: 'test', role: 'Workspace admin' },
+  { username: 'workspaceviewer', password: 'test', role: 'Viewer' }
+] as const;
+
 export const LoginScreen = () => {
   const { login, loginWithOidc, isLoading } = useAuth();
   const { data: authConfig, isLoading: isLoadingConfig } = useAuthConfig();
@@ -232,6 +238,30 @@ export const LoginScreen = () => {
                   </svg>
                 )}
               </button>
+
+              {isDemoMode && (
+                <div className={styles.demoBox}>
+                  <div className={styles.demoTitle}>Demo accounts</div>
+                  {DEMO_USERS.map(u => (
+                    <button
+                      key={u.username}
+                      type="button"
+                      className={styles.demoRow}
+                      disabled={isSubmitting}
+                      onClick={() => {
+                        setUsername(u.username);
+                        setPassword(u.password);
+                        clearError();
+                      }}
+                    >
+                      <span className={styles.demoRole}>{u.role}</span>
+                      <span className={styles.demoCred}>
+                        {u.username} / {u.password}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           ) : (
             <div className={styles.oidcContainer}>
