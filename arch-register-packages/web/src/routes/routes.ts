@@ -1,6 +1,7 @@
 import { createRootRouteWithContext, createRoute, redirect } from '@tanstack/react-router';
 import type { RouterContext } from '../routerContext';
 import { LoginScreen } from '../auth/LoginScreen';
+import { sanitizeRedirect } from '../auth/safeRedirect';
 import { WorkspaceLayout } from '../layouts/WorkspaceLayout';
 import { workspacesQueryOptions } from '../hooks/useWorkspaces';
 import { RootLayout } from '../layouts/RootLayout';
@@ -21,7 +22,7 @@ const loginRoute = createRoute({
   path: '/login',
   component: LoginScreen,
   validateSearch: (search: Record<string, unknown>) => {
-    const redirect = search.redirect as string | undefined;
+    const redirect = sanitizeRedirect(search.redirect as string | undefined);
     const reason = search.reason === 'session-expired' ? 'session-expired' : undefined;
     return {
       ...(redirect ? { redirect } : {}),
