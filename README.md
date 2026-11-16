@@ -66,6 +66,9 @@ connect them to the projects and documentation that explain how the landscape ch
 - **Integration and automation** — Use the documented API and API tokens, CSV import/export, webhooks, MCP, recurring
   jobs, and configurable automation rules. AI-assisted workflows and external content providers are experimental.
 
+Try the [Arch Register demo](https://diagramcraft.github.io/diagram-craft/arch-register-demo/), which runs entirely in
+your browser.
+
 See the [Arch Register package guide](arch-register-packages/README.md), the
 [Arch Register documentation](https://diagramcraft.github.io/diagram-craft/arch-register/intro), and the
 [Arch Register feature map](feature-maps/arch-register.md) for more detail.
