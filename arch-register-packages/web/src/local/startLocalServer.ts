@@ -1,6 +1,6 @@
 import { setApiTransport } from '../lib/apiTransport';
 import { createWorkerFetch } from './workerFetch';
-import type { FromWorkerMessage } from './workerProtocol';
+import type { FromWorkerMessage, ToWorkerMessage } from './workerProtocol';
 
 const DEMO_USER = { username: 'globaladmin', password: 'test' };
 
@@ -52,5 +52,33 @@ export const startLocalServer = async () => {
   };
 
   setApiTransport(withBearerAuth(raw, login));
+
+  // Persist unsaved changes when the page is hidden or closed
+  const flush = () => worker.postMessage({ type: 'flush' } satisfies ToWorkerMessage);
+  window.addEventListener('pagehide', flush);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') flush();
+  });
+
+  activeWorker = worker;
   return worker;
+};
+
+let activeWorker: Worker | null = null;
+
+/** Discards the persisted demo data and reloads, which re-seeds the demo. */
+export const resetDemo = async () => {
+  const worker = activeWorker;
+  if (worker) {
+    await new Promise<void>(resolve => {
+      const onMessage = (e: MessageEvent<FromWorkerMessage>) => {
+        if (e.data.type !== 'reset-done') return;
+        worker.removeEventListener('message', onMessage);
+        resolve();
+      };
+      worker.addEventListener('message', onMessage);
+      worker.postMessage({ type: 'reset' } satisfies ToWorkerMessage);
+    });
+  }
+  window.location.reload();
 };

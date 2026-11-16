@@ -7,6 +7,8 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { GlobalPermissionsSubSection } from './sub-sections/GlobalPermissionsSubSection';
 import { SecurityEventsSubSection } from './sub-sections/SecurityEventsSubSection';
 import { UsersSubSection } from './sub-sections/UsersSubSection';
+import { DemoDataSubSection } from './sub-sections/DemoDataSubSection';
+import { isDemoMode } from '../../lib/demoMode';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useGlobalSettingsSection, type GlobalSettingsSection } from './useGlobalSettingsSection';
 
@@ -28,6 +30,11 @@ const SECTION_META: Record<
     title: 'Security events',
     sub: 'Review sign-ins, failed attempts, rate limiting and account lockouts.',
     buttonLabel: ''
+  },
+  demo: {
+    title: 'Demo data',
+    sub: 'Your changes are stored in this browser. Reset to start over with the sample data.',
+    buttonLabel: ''
   }
 };
 
@@ -40,7 +47,13 @@ export const GlobalSettingsScreen = () => {
   const [usersCreateDialogOpen, setUsersCreateDialogOpen] = useState(false);
 
   useEffect(() => {
-    if (section === 'global-permissions' || !authConfigLoaded || canManageUsers) return;
+    if (
+      section === 'global-permissions' ||
+      (section === 'demo' && isDemoMode) ||
+      !authConfigLoaded ||
+      canManageUsers
+    )
+      return;
     navigate({
       to: '/$workspaceSlug/settings/global',
       params: { workspaceSlug },
@@ -50,7 +63,9 @@ export const GlobalSettingsScreen = () => {
 
   const meta = SECTION_META[section];
 
-  if (section !== 'global-permissions' && (!authConfigLoaded || !canManageUsers)) return null;
+  const isDemoSection = section === 'demo' && isDemoMode;
+  if (section !== 'global-permissions' && !isDemoSection && (!authConfigLoaded || !canManageUsers))
+    return null;
 
   return (
     <Page>
@@ -65,7 +80,7 @@ export const GlobalSettingsScreen = () => {
         title={meta.title}
         description={meta.sub}
         buttons={
-          section === 'security-events' ? undefined : (
+          section === 'security-events' || section === 'demo' ? undefined : (
             <Button
               variant="primary"
               icon={<TbPlus size={12} />}
@@ -81,7 +96,9 @@ export const GlobalSettingsScreen = () => {
         }
       />
 
-      {section === 'security-events' ? (
+      {section === 'demo' ? (
+        <DemoDataSubSection />
+      ) : section === 'security-events' ? (
         <SecurityEventsSubSection />
       ) : section === 'users' ? (
         <UsersSubSection

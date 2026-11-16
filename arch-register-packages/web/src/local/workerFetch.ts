@@ -48,7 +48,7 @@ export const createWorkerFetch = (port: MessagePortLike): typeof fetch => {
 
       const onMessage = (e: MessageEvent) => {
         const msg = e.data as FromWorkerMessage;
-        if (!msg || msg.type === 'ready' || msg.id !== id) return;
+        if (!msg || msg.type === 'ready' || msg.type === 'reset-done' || msg.id !== id) return;
 
         switch (msg.type) {
           case 'head': {

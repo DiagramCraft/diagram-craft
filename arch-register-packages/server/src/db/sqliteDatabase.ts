@@ -51,6 +51,7 @@ import { SqliteIntegrationSyncDatabase } from '../domain/integrationSync/db/sqli
 
 export class SqliteDatabase implements DatabaseAdapter {
   private db;
+  private readonly rawDb: unknown;
 
   readonly core;
   readonly workspace;
@@ -96,8 +97,19 @@ export class SqliteDatabase implements DatabaseAdapter {
   private transactionTail: Promise<void> = Promise.resolve();
   private savepointCounter = 0;
 
-  constructor(filePath: string) {
-    const rawDb = new Database(filePath);
+  /**
+   * @param snapshot Browser demo only: bytes from `exportSnapshot()` to restore instead of starting empty.
+   *                 Schema creation is skipped when the snapshot already has it; pending migrations still run.
+   */
+  constructor(filePath: string, snapshot?: Uint8Array) {
+    type WasmDatabase = new (
+      path: string,
+      options?: { snapshot?: Uint8Array }
+    ) => InstanceType<typeof Database>;
+    const rawDb = snapshot
+      ? new (Database as unknown as WasmDatabase)(filePath, { snapshot })
+      : new Database(filePath);
+    this.rawDb = rawDb;
     this.db = isDevTracingEnabled() ? instrumentSqliteDatabase(rawDb) : rawDb;
     this.configure();
     this.initializeSchema();
@@ -247,6 +259,16 @@ export class SqliteDatabase implements DatabaseAdapter {
       entityMerge: this.entityMerge,
       integrationSync: this.integrationSync
     };
+  }
+
+  /** Browser demo only (WASM shim): serializes the whole database, or null when unsupported. */
+  exportSnapshot(): Uint8Array | null {
+    return (this.rawDb as { serialize?: () => Uint8Array }).serialize?.() ?? null;
+  }
+
+  /** Browser demo only (WASM shim): a counter that increases whenever rows are written. */
+  changeCount(): number {
+    return (this.rawDb as { totalChanges?: () => number }).totalChanges?.() ?? 0;
   }
 
   private configure() {

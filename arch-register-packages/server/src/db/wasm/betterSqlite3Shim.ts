@@ -104,9 +104,34 @@ export class Database {
   readonly raw: RawDb;
   private savepointCounter = 0;
 
-  // The path is intentionally ignored: the shim is in-memory only
-  constructor(_filePath?: string) {
+  // The path is intentionally ignored: the shim is in-memory only. An optional `snapshot`
+  // (as produced by `serialize()`) is loaded as the initial database content.
+  constructor(_filePath?: string, options?: { snapshot?: Uint8Array }) {
     this.raw = new sqlite3.oo1.DB(':memory:', 'c');
+    if (options?.snapshot) this.deserialize(options.snapshot);
+  }
+
+  /** Returns the complete database as bytes, suitable for `new Database(path, { snapshot })`. */
+  serialize(): Uint8Array {
+    return sqlite3.capi.sqlite3_js_db_export(this.raw);
+  }
+
+  /** Total rows modified since the connection opened; only changes when data is written. */
+  totalChanges(): number {
+    return this.raw.changes(true) as number;
+  }
+
+  private deserialize(bytes: Uint8Array) {
+    const pData = sqlite3.wasm.allocFromTypedArray(bytes);
+    const rc = sqlite3.capi.sqlite3_deserialize(
+      this.raw,
+      'main',
+      pData,
+      bytes.byteLength,
+      bytes.byteLength,
+      sqlite3.capi.SQLITE_DESERIALIZE_FREEONCLOSE | sqlite3.capi.SQLITE_DESERIALIZE_RESIZEABLE
+    );
+    if (rc !== 0) throw new Error(`Failed to restore database snapshot (sqlite rc ${rc})`);
   }
 
   prepare(sql: string): Statement {
