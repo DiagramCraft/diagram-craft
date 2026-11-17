@@ -1,15 +1,19 @@
 import { useState, type ComponentProps, type ReactNode } from 'react';
 import {
   flexRender,
+  columnResizingFeature,
+  columnSizingFeature,
   rowSelectionFeature,
   tableFeatures,
   useTable,
   type ColumnDef,
+  type ColumnSizingState,
   type RowData,
   type RowSelectionState
 } from '@tanstack/react-table';
 import { Table } from './Table';
 import type { SortState } from './useTableSort';
+import { useColumnSizing } from './useColumnSizing';
 
 // Per-column presentation options, read from `columnDef.meta`. They map 1:1 onto props of the
 // existing Table.* cells so DataTable renders identically to a hand-written Table.
@@ -26,6 +30,8 @@ export type DataTableColumnMeta = {
 
 const features = tableFeatures({
   rowSelectionFeature,
+  columnSizingFeature,
+  columnResizingFeature,
   columnMeta: {} as DataTableColumnMeta
 });
 
@@ -51,6 +57,12 @@ type DataTableProps<T extends RowData> = RootProps & {
   onSelectedRowIdsChange?: (selection: RowSelectionState) => void;
   isRowSelected?: (row: T) => boolean;
   emptyState?: ReactNode;
+  // Drag handles on header edges; widths come from column `size`/`minSize`/`maxSize` (or `meta.width`)
+  resizable?: boolean;
+  columnSizing?: ColumnSizingState;
+  onColumnSizingChange?: (sizing: ColumnSizingState) => void;
+  // localStorage key under which resized widths are persisted
+  persistKey?: string;
 };
 
 export const DataTable = <T extends RowData>({
@@ -65,10 +77,20 @@ export const DataTable = <T extends RowData>({
   onSelectedRowIdsChange,
   isRowSelected,
   emptyState,
+  resizable = false,
+  columnSizing: columnSizingProp,
+  onColumnSizingChange,
+  persistKey,
   ...rootProps
 }: DataTableProps<T>) => {
   const [internalSelection, setInternalSelection] = useState<RowSelectionState>({});
   const rowSelection = selectedRowIds ?? internalSelection;
+
+  const [columnSizing, setColumnSizing] = useColumnSizing({
+    columnSizing: columnSizingProp,
+    onColumnSizingChange,
+    persistKey
+  });
 
   const table = useTable({
     features,
@@ -76,7 +98,11 @@ export const DataTable = <T extends RowData>({
     data,
     getRowId,
     enableRowSelection: selectable,
-    state: { rowSelection },
+    enableColumnResizing: resizable,
+    columnResizeMode: 'onEnd',
+    state: { rowSelection, columnSizing },
+    onColumnSizingChange: updater =>
+      setColumnSizing(typeof updater === 'function' ? updater(columnSizing) : updater),
     onRowSelectionChange: updater => {
       const next = typeof updater === 'function' ? updater(rowSelection) : updater;
       setInternalSelection(next);
@@ -88,7 +114,7 @@ export const DataTable = <T extends RowData>({
   const leafColumnCount = table.getAllLeafColumns().length + (selectable ? 1 : 0);
 
   return (
-    <Table.Root {...rootProps}>
+    <Table.Root {...rootProps} layout={resizable ? 'fixed' : rootProps.layout}>
       <Table.Head>
         {table.getHeaderGroups().map(group => (
           <tr key={group.id}>
@@ -110,21 +136,31 @@ export const DataTable = <T extends RowData>({
                 align: meta?.align,
                 numeric: meta?.numeric,
                 sticky: meta?.sticky,
-                width: meta?.width,
+                width: resizable ? header.column.getSize() : meta?.width,
                 colSpan: header.colSpan > 1 ? header.colSpan : undefined
               };
+              const resizer =
+                resizable && header.column.getCanResize() ? (
+                  <Table.ResizeHandle
+                    active={header.column.getIsResizing()}
+                    onMouseDown={header.getResizeHandler()}
+                    onTouchStart={header.getResizeHandler()}
+                    onDoubleClick={() => header.column.resetSize()}
+                  />
+                ) : undefined;
               return meta?.sortable && onSort ? (
                 <Table.SortableHeaderCell
                   key={header.id}
                   sortKey={header.column.id}
                   sort={sort}
                   onSort={onSort}
+                  resizer={resizer}
                   {...shared}
                 >
                   {content}
                 </Table.SortableHeaderCell>
               ) : (
-                <Table.HeaderCell key={header.id} {...shared}>
+                <Table.HeaderCell key={header.id} resizer={resizer} {...shared}>
                   {content}
                 </Table.HeaderCell>
               );
@@ -157,7 +193,7 @@ export const DataTable = <T extends RowData>({
                   align={meta?.align}
                   numeric={meta?.numeric}
                   sticky={meta?.sticky}
-                  width={meta?.width}
+                  width={resizable ? cell.column.getSize() : meta?.width}
                   primary={meta?.primary}
                   interactive={meta?.interactive}
                 >

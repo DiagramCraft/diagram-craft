@@ -62,4 +62,35 @@ describe('DataTable', () => {
     expect(html).toContain('Nothing here');
     expect(html).toContain('colSpan="3"');
   });
+
+  describe('resizing', () => {
+    const handles = (html: string) => html.match(/cursor|resizeHandle/g)?.length ?? 0;
+
+    test('renders no handles unless resizable', () => {
+      expect(handles(render())).toBe(0);
+    });
+
+    test('renders a handle per resizable column and applies sizing widths', () => {
+      const html = render({ resizable: true, columnSizing: { name: 321 } });
+      expect(html.match(/resizeHandle/g)).toHaveLength(2);
+      expect(html).toContain('width:321px');
+    });
+
+    test('skips handles for columns with enableResizing false', () => {
+      const columns: DataTableColumn<Row>[] = [
+        { ...COLUMNS[0]!, enableResizing: false },
+        COLUMNS[1]!
+      ];
+      expect(render({ resizable: true, columns }).match(/resizeHandle/g)).toHaveLength(1);
+    });
+
+    test('keeps aria-sort alongside handles', () => {
+      const html = render({
+        resizable: true,
+        sort: { key: 'name', dir: 'asc' },
+        onSort: () => {}
+      });
+      expect(html).toContain('aria-sort="ascending"');
+    });
+  });
 });
