@@ -142,6 +142,7 @@ export const DataTable = <T extends RowData>({
               const resizer =
                 resizable && header.column.getCanResize() ? (
                   <Table.ResizeHandle
+                    key={header.id}
                     active={header.column.getIsResizing()}
                     onMouseDown={header.getResizeHandler()}
                     onTouchStart={header.getResizeHandler()}
