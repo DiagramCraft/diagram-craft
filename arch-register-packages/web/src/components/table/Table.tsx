@@ -182,7 +182,10 @@ const alignClass = (align: Align | undefined, numeric: boolean | undefined) => {
   return undefined;
 };
 
-type HeaderCellProps = CellSharedProps & ComponentPropsWithoutRef<'th'>;
+type HeaderCellProps = CellSharedProps & {
+  // Rendered after the content, e.g. a Table.ResizeHandle
+  resizer?: ReactNode;
+} & ComponentPropsWithoutRef<'th'>;
 
 const HeaderCell = ({
   align,
@@ -191,11 +194,32 @@ const HeaderCell = ({
   width,
   className,
   style,
+  resizer,
+  children,
   ...rest
 }: HeaderCellProps) => (
   <th
     className={cx(styles.th, alignClass(align, numeric), sticky && styles.stickyCol, className)}
     style={cellStyle(width, style)}
+    {...rest}
+  >
+    {children}
+    {resizer}
+  </th>
+);
+
+type ResizeHandleProps = {
+  active?: boolean;
+} & Omit<ComponentPropsWithoutRef<'div'>, 'children'>;
+
+const ResizeHandle = ({ active, className, onClick, ...rest }: ResizeHandleProps) => (
+  <div
+    aria-hidden="true"
+    className={cx(styles.resizeHandle, active && styles.resizeHandleActive, className)}
+    onClick={ev => {
+      ev.stopPropagation();
+      onClick?.(ev);
+    }}
     {...rest}
   />
 );
@@ -416,6 +440,7 @@ export const Table = {
   Body,
   Row,
   HeaderCell,
+  ResizeHandle,
   SortableHeaderCell,
   Cell,
   NameCell,

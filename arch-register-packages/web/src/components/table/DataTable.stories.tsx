@@ -93,3 +93,15 @@ export const ClickableRows: Story = {
 export const Empty: Story = {
   render: () => <DataTable columns={COLUMNS} data={[]} emptyState="No people found" />
 };
+
+export const Resizable: Story = {
+  render: () => (
+    <DataTable
+      columns={COLUMNS}
+      data={PEOPLE}
+      getRowId={p => p.id}
+      resizable
+      persistKey="story:datatable-resizable"
+    />
+  )
+};

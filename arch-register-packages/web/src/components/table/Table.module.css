@@ -71,6 +71,23 @@
   padding: 8px 10px;
   border-bottom: 1px solid var(--panel-border);
   white-space: nowrap;
+  position: relative;
+}
+
+.resizeHandle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+  touch-action: none;
+  user-select: none;
+}
+
+.resizeHandle:hover,
+.resizeHandleActive {
+  background: var(--panel-border);
 }
 
 /* Alignment modifiers need to match .table .th's specificity or the default left alignment wins. */
