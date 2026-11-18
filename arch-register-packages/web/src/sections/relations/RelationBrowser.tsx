@@ -18,6 +18,7 @@ import { Pagination } from '../../components/Pagination';
 import { Title } from '../../components/Title';
 import { LabeledSelect } from '../../components/LabeledSelect';
 import { Table } from '../../components/table/Table';
+import { DataTable, type DataTableColumn } from '../../components/table/DataTable';
 import { TypeBadge } from '../../components/TypeBadge';
 import { useTableSort } from '../../components/table/useTableSort';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
@@ -65,6 +66,8 @@ import { RelationGraphView } from './RelationGraphView';
 // RelationDetailPopover for edges.
 // Saved views reuse the entity browser's SaveViewDialog and useSavedViews hooks as-is — relation-rooted
 // saved views persist the canonical query plus the selected table/graph mode.
+type Relation = ReturnType<typeof useRelationBrowserData>['relations'][number];
+
 export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
   const search = useSearch({ strict: false });
   const view: RelationBrowserView = search.viewMode === 'graph' ? 'graph' : 'table';
@@ -190,7 +193,6 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
   // aliases from the query's own `projections`) takes precedence when set; otherwise every field
   // on the active relation schema shows, as before.
   const fieldIds = configuredTableFieldIds ?? activeSchema?.fields.map(field => field.id) ?? [];
-  const columnCount = 6 + fieldIds.length;
   const fieldLabelById = (fieldId: string): string =>
     fieldId.startsWith(PROJECTION_FIELD_PREFIX)
       ? fieldId.slice(PROJECTION_FIELD_PREFIX.length)
@@ -244,6 +246,118 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
   const sortValue = sort?.key ?? 'none';
   const handleSortChange = (value: string) =>
     setSort(value === 'none' ? null : { key: value, dir: 'asc' });
+  const renderEndpoint = (endpoint: Relation['_in']) => {
+    const entry = entitySchemaById.get(endpoint.schemaId ?? '');
+    return (
+      <span className={styles.endpoint}>
+        {entry && (
+          <TypeBadge
+            color={resolveSchemaColor(entry.schema, entry.index)}
+            name={entry.schema.name}
+            icon={entry.schema.icon}
+            size={18}
+          />
+        )}
+        {endpoint.name}
+      </span>
+    );
+  };
+
+  const columns: DataTableColumn<Relation>[] = [
+    {
+      id: '_in',
+      header: 'In',
+      size: 220,
+      minSize: 120,
+      meta: { sortable: true, label: 'In' },
+      cell: ({ row }) => renderEndpoint(row.original._in)
+    },
+    {
+      id: '_out',
+      header: 'Out',
+      size: 220,
+      minSize: 120,
+      meta: { sortable: true, label: 'Out' },
+      cell: ({ row }) => renderEndpoint(row.original._out)
+    },
+    {
+      id: '_schema',
+      header: 'Type',
+      meta: { sortable: true, label: 'Type' },
+      cell: ({ row }) => <Chip tone="ghost">{row.original._schema.name}</Chip>
+    },
+    {
+      id: '_owner',
+      header: 'Owner',
+      meta: { sortable: true, label: 'Owner' },
+      cell: ({ row }) => <span className="dim">{row.original._owner?.name ?? ''}</span>
+    },
+    {
+      id: '_lifecycle',
+      header: 'Lifecycle',
+      meta: { sortable: true, label: 'Lifecycle' },
+      cell: ({ row }) => <span className="dim">{row.original._lifecycle?.name ?? ''}</span>
+    },
+    ...fieldIds.map(
+      (fieldId): DataTableColumn<Relation> => ({
+        id: fieldId,
+        header: fieldLabelById(fieldId),
+        meta: { sortable: true, label: fieldLabelById(fieldId) },
+        cell: ({ row }) =>
+          formatFieldValue(
+            getFieldValue(row.original, fieldId),
+            fieldTypeById.get(fieldId),
+            referenceLookup
+          )
+      })
+    ),
+    {
+      id: '_actions',
+      header: '',
+      size: 40,
+      meta: { interactive: true, align: 'right', width: 28, selectable: false },
+      cell: ({ row }) => {
+        const relation = row.original;
+        return (
+          <DropdownMenu
+            trigger={<Table.DotsButton />}
+            items={[
+              {
+                label: 'View blast radius',
+                icon: <TbAffiliate size={14} />,
+                onClick: () => setBlastRadiusRelationId(relation._uid)
+              },
+              ...(relation.canEdit
+                ? [
+                    {
+                      label: 'Edit',
+                      icon: <TbPencil size={14} />,
+                      onClick: () => setEditRelationId(relation._uid)
+                    }
+                  ]
+                : []),
+              ...(relation.canDelete
+                ? [
+                    {
+                      label: 'Delete',
+                      icon: <TbTrash size={14} />,
+                      danger: true,
+                      onClick: () =>
+                        setDeleteTarget({
+                          relationId: relation._uid,
+                          inEntityId: relation._in.id,
+                          outEntityId: relation._out.id,
+                          label: relationLabel(relation)
+                        })
+                    }
+                  ]
+                : [])
+            ]}
+          />
+        );
+      }
+    }
+  ];
   const selectedRelation = relations.find(relation => relation._uid === selectedRelationId);
 
   const handleSaveView = async (
@@ -387,148 +501,20 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
       </ViewControls>
 
       {view === 'table' ? (
-        <Table.Root scroll>
-          <Table.Head>
-            <Table.Row>
-              <Table.SortableHeaderCell
-                sortKey="_in"
-                sort={sort}
-                onSort={toggleSort}
-                style={{ minWidth: 200 }}
-              >
-                In
-              </Table.SortableHeaderCell>
-              <Table.SortableHeaderCell
-                sortKey="_out"
-                sort={sort}
-                onSort={toggleSort}
-                style={{ minWidth: 200 }}
-              >
-                Out
-              </Table.SortableHeaderCell>
-              <Table.SortableHeaderCell sortKey="_schema" sort={sort} onSort={toggleSort}>
-                Type
-              </Table.SortableHeaderCell>
-              <Table.SortableHeaderCell sortKey="_owner" sort={sort} onSort={toggleSort}>
-                Owner
-              </Table.SortableHeaderCell>
-              <Table.SortableHeaderCell sortKey="_lifecycle" sort={sort} onSort={toggleSort}>
-                Lifecycle
-              </Table.SortableHeaderCell>
-              {fieldIds.map(fieldId => (
-                <Table.SortableHeaderCell
-                  key={fieldId}
-                  sortKey={fieldId}
-                  sort={sort}
-                  onSort={toggleSort}
-                >
-                  {fieldLabelById(fieldId)}
-                </Table.SortableHeaderCell>
-              ))}
-              <Table.HeaderCell aria-label="Actions" style={{ width: 40 }} />
-            </Table.Row>
-          </Table.Head>
-          <Table.Body>
-            {sorted.length === 0 ? (
-              <Table.EmptyRow colSpan={columnCount}>
-                {isLoading ? 'Loading…' : 'No relation instances found.'}
-              </Table.EmptyRow>
-            ) : (
-              sorted.map(relation => {
-                const inSchema = entitySchemaById.get(relation._in.schemaId ?? '');
-                const outSchema = entitySchemaById.get(relation._out.schemaId ?? '');
-                return (
-                  <Table.Row
-                    key={relation._uid}
-                    onClick={() => setSelectedRelationId(relation._uid)}
-                  >
-                    <Table.Cell>
-                      <span className={styles.endpoint}>
-                        {inSchema && (
-                          <TypeBadge
-                            color={resolveSchemaColor(inSchema.schema, inSchema.index)}
-                            name={inSchema.schema.name}
-                            icon={inSchema.schema.icon}
-                            size={18}
-                          />
-                        )}
-                        {relation._in.name}
-                      </span>
-                    </Table.Cell>
-                    <Table.Cell>
-                      <span className={styles.endpoint}>
-                        {outSchema && (
-                          <TypeBadge
-                            color={resolveSchemaColor(outSchema.schema, outSchema.index)}
-                            name={outSchema.schema.name}
-                            icon={outSchema.schema.icon}
-                            size={18}
-                          />
-                        )}
-                        {relation._out.name}
-                      </span>
-                    </Table.Cell>
-                    <Table.Cell>
-                      <Chip tone="ghost">{relation._schema.name}</Chip>
-                    </Table.Cell>
-                    <Table.Cell>
-                      <span className="dim">{relation._owner?.name ?? ''}</span>
-                    </Table.Cell>
-                    <Table.Cell>
-                      <span className="dim">{relation._lifecycle?.name ?? ''}</span>
-                    </Table.Cell>
-                    {fieldIds.map(fieldId => (
-                      <Table.Cell key={fieldId}>
-                        {formatFieldValue(
-                          getFieldValue(relation, fieldId),
-                          fieldTypeById.get(fieldId),
-                          referenceLookup
-                        )}
-                      </Table.Cell>
-                    ))}
-                    <Table.ActionsCell>
-                      <DropdownMenu
-                        trigger={<Table.DotsButton />}
-                        items={[
-                          {
-                            label: 'View blast radius',
-                            icon: <TbAffiliate size={14} />,
-                            onClick: () => setBlastRadiusRelationId(relation._uid)
-                          },
-                          ...(relation.canEdit
-                            ? [
-                                {
-                                  label: 'Edit',
-                                  icon: <TbPencil size={14} />,
-                                  onClick: () => setEditRelationId(relation._uid)
-                                }
-                              ]
-                            : []),
-                          ...(relation.canDelete
-                            ? [
-                                {
-                                  label: 'Delete',
-                                  icon: <TbTrash size={14} />,
-                                  danger: true,
-                                  onClick: () =>
-                                    setDeleteTarget({
-                                      relationId: relation._uid,
-                                      inEntityId: relation._in.id,
-                                      outEntityId: relation._out.id,
-                                      label: relationLabel(relation)
-                                    })
-                                }
-                              ]
-                            : [])
-                        ]}
-                      />
-                    </Table.ActionsCell>
-                  </Table.Row>
-                );
-              })
-            )}
-          </Table.Body>
-        </Table.Root>
+        <DataTable
+          // Remount when the column set changes (another saved view / schema) so local
+          // widths don't leak between unrelated column sets.
+          key={fieldIds.join('|')}
+          scroll
+          resizable
+          columns={columns}
+          data={sorted}
+          getRowId={relation => relation._uid}
+          sort={sort}
+          onSort={toggleSort}
+          onRowClick={relation => setSelectedRelationId(relation._uid)}
+          emptyState={isLoading ? 'Loading…' : 'No relation instances found.'}
+        />
       ) : (
         <div className={styles.graphContainer}>
           <RelationGraphView
