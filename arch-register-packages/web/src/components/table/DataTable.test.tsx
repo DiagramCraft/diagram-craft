@@ -57,6 +57,15 @@ describe('DataTable', () => {
     expect(body(render({ onRowClick: () => {} }))).toContain('rowClickable');
   });
 
+  test('rows are focusable only with rowKeyboardActivation and onRowClick', () => {
+    const body = (h: string) => h.match(/<tbody>.*<\/tbody>/)![0];
+    expect(body(render({ onRowClick: () => {} }))).not.toContain('tabindex');
+    expect(body(render({ rowKeyboardActivation: true }))).not.toContain('tabindex');
+    expect(
+      body(render({ onRowClick: () => {}, rowKeyboardActivation: true })).match(/tabindex="0"/g)
+    ).toHaveLength(2);
+  });
+
   test('renders the empty state spanning all columns', () => {
     const html = render({ data: [], emptyState: 'Nothing here', selectable: true });
     expect(html).toContain('Nothing here');
