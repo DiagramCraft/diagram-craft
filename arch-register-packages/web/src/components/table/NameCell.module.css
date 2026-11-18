@@ -1,0 +1,23 @@
+.name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nameMain {
+  color: var(--base-fg);
+  font-weight: 500;
+}
+
+.nameMuted {
+  color: var(--base-fg-dimmed);
+}
+
+.nameSub {
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 340px;
+  color: var(--panel-fg-tertiary);
+}

@@ -14,6 +14,7 @@ import { Dialog, KbdHints } from '@diagram-craft/app-components/Dialog';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Table } from '../table/Table';
+import { NameCell } from '../table/NameCell';
 import { DropdownMenu, type MenuItem } from '../DropdownMenu';
 import { MutationError } from '../../sections/workspace-settings/MutationError';
 import { formatDate } from '../../utils/dateFormat';
@@ -208,7 +209,7 @@ export const TokenTable = ({
     <Table.Body>
       {tokens.map(token => (
         <Table.Row key={token.id}>
-          <Table.NameCell
+          <NameCell.Cell
             title={token.name}
             subtitle={`Created ${formatDate(token.created_at, 'Never')}`}
             icon={<TbKey size={14} />}

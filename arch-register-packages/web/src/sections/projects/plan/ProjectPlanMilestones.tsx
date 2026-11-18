@@ -20,6 +20,7 @@ import {
 } from '../../../hooks/useMilestones';
 import { EmptyState } from '../../../components/EmptyState';
 import { Table } from '../../../components/table/Table';
+import { NameCell } from '../../../components/table/NameCell';
 import { useTableSort } from '../../../components/table/useTableSort';
 import { ViewControls } from '../../../components/ViewControls';
 import { LabeledSelect } from '../../../components/LabeledSelect';
@@ -210,7 +211,7 @@ const MilestoneTable = ({
             muted={milestone.status === 'cancelled'}
             onClick={canEdit ? () => onEdit(milestone) : undefined}
           >
-            <Table.NameCell
+            <NameCell.Cell
               icon={<TbFlag size={14} />}
               title={milestone.name}
               titleMuted={milestone.status === 'cancelled'}

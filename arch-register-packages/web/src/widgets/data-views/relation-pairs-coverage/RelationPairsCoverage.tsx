@@ -1,6 +1,7 @@
 import { Chip } from '../../../components/Chip';
 import { EmptyState } from '../../../components/EmptyState';
 import { Table } from '../../../components/table/Table';
+import { NameCell } from '../../../components/table/NameCell';
 import { useTableSort } from '../../../components/table/useTableSort';
 import { useWidgetFramed } from '../../shared/dashboard/WidgetFramed';
 import { type RelationPair } from './relationPairCoverageLogic';
@@ -72,7 +73,7 @@ export const RelationPairsCoverageWidget = ({
         ) : (
           sorted.map(pair => (
             <Table.Row key={pair.key}>
-              <Table.NameCell title={pair.consumer.name} />
+              <NameCell.Cell title={pair.consumer.name} />
               <Table.Cell className={styles.endpoint}>{pair.hub.name}</Table.Cell>
               <Table.Cell className={styles.endpoint}>{pair.provider.name}</Table.Cell>
               <Table.Cell>

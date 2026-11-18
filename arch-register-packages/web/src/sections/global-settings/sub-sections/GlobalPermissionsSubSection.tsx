@@ -13,6 +13,7 @@ import { MemberAvatar } from '../../../components/MemberAvatar';
 import { SearchInput } from '../../../components/SearchInput';
 import { ViewControls } from '../../../components/ViewControls';
 import { Table } from '../../../components/table/Table';
+import { NameCell } from '../../../components/table/NameCell';
 import { getUserLabel } from '../../../utils/userLabel';
 import { useAuthUsers, useUpdateUserGlobalRoles } from '../../../hooks/useGlobalRoles';
 import { userGlobalRolesQuery } from '../../../queries/globalRoles';
@@ -157,7 +158,7 @@ export const GlobalPermissionsSubSection = ({
             <Table.Body>
               {filteredUsers.map(assignedUser => (
                 <Table.Row key={assignedUser.id} onClick={() => setSelectedUserId(assignedUser.id)}>
-                  <Table.NameCell
+                  <NameCell.Cell
                     icon={
                       <MemberAvatar
                         name={assignedUser.display_name}

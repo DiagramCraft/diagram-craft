@@ -9,6 +9,7 @@ import { useDocumentList, useDocumentTypes } from '../../../hooks/useDocuments';
 import { useEntity } from '../../../hooks/useEntities';
 import { EmptyState } from '../../../components/EmptyState';
 import { Table } from '../../../components/table/Table';
+import { NameCell } from '../../../components/table/NameCell';
 import { TypeBadge } from '../../../components/TypeBadge';
 import {
   asEntityPublicId,
@@ -196,7 +197,7 @@ export const DocumentBrowserEmbed = ({ config }: Props) => {
                 if (event.key === 'Enter' || event.key === ' ') onDocumentClick(document);
               }}
             >
-              <Table.NameCell
+              <NameCell.Cell
                 icon={<TbFileText size={16} />}
                 title={document.file.name}
                 subtitle={document.file.path}

@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Fragment, useState } from 'react';
 import { TbChevronRight } from 'react-icons/tb';
 import { Table } from './Table';
+import { NameCell } from './NameCell';
 import { DropdownMenu } from '../DropdownMenu';
 import { TypeBadge } from '../TypeBadge';
 import { useTableSort } from './useTableSort';
@@ -134,14 +135,14 @@ export const NameCells: Story = {
       </Table.Head>
       <Table.Body>
         <Table.Row>
-          <Table.NameCell
+          <NameCell.Cell
             icon={<TypeBadge color="#3b82f6" name="Service" icon="server" size={18} />}
             title="Payments API"
             subtitle="Handles all payment processing for the checkout flow"
           />
         </Table.Row>
         <Table.Row>
-          <Table.NameCell
+          <NameCell.Cell
             icon={<TypeBadge color="#22c55e" name="Database" icon="database" size={18} />}
             title="Unlinked entity"
             titleMuted
@@ -209,7 +210,7 @@ export const StickyColumns: Story = {
                   checked={false}
                   onChange={() => {}}
                 />
-                <Table.NameCell sticky width={160} title={p.name} />
+                <NameCell.Cell sticky width={160} title={p.name} />
                 {columns.map(c => (
                   <Table.Cell key={c}>{c} value</Table.Cell>
                 ))}

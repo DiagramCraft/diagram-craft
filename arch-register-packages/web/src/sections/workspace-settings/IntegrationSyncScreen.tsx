@@ -14,6 +14,7 @@ import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
 import { Title } from '../../components/Title';
 import { Page } from '../../components/Page';
 import { Table } from '../../components/table/Table';
+import { NameCell } from '../../components/table/NameCell';
 import { StatusChip } from '../../components/StatusChip';
 import { EntityPicker } from '../../components/EntityPicker';
 import { RelationPicker } from '../../components/RelationPicker';
@@ -267,7 +268,7 @@ export const IntegrationSyncScreen = () => {
                       )
                     }
                   >
-                    <Table.NameCell title={source.displayName} subtitle={source.sourceKey} />
+                    <NameCell.Cell title={source.displayName} subtitle={source.sourceKey} />
                     <Table.Cell>{source.type}</Table.Cell>
                     <Table.Cell>
                       <StatusChip value={source.status} />

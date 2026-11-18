@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { Chip } from '../../../components/Chip';
 import { Table } from '../../../components/table/Table';
+import { NameCell } from '../../../components/table/NameCell';
 import { projectsQuery } from '../../../queries/projects';
 import { dueLabel, dueTone } from '../../../utils/assessmentDueTone';
 import { asProjectPublicId, projectDetailRoute } from '../../../routes/publicObjectRoutes';
@@ -85,7 +86,7 @@ export const AssessmentProgressTableWidget = ({
           ) : (
             rows.map(summary => (
               <Table.Row key={summary.assessment.id} onClick={() => openAssessment(summary)}>
-                <Table.NameCell
+                <NameCell.Cell
                   title={summary.assessment.name}
                   subtitle={summary.assessment.description || undefined}
                 />

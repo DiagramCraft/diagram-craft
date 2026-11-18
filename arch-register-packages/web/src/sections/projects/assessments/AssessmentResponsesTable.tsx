@@ -16,6 +16,7 @@ import { EntityNavigationLink } from '../../../components/EntityNavigationLink';
 import { MemberAvatar } from '../../../components/MemberAvatar';
 import { SearchInput } from '../../../components/SearchInput';
 import { Table } from '../../../components/table/Table';
+import { NameCell } from '../../../components/table/NameCell';
 import { useTableSort } from '../../../components/table/useTableSort';
 import { TypeBadge } from '../../../components/TypeBadge';
 import { AssessmentFieldCell } from './AssessmentFieldCells';
@@ -246,7 +247,7 @@ const AssessmentResponseRow = ({
 
   return (
     <Table.Row>
-      <Table.NameCell
+      <NameCell.Cell
         sticky
         className={styles.entCol}
         width={210}

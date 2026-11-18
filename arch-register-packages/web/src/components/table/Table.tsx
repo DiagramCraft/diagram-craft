@@ -334,51 +334,6 @@ const CheckboxCell = ({ as = 'td', sticky, style, ...rest }: CheckboxCellProps) 
   );
 };
 
-type NameCellProps = {
-  icon?: ReactNode;
-  prefix?: ReactNode;
-  indentLevel?: number;
-  title: ReactNode;
-  subtitle?: ReactNode;
-  titleMuted?: boolean;
-  sticky?: boolean;
-  width?: number | string;
-  // 'prefix' is also a global RDFa HTML attribute (typed as string) that ComponentPropsWithoutRef<'td'>
-  // would otherwise contribute, colliding with our ReactNode-typed prop of the same name.
-} & Omit<ComponentPropsWithoutRef<'td'>, 'title' | 'prefix'>;
-
-const NameCell = ({
-  icon,
-  prefix,
-  indentLevel,
-  title,
-  subtitle,
-  titleMuted,
-  sticky,
-  width,
-  className,
-  style,
-  ...rest
-}: NameCellProps) => (
-  <td
-    className={cx(styles.td, sticky && styles.stickyCol, className)}
-    style={cellStyle(width, style)}
-    {...rest}
-  >
-    <div
-      className={styles.name}
-      style={indentLevel ? { paddingLeft: indentLevel * 20 } : undefined}
-    >
-      {prefix}
-      {icon}
-      <div>
-        <div className={cx(styles.nameMain, titleMuted && styles.nameMuted)}>{title}</div>
-        {subtitle && <div className={styles.nameSub}>{subtitle}</div>}
-      </div>
-    </div>
-  </td>
-);
-
 type ActionsCellProps = ComponentPropsWithoutRef<'td'>;
 
 const ActionsCell = ({ className, onClick, ...rest }: ActionsCellProps) => (
@@ -463,7 +418,6 @@ export const Table = {
   ResizeHandle,
   SortableHeaderCell,
   Cell,
-  NameCell,
   Checkbox,
   CheckboxCell,
   ActionsCell,
