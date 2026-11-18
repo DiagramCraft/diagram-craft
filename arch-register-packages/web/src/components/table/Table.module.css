@@ -359,3 +359,51 @@
   background: var(--panel-bg);
   box-shadow: inset 2px 0 0 var(--accent-fg);
 }
+
+/* Cell selection (DataTable `cellSelection`): tinted range, outlined edges, stronger active cell.
+   Outlines use inset box-shadows so they don't shift layout or fight border-collapse. */
+.table[data-cell-selection] {
+  user-select: none;
+}
+
+.table[data-cell-selection]:focus-visible {
+  outline: none;
+}
+
+.table .td[data-selected],
+.table .th[data-selected] {
+  background: color-mix(in oklch, var(--accent-fg) 12%, var(--base-bg));
+}
+
+.table .td[data-selected] {
+  --el: transparent;
+  --er: transparent;
+  --et: transparent;
+  --eb: transparent;
+  box-shadow:
+    inset 1px 0 0 var(--el),
+    inset -1px 0 0 var(--er),
+    inset 0 1px 0 var(--et),
+    inset 0 -1px 0 var(--eb);
+}
+
+.table .td[data-edge-left] {
+  --el: var(--accent-fg);
+}
+
+.table .td[data-edge-right] {
+  --er: var(--accent-fg);
+}
+
+.table .td[data-edge-top] {
+  --et: var(--accent-fg);
+}
+
+.table .td[data-edge-bottom] {
+  --eb: var(--accent-fg);
+}
+
+.table .td[data-active] {
+  box-shadow: inset 0 0 0 1px var(--accent-fg);
+  background: var(--base-bg);
+}

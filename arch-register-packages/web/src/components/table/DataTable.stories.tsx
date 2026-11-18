@@ -188,3 +188,15 @@ export const MultipleStickyColumns: Story = {
     );
   }
 };
+
+export const CellSelection: Story = {
+  render: () => (
+    <DataTable
+      columns={COLUMNS}
+      data={PEOPLE}
+      getRowId={r => r.id}
+      cellSelection
+      onCopy={text => console.log('copied', JSON.stringify(text))}
+    />
+  )
+};

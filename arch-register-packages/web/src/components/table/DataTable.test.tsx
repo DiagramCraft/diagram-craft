@@ -143,4 +143,52 @@ describe('DataTable', () => {
     expect(render({ columnChooser: true })).toContain('aria-label="Choose columns"');
     expect(render()).not.toContain('Choose columns');
   });
+
+  describe('cell selection', () => {
+    const selectedCells = {
+      anchor: { rowId: '1', columnId: 'name' },
+      focus: { rowId: '2', columnId: 'role' }
+    };
+
+    test('is off by default', () => {
+      const html = render({ selectedCells });
+      expect(html).not.toContain('data-selected');
+      expect(html).not.toContain('role="grid"');
+    });
+
+    test('makes the table a focusable grid when enabled', () => {
+      const html = render({ cellSelection: true });
+      expect(html).toContain('role="grid"');
+      expect(html).toContain('tabindex="0"');
+      expect(html.match(/aria-selected="false"/g)).toHaveLength(4);
+    });
+
+    test('marks the selected range, active cell and edges', () => {
+      const html = render({ cellSelection: true, selectedCells });
+      expect(html.match(/<td[^>]*data-selected/g)).toHaveLength(4);
+      expect(html.match(/data-active/g)).toHaveLength(1);
+      expect(html.match(/data-edge-top/g)).toHaveLength(2);
+      expect(html.match(/data-edge-right/g)).toHaveLength(2);
+    });
+
+    test('marks full-height column selections on the header', () => {
+      const html = render({
+        cellSelection: true,
+        selectedCells: {
+          anchor: { rowId: '1', columnId: 'name' },
+          focus: { rowId: '2', columnId: 'name' }
+        }
+      });
+      expect(html.match(/<th[^>]*data-selected/g)).toHaveLength(1);
+    });
+
+    test('ignores a selection pointing at a hidden column', () => {
+      const html = render({
+        cellSelection: true,
+        selectedCells,
+        columnVisibility: { role: false }
+      });
+      expect(html).not.toContain('data-selected');
+    });
+  });
 });
