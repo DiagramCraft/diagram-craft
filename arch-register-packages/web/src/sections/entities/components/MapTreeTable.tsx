@@ -9,6 +9,7 @@ import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import { Chip } from '../../../components/Chip';
 import { EmptyState } from '../../../components/EmptyState';
 import { Table } from '../../../components/table/Table';
+import { NameCell } from '../../../components/table/NameCell';
 import { TypeBadge } from '../../../components/TypeBadge';
 import type { EntityHoverCardRow } from '../../../components/EntityHoverCardBody';
 import { resolveSchemaColor } from '../../../lib/schemaPresentation';
@@ -118,7 +119,7 @@ export const MapTreeTable = ({
             const expanded = !collapsed.has(node._uid);
             return (
               <Table.Row key={node._uid} muted={dimmed}>
-                <Table.NameCell
+                <NameCell.Cell
                   indentLevel={depth}
                   prefix={
                     hasChildren ? (

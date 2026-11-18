@@ -15,6 +15,7 @@ import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useEntitiesBySchema } from '../../../hooks/useEntities';
 import { resolveSchemaColor } from '../../../lib/schemaPresentation';
 import { Table } from '../../../components/table/Table';
+import { NameCell } from '../../../components/table/NameCell';
 import { useTableSort } from '../../../components/table/useTableSort';
 import styles from './AssessmentTable.module.css';
 
@@ -191,7 +192,7 @@ const AssessmentRow = ({
 
   return (
     <Table.Row muted={assessment.status === 'archived'} onClick={onOpen}>
-      <Table.NameCell
+      <NameCell.Cell
         icon={<TbClipboardList size={14} />}
         title={assessment.name + cycleSuffix}
         subtitle={assessment.description || undefined}

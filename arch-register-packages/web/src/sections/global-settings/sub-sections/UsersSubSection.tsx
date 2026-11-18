@@ -16,6 +16,7 @@ import { SearchInput } from '../../../components/SearchInput';
 import { ViewControls } from '../../../components/ViewControls';
 import { UserStatusChip } from '../UserStatusChip';
 import { Table } from '../../../components/table/Table';
+import { NameCell } from '../../../components/table/NameCell';
 import { getUserLabel } from '../../../utils/userLabel';
 import type { UserSummary } from '@arch-register/api-types/authContract';
 
@@ -123,7 +124,7 @@ export const UsersSubSection = ({
                       candidate.is_system_actor ? undefined : () => setEditingUser(candidate)
                     }
                   >
-                    <Table.NameCell
+                    <NameCell.Cell
                       icon={
                         <MemberAvatar
                           name={candidate.display_name}

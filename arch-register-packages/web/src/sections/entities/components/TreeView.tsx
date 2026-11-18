@@ -27,6 +27,7 @@ import {
   type EntityDisplayField
 } from './entityDisplayFields';
 import { Table } from '../../../components/table/Table';
+import { NameCell } from '../../../components/table/NameCell';
 import { EmptyState } from '../../../components/EmptyState';
 import { LoadingState } from '../../../components/LoadingState';
 
@@ -254,7 +255,7 @@ const TreeNodeRow = ({
   return (
     <>
       <Table.Row muted={isAncestor} onClick={() => onEntityClick(item._publicId)}>
-        <Table.NameCell
+        <NameCell.Cell
           indentLevel={depth}
           prefix={
             hasChildren ? (

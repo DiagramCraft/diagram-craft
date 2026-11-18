@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Chip } from '../../../components/Chip';
 import { EmptyState } from '../../../components/EmptyState';
 import { Table } from '../../../components/table/Table';
+import { NameCell } from '../../../components/table/NameCell';
 import { useTableSort } from '../../../components/table/useTableSort';
 import {
   useSpecificationItemsFeed,
@@ -118,7 +119,7 @@ export const SpecItemsTableWidget = ({ config }: { config: SpecItemsTableWidgetC
                   {row.item.action.toUpperCase()}
                 </Chip>
               </Table.Cell>
-              <Table.NameCell
+              <NameCell.Cell
                 title={row.item.path ?? row.item.channel ?? 'Unspecified resource'}
                 subtitle={row.item.identifier}
               />

@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useWidgetRecords } from '../../../hooks/useEntityQueryText';
 import { Table } from '../../../components/table/Table';
+import { NameCell } from '../../../components/table/NameCell';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEntityDrawer';
 import { useWidgetFramed } from '../../shared/dashboard/WidgetFramed';
@@ -67,7 +68,7 @@ export const GroupedRollupTableWidget = ({ config }: Props) => {
             key={row.key}
             onClick={row.entityPublicId ? () => openEntityDrawer(row.entityPublicId!) : undefined}
           >
-            <Table.NameCell title={row.label} subtitle={row.entityPublicId} />
+            <NameCell.Cell title={row.label} subtitle={row.entityPublicId} />
             {showBar && (
               <Table.Cell>
                 <span className={styles.track} aria-hidden>

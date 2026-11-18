@@ -24,6 +24,7 @@ import {
 import { useTeamAssignments, useTeams } from '../../../hooks/useWorkspaceConfig';
 import { useWorkspaceRoles } from '../../../hooks/useWorkspaceRoles';
 import { Table } from '../../../components/table/Table';
+import { NameCell } from '../../../components/table/NameCell';
 import styles from './MembersSubSection.module.css';
 import { EmptyState } from '../../../components/EmptyState';
 import { LoadingState } from '../../../components/LoadingState';
@@ -183,7 +184,7 @@ export const MembersSubSection = ({ workspaceSlug }: { workspaceSlug: string }) 
                 const memberTeams = teamsByUser.get(member.user_id) ?? [];
                 return (
                   <Table.Row key={member.user_id} onClick={() => setEditingUserId(member.user_id)}>
-                    <Table.NameCell
+                    <NameCell.Cell
                       icon={
                         <MemberAvatar
                           name={member.display_name}

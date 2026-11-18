@@ -7,6 +7,7 @@ import { useMdxContext } from '../../../sections/markdown/MdxContext';
 import { EntityNavigationLink } from '../../../components/EntityNavigationLink';
 import { resolveSchemaColor } from '../../../lib/schemaPresentation';
 import { Table } from '../../../components/table/Table';
+import { NameCell } from '../../../components/table/NameCell';
 import styles from './EntityTable.module.css';
 import { EmptyState } from '../../../components/EmptyState';
 import type { EntityTableWidgetConfig } from './types';
@@ -98,7 +99,7 @@ export const EntityTable = ({ config }: { config: EntityTableWidgetConfig }) => 
 
             return (
               <Table.Row key={entity._uid}>
-                <Table.NameCell
+                <NameCell.Cell
                   icon={
                     schemaDef && (
                       <TypeBadge
