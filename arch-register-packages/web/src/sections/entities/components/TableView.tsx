@@ -86,7 +86,7 @@ export const TableView = ({
     projectContext != null
   );
 
-  const columns = useMemo(() => {
+  const buildColumns = (): DataTableColumn<Entity>[] => {
     const dynamic = fieldIds
       .filter(id => id !== '_description')
       .map(
@@ -215,23 +215,8 @@ export const TableView = ({
     }
 
     return result;
-  }, [
-    fieldIds.join('|'),
-    displayFields,
-    schemaMap,
-    config,
-    hideTypeColumn,
-    rowOpensEntityPage,
-    projectContext,
-    activeDateField,
-    readOnly,
-    onClone,
-    onDelete,
-    onManageCollections,
-    onMerge,
-    commonActions,
-    dateTimeFormatPreference
-  ]);
+  };
+  const columns = buildColumns();
 
   const selectedRowIds = useMemo(
     () => Object.fromEntries([...(selectedIds ?? [])].map(id => [id, true as const])),
