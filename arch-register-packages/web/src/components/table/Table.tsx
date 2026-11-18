@@ -28,12 +28,19 @@ const stopClick: MouseEventHandler<HTMLTableCellElement> = ev => ev.stopPropagat
 // accumulation below needs this value to fall back on when a sticky CheckboxCell omits it.
 const CHECKBOX_CELL_WIDTH = 32;
 
-type StickyCellProps = { sticky?: boolean; width?: number | string; style?: CSSProperties };
+type StickyCellProps = {
+  sticky?: boolean;
+  width?: number | string;
+  style?: CSSProperties;
+};
 
+// Legacy fallback for hand-written tables: infers offsets from direct children. Cells that already
+// carry an explicit `style.left` (e.g. DataTable, via column pinning) are left untouched.
 const withStickyOffsets = (children: ReactNode): ReactNode => {
   let left = 0;
   return Children.map(children, child => {
     if (!isValidElement<StickyCellProps>(child) || !child.props.sticky) return child;
+    if (child.props.style?.left !== undefined) return child;
     const offset = left;
     const width =
       typeof child.props.width === 'number'
@@ -91,6 +98,8 @@ type TableRootProps = {
   scrollY?: boolean;
   stickyHeader?: boolean;
   layout?: 'auto' | 'fixed';
+  // Explicit column count for DetailRow; skips inference from the Head element tree
+  columnCount?: number;
   // false when the table already sits inside another bordered/rounded surface (e.g. a Section
   // panel), so Table.Root's own border/radius/background don't double up against it.
   bordered?: boolean;
@@ -104,13 +113,18 @@ const Root = ({
   scrollY = false,
   stickyHeader = false,
   layout = 'auto',
+  columnCount: columnCountProp,
   bordered = true,
   wrapClassName,
   className,
   children,
   ...rest
 }: TableRootProps) => {
-  const columnCount = useMemo(() => findHeaderColumnCount(children), [children]);
+  const inferredColumnCount = useMemo(
+    () => (columnCountProp === undefined ? findHeaderColumnCount(children) : undefined),
+    [children, columnCountProp]
+  );
+  const columnCount = columnCountProp ?? inferredColumnCount;
   return (
     <div
       className={cx(
@@ -375,7 +389,9 @@ const ActionsCell = ({ className, onClick, ...rest }: ActionsCellProps) => (
   />
 );
 
-type DotsButtonProps = { 'aria-label'?: string } & ComponentPropsWithoutRef<'button'>;
+type DotsButtonProps = {
+  'aria-label'?: string;
+} & ComponentPropsWithoutRef<'button'>;
 
 const DotsButton = forwardRef<HTMLButtonElement, DotsButtonProps>(
   ({ className, 'aria-label': ariaLabel = 'Actions', ...rest }, ref) => (
@@ -392,7 +408,11 @@ const DotsButton = forwardRef<HTMLButtonElement, DotsButtonProps>(
 );
 DotsButton.displayName = 'DotsButton';
 
-type EmptyRowProps = { colSpan: number; title?: ReactNode; children?: ReactNode };
+type EmptyRowProps = {
+  colSpan: number;
+  title?: ReactNode;
+  children?: ReactNode;
+};
 
 const EmptyRow = ({ colSpan, title, children }: EmptyRowProps) => (
   <tr className={styles.emptyRow}>

@@ -1,6 +1,7 @@
 import { useState, type ComponentProps, type ReactNode } from 'react';
 import {
   flexRender,
+  columnPinningFeature,
   columnResizingFeature,
   columnSizingFeature,
   rowSelectionFeature,
@@ -28,10 +29,17 @@ export type DataTableColumnMeta = {
   interactive?: boolean;
 };
 
+// Width of the selection checkbox column (fixed in Table.module.css); pinned columns are shifted by it
+const CHECKBOX_COLUMN_WIDTH = 32;
+
+const columnId = (c: { id?: string; accessorKey?: unknown }) =>
+  c.id ?? (typeof c.accessorKey === 'string' ? c.accessorKey : undefined);
+
 const features = tableFeatures({
   rowSelectionFeature,
   columnSizingFeature,
   columnResizingFeature,
+  columnPinningFeature,
   columnMeta: {} as DataTableColumnMeta
 });
 
@@ -92,6 +100,21 @@ export const DataTable = <T extends RowData>({
     persistKey
   });
 
+  // `meta.sticky` is the public API; it maps onto TanStack's left column pinning so every cell gets
+  // an explicit offset (header and body) instead of Table.Row inferring it from its children.
+  const stickyColumnIds = columns
+    .filter(c => c.meta?.sticky)
+    .map(c => columnId(c as { id?: string; accessorKey?: unknown }))
+    .filter((id): id is string => id !== undefined);
+  const checkboxOffset = selectable && stickyColumnIds.length > 0 ? CHECKBOX_COLUMN_WIDTH : 0;
+  const stickyStyle = (column: {
+    getIsPinned: () => false | 'start' | 'end';
+    getStart: (p: 'start') => number;
+  }) =>
+    column.getIsPinned() === 'start'
+      ? { left: column.getStart('start') + checkboxOffset }
+      : undefined;
+
   const table = useTable({
     features,
     columns,
@@ -100,7 +123,11 @@ export const DataTable = <T extends RowData>({
     enableRowSelection: selectable,
     enableColumnResizing: resizable,
     columnResizeMode: 'onEnd',
-    state: { rowSelection, columnSizing },
+    state: {
+      rowSelection,
+      columnSizing,
+      columnPinning: { start: stickyColumnIds, end: [] }
+    },
     onColumnSizingChange: updater =>
       setColumnSizing(typeof updater === 'function' ? updater(columnSizing) : updater),
     onRowSelectionChange: updater => {
@@ -114,7 +141,11 @@ export const DataTable = <T extends RowData>({
   const leafColumnCount = table.getAllLeafColumns().length + (selectable ? 1 : 0);
 
   return (
-    <Table.Root {...rootProps} layout={resizable ? 'fixed' : rootProps.layout}>
+    <Table.Root
+      {...rootProps}
+      columnCount={leafColumnCount}
+      layout={resizable ? 'fixed' : rootProps.layout}
+    >
       <Table.Head>
         {table.getHeaderGroups().map(group => (
           <tr key={group.id}>
@@ -122,6 +153,8 @@ export const DataTable = <T extends RowData>({
               <Table.CheckboxCell
                 as="th"
                 aria-label="Select all rows"
+                sticky={checkboxOffset > 0}
+                style={checkboxOffset > 0 ? { left: 0 } : undefined}
                 checked={table.getIsAllRowsSelected()}
                 indeterminate={table.getIsSomeRowsSelected()}
                 onChange={table.getToggleAllRowsSelectedHandler()}
@@ -135,7 +168,8 @@ export const DataTable = <T extends RowData>({
               const shared = {
                 align: meta?.align,
                 numeric: meta?.numeric,
-                sticky: meta?.sticky,
+                sticky: header.column.getIsPinned() === 'start',
+                style: stickyStyle(header.column),
                 width: resizable ? header.column.getSize() : meta?.width,
                 colSpan: header.colSpan > 1 ? header.colSpan : undefined
               };
@@ -182,6 +216,8 @@ export const DataTable = <T extends RowData>({
             {selectable && (
               <Table.CheckboxCell
                 aria-label="Select row"
+                sticky={checkboxOffset > 0}
+                style={checkboxOffset > 0 ? { left: 0 } : undefined}
                 checked={row.getIsSelected()}
                 onChange={row.getToggleSelectedHandler()}
               />
@@ -193,7 +229,8 @@ export const DataTable = <T extends RowData>({
                   key={cell.id}
                   align={meta?.align}
                   numeric={meta?.numeric}
-                  sticky={meta?.sticky}
+                  sticky={cell.column.getIsPinned() === 'start'}
+                  style={stickyStyle(cell.column)}
                   width={resizable ? cell.column.getSize() : meta?.width}
                   primary={meta?.primary}
                   interactive={meta?.interactive}

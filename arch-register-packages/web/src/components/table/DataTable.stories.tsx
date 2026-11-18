@@ -105,3 +105,71 @@ export const Resizable: Story = {
     />
   )
 };
+
+const WIDE_COLUMNS: DataTableColumn<Person>[] = [
+  {
+    id: 'name',
+    header: 'Name',
+    accessorKey: 'name',
+    size: 180,
+    meta: { primary: true, sticky: true }
+  },
+  { id: 'role', header: 'Role', accessorKey: 'role', size: 320 },
+  { id: 'email', header: 'Email', accessorKey: 'email', size: 320 },
+  { id: 'notes', header: 'Notes', accessorFn: () => 'Long free-text column', size: 480 }
+];
+
+// Name stays pinned while the rest scrolls horizontally; header cells are pinned too
+export const StickyColumn: Story = {
+  render: () => (
+    <div style={{ maxWidth: 480 }}>
+      <DataTable
+        columns={WIDE_COLUMNS}
+        data={PEOPLE}
+        getRowId={p => p.id}
+        scroll
+        stickyHeader
+        resizable
+      />
+    </div>
+  )
+};
+
+// The selection checkbox is pinned too, and the sticky column is offset by its width
+export const StickyColumnSelectable: Story = {
+  render: () => (
+    <div style={{ maxWidth: 480 }}>
+      <DataTable
+        columns={WIDE_COLUMNS}
+        data={PEOPLE}
+        getRowId={p => p.id}
+        scroll
+        stickyHeader
+        resizable
+        selectable
+      />
+    </div>
+  )
+};
+
+// Two pinned columns; the second is offset by the first's width, including after resizing
+export const MultipleStickyColumns: Story = {
+  render: () => {
+    const columns = WIDE_COLUMNS.map(c =>
+      c.id === 'role' ? { ...c, size: 140, meta: { sticky: true } } : c
+    );
+    return (
+      <div style={{ maxWidth: 520 }}>
+        <DataTable
+          columns={columns}
+          data={PEOPLE}
+          getRowId={p => p.id}
+          scroll
+          stickyHeader
+          resizable
+          persistKey="story:datatable-sticky-multi"
+        />
+      </div>
+    );
+  }
+};
