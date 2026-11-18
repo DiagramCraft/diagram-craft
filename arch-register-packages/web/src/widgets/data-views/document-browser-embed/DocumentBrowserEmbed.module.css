@@ -25,10 +25,6 @@ div[data-frame="true"] {
   overflow-x: auto;
 }
 
-.tableSurface {
-  min-width: 700px;
-}
-
 .typeCell {
   display: inline-flex;
   align-items: center;

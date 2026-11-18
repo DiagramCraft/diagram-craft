@@ -1359,6 +1359,11 @@
         - @id:ar.content.workspace-documents Users can create, edit, organize, link, and revise shared workspace
           documents.
 
+        - @id:ar.content.document-browser Users can embed a document browser widget at workspace, project, or entity
+          scope that lists documents with their configured metadata columns in the query's sort order. Readers can
+          resize columns by dragging header edges (not persisted) and open a document with the mouse or by focusing a
+          row and pressing Enter or Space.
+
         - @id:ar.content.entity-content Users can maintain content attached to individual entities and navigate between
           entities and their content.
 

@@ -8,7 +8,7 @@ import { useMdxContext } from '../../../sections/markdown/MdxContext';
 import { useDocumentList, useDocumentTypes } from '../../../hooks/useDocuments';
 import { useEntity } from '../../../hooks/useEntities';
 import { EmptyState } from '../../../components/EmptyState';
-import { Table } from '../../../components/table/Table';
+import { DataTable, type DataTableColumn } from '../../../components/table/DataTable';
 import { NameCell } from '../../../components/table/NameCell';
 import { TypeBadge } from '../../../components/TypeBadge';
 import {
@@ -118,9 +118,79 @@ export const DocumentBrowserEmbed = ({ config }: Props) => {
         .filter((field): field is DocumentField => !!field),
     [config?.visibleFieldIds, fieldMap]
   );
-  const visibleBaseColumnIds = new Set(
-    config?.visibleBaseColumnIds ?? DOCUMENT_BROWSER_BASE_COLUMN_IDS
+  const visibleBaseColumnIds = useMemo(
+    () => new Set<string>(config?.visibleBaseColumnIds ?? DOCUMENT_BROWSER_BASE_COLUMN_IDS),
+    [config?.visibleBaseColumnIds]
   );
+
+  const columns = useMemo(() => {
+    const result: DataTableColumn<DocumentListItem>[] = [
+      {
+        id: 'title',
+        header: 'Title',
+        size: 320,
+        minSize: 160,
+        meta: { primary: true },
+        cell: ({ row }) => (
+          <NameCell.Content
+            icon={<TbFileText size={16} />}
+            title={row.original.file.name}
+            subtitle={row.original.file.path}
+          />
+        )
+      }
+    ];
+    if (visibleBaseColumnIds.has('document_type')) {
+      result.push({
+        id: 'document_type',
+        header: 'Document type',
+        size: 180,
+        minSize: 100,
+        cell: ({ row }) =>
+          row.original.document_type_name ? (
+            <span className={styles.typeCell}>
+              <TypeBadge
+                color={row.original.document_type_color ?? 'var(--base-fg-secondary)'}
+                name={row.original.document_type_name}
+                icon={row.original.document_type_icon}
+                size={18}
+              />
+              {row.original.document_type_name}
+            </span>
+          ) : (
+            'Untyped Markdown'
+          )
+      });
+    }
+    if (visibleBaseColumnIds.has('location')) {
+      result.push({
+        id: 'location',
+        header: 'Location',
+        size: 160,
+        minSize: 80,
+        cell: () => locationLabel
+      });
+    }
+    if (visibleBaseColumnIds.has('updated_at')) {
+      result.push({
+        id: 'updated_at',
+        header: 'Updated',
+        size: 140,
+        minSize: 80,
+        cell: ({ row }) => formatDate(row.original.file.updated_at)
+      });
+    }
+    for (const field of visibleFields) {
+      result.push({
+        id: `field:${field.id}`,
+        header: field.name,
+        size: 160,
+        minSize: 80,
+        cell: ({ row }) => displayValue(row.original.metadata[field.id])
+      });
+    }
+    return result;
+  }, [visibleBaseColumnIds, visibleFields, locationLabel]);
 
   const onDocumentClick = useCallback(
     (document: DocumentListItem) => {
@@ -173,63 +243,17 @@ export const DocumentBrowserEmbed = ({ config }: Props) => {
 
   return (
     <div className={styles.tableWrapper}>
-      <Table.Root className={styles.tableSurface}>
-        <Table.Head>
-          <Table.Row>
-            <Table.HeaderCell>Title</Table.HeaderCell>
-            {visibleBaseColumnIds.has('document_type') && (
-              <Table.HeaderCell>Document type</Table.HeaderCell>
-            )}
-            {visibleBaseColumnIds.has('location') && <Table.HeaderCell>Location</Table.HeaderCell>}
-            {visibleBaseColumnIds.has('updated_at') && <Table.HeaderCell>Updated</Table.HeaderCell>}
-            {visibleFields.map(field => (
-              <Table.HeaderCell key={field.id}>{field.name}</Table.HeaderCell>
-            ))}
-          </Table.Row>
-        </Table.Head>
-        <Table.Body>
-          {documents.map(document => (
-            <Table.Row
-              key={document.file.id}
-              onClick={() => onDocumentClick(document)}
-              tabIndex={0}
-              onKeyDown={event => {
-                if (event.key === 'Enter' || event.key === ' ') onDocumentClick(document);
-              }}
-            >
-              <NameCell.Cell
-                icon={<TbFileText size={16} />}
-                title={document.file.name}
-                subtitle={document.file.path}
-              />
-              {visibleBaseColumnIds.has('document_type') && (
-                <Table.Cell>
-                  {document.document_type_name ? (
-                    <span className={styles.typeCell}>
-                      <TypeBadge
-                        color={document.document_type_color ?? 'var(--base-fg-secondary)'}
-                        name={document.document_type_name}
-                        icon={document.document_type_icon}
-                        size={18}
-                      />
-                      {document.document_type_name}
-                    </span>
-                  ) : (
-                    'Untyped Markdown'
-                  )}
-                </Table.Cell>
-              )}
-              {visibleBaseColumnIds.has('location') && <Table.Cell>{locationLabel}</Table.Cell>}
-              {visibleBaseColumnIds.has('updated_at') && (
-                <Table.Cell>{formatDate(document.file.updated_at)}</Table.Cell>
-              )}
-              {visibleFields.map(field => (
-                <Table.Cell key={field.id}>{displayValue(document.metadata[field.id])}</Table.Cell>
-              ))}
-            </Table.Row>
-          ))}
-        </Table.Body>
-      </Table.Root>
+      <DataTable
+        // Remount when the column set changes so local widths don't leak between column sets
+        key={columns.map(c => c.id).join('|')}
+        scroll
+        resizable
+        rowKeyboardActivation
+        columns={columns}
+        data={documents}
+        getRowId={document => document.file.id}
+        onRowClick={onDocumentClick}
+      />
     </div>
   );
 };
