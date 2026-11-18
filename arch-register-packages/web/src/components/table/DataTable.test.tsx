@@ -93,4 +93,36 @@ describe('DataTable', () => {
       expect(html).toContain('aria-sort="ascending"');
     });
   });
+
+  describe('sticky columns', () => {
+    const sticky = (n: number): DataTableColumn<Row>[] =>
+      COLUMNS.map((c, i) => (i < n ? { ...c, meta: { ...c.meta, sticky: true } } : c));
+    const lefts = (html: string) => [...html.matchAll(/left:(\d+)(?:px)?/g)].map(m => Number(m[1]));
+
+    test('offsets header and body cells of a sticky column', () => {
+      const html = render({ columns: sticky(1), resizable: true });
+      expect(html.match(/stickyCol/g)).toHaveLength(3);
+      expect(lefts(html)).toEqual([0, 0, 0]);
+    });
+
+    test('second sticky column is offset by the first width', () => {
+      const html = render({
+        columns: sticky(2),
+        resizable: true,
+        columnSizing: { name: 150, role: 100 }
+      });
+      expect(lefts(html)).toEqual([0, 150, 0, 150, 0, 150]);
+    });
+
+    test('pins the selection checkbox and shifts sticky columns by its width', () => {
+      const html = render({ columns: sticky(1), selectable: true, resizable: true });
+      expect(lefts(html)).toEqual([0, 32, 0, 32, 0, 32]);
+    });
+
+    test('adds no offsets without sticky columns', () => {
+      const html = render({ selectable: true });
+      expect(html).not.toContain('stickyCol');
+      expect(html).not.toContain('left:');
+    });
+  });
 });
