@@ -30,6 +30,18 @@ import type { SortState } from './useTableSort';
 import { useColumnSizing } from './useColumnSizing';
 import { useColumnLayout } from './useColumnLayout';
 import { ColumnChooser } from './ColumnChooser';
+import { EditableCell } from './EditableCell';
+import editorStyles from './CellEditor.module.css';
+import {
+  getEditStart,
+  isCellEditable,
+  navToDirection,
+  useCellEditing,
+  validateValue,
+  type CellEditingMeta,
+  type EditingState,
+  type EditNav
+} from './useCellEditing';
 import {
   extendTo,
   getCellState,
@@ -48,7 +60,9 @@ import {
 
 // Per-column presentation options, read from `columnDef.meta`. They map 1:1 onto props of the
 // existing Table.* cells so DataTable renders identically to a hand-written Table.
-export type DataTableColumnMeta = {
+export type CellEdit = { rowId: string; columnId: string; value: unknown };
+
+export type DataTableColumnMeta = CellEditingMeta & {
   sortable?: boolean;
   align?: 'left' | 'center' | 'right';
   numeric?: boolean;
@@ -127,6 +141,18 @@ type DataTableProps<T extends RowData> = RootProps & {
   // Called with the copied text; `clipboard` overrides navigator.clipboard (mainly for tests)
   onCopy?: (text: string) => void;
   clipboard?: { writeText: (text: string) => Promise<void> | void };
+  // Cell editing, enabled for columns with `meta.editor` when this is set. Keyboard editing (Enter/F2,
+  // typing, Delete) needs `cellSelection`; double-click works without. The parent applies the change
+  // to `data`; the table never mutates rows itself.
+  onCellEdit?: (rowId: string, columnId: string, value: unknown) => void;
+  // Batch alternative: called once per user action (a single edit, or clearing a range) with all its
+  // edits, so they can go to the backend as one request. Takes precedence over `onCellEdit`.
+  onCellsEdit?: (edits: CellEdit[]) => void;
+  // Marks cells with unsaved changes (a corner marker); typically driven by a pending-changes map when
+  // batching edits. The table only draws the marker, merging pending values into `data` is up to the caller.
+  isCellDirty?: (rowId: string, columnId: string) => boolean;
+  editingCell?: EditingState;
+  onEditingChange?: (editing: EditingState) => void;
   // Custom placement for the chooser; receives the chooser element (null when columnChooser is off)
   renderToolbar?: (chooser: ReactNode) => ReactNode;
 };
@@ -157,6 +183,11 @@ export const DataTable = <T extends RowData>({
   onSelectedCellsChange,
   onCopy,
   clipboard,
+  onCellEdit,
+  onCellsEdit,
+  isCellDirty,
+  editingCell,
+  onEditingChange,
   renderToolbar,
   ...rootProps
 }: DataTableProps<T>) => {
@@ -267,6 +298,46 @@ export const DataTable = <T extends RowData>({
     return () => document.removeEventListener('mouseup', stop);
   }, []);
 
+  const [editing, setEditing] = useCellEditing({ editingCell, onEditingChange });
+  const columnById = (id: string) => table.getColumn(id)?.columnDef.meta;
+  const canEdit = (rowId: string, colId: string) =>
+    !!(onCellsEdit ?? onCellEdit) &&
+    isCellEditable(columnById(colId), rows.find(r => r.id === rowId)?.original);
+
+  const applyEdits = (edits: CellEdit[]) => {
+    if (edits.length === 0) return;
+    if (onCellsEdit) onCellsEdit(edits);
+    else for (const e of edits) onCellEdit?.(e.rowId, e.columnId, e.value);
+  };
+
+  const focusTable = () =>
+    document.querySelector<HTMLElement>(`[data-cell-selection="${tableId}"]`)?.focus();
+
+  const endEdit = (cell: CellRef, result: { value: unknown } | undefined, nav: EditNav) => {
+    setEditing(null);
+    if (result) applyEdits([{ ...cell, value: result.value }]);
+    const direction = navToDirection(nav);
+    if (direction && cellSelectionEnabled) {
+      setCells(moveFocus(rowIds, columnIds, selectCell(cell), direction, false));
+    }
+    // Keep arrow-key navigation working: the key handler only reacts to events on the table itself
+    if (cellSelectionEnabled) focusTable();
+  };
+
+  const clearSelectedCells = () => {
+    if (!range) return;
+    const edits: CellEdit[] = [];
+    for (const row of rows.slice(range.r0, range.r1 + 1)) {
+      for (const col of selectableColumns.slice(range.c0, range.c1 + 1)) {
+        if (!canEdit(row.id, col.id)) continue;
+        if (validateValue(col.columnDef.meta?.validate, null) === null) {
+          edits.push({ rowId: row.id, columnId: col.id, value: null });
+        }
+      }
+    }
+    applyEdits(edits);
+  };
+
   const onCellMouseDown = (ev: MouseEvent, cell: CellRef) => {
     if (ev.button !== 0) return;
     dragging.current = true;
@@ -325,6 +396,15 @@ export const DataTable = <T extends RowData>({
       copyRange();
     } else if (ev.key === 'Escape') {
       setCells(null);
+    } else if (focus && (ev.key === 'Delete' || ev.key === 'Backspace')) {
+      ev.preventDefault();
+      clearSelectedCells();
+    } else if (focus && canEdit(focus.rowId, focus.columnId)) {
+      const start = getEditStart(ev);
+      if (start) {
+        ev.preventDefault();
+        setEditing({ cell: focus, seed: start.seed });
+      }
     }
   };
 
@@ -480,6 +560,10 @@ export const DataTable = <T extends RowData>({
                   range && columnIndex >= 0
                     ? getCellState(range, focus, rowIndex, columnIndex, row.id, cell.column.id)
                     : undefined;
+                const isEditing =
+                  editing?.cell.rowId === row.id &&
+                  editing.cell.columnId === cell.column.id &&
+                  canEdit(row.id, cell.column.id);
                 const selectionProps =
                   cellSelectionEnabled && columnIndex >= 0 && !meta?.interactive
                     ? {
@@ -490,8 +574,11 @@ export const DataTable = <T extends RowData>({
                         'data-edge-right': state?.edgeRight ? '' : undefined,
                         'data-edge-bottom': state?.edgeBottom ? '' : undefined,
                         'data-edge-left': state?.edgeLeft ? '' : undefined,
-                        onMouseDown: (ev: MouseEvent) => onCellMouseDown(ev, ref),
-                        onMouseEnter: () => onCellMouseEnter(ref)
+                        // Clicks inside an editor must not start a selection drag
+                        onMouseDown: isEditing
+                          ? undefined
+                          : (ev: MouseEvent) => onCellMouseDown(ev, ref),
+                        onMouseEnter: isEditing ? undefined : () => onCellMouseEnter(ref)
                       }
                     : undefined;
                 return (
@@ -505,8 +592,39 @@ export const DataTable = <T extends RowData>({
                     width={resizable ? cell.column.getSize() : meta?.width}
                     primary={meta?.primary}
                     interactive={meta?.interactive}
+                    data-editing={isEditing ? '' : undefined}
+                    data-dirty={isCellDirty?.(row.id, cell.column.id) ? '' : undefined}
+                    aria-description={
+                      isCellDirty?.(row.id, cell.column.id) ? 'Modified, not saved' : undefined
+                    }
+                    onDoubleClick={
+                      canEdit(row.id, cell.column.id) && !isEditing
+                        ? () => {
+                            setCells(selectCell(ref));
+                            setEditing({ cell: ref });
+                          }
+                        : undefined
+                    }
                   >
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    {isEditing && meta ? (
+                      // The original content stays in the flow (hidden) so the editor, which is laid
+                      // over the cell, cannot change the column width
+                      <div className={editorStyles.host}>
+                        <div className={editorStyles.placeholder}>
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </div>
+                        <div className={editorStyles.layer}>
+                          <EditableCell
+                            meta={meta}
+                            value={cell.getValue()}
+                            seed={editing?.seed}
+                            onDone={(result, nav) => endEdit(ref, result, nav)}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      flexRender(cell.column.columnDef.cell, cell.getContext())
+                    )}
                   </Table.Cell>
                 );
               })}

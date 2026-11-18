@@ -407,3 +407,26 @@
   box-shadow: inset 0 0 0 1px var(--accent-fg);
   background: var(--base-bg);
 }
+
+/* Cell being edited: the editor fills the cell and text can be selected inside it */
+.table .td[data-editing] {
+  user-select: text;
+  background: var(--base-bg);
+  box-shadow: inset 0 0 0 2px var(--accent-fg);
+}
+
+/* Unsaved change (DataTable `isCellDirty`): small corner marker, like spreadsheet change indicators */
+.table .td[data-dirty] {
+  position: relative;
+}
+
+.table .td[data-dirty]::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-style: solid;
+  border-width: 7px 7px 0 0;
+  border-color: var(--accent-fg) transparent transparent transparent;
+  pointer-events: none;
+}

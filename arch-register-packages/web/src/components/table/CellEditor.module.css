@@ -1,0 +1,40 @@
+/* Bare editors that fill the whole cell; the cell itself draws the outline (data-editing) */
+.input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  user-select: text;
+}
+
+.input[aria-invalid="true"] {
+  color: var(--error-fg, #c0392b);
+}
+
+.checkbox {
+  margin: 0;
+}
+
+.host {
+  position: relative;
+}
+
+.placeholder {
+  visibility: hidden;
+}
+
+/* Covers the whole cell including its padding, without taking part in column sizing */
+.layer {
+  position: absolute;
+  inset: -8px -10px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+}

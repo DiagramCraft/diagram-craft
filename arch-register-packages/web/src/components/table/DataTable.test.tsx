@@ -191,4 +191,52 @@ describe('DataTable', () => {
       expect(html).not.toContain('data-selected');
     });
   });
+
+  describe('cell editing', () => {
+    const editable: DataTableColumn<Row>[] = [
+      { id: 'name', header: 'Name', accessorKey: 'name', meta: { editor: 'text' } },
+      { id: 'role', header: 'Role', accessorKey: 'role' }
+    ];
+    const edit = (props = {}) =>
+      render({
+        columns: editable,
+        cellSelection: true,
+        onCellEdit: () => {},
+        editingCell: { cell: { rowId: '1', columnId: 'name' } },
+        ...props
+      });
+
+    test('renders the editor and data-editing on the editing cell only', () => {
+      const html = edit();
+      expect(html.match(/data-editing/g)).toHaveLength(1);
+      expect(html).toContain('<input');
+      expect(html).toContain('value="Ada"');
+      expect(html).toContain('Grace');
+    });
+
+    test('seeds the editor with the typed character', () => {
+      const html = edit({ editingCell: { cell: { rowId: '1', columnId: 'name' }, seed: 'z' } });
+      expect(html).toContain('value="z"');
+    });
+
+    test('ignores an editing cell whose column has no editor', () => {
+      const html = edit({ editingCell: { cell: { rowId: '1', columnId: 'role' } } });
+      expect(html).not.toContain('data-editing');
+    });
+
+    test('onCellsEdit alone also enables editing', () => {
+      expect(edit({ onCellEdit: undefined, onCellsEdit: () => {} })).toContain('data-editing');
+    });
+
+    test('ignores editing state without onCellEdit', () => {
+      expect(edit({ onCellEdit: undefined })).not.toContain('data-editing');
+    });
+  });
+
+  test('marks dirty cells with data-dirty and a description', () => {
+    const html = render({ isCellDirty: (r, c) => r === '2' && c === 'role' });
+    expect(html.match(/data-dirty/g)).toHaveLength(1);
+    expect(html).toContain('aria-description="Modified, not saved"');
+    expect(render()).not.toContain('data-dirty');
+  });
 });

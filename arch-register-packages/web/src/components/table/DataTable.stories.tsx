@@ -1,5 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useMemo, useState } from 'react';
+import { z } from 'zod';
+import { Button } from '@diagram-craft/app-components/Button';
 import { DataTable, type DataTableColumn } from './DataTable';
 import { useTableSort } from './useTableSort';
 import { compareStrings } from '../../utils/compare';
@@ -199,4 +201,125 @@ export const CellSelection: Story = {
       onCopy={text => console.log('copied', JSON.stringify(text))}
     />
   )
+};
+
+type Task = { id: string; title: string; points: number | null; status: string; done: boolean };
+
+const TASKS: Task[] = [
+  { id: '1', title: 'Write spec', points: 3, status: 'todo', done: false },
+  { id: '2', title: 'Build editor', points: 5, status: 'doing', done: false },
+  { id: '3', title: 'Review', points: null, status: 'done', done: true }
+];
+
+const STATUSES = [
+  { value: 'todo', label: 'To do' },
+  { value: 'doing', label: 'In progress' },
+  { value: 'done', label: 'Done' }
+];
+
+const TASK_COLUMNS: DataTableColumn<Task>[] = [
+  {
+    id: 'title',
+    header: 'Title',
+    accessorKey: 'title',
+    meta: { editor: 'text', validate: z.string().min(1, 'Required') }
+  },
+  {
+    id: 'points',
+    header: 'Points',
+    accessorKey: 'points',
+    meta: {
+      editor: 'number',
+      numeric: true,
+      validate: z.number().int().min(0, 'Must be 0 or more').nullable()
+    }
+  },
+  {
+    id: 'status',
+    header: 'Status',
+    accessorKey: 'status',
+    cell: ({ getValue }) => STATUSES.find(s => s.value === getValue())?.label ?? '',
+    meta: { editor: 'select', options: STATUSES, editable: (row: Task) => !row.done }
+  },
+  {
+    id: 'done',
+    header: 'Done',
+    accessorKey: 'done',
+    cell: ({ getValue }) => (getValue() ? 'Yes' : 'No'),
+    meta: { editor: 'boolean' }
+  }
+];
+
+export const EditableCells: Story = {
+  render: () => {
+    const [rows, setRows] = useState(TASKS);
+    return (
+      <DataTable
+        columns={TASK_COLUMNS}
+        data={rows}
+        getRowId={r => r.id}
+        cellSelection
+        onCellEdit={(rowId, columnId, value) =>
+          setRows(rs => rs.map(r => (r.id === rowId ? { ...r, [columnId]: value } : r)))
+        }
+      />
+    );
+  }
+};
+
+// Batched editing: edits collect in a pending map (marked as dirty) and are saved or discarded together
+export const PendingChanges: Story = {
+  render: () => {
+    const [saved, setSaved] = useState(TASKS);
+    const [pending, setPending] = useState<Record<string, Record<string, unknown>>>({});
+
+    // The table shows saved values with pending ones merged on top
+    const data = useMemo(
+      () => saved.map(row => ({ ...row, ...pending[row.id] })),
+      [saved, pending]
+    );
+    const count = Object.values(pending).reduce((n, cols) => n + Object.keys(cols).length, 0);
+
+    return (
+      <>
+        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+          <Button
+            disabled={count === 0}
+            onClick={() => {
+              // A real app would send `pending` to the backend here as one request
+              setSaved(data);
+              setPending({});
+            }}
+          >
+            Save {count > 0 ? `(${count})` : ''}
+          </Button>
+          <Button variant="secondary" disabled={count === 0} onClick={() => setPending({})}>
+            Discard
+          </Button>
+        </div>
+        <DataTable
+          columns={TASK_COLUMNS}
+          data={data}
+          getRowId={r => r.id}
+          cellSelection
+          onCellsEdit={edits =>
+            setPending(p => {
+              const next = { ...p };
+              for (const { rowId, columnId, value } of edits) {
+                const original = saved.find(r => r.id === rowId)?.[columnId as keyof Task];
+                const cols = { ...next[rowId] };
+                // Editing a cell back to its saved value is no longer a change
+                if (value === original) delete cols[columnId];
+                else cols[columnId] = value;
+                if (Object.keys(cols).length === 0) delete next[rowId];
+                else next[rowId] = cols;
+              }
+              return next;
+            })
+          }
+          isCellDirty={(rowId, columnId) => pending[rowId]?.[columnId] !== undefined}
+        />
+      </>
+    );
+  }
 };
