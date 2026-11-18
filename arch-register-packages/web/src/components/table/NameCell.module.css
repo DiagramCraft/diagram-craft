@@ -4,6 +4,11 @@
   gap: 8px;
 }
 
+/* Let the text block shrink below its content width so callers can truncate long titles */
+.name > div {
+  min-width: 0;
+}
+
 .nameMain {
   color: var(--base-fg);
   font-weight: 500;

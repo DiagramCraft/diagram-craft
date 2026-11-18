@@ -52,21 +52,14 @@
   color: var(--base-fg);
 }
 
-.entCol {
-  min-width: 210px;
-}
-
-.statusCol {
-  min-width: 150px;
-}
-
 .entNameBtn {
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--base-fg);
   text-align: left;
   white-space: nowrap;
-  max-width: 160px;
+  display: block;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   text-decoration: none;
@@ -77,22 +70,12 @@
   text-decoration: underline;
 }
 
-.cell {
-  min-width: 148px;
-  max-width: 220px;
-}
-
 .statusDot {
   display: inline-block;
   width: 7px;
   height: 7px;
   border-radius: 50%;
   margin-right: 6px;
-}
-
-.avatarCol {
-  min-width: 40px;
-  width: 40px;
 }
 
 .avatarBtn {

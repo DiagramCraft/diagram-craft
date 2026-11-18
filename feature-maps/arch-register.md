@@ -1326,7 +1326,9 @@
 
         - @id:ar.assessments.responses Reviewers can fill in assessment responses for in-scope entities from an
           assessment grid or entity detail view, or, for confirm-only assessments, record a single "confirmed
-          accurate" action per entity.
+          accurate" action per entity. In the assessment grid, reviewers can resize columns and show, hide, or
+          reorder question columns; the Entity column stays pinned, Status and history stay visible, and these
+          adjustments are not persisted.
 
         - @id:ar.assessments.progress Users can inspect assessment completion, status, summary, and aggregate results,
           including a per-team acknowledgement breakdown when the assessment has assigned teams. Scope-derived
