@@ -53,12 +53,13 @@
 }
 
 .entNameBtn {
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--base-fg);
   text-align: left;
   white-space: nowrap;
-  max-width: 160px;
+  display: block;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   text-decoration: none;
