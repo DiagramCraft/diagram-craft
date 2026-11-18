@@ -106,6 +106,21 @@ export const Resizable: Story = {
   )
 };
 
+export const ColumnChooserStory: Story = {
+  name: 'ColumnChooser',
+  render: () => (
+    <DataTable
+      columns={COLUMNS.map((c, i) =>
+        i === 0 ? { ...c, meta: { ...c.meta, hideable: false } } : c
+      )}
+      data={PEOPLE}
+      getRowId={p => p.id}
+      columnChooser
+      persistKey="story:datatable-columns"
+    />
+  )
+};
+
 const WIDE_COLUMNS: DataTableColumn<Person>[] = [
   {
     id: 'name',

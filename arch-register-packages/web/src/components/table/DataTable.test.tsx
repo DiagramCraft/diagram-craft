@@ -125,4 +125,22 @@ describe('DataTable', () => {
       expect(html).not.toContain('left:');
     });
   });
+
+  test('omits hidden columns from header and body', () => {
+    const html = render({ columnVisibility: { role: false } });
+    expect(html.match(/<th[ >]/g)).toHaveLength(1);
+    expect(html).toContain('Ada');
+    expect(html).not.toContain('Admiral');
+  });
+
+  test('respects column order', () => {
+    const html = render({ columnOrder: ['role', 'name'] });
+    expect(html.indexOf('Role')).toBeLessThan(html.indexOf('Name'));
+    expect(html.indexOf('Engineer')).toBeLessThan(html.indexOf('Ada'));
+  });
+
+  test('renders the column chooser trigger only when enabled', () => {
+    expect(render({ columnChooser: true })).toContain('aria-label="Choose columns"');
+    expect(render()).not.toContain('Choose columns');
+  });
 });
