@@ -12,7 +12,7 @@ import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
-import type { JobRunStatus, JobSchedule } from '@arch-register/api-types/jobsContract';
+import type { JobRun, JobRunStatus, JobSchedule } from '@arch-register/api-types/jobsContract';
 import {
   useCancelJobRun,
   useJobRuns,
@@ -27,6 +27,7 @@ import { LabeledDateInput } from '../../../components/LabeledDateInput';
 import { ViewControls } from '../../../components/ViewControls';
 import { LabeledSelect } from '../../../components/LabeledSelect';
 import { Table } from '../../../components/table/Table';
+import { DataTable, type DataTableColumn } from '../../../components/table/DataTable';
 import { Chip } from '../../../components/Chip';
 import { Banner } from '../../../components/Banner';
 import { QueryState } from '../QueryState';
@@ -303,6 +304,116 @@ const formatSummary = (result: Record<string, unknown> | null, error: string | n
   return JSON.stringify(result);
 };
 
+const getRunColumns = (onCancel: (id: string) => void): DataTableColumn<JobRun>[] => [
+  {
+    id: 'job',
+    header: 'Job',
+    size: 170,
+    minSize: 120,
+    meta: { hideable: false, label: 'Job' },
+    cell: ({ row }) => (
+      <>
+        <div className={styles.name}>{row.original.job_type}</div>
+        <div className={styles.muted}>
+          Priority {row.original.priority} · attempt {row.original.attempt_count}/
+          {row.original.max_attempts}
+        </div>
+      </>
+    )
+  },
+  {
+    id: 'planned',
+    header: 'Planned',
+    size: 155,
+    minSize: 100,
+    meta: { label: 'Planned' },
+    cell: ({ row }) => formatDateTime(row.original.planned_at)
+  },
+  {
+    id: 'started',
+    header: 'Started',
+    size: 155,
+    minSize: 100,
+    meta: { label: 'Started' },
+    cell: ({ row }) => formatDateTime(row.original.started_at)
+  },
+  {
+    id: 'completed',
+    header: 'Completed',
+    size: 155,
+    minSize: 100,
+    meta: { label: 'Completed' },
+    cell: ({ row }) => formatDateTime(row.original.completed_at)
+  },
+  {
+    id: 'queue',
+    header: 'Queue',
+    size: 90,
+    minSize: 70,
+    meta: { label: 'Queue' },
+    cell: ({ row }) => formatDuration(row.original.queue_delay_ms)
+  },
+  {
+    id: 'duration',
+    header: 'Duration',
+    size: 90,
+    minSize: 70,
+    meta: { label: 'Duration' },
+    cell: ({ row }) => formatDuration(row.original.duration_ms)
+  },
+  {
+    id: 'status',
+    header: 'Status',
+    size: 110,
+    minSize: 90,
+    meta: { hideable: false, label: 'Status' },
+    cell: ({ row }) => (
+      <Chip dot={statusColor[row.original.status]} tone="ghost">
+        {row.original.status}
+      </Chip>
+    )
+  },
+  {
+    id: 'result',
+    header: 'Worker / result',
+    size: 320,
+    minSize: 120,
+    meta: { label: 'Worker / result' },
+    cell: ({ row }) => {
+      const summary = formatSummary(row.original.result, row.original.error);
+      return (
+        <>
+          <div>{row.original.worker_id ?? 'Not started'}</div>
+          <div className={styles.summary} title={summary}>
+            {summary}
+          </div>
+        </>
+      );
+    }
+  },
+  {
+    id: 'action',
+    header: 'Action',
+    size: 100,
+    minSize: 90,
+    enableResizing: false,
+    meta: { hideable: false, interactive: true, selectable: false, label: 'Action' },
+    cell: ({ row }) =>
+      row.original.status === 'queued' ? (
+        <Button
+          variant="danger"
+          size="xs"
+          icon={<TbPlayerPause size={12} />}
+          onClick={() => onCancel(row.original.id)}
+        >
+          Cancel
+        </Button>
+      ) : (
+        <span className={styles.muted}>—</span>
+      )
+  }
+];
+
 type JobsTab = 'schedules' | 'history' | 'servers';
 
 export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: string }) => {
@@ -349,6 +460,7 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
     isError: runsError,
     refetch: refetchRuns
   } = useJobRuns(workspaceSlug, runFilters, tab === 'history');
+  const runColumns = useMemo(() => getRunColumns(setCancelTarget), []);
   const cancelRun = useCancelJobRun(workspaceSlug);
   const updateSchedule = useUpdateJobSchedule(workspaceSlug);
   const runScheduleNow = useRunJobScheduleNow(workspaceSlug);
@@ -571,72 +683,19 @@ export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: stri
             <QueryState
               isLoading={runsLoading}
               error={runsError}
-              isEmpty={runs == null || runs.items.length === 0}
+              isEmpty={false}
               subject="job history"
-              empty={{ compact: true, title: 'No job runs match the current filters.' }}
             >
-              <div className={styles.tableWrap}>
-                <Table.Root layout="fixed" bordered={false}>
-                  <Table.Head>
-                    <Table.Row>
-                      <Table.HeaderCell width={150}>Job</Table.HeaderCell>
-                      <Table.HeaderCell width={155}>Planned</Table.HeaderCell>
-                      <Table.HeaderCell width={155}>Started</Table.HeaderCell>
-                      <Table.HeaderCell width={155}>Completed</Table.HeaderCell>
-                      <Table.HeaderCell width={90}>Queue</Table.HeaderCell>
-                      <Table.HeaderCell width={90}>Duration</Table.HeaderCell>
-                      <Table.HeaderCell width={100}>Status</Table.HeaderCell>
-                      <Table.HeaderCell>Worker / result</Table.HeaderCell>
-                      <Table.HeaderCell width={90}>Action</Table.HeaderCell>
-                    </Table.Row>
-                  </Table.Head>
-                  <Table.Body>
-                    {(runs?.items ?? []).map(run => (
-                      <Table.Row key={run.id}>
-                        <Table.Cell>
-                          <div className={styles.name}>{run.job_type}</div>
-                          <div className={styles.muted}>
-                            Priority {run.priority} · attempt {run.attempt_count}/{run.max_attempts}
-                          </div>
-                        </Table.Cell>
-                        <Table.Cell>{formatDateTime(run.planned_at)}</Table.Cell>
-                        <Table.Cell>{formatDateTime(run.started_at)}</Table.Cell>
-                        <Table.Cell>{formatDateTime(run.completed_at)}</Table.Cell>
-                        <Table.Cell>{formatDuration(run.queue_delay_ms)}</Table.Cell>
-                        <Table.Cell>{formatDuration(run.duration_ms)}</Table.Cell>
-                        <Table.Cell>
-                          <Chip dot={statusColor[run.status]} tone="ghost">
-                            {run.status}
-                          </Chip>
-                        </Table.Cell>
-                        <Table.Cell>
-                          <div>{run.worker_id ?? 'Not started'}</div>
-                          <div
-                            className={styles.summary}
-                            title={formatSummary(run.result, run.error)}
-                          >
-                            {formatSummary(run.result, run.error)}
-                          </div>
-                        </Table.Cell>
-                        <Table.Cell>
-                          {run.status === 'queued' ? (
-                            <Button
-                              variant="danger"
-                              size="xs"
-                              icon={<TbPlayerPause size={12} />}
-                              onClick={() => setCancelTarget(run.id)}
-                            >
-                              Cancel
-                            </Button>
-                          ) : (
-                            <span className={styles.muted}>—</span>
-                          )}
-                        </Table.Cell>
-                      </Table.Row>
-                    ))}
-                  </Table.Body>
-                </Table.Root>
-              </div>
+              <DataTable
+                scroll
+                resizable
+                columnChooser
+                wrapClassName={styles.tableWrap}
+                columns={runColumns}
+                data={runs?.items ?? []}
+                getRowId={run => run.id}
+                emptyState="No job runs match the current filters."
+              />
               <div className={styles.pagination}>
                 <div className={styles.pageLabel}>
                   {runs?.total ?? 0} run{runs?.total === 1 ? '' : 's'} · page {currentPage} of{' '}

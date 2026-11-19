@@ -1638,7 +1638,9 @@
           requests are controlled by the external engine.
 
         - @id:ar.integrations.jobs Administrators can create and configure supported recurring jobs, inspect scheduled
-          jobs, job servers, run history, and supported cancellation operations.
+          jobs, job servers, run history, and supported cancellation operations. In run history, administrators can resize
+          columns and show, hide, or reorder them; Job, Status, and Action stay visible, and these adjustments are not
+          persisted.
 
             - @id:ar.integrations.jobs.standard_jobs Administrators can configure a Technology End of Life job to
               hydrate mapped schema fields from endoflife.date while recording those fields as scheduled integration
