@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
+import { DataTable, type DataTableColumn } from '../../../components/table/DataTable';
+import { flattenTree, type FlatTreeRow } from './treeFlatten';
+import type { TreeItemLike } from './treeFlatten';
 import { TbChevronDown, TbChevronRight } from 'react-icons/tb';
 import { Chip } from '../../../components/Chip';
 import { DropdownMenu } from '../../../components/DropdownMenu';
@@ -11,7 +14,6 @@ import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspace
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import { browserEntityMenuItems } from './entityBrowserViewShared';
-import type { EntityCommonActions } from './entityMenu';
 import { useEntityCommonActions } from './useEntityCommonActions';
 import {
   isEntityInProject,
@@ -59,12 +61,12 @@ export type TreeViewProps = {
   onCountChange?: (count: number) => void;
 };
 
-type TreeItem = (TreeNode & {
-  _projectLink?: ProjectLinkState;
-  _assessment?: Record<string, string | number | boolean> | null;
-}) & {
-  children: TreeItem[];
-};
+type TreeItem = TreeItemLike<
+  TreeNode & {
+    _projectLink?: ProjectLinkState;
+    _assessment?: Record<string, string | number | boolean> | null;
+  }
+>;
 
 export const TreeView = ({
   workspaceId,
@@ -84,7 +86,6 @@ export const TreeView = ({
   onClone,
   onManageCollections,
   onMerge,
-  lifecycleStates,
   projectContext,
   readOnly,
   config,
@@ -119,6 +120,8 @@ export const TreeView = ({
     onCountChange?.(nodes.filter(node => node._isMatch).length);
   }, [isError, isLoading, nodes, onCountChange]);
 
+  const [collapsedIds, setCollapsedIds] = useState<ReadonlySet<string>>(new Set());
+
   const roots = useMemo(() => {
     const nodeMap = new Map<string, TreeItem>();
     for (const node of nodes) {
@@ -147,7 +150,9 @@ export const TreeView = ({
       .filter(node => !childIds.has(node._uid))
       .sort((a, b) => (a._name || a._slug).localeCompare(b._name || b._slug));
   }, [nodes, edges, responsesByEntity]);
-  const columns = getDisplayFieldIds('tree', config).map(
+  const flatRows = useMemo(() => flattenTree(roots, collapsedIds), [roots, collapsedIds]);
+
+  const fields = getDisplayFieldIds('tree', config).map(
     id => displayFields.find(field => field.id === id) ?? { id, label: id, group: 'Fields' }
   );
 
@@ -170,169 +175,125 @@ export const TreeView = ({
     );
   }
 
-  return (
-    <Table.Root>
-      <Table.Head>
-        <Table.Row>
-          <Table.HeaderCell style={{ minWidth: 240 }}>Name</Table.HeaderCell>
-          <Table.HeaderCell>Type</Table.HeaderCell>
-          {columns
-            .filter(c => c.id !== '_description')
-            .map(c => (
-              <Table.HeaderCell key={c.id}>{c.label}</Table.HeaderCell>
-            ))}
-          {!readOnly && <Table.HeaderCell style={{ width: 28 }} />}
-        </Table.Row>
-      </Table.Head>
-      <Table.Body>
-        {roots.map(item => (
-          <TreeNodeRow
-            key={item._uid}
-            item={item}
-            depth={0}
-            schemaMap={schemaMap}
-            onEntityClick={onEntityClick}
-            onDelete={onDelete}
-            onClone={onClone}
-            onManageCollections={onManageCollections}
-            onMerge={onMerge}
-            lifecycleStates={lifecycleStates}
-            projectContext={projectContext}
-            commonActions={commonActions}
-            readOnly={readOnly}
-            columns={columns}
-            displayFields={displayFields}
+  const toggle = (uid: string) =>
+    setCollapsedIds(current => {
+      const next = new Set(current);
+      if (!next.delete(uid)) next.add(uid);
+      return next;
+    });
+
+  const columns: DataTableColumn<FlatTreeRow<TreeItem>>[] = [
+    {
+      id: '_name',
+      header: 'Name',
+      size: 280,
+      minSize: 160,
+      meta: { label: 'Name', sticky: true, hideable: false },
+      cell: ({ row }) => {
+        const { item, depth, hasChildren, expanded } = row.original;
+        const schemaEntry = schemaMap.get(item._schema.id);
+        return (
+          <NameCell.Content
+            indentLevel={depth}
+            prefix={
+              hasChildren ? (
+                <button
+                  type="button"
+                  className={styles.treeToggle}
+                  aria-label={expanded ? 'Collapse' : 'Expand'}
+                  aria-expanded={expanded}
+                  onClick={event => {
+                    event.stopPropagation();
+                    toggle(item._uid);
+                  }}
+                >
+                  {expanded ? <TbChevronDown size={12} /> : <TbChevronRight size={12} />}
+                </button>
+              ) : (
+                <span className={styles.treeToggleSpacer} />
+              )
+            }
+            icon={
+              schemaEntry && (
+                <TypeBadge
+                  color={resolveSchemaColor(schemaEntry.schema, schemaEntry.index)}
+                  name={schemaEntry.schema.name}
+                  icon={schemaEntry.schema.icon}
+                  size={18}
+                />
+              )
+            }
+            title={item._name ?? item._slug}
+            titleMuted={
+              projectContext != null && !isEntityInProject(item, projectContext.project.id)
+            }
+            subtitle={
+              fields.some(c => c.id === '_description') && item._description
+                ? item._description
+                : undefined
+            }
           />
-        ))}
-      </Table.Body>
-    </Table.Root>
-  );
-};
-
-const TreeNodeRow = ({
-  item,
-  depth,
-  schemaMap,
-  onEntityClick,
-  onDelete,
-  onClone,
-  onManageCollections,
-  onMerge,
-  lifecycleStates,
-  projectContext,
-  commonActions,
-  readOnly,
-  columns,
-  displayFields
-}: {
-  item: TreeItem;
-  depth: number;
-  schemaMap: Map<string, { schema: EntitySchema; index: number }>;
-  onEntityClick: (entityId: string) => void;
-  onDelete: (entity: EntityRecord) => void;
-  onClone: (entity: EntityRecord) => void;
-  onManageCollections?: (entity: EntityRecord) => void;
-  onMerge?: (entity: EntityRecord) => void;
-  lifecycleStates: WorkspaceLifecycleState[];
-  projectContext?: ProjectBrowserContext;
-  commonActions: EntityCommonActions;
-  readOnly?: boolean;
-  columns: EntityDisplayField[];
-  displayFields: EntityDisplayField[];
-}) => {
-  const [expanded, setExpanded] = useState(true);
-  const hasChildren = item.children.length > 0;
-  const schemaEntry = schemaMap.get(item._schema.id);
-  const isAncestor = !item._isMatch;
-  const menuItems = readOnly
-    ? []
-    : browserEntityMenuItems(
-        item,
-        { onClone, onDelete, onManageCollections, onMerge, projectContext },
-        commonActions
-      );
-
-  return (
-    <>
-      <Table.Row muted={isAncestor} onClick={() => onEntityClick(item._publicId)}>
-        <NameCell.Cell
-          indentLevel={depth}
-          prefix={
-            hasChildren ? (
-              <button
-                type="button"
-                className={styles.treeToggle}
-                onClick={event => {
-                  event.stopPropagation();
-                  setExpanded(value => !value);
-                }}
-              >
-                {expanded ? <TbChevronDown size={12} /> : <TbChevronRight size={12} />}
-              </button>
-            ) : (
-              <span className={styles.treeToggleSpacer} />
-            )
-          }
-          icon={
-            schemaEntry && (
-              <TypeBadge
-                color={resolveSchemaColor(schemaEntry.schema, schemaEntry.index)}
-                name={schemaEntry.schema.name}
-                icon={schemaEntry.schema.icon}
-                size={18}
-              />
-            )
-          }
-          title={item._name ?? item._slug}
-          titleMuted={projectContext != null && !isEntityInProject(item, projectContext.project.id)}
-          subtitle={
-            columns.some(c => c.id === '_description') && item._description
-              ? item._description
-              : undefined
-          }
-        />
-        <Table.Cell>
-          {schemaEntry && <Chip tone="ghost">{schemaEntry.schema.name}</Chip>}
-        </Table.Cell>
-        {columns
-          .filter(c => c.id !== '_description')
-          .map(column => {
+        );
+      }
+    },
+    {
+      id: '_type',
+      header: 'Type',
+      meta: { label: 'Type' },
+      cell: ({ row }) => {
+        const schemaEntry = schemaMap.get(row.original.item._schema.id);
+        return schemaEntry && <Chip tone="ghost">{schemaEntry.schema.name}</Chip>;
+      }
+    },
+    ...fields
+      .filter(c => c.id !== '_description')
+      .map(
+        (column): DataTableColumn<FlatTreeRow<TreeItem>> => ({
+          id: column.id,
+          header: column.label,
+          meta: { label: column.label },
+          cell: ({ row }) => {
+            const item = row.original.item;
             const field =
               findEntityDisplayField(column.id, item, schemaMap, displayFields) ?? column;
-            return (
-              <Table.Cell key={column.id}>
-                {formatEntityDisplayValue(item, field) ?? '—'}
-              </Table.Cell>
-            );
-          })}
-        {!readOnly && (
-          <Table.ActionsCell>
-            {menuItems.length > 0 && (
-              <DropdownMenu trigger={<Table.DotsButton />} items={menuItems} />
-            )}
-          </Table.ActionsCell>
-        )}
-      </Table.Row>
-      {expanded &&
-        item.children.map(child => (
-          <TreeNodeRow
-            key={child._uid}
-            item={child}
-            depth={depth + 1}
-            schemaMap={schemaMap}
-            onEntityClick={onEntityClick}
-            onDelete={onDelete}
-            onClone={onClone}
-            onManageCollections={onManageCollections}
-            onMerge={onMerge}
-            lifecycleStates={lifecycleStates}
-            projectContext={projectContext}
-            commonActions={commonActions}
-            readOnly={readOnly}
-            columns={columns}
-            displayFields={displayFields}
-          />
-        ))}
-    </>
+            return formatEntityDisplayValue(item, field) ?? '—';
+          }
+        })
+      )
+  ];
+
+  if (!readOnly) {
+    columns.push({
+      id: '_actions',
+      header: '',
+      size: 40,
+      meta: { interactive: true, align: 'right', width: 28, selectable: false, hideable: false },
+      cell: ({ row }) => {
+        const menuItems = browserEntityMenuItems(
+          row.original.item,
+          { onClone, onDelete, onManageCollections, onMerge, projectContext },
+          commonActions
+        );
+        return menuItems.length > 0 ? (
+          <DropdownMenu trigger={<Table.DotsButton />} items={menuItems} />
+        ) : null;
+      }
+    });
+  }
+
+  return (
+    <DataTable
+      // Remount when the configured field set changes so local widths and layout don't leak
+      key={columns.map(c => c.id).join('|')}
+      scroll
+      stickyHeader
+      bordered
+      resizable
+      columns={columns}
+      data={flatRows}
+      getRowId={row => row.item._uid}
+      isRowMuted={row => !row.item._isMatch}
+      onRowClick={row => onEntityClick(row.item._publicId)}
+    />
   );
 };

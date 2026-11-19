@@ -121,6 +121,8 @@ type DataTableProps<T extends RowData> = RootProps & {
   selectedRowIds?: RowSelectionState;
   onSelectedRowIdsChange?: (selection: RowSelectionState) => void;
   isRowSelected?: (row: T) => boolean;
+  // Renders the row de-emphasised, e.g. context rows such as ancestors of filtered matches
+  isRowMuted?: (row: T) => boolean;
   emptyState?: ReactNode;
   // Drag handles on header edges; widths come from column `size`/`minSize`/`maxSize` (or `meta.width`)
   resizable?: boolean;
@@ -171,6 +173,7 @@ export const DataTable = <T extends RowData>({
   selectedRowIds,
   onSelectedRowIdsChange,
   isRowSelected,
+  isRowMuted,
   emptyState,
   resizable = false,
   columnSizing: columnSizingProp,
@@ -533,6 +536,7 @@ export const DataTable = <T extends RowData>({
             <Table.Row
               key={row.id}
               selected={isRowSelected?.(row.original) ?? (selectable && row.getIsSelected())}
+              muted={isRowMuted?.(row.original)}
               onClick={
                 onRowClick
                   ? () => {

@@ -51,6 +51,13 @@ describe('DataTable', () => {
     expect(html.match(/checked=""/g)).toHaveLength(1);
   });
 
+  test('mutes only the rows matching isRowMuted', () => {
+    const mutedRows = (html: string) =>
+      html.match(/<tbody>.*<\/tbody>/)![0].match(/<tr class="[^"]*rowMuted[^"]*"/g) ?? [];
+    expect(mutedRows(render({ isRowMuted: r => r.id === '2' }))).toHaveLength(1);
+    expect(mutedRows(render())).toHaveLength(0);
+  });
+
   test('rows are clickable only when onRowClick is set', () => {
     const body = (h: string) => h.match(/<tbody>.*<\/tbody>/)![0];
     expect(body(render())).not.toContain('rowClickable');
