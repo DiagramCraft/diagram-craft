@@ -1019,7 +1019,7 @@
 
         - @id:ar.entity-views.cards Users can inspect entities as cards for quick scanning of record summaries.
 
-        - @id:ar.entity-views.tree Users can inspect hierarchical entity structure in a tree-oriented view.
+        - @id:ar.entity-views.tree Users can inspect hierarchical entity structure in a tree-oriented view. Branches expand and collapse, the Name column stays pinned, and columns can be resized for the current session; which fields appear is set through the browser's existing field selector.
 
 - @id:ar.entity-views.graph Users can explore the entities matching the current browser filter as highlighted
   roots, together with linked entities traversed up to a configurable number of relationship levels; the
