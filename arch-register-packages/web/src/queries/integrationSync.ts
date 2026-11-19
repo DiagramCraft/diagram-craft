@@ -1,6 +1,10 @@
 import { queryOptions } from '@tanstack/react-query';
 import { orpcClient } from '../lib/orpcClient';
 
+export type IntegrationSyncRecord = Awaited<
+  ReturnType<typeof orpcClient.integrationSync.dashboard>
+>['records'][number];
+
 export const integrationSyncDashboardKey = (workspace: string) =>
   ['integration-sync-dashboard', workspace] as const;
 
