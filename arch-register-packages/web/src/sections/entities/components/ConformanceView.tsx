@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { TbShieldCheck } from 'react-icons/tb';
+import type { ConformanceViolation } from '@arch-register/api-types/conformanceContract';
 import { SeverityBadge, ViolationStatusChip } from '../../../components/ConformanceBadges';
 import {
   CONFORMANCE_SEVERITY_OPTIONS,
@@ -8,7 +9,7 @@ import {
 import { EmptyState } from '../../../components/EmptyState';
 import { LabeledSelect } from '../../../components/LabeledSelect';
 import { LoadingState } from '../../../components/LoadingState';
-import { Table } from '../../../components/table/Table';
+import { DataTable, type DataTableColumn } from '../../../components/table/DataTable';
 import { ViewControls, ViewControlsFrame } from '../../../components/ViewControls';
 import { useConformanceChecks, useConformanceViolations } from '../../../hooks/useConformance';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
@@ -23,6 +24,63 @@ import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
 
 // The violations API caps a page at 200; the view joins one page onto the browser's rows.
 const FETCH_LIMIT = 200;
+
+type ViolationRow = {
+  violation: ConformanceViolation;
+  entity: EntityBrowserRowViewProps['rows'][number];
+};
+
+const columns: DataTableColumn<ViolationRow>[] = [
+  {
+    id: 'entity',
+    header: 'Entity',
+    size: 200,
+    minSize: 100,
+    cell: ({ row }) => entityName(row.original.entity)
+  },
+  {
+    id: 'type',
+    header: 'Type',
+    size: 140,
+    minSize: 80,
+    cell: ({ row }) => row.original.entity._schema.name
+  },
+  {
+    id: 'check',
+    header: 'Check',
+    size: 200,
+    minSize: 100,
+    cell: ({ row }) => row.original.violation.check_name
+  },
+  {
+    id: 'severity',
+    header: 'Severity',
+    size: 90,
+    minSize: 80,
+    cell: ({ row }) => <SeverityBadge severity={row.original.violation.severity} />
+  },
+  {
+    id: 'status',
+    header: 'Status',
+    size: 140,
+    minSize: 100,
+    cell: ({ row }) => <ViolationStatusChip status={row.original.violation.status} />
+  },
+  {
+    id: 'message',
+    header: 'Message',
+    size: 360,
+    minSize: 120,
+    cell: ({ row }) => row.original.violation.message
+  },
+  {
+    id: 'lastSeen',
+    header: 'Last seen',
+    size: 150,
+    minSize: 100,
+    cell: ({ row }) => formatDateTime(row.original.violation.last_seen_at)
+  }
+];
 
 /**
  * Joins conformance violations onto the entities matching the browser's search and filters, one
@@ -111,36 +169,16 @@ export const ConformanceView = ({
         />
       ) : (
         <>
-          <Table.Root layout="fixed" bordered={false}>
-            <Table.Head>
-              <Table.Row>
-                <Table.HeaderCell>Entity</Table.HeaderCell>
-                <Table.HeaderCell width={140}>Type</Table.HeaderCell>
-                <Table.HeaderCell>Check</Table.HeaderCell>
-                <Table.HeaderCell width={90}>Severity</Table.HeaderCell>
-                <Table.HeaderCell width={140}>Status</Table.HeaderCell>
-                <Table.HeaderCell>Message</Table.HeaderCell>
-                <Table.HeaderCell width={150}>Last seen</Table.HeaderCell>
-              </Table.Row>
-            </Table.Head>
-            <Table.Body>
-              {joined.map(({ violation, entity }) => (
-                <Table.Row key={violation.id} onClick={() => onEntityClick(entity._publicId)}>
-                  <Table.Cell>{entityName(entity)}</Table.Cell>
-                  <Table.Cell>{entity._schema.name}</Table.Cell>
-                  <Table.Cell>{violation.check_name}</Table.Cell>
-                  <Table.Cell>
-                    <SeverityBadge severity={violation.severity} />
-                  </Table.Cell>
-                  <Table.Cell>
-                    <ViolationStatusChip status={violation.status} />
-                  </Table.Cell>
-                  <Table.Cell>{violation.message}</Table.Cell>
-                  <Table.Cell>{formatDateTime(violation.last_seen_at)}</Table.Cell>
-                </Table.Row>
-              ))}
-            </Table.Body>
-          </Table.Root>
+          <DataTable
+            resizable
+            layout="fixed"
+            bordered={false}
+            columns={columns}
+            data={joined}
+            getRowId={({ violation }) => violation.id}
+            onRowClick={({ entity }) => onEntityClick(entity._publicId)}
+            rowKeyboardActivation
+          />
           {data.total > FETCH_LIMIT && (
             <EmptyState
               compact

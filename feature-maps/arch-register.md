@@ -1055,7 +1055,8 @@
           violations onto the entities matching the current search and filters, one row per violation, with its own
           status, severity, and check filters; selecting a row opens the entity. It can be saved like any other view,
           is gated by the same permission as the workspace Conformance section, and shows the first 200 violations
-          of the selected filters. The workspace Conformance section remains the place to manage checks, exemptions,
+          of the selected filters. Reviewers can resize columns to read long checks and messages; widths are not
+          persisted. The workspace Conformance section remains the place to manage checks, exemptions,
           and runs.
 
         - @id:ar.entity-views.diff Users can pick a date and view a workspace-wide diff: for a future date, what changes by
