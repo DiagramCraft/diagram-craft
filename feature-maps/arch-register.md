@@ -738,7 +738,9 @@
           so. Stale, orphaned, and repeatedly failing records remain visible for permissioned retry. Orphaned
           entities and relations can be explicitly relinked through type-specific pickers, or an administrator can
           confirm stopping management, which removes integration tracking without deleting the catalog record; all
-          reconciliation actions are audited and there is no automatic deletion.
+          reconciliation actions are audited and there is no automatic deletion. In the records-needing-attention
+          table, administrators can resize columns to read long external keys and select and copy cell ranges, with
+          the full external key copied as text; row actions stay outside the copy range and widths are not persisted.
 
         - @id:ar.api-integration-catalog.impact The Impact section is a single-API blast-radius inspector: the API is
           picked from the section's own primary sidebar (every `api`-schema entity, with its combined provider/consumer

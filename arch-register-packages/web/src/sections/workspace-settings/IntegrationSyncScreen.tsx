@@ -14,6 +14,7 @@ import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
 import { Title } from '../../components/Title';
 import { Page } from '../../components/Page';
 import { Table } from '../../components/table/Table';
+import { DataTable, type DataTableColumn } from '../../components/table/DataTable';
 import { NameCell } from '../../components/table/NameCell';
 import { StatusChip } from '../../components/StatusChip';
 import { EntityPicker } from '../../components/EntityPicker';
@@ -24,6 +25,7 @@ import {
   configureIntegrationSource,
   integrationSyncDashboardKey,
   integrationSyncDashboardQuery,
+  type IntegrationSyncRecord,
   relinkIntegrationSyncRecord,
   retryIntegrationSyncRun,
   stopManagingIntegrationSyncRecord
@@ -154,6 +156,103 @@ export const IntegrationSyncScreen = () => {
   const changedToday = allRuns
     .filter(run => run.startedAt.startsWith(today))
     .reduce((sum, run) => sum + run.counts.created + run.counts.updated, 0);
+
+  const recordColumns: DataTableColumn<IntegrationSyncRecord>[] = [
+    {
+      id: 'sourceKey',
+      header: 'Source',
+      size: 160,
+      minSize: 80,
+      meta: { label: 'Source', hideable: false, copyValue: record => record.sourceKey },
+      cell: ({ row }) => row.original.sourceKey
+    },
+    {
+      id: 'recordType',
+      header: 'Type',
+      size: 100,
+      minSize: 60,
+      meta: { label: 'Type', hideable: false, copyValue: record => record.recordType },
+      cell: ({ row }) => row.original.recordType
+    },
+    {
+      id: 'externalKey',
+      header: 'External key',
+      size: 360,
+      minSize: 120,
+      meta: { label: 'External key', hideable: false, copyValue: record => record.externalKey },
+      cell: ({ row }) => <span title={row.original.externalKey}>{row.original.externalKey}</span>
+    },
+    {
+      id: 'state',
+      header: 'State',
+      size: 120,
+      minSize: 80,
+      meta: { label: 'State', hideable: false, copyValue: record => record.state },
+      cell: ({ row }) => <StatusChip value={row.original.state} />
+    },
+    {
+      id: 'lastSeenAt',
+      header: 'Last seen',
+      size: 180,
+      minSize: 100,
+      meta: {
+        label: 'Last seen',
+        hideable: false,
+        copyValue: record => dateLabel(record.lastSeenAt)
+      },
+      cell: ({ row }) => dateLabel(row.original.lastSeenAt)
+    },
+    {
+      id: '_actions',
+      header: '',
+      size: 48,
+      enableResizing: false,
+      meta: { interactive: true, selectable: false, hideable: false, align: 'right', width: 28 },
+      cell: ({ row }) => {
+        const record = row.original;
+        if (record.state !== 'orphaned') return null;
+        return (
+          <DropdownMenu
+            trigger={<Table.DotsButton aria-label={`Actions for ${record.externalKey}`} />}
+            items={
+              [
+                ...(record.recordType === 'entity' || record.recordType === 'relation'
+                  ? [
+                      {
+                        label: 'Relink',
+                        icon: <TbLink size={14} />,
+                        disabled: relink.isPending,
+                        onClick: () => {
+                          setRelinkTarget({
+                            id: record.id,
+                            externalKey: record.externalKey,
+                            recordType: record.recordType as 'entity' | 'relation'
+                          });
+                          setSelectedEntity(null);
+                          setSelectedRelation(null);
+                        }
+                      }
+                    ]
+                  : []),
+                {
+                  label: 'Stop managing',
+                  icon: <TbLinkOff size={14} />,
+                  danger: true,
+                  disabled: stopManaging.isPending,
+                  onClick: () =>
+                    setStopManagingTarget({
+                      id: record.id,
+                      externalKey: record.externalKey,
+                      recordType: record.recordType
+                    })
+                }
+              ] satisfies MenuItem[]
+            }
+          />
+        );
+      }
+    }
+  ];
 
   const closeRelinkDialog = () => {
     if (relink.isPending) return;
@@ -374,80 +473,16 @@ export const IntegrationSyncScreen = () => {
               </Button>
             </div>
           )}
-          <Table.Root scroll stickyHeader>
-            <Table.Head>
-              <Table.Row>
-                <Table.HeaderCell>Source</Table.HeaderCell>
-                <Table.HeaderCell>Type</Table.HeaderCell>
-                <Table.HeaderCell>External key</Table.HeaderCell>
-                <Table.HeaderCell>State</Table.HeaderCell>
-                <Table.HeaderCell>Last seen</Table.HeaderCell>
-                <Table.HeaderCell width={48} />
-              </Table.Row>
-            </Table.Head>
-            <Table.Body>
-              {recordsNeedingAttention.length === 0 ? (
-                <Table.EmptyRow colSpan={6}>
-                  No stale, missing, orphaned, or failing records.
-                </Table.EmptyRow>
-              ) : (
-                recordsNeedingAttention.map(record => (
-                  <Table.Row key={record.id}>
-                    <Table.Cell>{record.sourceKey}</Table.Cell>
-                    <Table.Cell>{record.recordType}</Table.Cell>
-                    <Table.Cell title={record.externalKey}>{record.externalKey}</Table.Cell>
-                    <Table.Cell>
-                      <StatusChip value={record.state} />
-                    </Table.Cell>
-                    <Table.Cell>{dateLabel(record.lastSeenAt)}</Table.Cell>
-                    <Table.ActionsCell>
-                      {record.state === 'orphaned' && (
-                        <DropdownMenu
-                          trigger={
-                            <Table.DotsButton aria-label={`Actions for ${record.externalKey}`} />
-                          }
-                          items={
-                            [
-                              ...(record.recordType === 'entity' || record.recordType === 'relation'
-                                ? [
-                                    {
-                                      label: 'Relink',
-                                      icon: <TbLink size={14} />,
-                                      disabled: relink.isPending,
-                                      onClick: () => {
-                                        setRelinkTarget({
-                                          id: record.id,
-                                          externalKey: record.externalKey,
-                                          recordType: record.recordType as 'entity' | 'relation'
-                                        });
-                                        setSelectedEntity(null);
-                                        setSelectedRelation(null);
-                                      }
-                                    }
-                                  ]
-                                : []),
-                              {
-                                label: 'Stop managing',
-                                icon: <TbLinkOff size={14} />,
-                                danger: true,
-                                disabled: stopManaging.isPending,
-                                onClick: () =>
-                                  setStopManagingTarget({
-                                    id: record.id,
-                                    externalKey: record.externalKey,
-                                    recordType: record.recordType
-                                  })
-                              }
-                            ] satisfies MenuItem[]
-                          }
-                        />
-                      )}
-                    </Table.ActionsCell>
-                  </Table.Row>
-                ))
-              )}
-            </Table.Body>
-          </Table.Root>
+          <DataTable
+            scroll
+            stickyHeader
+            resizable
+            cellSelection
+            columns={recordColumns}
+            data={recordsNeedingAttention}
+            getRowId={record => record.id}
+            emptyState="No stale, missing, orphaned, or failing records."
+          />
         </Tabs.Content>
       </Tabs.Root>
 
