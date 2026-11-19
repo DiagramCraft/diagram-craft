@@ -4,7 +4,7 @@ import { type RelationRecord } from '@arch-register/api-types/relationContract';
 import { Chip } from '../../../components/Chip';
 import { EmptyState } from '../../../components/EmptyState';
 import { LoadingState } from '../../../components/LoadingState';
-import { Table } from '../../../components/table/Table';
+import { DataTable, type DataTableColumn } from '../../../components/table/DataTable';
 import { useTableSort } from '../../../components/table/useTableSort';
 import { useEntitiesByIds } from '../../../hooks/useEntities';
 import { useRelationsQuery } from '../../../hooks/useRelations';
@@ -153,48 +153,55 @@ export const RelationTableWidget = ({ config }: { config: RelationTableWidgetCon
 
   const selected = sorted.find(relation => relation._uid === selectedId);
 
+  const tableColumns: DataTableColumn<RelationRecord>[] = [
+    {
+      id: '_in',
+      header: 'Source',
+      size: 200,
+      minSize: 100,
+      meta: { sortable: true, label: 'Source', interactive: true },
+      cell: ({ row }) => endpointLink(row.original._in)
+    },
+    {
+      id: '_out',
+      header: 'Destination',
+      size: 200,
+      minSize: 100,
+      meta: { sortable: true, label: 'Destination', interactive: true },
+      cell: ({ row }) => endpointLink(row.original._out)
+    },
+    ...columns.map(
+      (column): DataTableColumn<RelationRecord> => ({
+        id: column.id,
+        header: column.label,
+        minSize: 80,
+        meta: {
+          sortable: true,
+          label: column.label,
+          interactive: column.kind === 'field' && column.field.type === 'entityRelation'
+        },
+        cell: ({ row }) => renderCell(row.original, column)
+      })
+    )
+  ];
+
   return (
     <>
-      <Table.Root scroll stickyHeader bordered={!framed}>
-        <Table.Head>
-          <Table.Row>
-            <Table.SortableHeaderCell sortKey="_in" sort={sort} onSort={toggleSort}>
-              Source
-            </Table.SortableHeaderCell>
-            <Table.SortableHeaderCell sortKey="_out" sort={sort} onSort={toggleSort}>
-              Destination
-            </Table.SortableHeaderCell>
-            {columns.map(column => (
-              <Table.SortableHeaderCell
-                key={column.id}
-                sortKey={column.id}
-                sort={sort}
-                onSort={toggleSort}
-              >
-                {column.label}
-              </Table.SortableHeaderCell>
-            ))}
-          </Table.Row>
-        </Table.Head>
-        <Table.Body>
-          {sorted.length === 0 ? (
-            <Table.EmptyRow colSpan={columns.length + 2}>No matching relations.</Table.EmptyRow>
-          ) : (
-            sorted.map(relation => (
-              <Table.Row
-                key={relation._uid}
-                onClick={config.rowDrawer ? () => setSelectedId(relation._uid) : undefined}
-              >
-                <Table.Cell>{endpointLink(relation._in)}</Table.Cell>
-                <Table.Cell>{endpointLink(relation._out)}</Table.Cell>
-                {columns.map(column => (
-                  <Table.Cell key={column.id}>{renderCell(relation, column)}</Table.Cell>
-                ))}
-              </Table.Row>
-            ))
-          )}
-        </Table.Body>
-      </Table.Root>
+      <DataTable
+        // Remount when the column set changes so local widths don't leak between column sets.
+        key={columns.map(column => column.id).join('|')}
+        scroll
+        stickyHeader
+        resizable
+        bordered={!framed}
+        columns={tableColumns}
+        data={sorted}
+        getRowId={relation => relation._uid}
+        sort={sort}
+        onSort={toggleSort}
+        onRowClick={config.rowDrawer ? relation => setSelectedId(relation._uid) : undefined}
+        emptyState="No matching relations."
+      />
       {selected && (
         <RelationDrawer
           workspaceSlug={workspaceSlug}

@@ -66,7 +66,7 @@
           saved-view embeds, entity tables, entity cards, entity graphs, entity changelogs, document browsers, entity
           browsers, diagram previews, wiki-page embeds, lifecycle and activity-trend charts, stale-entity reports, an
           activity feed, configurable Markdown content, stat tiles that count or sum a field over a query, API & Integration Catalog statistics and list panels, ratio
-          bar-lists, count-by-field breakdown bars, month-bucketed date bar charts, upcoming-by-date countdown lists, ranked lists with share bars, a risk matrix, tabs that group other widgets, relation tables with an optional row detail drawer, specification-operation tables, provider × consumer pair-coverage tables, and assessment lists and counts scoped to chosen entity types)
+          bar-lists, count-by-field breakdown bars, month-bucketed date bar charts, upcoming-by-date countdown lists, ranked lists with share bars, a risk matrix, tabs that group other widgets, relation tables with sortable, resizable columns and an optional row detail drawer, specification-operation tables, provider × consumer pair-coverage tables, and assessment lists and counts scoped to chosen entity types)
           laid out on a grid; a fresh workspace shows a sensible default layout. The entity table and entity browser
           widgets both show a list of entities but serve different needs: entity table offers quick, flat schema/owner/
           lifecycle/limit filtering with fixed columns, while entity browser exposes the full entity browser experience
