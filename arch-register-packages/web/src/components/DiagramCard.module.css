@@ -110,34 +110,6 @@
   color: var(--cmp-fg-disabled);
 }
 
-.diagramRow {
-  display: grid;
-  grid-template-columns: 1fr 90px;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 10px;
-  text-align: left;
-  color: var(--base-fg-secondary);
-  cursor: pointer;
-  background: none;
-  border: none;
-  border-bottom: 1px solid var(--panel-border);
-  width: 100%;
-  font-size: 12px;
-}
-
-.diagramRowWithFolder {
-  grid-template-columns: 1fr 120px 90px;
-}
-
-.diagramRow:last-child {
-  border-bottom: none;
-}
-
-.diagramRow:hover {
-  background: var(--cmp-bg);
-}
-
 .diagramRowName {
   color: var(--base-fg);
   font-weight: 500;
@@ -164,9 +136,4 @@
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-}
-
-.diagramRowDate {
-  font-size: 11px;
-  color: var(--cmp-fg-disabled);
 }

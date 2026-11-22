@@ -1257,7 +1257,10 @@
           available via the sidebar rather than as a dashboard widget.
 
         - @id:ar.projects.files Users can organize project files and folders, create content nodes, rename or relocate
-          them, and manage supported file content.
+          them, and manage supported file content. The content browser can show folders, diagrams, documents, and files as a grid
+          or as a table; in the table, folders are listed first, a Folder column appears when items span several folders,
+          columns can be resized by dragging header edges (not persisted), and an item opens with the mouse or by
+          focusing a row and pressing Enter or Space.
 
         - @id:ar.projects.markdown Users can create and edit Markdown documents with links, backlinks, attachments,
           metadata, and revision history. Project editors can manage project-specific Markdown templates from the

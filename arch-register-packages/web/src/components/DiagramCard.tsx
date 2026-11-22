@@ -163,20 +163,25 @@ export const DiagramCard = ({
   </DiagramMetadataPopover>
 );
 
-export const DiagramRow = ({
-  file,
-  folder,
-  showFolder = false,
-  onOpen,
-  onContextMenu
-}: {
-  file: ProjectFile;
-  folder?: string;
-  /** Adds the folder column; the list header must show it too. */
-  showFolder?: boolean;
-  onOpen: () => void;
-  onContextMenu?: (e: React.MouseEvent) => void;
-}) => (
+const accentIconStyle: React.CSSProperties = { flexShrink: 0, color: 'var(--accent-fg)' };
+
+const TemplateBadges = ({ file }: { file: ProjectFile }) => (
+  <>
+    {file.is_workspace_template && (
+      <span title="Workspace template">
+        <TbStar size={10} /> Workspace
+      </span>
+    )}
+    {file.is_template && !file.is_workspace_template && (
+      <span title="Project template">
+        <TbStar size={10} /> Project
+      </span>
+    )}
+  </>
+);
+
+/** Name cell content for a file in the list view, with the hover metadata popover */
+export const DiagramRowName = ({ file }: { file: ProjectFile }) => (
   <DiagramMetadataPopover
     type={file.type}
     fallbackTitle={file.name}
@@ -184,48 +189,29 @@ export const DiagramRow = ({
     commentCount={file.comment_count}
     unresolvedCommentCount={file.unresolved_comment_count}
   >
-    <button
-      type="button"
-      className={`${styles.diagramRow} ${showFolder ? styles.diagramRowWithFolder : ''}`}
-      onClick={onOpen}
-      onContextMenu={onContextMenu}
-    >
-      <div className={styles.diagramRowName}>
-        {file.type === 'markdown' && (
-          <TbFileText size={13} style={{ flexShrink: 0, color: 'var(--accent-fg)' }} />
-        )}
-        {file.type === 'diagram' && (
-          <TbSitemap size={13} style={{ flexShrink: 0, color: 'var(--accent-fg)' }} />
-        )}
-        {file.type === 'file' && (
-          <span style={{ display: 'inline-flex', flexShrink: 0, color: 'var(--accent-fg)' }}>
-            {getFileNodeIcon(file.type, 13, file.original_filename ?? file.name)}
-          </span>
-        )}
-        <span>{file.content_metadata?.title ?? file.name}</span>
-        {file.is_workspace_template && (
-          <span title="Workspace template">
-            <TbStar size={10} /> Workspace
-          </span>
-        )}
-        {file.is_template && !file.is_workspace_template && (
-          <span title="Project template">
-            <TbStar size={10} /> Project
-          </span>
-        )}
-      </div>
-      {showFolder && (
-        <div className={styles.diagramRowFolder}>
-          {folder && (
-            <>
-              <TbFolder size={10} /> {folder}
-            </>
-          )}
-        </div>
+    <div className={styles.diagramRowName}>
+      {file.type === 'markdown' && <TbFileText size={13} style={accentIconStyle} />}
+      {file.type === 'diagram' && <TbSitemap size={13} style={accentIconStyle} />}
+      {file.type === 'file' && (
+        <span style={{ display: 'inline-flex', ...accentIconStyle }}>
+          {getFileNodeIcon(file.type, 13, file.original_filename ?? file.name)}
+        </span>
       )}
-      <div className={styles.diagramRowDate}>{formatDate(file.updated_at)}</div>
-    </button>
+      <span>{file.content_metadata?.title ?? file.name}</span>
+      <TemplateBadges file={file} />
+    </div>
   </DiagramMetadataPopover>
+);
+
+export const DiagramRowFolder = ({ folder }: { folder?: string }) =>
+  folder ? (
+    <span className={styles.diagramRowFolder}>
+      <TbFolder size={10} /> {folder}
+    </span>
+  ) : null;
+
+export const DiagramRowDate = ({ file }: { file: ProjectFile }) => (
+  <>{formatDate(file.updated_at)}</>
 );
 
 export type DiagramBrowserFolderItem = {
@@ -236,7 +222,7 @@ export type DiagramBrowserFolderItem = {
   readOnly?: boolean;
 };
 
-const folderSummary = (folder: DiagramBrowserFolderItem) =>
+export const folderSummary = (folder: DiagramBrowserFolderItem) =>
   `${folder.fileCount} ${folder.fileCount === 1 ? 'item' : 'items'}`;
 
 export const FolderCard = ({
@@ -263,29 +249,13 @@ export const FolderCard = ({
   </button>
 );
 
-export const FolderRow = ({
-  folder,
-  showFolder = false,
-  onOpen
-}: {
-  folder: DiagramBrowserFolderItem;
-  showFolder?: boolean;
-  onOpen: () => void;
-}) => (
-  <button
-    type="button"
-    className={`${styles.diagramRow} ${showFolder ? styles.diagramRowWithFolder : ''}`}
-    onClick={onOpen}
-  >
-    <div className={styles.diagramRowName}>
-      {folder.readOnly ? (
-        <TbFolderSymlink size={13} style={{ flexShrink: 0, color: 'var(--accent-fg)' }} />
-      ) : (
-        <TbFolder size={13} style={{ flexShrink: 0, color: 'var(--accent-fg)' }} />
-      )}
-      <span>{folder.name}</span>
-    </div>
-    {showFolder && <div className={styles.diagramRowFolder} />}
-    <div className={styles.diagramRowDate}>{folderSummary(folder)}</div>
-  </button>
+export const FolderRowName = ({ folder }: { folder: DiagramBrowserFolderItem }) => (
+  <div className={styles.diagramRowName}>
+    {folder.readOnly ? (
+      <TbFolderSymlink size={13} style={accentIconStyle} />
+    ) : (
+      <TbFolder size={13} style={accentIconStyle} />
+    )}
+    <span>{folder.name}</span>
+  </div>
 );

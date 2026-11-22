@@ -73,6 +73,11 @@ describe('DataTable', () => {
     ).toHaveLength(2);
   });
 
+  test('renders with onRowContextMenu set', () => {
+    const body = (h: string) => h.match(/<tbody>.*<\/tbody>/)![0];
+    expect(body(render({ onRowContextMenu: () => {} }))).toContain('<tr');
+  });
+
   test('renders the empty state spanning all columns', () => {
     const html = render({ data: [], emptyState: 'Nothing here', selectable: true });
     expect(html).toContain('Nothing here');

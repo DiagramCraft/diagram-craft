@@ -4,11 +4,20 @@ import { TbFolder, TbPlus } from 'react-icons/tb';
 import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 import {
   DiagramCard,
-  DiagramRow,
+  DiagramRowDate,
+  DiagramRowFolder,
+  DiagramRowName,
   FolderCard,
-  FolderRow,
+  FolderRowName,
+  folderSummary,
   type DiagramBrowserFolderItem
 } from '../DiagramCard';
+import { DataTable, type DataTableColumn } from '../table/DataTable';
+import {
+  buildDiagramBrowserRows,
+  diagramBrowserRowId,
+  type DiagramBrowserRow
+} from './diagramBrowserRows';
 import { EmptyState } from '../EmptyState';
 import { LabeledSelect } from '../LabeledSelect';
 import { SearchInput } from '../SearchInput';
@@ -177,27 +186,70 @@ export const DiagramBrowserView = ({
   });
 
   if (viewMode === 'list') {
+    const columns: DataTableColumn<DiagramBrowserRow>[] = [
+      {
+        id: 'name',
+        header: 'Name',
+        size: 400,
+        minSize: 160,
+        meta: { primary: true },
+        cell: ({ row }) =>
+          row.original.kind === 'folder' ? (
+            <FolderRowName folder={row.original.folder} />
+          ) : (
+            <DiagramRowName file={row.original.item.file} />
+          )
+      },
+      ...(showFolder
+        ? [
+            {
+              id: 'folder',
+              header: 'Folder',
+              size: 160,
+              minSize: 80,
+              cell: ({ row }) =>
+                row.original.kind === 'item' ? (
+                  <DiagramRowFolder folder={row.original.item.folder} />
+                ) : null
+            } satisfies DataTableColumn<DiagramBrowserRow>
+          ]
+        : []),
+      {
+        id: 'lastEdit',
+        header: 'Last edit',
+        size: 120,
+        minSize: 80,
+        cell: ({ row }) =>
+          row.original.kind === 'folder' ? (
+            folderSummary(row.original.folder)
+          ) : (
+            <DiagramRowDate file={row.original.item.file} />
+          )
+      }
+    ];
+
     return (
-      <div className={styles.diagramListPanel}>
-        <div
-          className={`${styles.diagramListHead} ${showFolder ? styles.diagramListHeadWithFolder : ''}`}
-        >
-          <span>Name</span>
-          {showFolder && <span>Folder</span>}
-          <span>Last edit</span>
-        </div>
-        {subfolders.map(folder => (
-          <FolderRow
-            key={folder.path}
-            folder={folder}
-            showFolder={showFolder}
-            onOpen={() => onOpenFolder?.(folder)}
-          />
-        ))}
-        {listItems.map(item => (
-          <DiagramRow key={item.file.path} showFolder={showFolder} {...renderItem(item)} />
-        ))}
-      </div>
+      <DataTable
+        // Remount when the column set changes so local widths don't leak between column sets
+        key={columns.map(c => c.id).join('|')}
+        scroll
+        bordered
+        resizable
+        rowKeyboardActivation
+        columns={columns}
+        data={buildDiagramBrowserRows(subfolders, listItems)}
+        getRowId={diagramBrowserRowId}
+        onRowClick={row =>
+          row.kind === 'folder' ? onOpenFolder?.(row.folder) : renderItem(row.item).onOpen()
+        }
+        onRowContextMenu={
+          onContextMenu
+            ? (row, event) => {
+                if (row.kind === 'item') onContextMenu(event, row.item.file);
+              }
+            : undefined
+        }
+      />
     );
   }
 
