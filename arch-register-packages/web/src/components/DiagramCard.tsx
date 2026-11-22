@@ -210,7 +210,9 @@ export const DiagramRowFolder = ({ folder }: { folder?: string }) =>
     </span>
   ) : null;
 
-export const DiagramRowDate = ({ file }: { file: ProjectFile }) => <>{formatDate(file.updated_at)}</>;
+export const DiagramRowDate = ({ file }: { file: ProjectFile }) => (
+  <>{formatDate(file.updated_at)}</>
+);
 
 export type DiagramBrowserFolderItem = {
   path: string;
