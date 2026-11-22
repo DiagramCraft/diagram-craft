@@ -116,6 +116,8 @@ type DataTableProps<T extends RowData> = RootProps & {
   onRowClick?: (row: T) => void;
   // Makes rows focusable and activates `onRowClick` on Enter/Space (events from nested controls are left alone)
   rowKeyboardActivation?: boolean;
+  // Called when a row is right-clicked; the caller decides whether to prevent the native menu
+  onRowContextMenu?: (row: T, event: MouseEvent<HTMLTableRowElement>) => void;
   // Adds a leading checkbox column, including a header checkbox with indeterminate state
   selectable?: boolean;
   selectedRowIds?: RowSelectionState;
@@ -169,6 +171,7 @@ export const DataTable = <T extends RowData>({
   onSort,
   onRowClick,
   rowKeyboardActivation = false,
+  onRowContextMenu,
   selectable = false,
   selectedRowIds,
   onSelectedRowIdsChange,
@@ -548,6 +551,9 @@ export const DataTable = <T extends RowData>({
                       onRowClick(row.original);
                     }
                   : undefined
+              }
+              onContextMenu={
+                onRowContextMenu ? ev => onRowContextMenu(row.original, ev) : undefined
               }
               tabIndex={onRowClick && rowKeyboardActivation ? 0 : undefined}
               onKeyDown={
