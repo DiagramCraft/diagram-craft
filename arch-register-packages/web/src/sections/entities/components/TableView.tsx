@@ -97,7 +97,7 @@ export const TableView = ({
       {
         id: '_name',
         header: 'Name',
-        meta: { sortable: true, label: 'Name', width: 200 },
+        meta: { sortable: true, label: 'Name', width: 200, sticky: true },
         cell: ({ row }) => {
           const entity = row.original;
           const schemaEntry = schemaMap.get(entity._schema.id);

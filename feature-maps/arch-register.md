@@ -998,7 +998,8 @@
         - @id:ar.entity-views.table Users can inspect entities in a tabular browser with configurable fields, sorting,
           filtering, selection, and bulk actions. Project-only fields such as project role and project status are shown
           when the browser is in project context. Scalar-array filters use any-element matching for positive operators,
-          while emptiness checks the list and sorting/chart metrics use its first value.
+          while emptiness checks the list and sorting/chart metrics use its first value. The Name column stays pinned
+          while scrolling horizontally.
 
           - @id:ar.entity-views.table.column-rendering Users can choose how each table column is rendered: plain text
             (default), a color band (select options or number/date ranges mapped to green/amber/red), or a bar
