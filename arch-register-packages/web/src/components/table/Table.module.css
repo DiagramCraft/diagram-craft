@@ -195,6 +195,9 @@
 }
 
 .table .th.stickyCol {
+  /* .table .th sets position: relative at the same specificity; without this the header's
+     `left` offset shifts it instead of pinning it when stickyHeader is off. */
+  position: sticky;
   background: var(--base-bg);
   z-index: 3;
 }
