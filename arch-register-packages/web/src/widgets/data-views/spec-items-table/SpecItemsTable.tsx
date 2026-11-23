@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Chip } from '../../../components/Chip';
 import { EmptyState } from '../../../components/EmptyState';
-import { Table } from '../../../components/table/Table';
+import { DataTable, type DataTableColumn } from '../../../components/table/DataTable';
 import { NameCell } from '../../../components/table/NameCell';
 import { useTableSort } from '../../../components/table/useTableSort';
 import {
@@ -16,7 +16,14 @@ import { useEntityDrawer } from '../../../sections/entities/entityDrawer/useEnti
 import { resolveEntityQuery } from '../entity-browser-embed/EntityBrowserEmbedFieldResolution';
 import styles from './SpecItemsTable.module.css';
 import { useWidgetFramed } from '../../shared/dashboard/WidgetFramed';
-import { specItemsEmptyLabel, specItemTone, specItemSortValue } from './specItemsTableLogic';
+import {
+  specItemCopyDeprecated,
+  specItemCopyMethod,
+  specItemCopyPath,
+  specItemsEmptyLabel,
+  specItemSortValue,
+  specItemTone
+} from './specItemsTableLogic';
 import { SpecItemsTableWidgetConfig } from './types';
 
 const DEFAULT_ENTITY_LIMIT = 200;
@@ -89,46 +96,81 @@ export const SpecItemsTableWidget = ({ config }: { config: SpecItemsTableWidgetC
     return <EmptyState title={`Schema '${config.schemaName}' not found`} compact />;
   }
 
+  const columns: DataTableColumn<SpecificationItemRow>[] = [
+    {
+      id: 'method',
+      header: 'Method',
+      size: 110,
+      minSize: 70,
+      meta: { sortable: true, label: 'Method', hideable: false, copyValue: specItemCopyMethod },
+      cell: ({ row }) => (
+        <Chip tone="ghost" color={specItemTone(row.original.item.action)}>
+          {row.original.item.action.toUpperCase()}
+        </Chip>
+      )
+    },
+    {
+      id: 'path',
+      header: 'Path',
+      size: 320,
+      minSize: 120,
+      meta: { sortable: true, label: 'Path', hideable: false, copyValue: specItemCopyPath },
+      cell: ({ row }) => (
+        <NameCell.Content
+          title={row.original.item.path ?? row.original.item.channel ?? 'Unspecified resource'}
+          subtitle={row.original.item.identifier}
+        />
+      )
+    },
+    {
+      id: 'entity',
+      header: schema.name,
+      size: 220,
+      minSize: 100,
+      meta: {
+        sortable: true,
+        label: schema.name,
+        hideable: false,
+        interactive: true,
+        copyValue: row => row.api.name
+      },
+      cell: ({ row }) => (
+        <button
+          type="button"
+          className={styles.apiName}
+          onClick={() => openEntityDrawer(row.original.api.publicId)}
+        >
+          {row.original.api.name}
+        </button>
+      )
+    },
+    {
+      id: 'deprecated',
+      header: 'Deprecated',
+      size: 120,
+      minSize: 80,
+      meta: { label: 'Deprecated', hideable: false, copyValue: specItemCopyDeprecated },
+      cell: ({ row }) => row.original.item.deprecated && <Chip tone="ghost">Deprecated</Chip>
+    }
+  ];
+
   const isLoading = entities.isLoading || feed.isLoading;
   return (
-    <Table.Root scroll stickyHeader bordered={!framed}>
-      <Table.Head>
-        <Table.Row>
-          <Table.SortableHeaderCell sortKey="method" sort={sort} onSort={toggleSort}>
-            Method
-          </Table.SortableHeaderCell>
-          <Table.SortableHeaderCell sortKey="path" sort={sort} onSort={toggleSort}>
-            Path
-          </Table.SortableHeaderCell>
-          <Table.SortableHeaderCell sortKey="entity" sort={sort} onSort={toggleSort}>
-            {schema.name}
-          </Table.SortableHeaderCell>
-          <Table.HeaderCell>Deprecated</Table.HeaderCell>
-        </Table.Row>
-      </Table.Head>
-      <Table.Body>
-        {sorted.length === 0 ? (
-          <Table.EmptyRow colSpan={4}>
-            {isLoading ? 'Loading operations…' : specItemsEmptyLabel(config.deprecated === true)}
-          </Table.EmptyRow>
-        ) : (
-          sorted.map(row => (
-            <Table.Row key={row.key} onClick={() => openEntityDrawer(row.api.publicId)}>
-              <Table.Cell>
-                <Chip tone="ghost" color={specItemTone(row.item.action)}>
-                  {row.item.action.toUpperCase()}
-                </Chip>
-              </Table.Cell>
-              <NameCell.Cell
-                title={row.item.path ?? row.item.channel ?? 'Unspecified resource'}
-                subtitle={row.item.identifier}
-              />
-              <Table.Cell className={styles.apiName}>{row.api.name}</Table.Cell>
-              <Table.Cell>{row.item.deprecated && <Chip tone="ghost">Deprecated</Chip>}</Table.Cell>
-            </Table.Row>
-          ))
-        )}
-      </Table.Body>
-    </Table.Root>
+    <DataTable
+      scroll
+      stickyHeader
+      resizable
+      cellSelection
+      layout="fixed"
+      bordered={!framed}
+      columns={columns}
+      data={sorted}
+      getRowId={row => row.key}
+      sort={sort}
+      onSort={key => toggleSort(key as SortKey)}
+      emptyState={
+        isLoading ? 'Loading operations…' : specItemsEmptyLabel(config.deprecated === true)
+      }
+    />
   );
 };

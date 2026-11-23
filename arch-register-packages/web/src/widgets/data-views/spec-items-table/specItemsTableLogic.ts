@@ -22,3 +22,13 @@ export const specItemsEmptyLabel = (deprecatedOnly: boolean): string =>
   deprecatedOnly
     ? 'No deprecated operations match these filters.'
     : 'No operations match these filters.';
+
+export const specItemCopyMethod = (row: SpecificationItemRow): string =>
+  row.item.action.toUpperCase();
+
+// The copied path is the HTTP path, or the channel for channel-based specifications
+export const specItemCopyPath = (row: SpecificationItemRow): string =>
+  row.item.path ?? row.item.channel ?? '';
+
+export const specItemCopyDeprecated = (row: SpecificationItemRow): string =>
+  row.item.deprecated ? 'Deprecated' : '';
