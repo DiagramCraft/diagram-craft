@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type { SpecificationItemRow } from '../../../hooks/useSpecificationItemsFeed';
-import { specItemSortValue, specItemsEmptyLabel, specItemTone } from './specItemsTableLogic';
+import {
+  specItemCopyDeprecated,
+  specItemCopyMethod,
+  specItemCopyPath,
+  specItemSortValue,
+  specItemsEmptyLabel,
+  specItemTone
+} from './specItemsTableLogic';
 
 const row = (item: Record<string, unknown>) =>
   ({
@@ -30,5 +37,25 @@ describe('specItemsEmptyLabel', () => {
   it('differs for deprecated-only', () => {
     expect(specItemsEmptyLabel(true)).toContain('deprecated');
     expect(specItemsEmptyLabel(false)).not.toContain('deprecated');
+  });
+});
+
+describe('copy values', () => {
+  it('copies method, path and deprecation for HTTP operations', () => {
+    const r = row({ action: 'get', path: '/orders', identifier: 'getOrders', deprecated: true });
+    expect(specItemCopyMethod(r)).toBe('GET');
+    expect(specItemCopyPath(r)).toBe('/orders');
+    expect(specItemCopyDeprecated(r)).toBe('Deprecated');
+  });
+
+  it('copies the channel for channel-based specifications', () => {
+    const r = row({ action: 'publish', channel: 'orders.created' });
+    expect(specItemCopyMethod(r)).toBe('PUBLISH');
+    expect(specItemCopyPath(r)).toBe('orders.created');
+    expect(specItemCopyDeprecated(r)).toBe('');
+  });
+
+  it('copies an empty path when there is neither path nor channel', () => {
+    expect(specItemCopyPath(row({ action: 'rpc' }))).toBe('');
   });
 });

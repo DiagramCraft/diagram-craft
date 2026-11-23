@@ -708,11 +708,14 @@
           operations" tables listing every operation/message — method, path, API, deprecated flag — read from the
           APIs' primary `api-specification` artifact; there is no sunset-date countdown, no telemetry and no
           operations-count column). The section's primary sidebar offers Protocol, Lifecycle, and Owning team facets
-          (each option showing its count, state kept in the URL) that narrow all three tabs. A row click opens the
-          shared spec drawer (deep-linkable through its link-icon action; an old `/apis/<id>` link still redirects
+          (each option showing its count, state kept in the URL) that narrow all three tabs. A row click in the
+          catalog opens the shared spec drawer (deep-linkable through its link-icon action; an old `/apis/<id>` link still redirects
           to it): attributes, providers/consumers, and the full specification viewer — source/version picker,
           revision status notices, normalized operations/messages list, and a raw-source preview dialog. Clicking an
-          operation opens its parent API's drawer, not a per-operation deep link.
+          operation's API name opens its parent API's drawer (not a per-operation deep link); the name is an explicit
+          keyboard-accessible control, so clicking any other cell selects it. Operations tables support resizing
+          columns (widths are not persisted) and selecting cell ranges, copied as tab-separated text (method,
+          path or channel, API name, deprecated) for pasting into a spreadsheet.
 
         - @id:ar.api-integration-catalog.integrations The Integrations section is a seeded, editable dashboard with a
           Data flows tab and an API usage tab. Data flows is a relation table over every `Data Flow` typed relation
