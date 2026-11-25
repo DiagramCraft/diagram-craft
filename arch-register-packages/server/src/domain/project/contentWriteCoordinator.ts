@@ -1,10 +1,27 @@
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
-import type { StagedStorageMutation, StorageAdapter } from '../../storage/storage.types';
+import type {
+  StagedStorageMutation,
+  StorageAdapter,
+  StorageReconciliationOperation
+} from '../../storage/storage.types';
 import { createLogger } from '../../utils/logger';
 import type { ContentReconciliationOperation } from './db/contentReconciliationDatabase';
 
 const logger = createLogger('content-write');
+
+/**
+ * How long a live write owns its ledger row. While the lease is held, the recovery job does not
+ * consider the row due, so it cannot roll back a write that is between storage commit and
+ * database commit.
+ */
+const WRITER_LEASE_MS = 5 * 60_000;
+
+class OwnershipLostError extends Error {
+  constructor() {
+    super('Content write was taken over by recovery before the database commit');
+  }
+}
 
 export type ContentWriteStage = {
   name: 'preview' | 'references' | 'revision' | 'audit' | 'cleanup';
@@ -75,13 +92,7 @@ const stageStorageChange = async (
 };
 
 type ReconciliationPayload = {
-  storageChanges: Array<{
-    operationId: string;
-    action: 'write' | 'delete';
-    workspace: string;
-    projectId: string;
-    fileId: string;
-  }>;
+  storageChanges: StorageReconciliationOperation[];
   stages: string[];
   committed: boolean;
   finalized: boolean;
@@ -105,6 +116,20 @@ const updateLedger = async (
   });
 };
 
+// Used on pre-commit failure paths: only applies while the writer still owns the row
+const releaseLedger = async (
+  db: DatabaseAdapter,
+  operation: ContentReconciliationOperation,
+  payload: ReconciliationPayload,
+  update: Parameters<NonNullable<DatabaseAdapter['contentReconciliation']>['updateOperation']>[1]
+) => {
+  await reconciliationAdapter(db)?.transitionOperation(
+    operation.id,
+    { expectedStates: ['pending'] },
+    { ...update, payload }
+  );
+};
+
 const errorMessage = (error: unknown) => (error instanceof Error ? error.message : String(error));
 
 export const coordinateContentWrite = async <T>(options: ContentWriteOptions<T>): Promise<T> => {
@@ -121,8 +146,8 @@ export const coordinateContentWrite = async <T>(options: ContentWriteOptions<T>)
       operationId,
       action: change.type,
       workspace: change.workspace,
-      projectId: change.storageId,
-      fileId: change.nodeId
+      scopeId: change.storageId,
+      nodeId: change.nodeId
     })),
     stages: (options.afterCommit ?? []).map(stage => stage.name),
     committed: false,
@@ -142,7 +167,7 @@ export const coordinateContentWrite = async <T>(options: ContentWriteOptions<T>)
       scope: options.scope,
       node_ids: [...options.nodeIds],
       payload,
-      next_attempt_at: new Date(),
+      next_attempt_at: new Date(Date.now() + WRITER_LEASE_MS),
       created_at: new Date()
     });
   }
@@ -162,7 +187,7 @@ export const coordinateContentWrite = async <T>(options: ContentWriteOptions<T>)
       }
     }
     if (ledger && reconciliation) {
-      await updateLedger(options.db, ledger, payload, {
+      await releaseLedger(options.db, ledger, payload, {
         state: 'pending',
         last_error: errorMessage(error),
         attempt_count: ledger.attempt_count + 1,
@@ -185,23 +210,38 @@ export const coordinateContentWrite = async <T>(options: ContentWriteOptions<T>)
     }
     return transactionResult;
   };
+  const markDatabaseCommitted = async (target: DatabaseAdapter) => {
+    payload.committed = true;
+    const owned = await target.contentReconciliation.transitionOperation(
+      operationId,
+      { expectedStates: ['pending'] },
+      {
+        state: 'database_committed',
+        payload,
+        last_error: null,
+        next_attempt_at: new Date(Date.now() + 60_000),
+        updated_at: new Date()
+      }
+    );
+    if (!owned) throw new OwnershipLostError();
+  };
   try {
     result = options.db.core?.transaction
       ? await options.db.core.transaction(async tx => {
           const transactionResult = await writeAndAudit(tx);
-          payload.committed = true;
-          if (reconciliation) {
-            await tx.contentReconciliation.updateOperation(operationId, {
-              state: 'database_committed',
-              payload,
-              last_error: null,
-              updated_at: new Date()
-            });
-          }
+          if (ledger) await markDatabaseCommitted(tx);
           return transactionResult;
         })
       : await writeAndAudit(options.db);
+    if (!options.db.core?.transaction && ledger) await markDatabaseCommitted(options.db);
   } catch (error) {
+    if (error instanceof OwnershipLostError) {
+      // Recovery owns the row and has already rolled storage back
+      reportFailure('warn', 'Content write lost ownership to recovery', context, error);
+      throw error;
+    }
+    // The database transaction did not commit, so recovery must roll back, not finalize
+    payload.committed = false;
     for (const mutation of [...staged].reverse()) {
       try {
         await mutation.rollback();
@@ -215,7 +255,7 @@ export const coordinateContentWrite = async <T>(options: ContentWriteOptions<T>)
       }
     }
     if (ledger && reconciliation) {
-      await updateLedger(options.db, ledger, payload, {
+      await releaseLedger(options.db, ledger, payload, {
         state: 'pending',
         last_error: errorMessage(error),
         attempt_count: ledger.attempt_count + 1,

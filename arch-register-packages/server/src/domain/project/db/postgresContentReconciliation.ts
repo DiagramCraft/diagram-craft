@@ -4,6 +4,7 @@ import type {
   ContentReconciliationCreate,
   ContentReconciliationDatabase,
   ContentReconciliationSummary,
+  ContentReconciliationTransition,
   ContentReconciliationUpdate
 } from './contentReconciliationDatabase';
 import { contentReconciliationMapper } from './contentReconciliationDatabase';
@@ -67,6 +68,34 @@ export class PostgresContentReconciliationDatabase
         RETURNING *
       `;
       return row ? contentReconciliationMapper(row) : null;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async transitionOperation(
+    id: string,
+    transition: ContentReconciliationTransition,
+    update: ContentReconciliationUpdate
+  ) {
+    const current = await this.getOperation(id);
+    if (!current) return false;
+    try {
+      const rows = await this.sql<DatabaseRow[]>`
+        UPDATE content_reconciliation
+        SET state = ${update.state ?? current.state},
+            payload = ${this.json(update.payload ?? current.payload)},
+            attempt_count = ${update.attempt_count ?? current.attempt_count},
+            next_attempt_at = ${update.next_attempt_at ?? current.next_attempt_at},
+            last_error = ${update.last_error === undefined ? current.last_error : update.last_error},
+            updated_at = ${update.updated_at},
+            resolved_at = ${update.resolved_at === undefined ? current.resolved_at : update.resolved_at}
+        WHERE id = ${id}
+          AND state IN ${this.sql(transition.expectedStates as string[])}
+          AND (${transition.dueAt ?? null}::timestamptz IS NULL OR next_attempt_at <= ${transition.dueAt ?? null})
+        RETURNING id
+      `;
+      return rows.length > 0;
     } catch (error) {
       return normalizePostgresError(error);
     }

@@ -1,5 +1,9 @@
 import type { DatabaseAdapter } from '../../db/database';
-import type { StorageAdapter, StorageReconciliationOperation } from '../../storage/storage.types';
+import type {
+  RecoverableStorageAdapter,
+  StorageAdapter,
+  StorageReconciliationOperation
+} from '../../storage/storage.types';
 import { createLogger } from '../../utils/logger';
 import { createJobSchedule } from '../jobs/jobOperations';
 
@@ -46,12 +50,33 @@ export const ensureAllContentReconciliationSchedules = async (
   }
 };
 
+export const requireRecoverableStorage = (storage: StorageAdapter): RecoverableStorageAdapter => {
+  if (typeof storage.reconcile !== 'function') {
+    throw new Error('Storage adapter does not support content recovery (reconcile)');
+  }
+  return storage as RecoverableStorageAdapter;
+};
+
+// Lease held by the job while it works on a row; if the job dies the row becomes due again
+const CLAIM_LEASE_MS = 5 * 60_000;
+
+// Ledger rows written before the scope-oriented rename use projectId/fileId
+const normalizeChange = (
+  change: StorageReconciliationOperation & { projectId?: string; fileId?: string }
+): StorageReconciliationOperation => ({
+  operationId: change.operationId,
+  action: change.action,
+  workspace: change.workspace,
+  scopeId: change.scopeId ?? change.projectId!,
+  nodeId: change.nodeId ?? change.fileId!
+});
+
 const retryAt = (attempt: number) =>
   new Date(Date.now() + Math.min(60 * 60_000, Math.max(60_000, 2 ** attempt * 60_000)));
 
 const reconcileOperation = async (
   db: DatabaseAdapter,
-  storage: StorageAdapter,
+  storage: RecoverableStorageAdapter,
   operation: Awaited<ReturnType<DatabaseAdapter['contentReconciliation']['getOperation']>>
 ) => {
   if (!operation) return 'missing';
@@ -59,12 +84,27 @@ const reconcileOperation = async (
     storageChanges?: StorageReconciliationOperation[];
     stages?: string[];
     completedStages?: string[];
+    committed?: boolean;
   };
-  const changes = payload.storageChanges ?? [];
+  const changes = (payload.storageChanges ?? []).map(normalizeChange);
+
+  // Take exclusive ownership; the live writer's commit fails if we get here first
+  const claimed = await db.contentReconciliation.transitionOperation(
+    operation.id,
+    { expectedStates: [operation.state], dueAt: new Date() },
+    {
+      state: 'resolving',
+      next_attempt_at: new Date(Date.now() + CLAIM_LEASE_MS),
+      updated_at: new Date()
+    }
+  );
+  if (!claimed) return 'skipped';
 
   try {
-    if (operation.state === 'pending') {
-      for (const change of [...changes].reverse()) await storage.reconcile!(change, 'rollback');
+    // The action follows from whether the database committed, never from the (retry) state.
+    // A failed rollback must be retried as a rollback, so the backups are kept.
+    if (!payload.committed) {
+      for (const change of [...changes].reverse()) await storage.reconcile(change, 'rollback');
       await db.contentReconciliation.updateOperation(operation.id, {
         state: 'resolved',
         last_error: null,
@@ -74,7 +114,7 @@ const reconcileOperation = async (
       return 'rolled_back';
     }
 
-    for (const change of changes) await storage.reconcile!(change, 'finalize');
+    for (const change of changes) await storage.reconcile(change, 'finalize');
     const stages = payload.stages ?? [];
     const completedStages = payload.completedStages ?? [];
     if (completedStages.length === stages.length) {
@@ -115,7 +155,7 @@ const reconcileOperation = async (
 };
 
 export const createContentReconciliationJobHandler =
-  (db: DatabaseAdapter, storage: StorageAdapter) =>
+  (db: DatabaseAdapter, storage: RecoverableStorageAdapter) =>
   async (context: { workspace: string; signal?: AbortSignal }) => {
     const operations = await db.contentReconciliation.listDueOperations(
       context.workspace,

@@ -65,8 +65,8 @@ describe('FilesystemStorage staged mutations', () => {
         operationId,
         action: 'write',
         workspace: 'ws',
-        projectId: 'project',
-        fileId: 'node'
+        scopeId: 'project',
+        nodeId: 'node'
       },
       'finalize'
     );
@@ -85,11 +85,75 @@ describe('FilesystemStorage staged mutations', () => {
         operationId,
         action: 'write',
         workspace: 'ws',
-        projectId: 'project',
-        fileId: 'node'
+        scopeId: 'project',
+        nodeId: 'node'
       },
       'rollback'
     );
+
+    expect((await storage.read('ws', 'project', 'node')).toString()).toBe('old');
+  });
+
+  const op = (operationId: string) => ({
+    operationId,
+    action: 'write' as const,
+    workspace: 'ws',
+    scopeId: 'project',
+    nodeId: 'node'
+  });
+
+  it('rolls back a committed write of a new file after restart', async () => {
+    const { storage } = await makeStorage();
+    const operationId = '00000000-0000-0000-0000-000000000003';
+    const staged = await storage.stageWrite(
+      'ws',
+      'project',
+      'node',
+      Buffer.from('new'),
+      operationId
+    );
+    await staged.commit();
+
+    await storage.reconcile(op(operationId), 'rollback');
+    await storage.reconcile(op(operationId), 'rollback');
+
+    expect(await storage.exists('ws', 'project', 'node')).toBe(false);
+  });
+
+  it('keeps recovery idempotent when finalize is retried', async () => {
+    const { storage } = await makeStorage();
+    await storage.write('ws', 'project', 'node', Buffer.from('old'));
+    const operationId = '00000000-0000-0000-0000-000000000004';
+    const staged = await storage.stageWrite(
+      'ws',
+      'project',
+      'node',
+      Buffer.from('new'),
+      operationId
+    );
+    await staged.commit();
+
+    await storage.reconcile(op(operationId), 'finalize');
+    await storage.reconcile(op(operationId), 'finalize');
+
+    expect((await storage.read('ws', 'project', 'node')).toString()).toBe('new');
+  });
+
+  it('can retry a rollback after it was already applied', async () => {
+    const { storage } = await makeStorage();
+    await storage.write('ws', 'project', 'node', Buffer.from('old'));
+    const operationId = '00000000-0000-0000-0000-000000000005';
+    const staged = await storage.stageWrite(
+      'ws',
+      'project',
+      'node',
+      Buffer.from('new'),
+      operationId
+    );
+    await staged.commit();
+
+    await storage.reconcile(op(operationId), 'rollback');
+    await storage.reconcile(op(operationId), 'rollback');
 
     expect((await storage.read('ws', 'project', 'node')).toString()).toBe('old');
   });

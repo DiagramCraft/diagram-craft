@@ -3,6 +3,7 @@ import type {
   ContentReconciliationCreate,
   ContentReconciliationDatabase,
   ContentReconciliationSummary,
+  ContentReconciliationTransition,
   ContentReconciliationUpdate
 } from './contentReconciliationDatabase';
 import { contentReconciliationMapper } from './contentReconciliationDatabase';
@@ -88,6 +89,39 @@ export class SqliteContentReconciliationDatabase
       ]
     );
     return this.getOperation(id);
+  }
+
+  async transitionOperation(
+    id: string,
+    transition: ContentReconciliationTransition,
+    update: ContentReconciliationUpdate
+  ) {
+    const current = await this.getOperation(id);
+    if (!current) return false;
+    const states = transition.expectedStates;
+    const result = this.run(
+      `UPDATE content_reconciliation
+       SET state = ?, payload = ?, attempt_count = ?, next_attempt_at = ?, last_error = ?,
+           updated_at = ?, resolved_at = ?
+       WHERE id = ?
+         AND state IN (${states.map(() => '?').join(', ')})
+         ${transition.dueAt ? 'AND next_attempt_at <= ?' : ''}`,
+      [
+        update.state ?? current.state,
+        JSON.stringify(update.payload ?? current.payload),
+        update.attempt_count ?? current.attempt_count,
+        iso(update.next_attempt_at ?? current.next_attempt_at),
+        update.last_error === undefined ? current.last_error : update.last_error,
+        iso(update.updated_at),
+        (update.resolved_at === undefined ? current.resolved_at : update.resolved_at) == null
+          ? null
+          : iso((update.resolved_at === undefined ? current.resolved_at : update.resolved_at)!),
+        id,
+        ...states,
+        ...(transition.dueAt ? [iso(transition.dueAt)] : [])
+      ]
+    );
+    return result.changes > 0;
   }
 
   async summarize(workspace: string): Promise<ContentReconciliationSummary> {

@@ -56,6 +56,7 @@ import {
 } from '@arch-register/server/domain/notification/emailDelivery';
 import {
   createContentReconciliationJobHandler,
+  requireRecoverableStorage,
   ensureAllContentReconciliationSchedules,
   CONTENT_RECONCILIATION_SCAN_JOB_TYPE
 } from '@arch-register/server/domain/project/contentReconciliationJob';
@@ -135,7 +136,7 @@ const main = async () => {
   );
   handlers.set(
     CONTENT_RECONCILIATION_SCAN_JOB_TYPE,
-    createContentReconciliationJobHandler(db, storage)
+    createContentReconciliationJobHandler(db, requireRecoverableStorage(storage))
   );
   handlers.set(CONFORMANCE_SCAN_JOB_TYPE, createConformanceScanJobHandler(db));
   const server = createJobServer({
