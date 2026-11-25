@@ -94,19 +94,24 @@ describe('FilesystemStorage staged mutations', () => {
     expect((await storage.read('ws', 'project', 'node')).toString()).toBe('old');
   });
 
-  const op = (operationId: string) =>
-    ({
-      operationId,
-      action: 'write' as const,
-      workspace: 'ws',
-      scopeId: 'project',
-      nodeId: 'node'
-    });
+  const op = (operationId: string) => ({
+    operationId,
+    action: 'write' as const,
+    workspace: 'ws',
+    scopeId: 'project',
+    nodeId: 'node'
+  });
 
   it('rolls back a committed write of a new file after restart', async () => {
     const { storage } = await makeStorage();
     const operationId = '00000000-0000-0000-0000-000000000003';
-    const staged = await storage.stageWrite('ws', 'project', 'node', Buffer.from('new'), operationId);
+    const staged = await storage.stageWrite(
+      'ws',
+      'project',
+      'node',
+      Buffer.from('new'),
+      operationId
+    );
     await staged.commit();
 
     await storage.reconcile(op(operationId), 'rollback');
@@ -119,7 +124,13 @@ describe('FilesystemStorage staged mutations', () => {
     const { storage } = await makeStorage();
     await storage.write('ws', 'project', 'node', Buffer.from('old'));
     const operationId = '00000000-0000-0000-0000-000000000004';
-    const staged = await storage.stageWrite('ws', 'project', 'node', Buffer.from('new'), operationId);
+    const staged = await storage.stageWrite(
+      'ws',
+      'project',
+      'node',
+      Buffer.from('new'),
+      operationId
+    );
     await staged.commit();
 
     await storage.reconcile(op(operationId), 'finalize');
@@ -132,7 +143,13 @@ describe('FilesystemStorage staged mutations', () => {
     const { storage } = await makeStorage();
     await storage.write('ws', 'project', 'node', Buffer.from('old'));
     const operationId = '00000000-0000-0000-0000-000000000005';
-    const staged = await storage.stageWrite('ws', 'project', 'node', Buffer.from('new'), operationId);
+    const staged = await storage.stageWrite(
+      'ws',
+      'project',
+      'node',
+      Buffer.from('new'),
+      operationId
+    );
     await staged.commit();
 
     await storage.reconcile(op(operationId), 'rollback');

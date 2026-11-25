@@ -45,13 +45,7 @@ export class FilesystemStorage implements StorageAdapter {
   }
 
   private resolvePath(workspace: string, scopeId: string, nodeId: string): string {
-    return this.resolvePathFromBase(
-      this.baseDir,
-      this.resolvedBaseDir,
-      workspace,
-      scopeId,
-      nodeId
-    );
+    return this.resolvePathFromBase(this.baseDir, this.resolvedBaseDir, workspace, scopeId, nodeId);
   }
 
   async exists(workspace: string, scopeId: string, nodeId: string): Promise<boolean> {
@@ -98,12 +92,7 @@ export class FilesystemStorage implements StorageAdapter {
     }
   }
 
-  async write(
-    workspace: string,
-    scopeId: string,
-    nodeId: string,
-    content: Buffer
-  ): Promise<void> {
+  async write(workspace: string, scopeId: string, nodeId: string, content: Buffer): Promise<void> {
     const staged = await this.stageWrite(workspace, scopeId, nodeId, content);
     await staged.commit();
     await staged.finalize();

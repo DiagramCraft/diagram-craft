@@ -92,7 +92,11 @@ const reconcileOperation = async (
   const claimed = await db.contentReconciliation.transitionOperation(
     operation.id,
     { expectedStates: [operation.state], dueAt: new Date() },
-    { state: 'resolving', next_attempt_at: new Date(Date.now() + CLAIM_LEASE_MS), updated_at: new Date() }
+    {
+      state: 'resolving',
+      next_attempt_at: new Date(Date.now() + CLAIM_LEASE_MS),
+      updated_at: new Date()
+    }
   );
   if (!claimed) return 'skipped';
 
