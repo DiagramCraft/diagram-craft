@@ -27,14 +27,7 @@ jobs:
           sudo mv scc /usr/local/bin/
 
       - name: Run SCC on PR
-        run: scc -f json --remap-all "from 'vitest'":"TypeScript Tests","StoryObj":"Storybook" . > scc-pr.json
-
-      - name: Upload PR SCC artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: scc-pr
-          path: scc-pr.json
-          retention-days: 1
+        run: scc -f json --remap-all "from 'vitest'":"TypeScript Tests","StoryObj":"Storybook" . > "$RUNNER_TEMP/scc-pr.json"
 
       - name: Checkout base branch
         uses: actions/checkout@v4
@@ -43,24 +36,7 @@ jobs:
           submodules: 'recursive'
 
       - name: Run SCC on base
-        run: scc -f json --remap-all "from 'vitest'":"TypeScript Tests","StoryObj":"Storybook" . > scc-base.json
-
-      - name: Upload base SCC artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: scc-base
-          path: scc-base.json
-          retention-days: 1
-
-      - name: Download PR SCC artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: scc-pr
-
-      - name: Download base SCC artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: scc-base
+        run: scc -f json --remap-all "from 'vitest'":"TypeScript Tests","StoryObj":"Storybook" . > "$RUNNER_TEMP/scc-base.json"
 
       - name: Compare LOC and comment
         uses: actions/github-script@v7
@@ -71,14 +47,14 @@ jobs:
             let prScc, baseScc;
 
             try {
-              prScc = JSON.parse(fs.readFileSync('scc-pr.json', 'utf8'));
+              prScc = JSON.parse(fs.readFileSync(`${process.env.RUNNER_TEMP}/scc-pr.json`, 'utf8'));
             } catch (e) {
               console.error('Failed to read PR SCC data:', e);
               prScc = [];
             }
 
             try {
-              baseScc = JSON.parse(fs.readFileSync('scc-base.json', 'utf8'));
+              baseScc = JSON.parse(fs.readFileSync(`${process.env.RUNNER_TEMP}/scc-base.json`, 'utf8'));
             } catch (e) {
               console.error('Failed to read base SCC data:', e);
               baseScc = [];
