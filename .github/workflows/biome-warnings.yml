@@ -54,20 +54,6 @@ jobs:
             echo "errors=0" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Upload PR Biome artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: biome-pr-summary
-          path: output/biome/biome-pr-summary.json
-          retention-days: 1
-
-      - name: Upload PR Biome report
-        uses: actions/upload-artifact@v4
-        with:
-          name: biome-pr-report
-          path: output/biome/biome-pr.json
-          retention-days: 1
-
       - name: Checkout base branch
         uses: actions/checkout@v4
         with:
@@ -93,18 +79,6 @@ jobs:
           else
             echo '{"warnings":0,"errors":0}' > output/biome/biome-base-summary.json
           fi
-
-      - name: Upload base Biome artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: biome-base-summary
-          path: output/biome/biome-base-summary.json
-          retention-days: 1
-
-      - name: Download base Biome artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: biome-base-summary
 
       - name: Compare Biome warnings and comment
         if: always()
