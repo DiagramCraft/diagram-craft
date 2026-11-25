@@ -28,6 +28,7 @@ import {
   type AssessmentStatusFilter
 } from './assessmentDetailsViewModel';
 import styles from './AssessmentResponsesTable.module.css';
+import filterStyles from '../../entities/components/EntityBrowser.module.css';
 
 const STATUS_LABEL: Record<AssessmentEntityStatus, string> = {
   not_started: 'Not started',
@@ -242,7 +243,13 @@ export const AssessmentResponsesTable = ({
             </Button>
           }
         />
-        <Popover.Content sideOffset={4} align="start" arrow={false} closeButton={false}>
+        <Popover.Content
+          sideOffset={4}
+          align="start"
+          arrow={false}
+          closeButton={false}
+          className={filterStyles.filterPopover}
+        >
           <AssessmentFilterBuilder
             conditions={conditions}
             onChange={setConditions}
