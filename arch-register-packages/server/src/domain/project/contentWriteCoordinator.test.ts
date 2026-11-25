@@ -224,4 +224,39 @@ describe('coordinateContentWrite', () => {
       })
     ).rejects.toBe(primary);
   });
+
+  it('fails the write when recovery took over the ledger row before the database commit', async () => {
+    const staged = mutation();
+    const transitionOperation = vi.fn().mockResolvedValue(false);
+    const db = {
+      core: {
+        driver: 'sqlite',
+        close: vi.fn(),
+        transaction: async (fn: (tx: DatabaseAdapter) => Promise<unknown>) => fn(db)
+      },
+      contentReconciliation: {
+        createOperation: vi.fn(async input => ({ ...input, attempt_count: 0 })),
+        updateOperation: vi.fn(),
+        transitionOperation
+      }
+    } as unknown as DatabaseAdapter;
+
+    await expect(
+      coordinateContentWrite({
+        db,
+        storage: storageWith(staged),
+        operation: 'test',
+        scope: 'scope',
+        nodeIds: ['n'],
+        storageChanges: [
+          { type: 'write', workspace: 'ws', storageId: 's', nodeId: 'n', content: Buffer.from('x') }
+        ],
+        writeDatabase: async () => 'ok'
+      })
+    ).rejects.toThrow(/taken over by recovery/);
+
+    // Recovery owns the rollback; the writer must not touch storage again or finalize
+    expect(staged.rollback).not.toHaveBeenCalled();
+    expect(staged.finalize).not.toHaveBeenCalled();
+  });
 });

@@ -40,6 +40,13 @@ export type ContentReconciliationUpdate = {
   resolved_at?: Date | null;
 };
 
+export type ContentReconciliationTransition = {
+  /** The update only applies if the row is currently in one of these states */
+  expectedStates: readonly ContentReconciliationState[];
+  /** If set, the update only applies if the row is due at this time (`next_attempt_at <= dueAt`) */
+  dueAt?: Date;
+};
+
 export type ContentReconciliationSummary = {
   pending: number;
   database_committed: number;
@@ -60,6 +67,16 @@ export type ContentReconciliationDatabase = {
     id: string,
     update: ContentReconciliationUpdate
   ): Promise<ContentReconciliationOperation | null>;
+  /**
+   * Compare-and-set update, used to establish exclusive ownership of a row between the live
+   * writer and the recovery job. Returns false (and changes nothing) if the row is not in an
+   * expected state or is not due.
+   */
+  transitionOperation(
+    id: string,
+    transition: ContentReconciliationTransition,
+    update: ContentReconciliationUpdate
+  ): Promise<boolean>;
   summarize(workspace: string): Promise<ContentReconciliationSummary>;
 };
 

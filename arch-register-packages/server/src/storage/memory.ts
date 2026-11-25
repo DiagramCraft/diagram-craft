@@ -8,8 +8,8 @@ import type {
 const notFound = (key: string) =>
   Object.assign(new Error(`ENOENT: no such file '${key}'`), { code: 'ENOENT' });
 
-const keyOf = (workspace: string, projectId: string, fileId: string) =>
-  `${workspace}/${projectId}/${fileId}`;
+const keyOf = (workspace: string, scopeId: string, nodeId: string) =>
+  `${workspace}/${scopeId}/${nodeId}`;
 
 /**
  * In-memory StorageAdapter, for environments without a filesystem (e.g. the browser demo).
@@ -24,31 +24,31 @@ export class MemoryStorage implements StorageAdapter {
     return this.version;
   }
 
-  async exists(workspace: string, projectId: string, fileId: string) {
-    return this.files.has(keyOf(workspace, projectId, fileId));
+  async exists(workspace: string, scopeId: string, nodeId: string) {
+    return this.files.has(keyOf(workspace, scopeId, nodeId));
   }
 
-  async read(workspace: string, projectId: string, fileId: string) {
-    const key = keyOf(workspace, projectId, fileId);
+  async read(workspace: string, scopeId: string, nodeId: string) {
+    const key = keyOf(workspace, scopeId, nodeId);
     const content = this.files.get(key);
     if (!content) throw notFound(key);
     return Buffer.from(content);
   }
 
-  async write(workspace: string, projectId: string, fileId: string, content: Buffer) {
-    this.files.set(keyOf(workspace, projectId, fileId), Buffer.from(content));
+  async write(workspace: string, scopeId: string, nodeId: string, content: Buffer) {
+    this.files.set(keyOf(workspace, scopeId, nodeId), Buffer.from(content));
     this.version++;
   }
 
-  async delete(workspace: string, projectId: string, fileId: string) {
-    const key = keyOf(workspace, projectId, fileId);
+  async delete(workspace: string, scopeId: string, nodeId: string) {
+    const key = keyOf(workspace, scopeId, nodeId);
     if (!this.files.delete(key)) throw notFound(key);
     this.version++;
   }
 
-  async deleteAll(workspace: string, projectId: string) {
-    const prefix = `${keyOf(workspace, projectId, '')}`;
-    for (const key of [...this.files.keys()]) {
+  async deleteAll(workspace: string, scopeId: string) {
+    const prefix = `${keyOf(workspace, scopeId, '')}`;
+    for (const key of this.files.keys()) {
       if (key.startsWith(prefix)) {
         this.files.delete(key);
         this.version++;
@@ -58,11 +58,11 @@ export class MemoryStorage implements StorageAdapter {
 
   async stageWrite(
     workspace: string,
-    projectId: string,
-    fileId: string,
+    scopeId: string,
+    nodeId: string,
     content: Buffer
   ): Promise<StagedStorageMutation> {
-    const key = keyOf(workspace, projectId, fileId);
+    const key = keyOf(workspace, scopeId, nodeId);
     const staged = Buffer.from(content);
     let previous: Buffer | undefined;
     let committed = false;
@@ -85,10 +85,10 @@ export class MemoryStorage implements StorageAdapter {
 
   async stageDelete(
     workspace: string,
-    projectId: string,
-    fileId: string
+    scopeId: string,
+    nodeId: string
   ): Promise<StagedStorageMutation> {
-    const key = keyOf(workspace, projectId, fileId);
+    const key = keyOf(workspace, scopeId, nodeId);
     let previous: Buffer | undefined;
     let committed = false;
     return {
