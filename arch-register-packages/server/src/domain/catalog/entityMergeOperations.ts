@@ -649,15 +649,24 @@ export const executeEntityMerge = async (
     scope: { kind: 'entity', workspace: workspaceName },
     operation: async ({ ws, authCtx }) =>
       withCatalogMutationTransaction(db, async tx => {
-        // Resolve public ids first, then lock the actual catalog rows before taking the
-        // authoritative snapshot. SQLite's BEGIN IMMEDIATE supplies the same serialization.
-        const initialPlan = await loadMergePlan(tx, ws, sourceId, body.targetId, authCtx);
-        await tx.entityMerge.lockRecords(ws, [initialPlan.source.id, initialPlan.target.id]);
-        const lockedPlan = await loadMergePlan(tx, ws, sourceId, body.targetId, authCtx);
+        // Resolve public ids (aliases) to record ids with two cheap lookups and lock the pair.
+        // The adapter locks in stable id order, so concurrent A->B and B->A merges cannot
+        // deadlock. SQLite's BEGIN IMMEDIATE supplies the same serialization.
+        const [resolvedSource, resolvedTarget] = await Promise.all([
+          tx.catalog.getEntity(ws, sourceId),
+          tx.catalog.getEntity(ws, body.targetId)
+        ]);
+        httpAssert.present(resolvedSource, { status: 404, message: 'Source entity not found' });
+        httpAssert.present(resolvedTarget, { status: 404, message: 'Target entity not found' });
+        await tx.entityMerge.lockRecords(ws, [resolvedSource.id, resolvedTarget.id]);
+
+        // Discover the additional rows to lock (dependents and pair relations), lock them, and
+        // then take the authoritative snapshot that the version/fingerprint checks run against.
+        const discoveryPlan = await loadMergePlan(tx, ws, sourceId, body.targetId, authCtx);
         await tx.entityMerge.lockRecords(ws, [
           ...new Set([
-            ...lockedPlan.rawDependentIds,
-            ...lockedPlan.pairRelations.map(relation => relation.id)
+            ...discoveryPlan.rawDependentIds,
+            ...discoveryPlan.pairRelations.map(relation => relation.id)
           ])
         ]);
         const plan = await loadMergePlan(tx, ws, sourceId, body.targetId, authCtx);

@@ -8,33 +8,32 @@ import { executeEntityMerge, previewEntityMerge } from './entityMergeOperations'
 
 type ORPCContext = { db: DatabaseAdapter; event: AuthenticatedEvent };
 
-const router = implement(entityMergeContract).$context<ORPCContext>().use(orpcErrorMiddleware);
+const base = implement(entityMergeContract).$context<ORPCContext>().use(orpcErrorMiddleware);
 
-export const createEntityMergeORPCRouter = () =>
-  router.router({
-    entityMerges: {
-      preview: router.entityMerges.preview.handler(({ input, context }) =>
-        previewEntityMerge(
-          context.db,
-          input.params.workspace,
-          input.params.id,
-          input.body.targetId,
-          context.event
-        )
-      ),
-      execute: router.entityMerges.execute.handler(({ input, context }) =>
-        executeEntityMerge(
-          context.db,
-          input.params.workspace,
-          input.params.id,
-          input.body,
-          context.event
-        )
+const router = base.router({
+  entityMerges: {
+    preview: base.entityMerges.preview.handler(({ input, context }) =>
+      previewEntityMerge(
+        context.db,
+        input.params.workspace,
+        input.params.id,
+        input.body.targetId,
+        context.event
       )
-    }
-  });
+    ),
+    execute: base.entityMerges.execute.handler(({ input, context }) =>
+      executeEntityMerge(
+        context.db,
+        input.params.workspace,
+        input.params.id,
+        input.body,
+        context.event
+      )
+    )
+  }
+});
 
 export const createEntityMergeORPCHandler = (db: DatabaseAdapter) =>
-  createOrpcHandler(createEntityMergeORPCRouter(), {
+  createOrpcHandler(router, {
     context: event => ({ db, event: event as AuthenticatedEvent })
   });
