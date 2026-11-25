@@ -121,9 +121,22 @@ const mergePreviewBodySchema = z.object({
 
 const mergeExecuteBodySchema = z.object({
   targetId: z.string().min(1),
-  expectedSourceVersion: z.number().int().min(1),
-  expectedTargetVersion: z.number().int().min(1),
-  previewFingerprint: z.string().min(1),
+  expectedSourceVersion: z
+    .number()
+    .int()
+    .min(1)
+    .describe('The preview sourceVersion; a mismatch returns 409, so re-run the preview'),
+  expectedTargetVersion: z
+    .number()
+    .int()
+    .min(1)
+    .describe('The preview targetVersion; a mismatch returns 409, so re-run the preview'),
+  previewFingerprint: z
+    .string()
+    .min(1)
+    .describe(
+      'Opaque value from the preview, passed back unchanged; a mismatch (a dependent, relation or side-table row changed) returns 409, so re-run the preview'
+    ),
   fieldResolutions: z
     .record(z.string(), z.enum(['source', 'target']))
     .default({})

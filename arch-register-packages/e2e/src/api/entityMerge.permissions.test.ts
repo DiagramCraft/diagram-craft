@@ -349,4 +349,79 @@ test.describe('entity merge external identity + project scope', () => {
       'source_project_scope_dropped'
     ]);
   });
+
+  test('execute is denied to non-admins and rejects a stale preview without writing', async ({
+    server,
+    personas,
+    resources
+  }) => {
+    const ws = resources.workspaceId;
+    const sourceId = seededEntities.default.authMigrationAdapter.id;
+    const targetId = resources.entityIds.authService;
+    const dependentId = resources.entityIds.apiGateway;
+
+    const rewriteDependsOn = async (ids: string[]) => {
+      const dependent = await server.db.catalog.getEntity(ws, dependentId);
+      if (!dependent) throw new Error('Expected API Gateway entity to exist');
+      await server.db.catalog.updateEntity(ws, dependentId, {
+        slug: dependent.slug,
+        namespace: dependent.namespace,
+        name: dependent.name,
+        description: dependent.description,
+        owner: dependent.owner,
+        lifecycle: dependent.lifecycle,
+        target_lifecycle: dependent.target_lifecycle,
+        target_lifecycle_date: dependent.target_lifecycle_date,
+        tags: dependent.tags,
+        links: dependent.links,
+        schema_id: dependent.schema_id,
+        data: { ...dependent.data, depends_on: ids },
+        project_id: dependent.project_id,
+        updated_at: new Date(),
+        completeness: dependent.completeness
+      });
+    };
+
+    await rewriteDependsOn([sourceId]);
+
+    const preview = await personas.globalAdmin.orpc.entityMerges.preview({
+      params: { workspace: 'default', id: sourceId },
+      body: { targetId }
+    });
+    const acknowledgedBlockers = preview.blockers.map(blocker => blocker.code);
+    const body = { targetId, ...buildExecuteBody(preview), acknowledgedBlockers };
+
+    for (const persona of [personas.workspaceEditor, personas.outsider]) {
+      await expect(
+        persona.orpc.entityMerges.execute({
+          params: { workspace: 'default', id: sourceId },
+          body
+        })
+      ).rejects.toMatchObject({ code: expect.stringMatching(/FORBIDDEN|NOT_FOUND|UNAUTHORIZED/) });
+    }
+    expect((await server.db.catalog.getEntity(ws, sourceId))?.id).toBe(sourceId);
+
+    // Change a dependent reference; source and target versions stay the same.
+    await rewriteDependsOn([sourceId, targetId]);
+    const sourceBefore = await server.db.catalog.getEntity(ws, sourceId);
+    const targetBefore = await server.db.catalog.getEntity(ws, targetId);
+    const dependentBefore = await server.db.catalog.getEntity(ws, dependentId);
+    const auditBefore = (await server.db.audit.listAuditLogs(ws)).length;
+
+    await expect(
+      personas.globalAdmin.orpc.entityMerges.execute({
+        params: { workspace: 'default', id: sourceId },
+        body
+      })
+    ).rejects.toMatchObject({ status: 409 });
+
+    const sourceAfter = await server.db.catalog.getEntity(ws, sourceId);
+    expect(sourceAfter?.id).toBe(sourceId);
+    expect(sourceAfter?.version).toBe(sourceBefore?.version);
+    expect((await server.db.catalog.getEntity(ws, targetId))?.version).toBe(targetBefore?.version);
+    expect((await server.db.catalog.getEntity(ws, dependentId))?.version).toBe(
+      dependentBefore?.version
+    );
+    expect((await server.db.audit.listAuditLogs(ws)).length).toBe(auditBefore);
+  });
 });

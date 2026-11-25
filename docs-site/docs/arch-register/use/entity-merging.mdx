@@ -30,11 +30,34 @@ you explicitly acknowledge the warning. The operation runs atomically after conf
   }}
 />
 
+## Merging Through The API
+
+A merge is a two-step workflow: preview, then execute.
+
+1. Call the preview endpoint (`POST /{workspace}/data/{id}/merge/preview`) with the `targetId`. The response contains the
+   field, relation and side-table conflicts, any blockers, and the values that identify the state you reviewed:
+   `sourceVersion`, `targetVersion` and an opaque `previewFingerprint`.
+2. Call the execute endpoint (`POST /{workspace}/data/{id}/merge`) with the same `targetId`, passing the preview's
+   `sourceVersion` as `expectedSourceVersion`, `targetVersion` as `expectedTargetVersion`, and the
+   `previewFingerprint` unchanged. Add your resolutions (`fieldResolutions`, `relationResolutions`,
+   `sideTableResolutions`) and the codes of any warnings you accept in `acknowledgedBlockers`.
+
+If the source, the target, or anything the merge would rewrite (dependent entities, relations between the pair,
+side-table records) changed after the preview, execute returns `409` and nothing is written. Run the preview again,
+review the new result, and resubmit with the fresh values. Treat the fingerprint as opaque; do not construct or modify it.
+
 ## Scope And Effects
 
 Source and target must have the same project scope. A cross-project merge and a source entity with an open governance
 case are hard blockers. A merge that would remove project confinement from the source or move the canonical target
 into a project requires an acknowledged warning.
+
+- Merging two entities that belong to **different projects** is blocked (`project_scope_mismatch`) and cannot be
+  acknowledged.
+- Merging a **project-scoped entity with a workspace-scoped entity** is allowed only after you acknowledge the warning:
+  `source_project_scope_dropped` when a project-scoped source is merged into a workspace-scoped target, or
+  `project_scope_relocated` when a workspace-scoped source is merged into a project-scoped target. Pass the code in
+  `acknowledgedBlockers`.
 
 The merge rewrites supported reverse references and typed relations, transfers entity history and supported side-table
 records, removes the source as a live record, and creates an alias for its retired identifier. That identifier continues

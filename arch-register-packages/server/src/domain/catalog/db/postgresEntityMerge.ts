@@ -303,7 +303,8 @@ export class PostgresEntityMergeDatabase
   }
 
   async lockRecords(workspace: string, recordIds: string[]) {
-    for (const recordId of recordIds) {
+    // Always lock in ascending id order so overlapping merges cannot deadlock.
+    for (const recordId of [...new Set(recordIds)].sort()) {
       await this.sql`
         SELECT id FROM catalog_record
         WHERE workspace = ${workspace} AND id = ${recordId}

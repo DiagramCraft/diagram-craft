@@ -172208,16 +172208,19 @@
                   "expectedSourceVersion": {
                     "type": "integer",
                     "minimum": 1,
-                    "maximum": 9007199254740991
+                    "maximum": 9007199254740991,
+                    "description": "The preview sourceVersion; a mismatch returns 409, so re-run the preview"
                   },
                   "expectedTargetVersion": {
                     "type": "integer",
                     "minimum": 1,
-                    "maximum": 9007199254740991
+                    "maximum": 9007199254740991,
+                    "description": "The preview targetVersion; a mismatch returns 409, so re-run the preview"
                   },
                   "previewFingerprint": {
                     "type": "string",
-                    "minLength": 1
+                    "minLength": 1,
+                    "description": "Opaque value from the preview, passed back unchanged; a mismatch (a dependent, relation or side-table row changed) returns 409, so re-run the preview"
                   },
                   "fieldResolutions": {
                     "type": "object",
