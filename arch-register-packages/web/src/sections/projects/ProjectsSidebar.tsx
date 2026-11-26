@@ -49,7 +49,8 @@ export const ProjectsSidebar = ({
   const matches = useMatches();
   const allParams = Object.assign({}, ...matches.map(m => m.params)) as Record<string, string>;
   const projectId = allParams.projectId ?? null;
-  const projectFolder = allParams._splat ?? null;
+  const isWikiRoute = matches.some(m => m.pathname.includes('/wiki/'));
+  const projectFolder = isWikiRoute ? null : (allParams._splat ?? null);
   const { archivedProjects, liveProjects } = useMemo(
     () => ({
       archivedProjects: projects.filter(isArchivedProject),

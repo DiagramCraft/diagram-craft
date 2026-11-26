@@ -9,6 +9,7 @@ import { DiagramPicker } from '../../../components/DiagramPicker';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { FormGroup } from '../../../components/FormGroup';
 import { useContentTree, type ContentScope } from '../../../hooks/useContentScope';
+import { useWikiNodeId } from '../../../hooks/useWikiNodeId';
 import { useCreateMarkdownDiagramAttachment } from '../../../hooks/useAttachments';
 import { emptyDiagram } from '../../../lib/diagramDocuments';
 import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
@@ -34,7 +35,8 @@ export const DiagramEmbedConfigForm = ({
   const { trackCreatedDiagram } = useMarkdownDiagramSession();
   const projectId = contextProjectId ?? params.projectId;
   const entityId = context.mode === 'mdx' ? params.entityId : undefined;
-  const nodeId = context.mode === 'mdx' ? params.nodeId : undefined;
+  const { nodeId: wikiNodeId } = useWikiNodeId();
+  const nodeId = context.mode === 'mdx' ? wikiNodeId || undefined : undefined;
   const scope: ContentScope = projectId
     ? { kind: 'project', workspaceId: workspaceSlug, projectId }
     : entityId

@@ -3,7 +3,7 @@ import { useOpenDiagram } from '../diagram/useOpenDiagram';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { TbFileText, TbFolderOpen, TbPlus, TbUpload } from 'react-icons/tb';
 import styles from './WorkspaceContentScreen.module.css';
-import { parentPath } from '../../lib/contentPath';
+import { markdownPageRef, parentPath } from '../../lib/contentPath';
 import { useContentFileContextMenu } from '../../components/useContentFileContextMenu';
 import { Title } from '../../components/Title';
 import {
@@ -96,10 +96,13 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
     );
   };
 
-  const handleMarkdownClick = (fileId: string, mode: 'edit' | 'preview' = 'preview') => {
+  const handleMarkdownClick = (
+    file: { id: string; path?: string },
+    mode: 'edit' | 'preview' = 'preview'
+  ) => {
     navigate({
-      to: '/$workspaceSlug/content/wiki/$nodeId',
-      params: { workspaceSlug, nodeId: fileId },
+      to: '/$workspaceSlug/content/wiki/$',
+      params: { workspaceSlug, _splat: markdownPageRef(file) },
       search: { mode }
     });
   };
@@ -254,7 +257,7 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
         onOpenFolder={f => handleOpenFolder(f.path)}
         onContextMenu={fileMenu.open}
         onOpenDiagram={file => handleDiagramClick(file.id)}
-        onOpenMarkdown={file => handleMarkdownClick(file.id)}
+        onOpenMarkdown={file => handleMarkdownClick(file)}
         onDownloadFile={file =>
           handleDownloadClick(file.path, file.name, file.original_filename ?? null)
         }
@@ -294,7 +297,7 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
         folder={folder ?? null}
         onCreated={file => {
           setAddMarkdownOpen(false);
-          handleMarkdownClick(file.id, 'edit');
+          handleMarkdownClick(file, 'edit');
         }}
         onOpenDraft={draft =>
           navigate(

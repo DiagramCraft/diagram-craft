@@ -1,3 +1,5 @@
+import { markdownPageRef } from '../lib/contentPath';
+
 export type ProjectPublicId = string & { readonly __brand: 'ProjectPublicId' };
 export type EntityPublicId = string & { readonly __brand: 'EntityPublicId' };
 
@@ -43,13 +45,13 @@ export const projectDiagramRoute = <TSearch = undefined>(
 export const projectMarkdownRoute = <TSearch = undefined>(
   workspaceSlug: string,
   projectId: ProjectPublicId,
-  nodeId: string,
+  pageRef: string,
   search?: TSearch
 ) =>
   withSearch(
     {
-      to: '/$workspaceSlug/projects/$projectId/wiki/$nodeId' as const,
-      params: { workspaceSlug, projectId, nodeId }
+      to: '/$workspaceSlug/projects/$projectId/wiki/$' as const,
+      params: { workspaceSlug, projectId, _splat: pageRef }
     },
     search
   );
@@ -83,13 +85,13 @@ export const projectContentFolderRoute = <TSearch = undefined>(
 
 export const workspaceMarkdownRoute = <TSearch = undefined>(
   workspaceSlug: string,
-  nodeId: string,
+  pageRef: string,
   search?: TSearch
 ) =>
   withSearch(
     {
-      to: '/$workspaceSlug/content/wiki/$nodeId' as const,
-      params: { workspaceSlug, nodeId }
+      to: '/$workspaceSlug/content/wiki/$' as const,
+      params: { workspaceSlug, _splat: pageRef }
     },
     search
   );
@@ -122,13 +124,13 @@ export const workspaceContentFolderRoute = <TSearch = undefined>(
 export const entityMarkdownRoute = <TSearch = undefined>(
   workspaceSlug: string,
   entityId: EntityPublicId,
-  nodeId: string,
+  pageRef: string,
   search?: TSearch
 ) =>
   withSearch(
     {
-      to: '/$workspaceSlug/entities/$entityId/wiki/$nodeId' as const,
-      params: { workspaceSlug, entityId, nodeId }
+      to: '/$workspaceSlug/entities/$entityId/wiki/$' as const,
+      params: { workspaceSlug, entityId, _splat: pageRef }
     },
     search
   );
@@ -254,20 +256,22 @@ export const markdownFileRoute = (
   workspaceSlug: string,
   file: {
     id: string;
+    path?: string | null;
     project_id?: string | null;
     project_public_id?: string | null;
     entity_id?: string | null;
   }
 ) => {
   const search = { mode: 'preview' } as const;
+  const ref = markdownPageRef(file);
   if (file.project_id)
     return projectMarkdownRoute(
       workspaceSlug,
       asProjectPublicId(file.project_public_id ?? file.project_id),
-      file.id,
+      ref,
       search
     );
   if (file.entity_id)
-    return entityMarkdownRoute(workspaceSlug, asEntityPublicId(file.entity_id), file.id, search);
-  return workspaceMarkdownRoute(workspaceSlug, file.id, search);
+    return entityMarkdownRoute(workspaceSlug, asEntityPublicId(file.entity_id), ref, search);
+  return workspaceMarkdownRoute(workspaceSlug, ref, search);
 };

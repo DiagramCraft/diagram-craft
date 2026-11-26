@@ -106,6 +106,16 @@ export const resolveRelativeContentPath = (fromFilePath: string, href: string): 
   return segments.length > 0 ? segments.join('/') : null;
 };
 
+/**
+ * The URL reference for a markdown page: its path without the `.md` extension, so seeded and
+ * runtime-created pages look the same. Falls back to the id when the path is missing or would
+ * collide with the static `new` (draft) route.
+ */
+export const markdownPageRef = (file: { id: string; path?: string | null }): string => {
+  const ref = file.path?.replace(/\.md$/, '');
+  return !ref || ref === 'new' ? file.id : ref;
+};
+
 /** Finds the markdown file at `path`, with or without the `.md` extension. */
 export const findMarkdownFileByPath = (
   tree: { rootFiles: ProjectFile[]; folders: { files: ProjectFile[] }[] },

@@ -26,6 +26,8 @@ import {
   projectMarkdownRoute,
   workspaceMarkdownRoute
 } from '../../routes/publicObjectRoutes';
+import { markdownPageRef } from '../../lib/contentPath';
+import { useWikiNodeId } from '../../hooks/useWikiNodeId';
 import { applicationWorkspacePath } from '../../lib/applicationApi';
 import { downloadUrl } from '../../lib/browserDownload';
 import { LoadingState } from '../../components/LoadingState';
@@ -56,8 +58,7 @@ export const MarkdownEditorScreen = () => {
   // workspaceSlug is always present: this screen only mounts under the entity/project/content
   // wiki routes. nodeId is omitted by the new-document routes, which signals draft mode.
   const workspaceSlug = params.workspaceSlug!;
-  const nodeId = params.nodeId ?? '';
-  const isDraft = !params.nodeId;
+  const { nodeId, isDraft, resolving } = useWikiNodeId({ redirect: true });
   const { projectId, entityId } = params;
   const navigate = useNavigate();
   const { openDiagram, dialog: openDiagramDialog } = useOpenDiagram();
@@ -211,15 +212,20 @@ export const MarkdownEditorScreen = () => {
       if (attachment.type === 'markdown') {
         if (projectId) {
           navigate(
-            projectMarkdownRoute(workspaceSlug, asProjectPublicId(projectId), attachment.id)
+            projectMarkdownRoute(
+              workspaceSlug,
+              asProjectPublicId(projectId),
+              markdownPageRef(attachment)
+            )
           );
         } else if (entityId) {
-          navigate(entityMarkdownRoute(workspaceSlug, asEntityPublicId(entityId), attachment.id));
+          navigate(entityMarkdownRoute(
+              workspaceSlug,
+              asEntityPublicId(entityId),
+              markdownPageRef(attachment)
+            ));
         } else {
-          navigate({
-            to: '/$workspaceSlug/content/wiki/$nodeId',
-            params: { workspaceSlug, nodeId: attachment.id }
-          });
+          navigate(workspaceMarkdownRoute(workspaceSlug, markdownPageRef(attachment)));
         }
         return;
       }
@@ -292,7 +298,7 @@ export const MarkdownEditorScreen = () => {
     diagram
   });
 
-  if (!isDraft && isLoading) {
+  if (!isDraft && (resolving || isLoading)) {
     return (
       <div className={styles.screen}>
         <LoadingState text="Loading…" />

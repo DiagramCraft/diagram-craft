@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
+import { markdownFileRoute } from './publicObjectRoutes';
 
 const SRC_ROOT = new URL('../', import.meta.url).pathname;
 const HELPERS_FILE = join(SRC_ROOT, 'routes/publicObjectRoutes.ts');
@@ -40,5 +41,27 @@ describe('public object route usage', () => {
       .filter((value): value is string => value !== null);
 
     expect(violations).toEqual([]);
+  });
+});
+
+describe('markdownFileRoute', () => {
+  it('addresses workspace pages by path', () => {
+    expect(markdownFileRoute('ws', { id: '1', path: 'a/b.md' })).toMatchObject({
+      to: '/$workspaceSlug/content/wiki/$',
+      params: { workspaceSlug: 'ws', _splat: 'a/b' }
+    });
+  });
+
+  it('addresses project and entity pages by path within their scope', () => {
+    expect(
+      markdownFileRoute('ws', { id: '1', path: 'a', project_id: 'p', project_public_id: 'pp' })
+    ).toMatchObject({
+      to: '/$workspaceSlug/projects/$projectId/wiki/$',
+      params: { projectId: 'pp', _splat: 'a' }
+    });
+    expect(markdownFileRoute('ws', { id: '1', path: 'a.md', entity_id: 'e' })).toMatchObject({
+      to: '/$workspaceSlug/entities/$entityId/wiki/$',
+      params: { entityId: 'e', _splat: 'a' }
+    });
   });
 });
