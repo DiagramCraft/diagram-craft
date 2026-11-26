@@ -1,6 +1,7 @@
 import React, { type ReactNode } from 'react';
 import { type ASTNode } from '@diagram-craft/markdown';
 import { getWikiMdxComponents } from '../../../widgets/shared/widgetRegistry';
+import { MarkdownLink } from './MarkdownLink';
 import { MdxWidgetPreview } from '../../../widgets/shared/mdx/MdxWidgetPreview';
 
 /** A highlighted comment anchor, in the same plain-text offset space as `renderText`. Ranges must be sorted and non-overlapping. */
@@ -168,9 +169,9 @@ const renderNode = (node: ASTNode, key: string, ctx?: RenderCtx): ReactNode[] =>
     case 'link':
       return node.href
         ? [
-            <a key={key} href={node.href} title={node.title}>
+            <MarkdownLink key={key} href={node.href} title={node.title}>
               {renderNodes(node.children ?? [], key, ctx)}
-            </a>
+            </MarkdownLink>
           ]
         : renderLiteral(node.source ?? '', key, ctx);
 

@@ -46,6 +46,8 @@ import {
   seedWorkspaceConfiguration
 } from './seedPhases';
 import { seedIntegrationSyncData } from './seedData/integrationSync';
+import { seedTemplateDefinitions } from './seedData/templateDefinitions';
+import { persistTemplateWikiPages } from '../domain/catalog/templateWikiPersistence';
 
 type Database = DatabaseAdapter;
 
@@ -353,6 +355,17 @@ export const seedBootstrapData = async (
       );
     }
   }
+
+  await persistTemplateWikiPages(
+    db,
+    storage,
+    {
+      workspaceId: seededWorkspaces.default.id,
+      templateIds: seedTemplateDefinitions.selectedTemplates.map(template => template.id)
+    },
+    syncTimestamp,
+    null
+  );
 
   const adr = buildDefaultAdrDocuments(seededWorkspaces.default.id, syncTimestamp);
   await db.document.createDocumentType(adr.documentType);

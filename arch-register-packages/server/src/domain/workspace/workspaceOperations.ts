@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { seedDefaultApplications } from '../application/applicationOperations';
 import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
+import { persistTemplateWikiPages } from '../catalog/templateWikiPersistence';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { requireGlobalPermission } from '../auth/authorization';
 import { runAuthorizedOperation } from '../operation';
@@ -1040,6 +1041,16 @@ export const createWorkspace = async (
             for (const view of definitions.views) {
               await db.view.createSavedView(view);
             }
+            await persistTemplateWikiPages(
+              db,
+              storage,
+              {
+                workspaceId: row.id,
+                templateIds: definitions.selectedTemplates.map(selected => selected.id)
+              },
+              timestamp,
+              authCtx.userId
+            );
           }
         }
 

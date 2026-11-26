@@ -180,6 +180,10 @@
           schemas, shared field groups, and composition extensions for definitions that depend on more than one
           selected template. Cross-cutting dependencies are declared explicitly and resolved by an administrator
           during workspace creation; the same mapping flow is used when importing a concern into an existing workspace.
+          Each selected template also adds documentation pages to a top-level `data-model/` folder in Content,
+          describing the template, its schemas and how their entities relate (for example that a Component belongs
+          to a System); they are created with the workspace, are also part of the bootstrapped dataset, and are never
+          overwritten once created.
 
         - @id:ar.workspace.configuration Administrators can configure workspace lifecycle states, assessment types,
           teams, roles, members,
