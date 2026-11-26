@@ -3,11 +3,13 @@ import type { ProjectFile } from '@arch-register/api-types/projectContentContrac
 import {
   baseName,
   buildContentFolderTree,
+  findMarkdownFileByPath,
   isContentPathTaken,
   markdownDocumentPath,
   movePath,
   parentPath,
-  renamePath
+  renamePath,
+  resolveRelativeContentPath
 } from './contentPath';
 
 const file = (path: string, type: ProjectFile['type']): ProjectFile =>
@@ -54,5 +56,56 @@ describe('new markdown document paths', () => {
     expect(isContentPathTaken(tree, 'a/Inside.md')).toBe(true);
     expect(isContentPathTaken(tree, 'Inside.md')).toBe(false);
     expect(isContentPathTaken(tree, 'a/Other.md')).toBe(false);
+  });
+});
+
+describe('resolveRelativeContentPath', () => {
+  it('resolves sibling and parent-relative links', () => {
+    expect(resolveRelativeContentPath('wiki/home', './overview')).toBe('wiki/overview');
+    expect(resolveRelativeContentPath('wiki/home', '../standards/api-guide')).toBe(
+      'standards/api-guide'
+    );
+    expect(resolveRelativeContentPath('wiki/a/b', 'c/d')).toBe('wiki/a/c/d');
+    expect(resolveRelativeContentPath('home.md', './other')).toBe('other');
+  });
+
+  it('ignores query and anchor, and decodes the path', () => {
+    expect(resolveRelativeContentPath('wiki/home', './my%20page#top')).toBe('wiki/my page');
+  });
+
+  it('returns null for anything that is not a relative content path', () => {
+    expect(resolveRelativeContentPath('wiki/home', 'https://example.com')).toBeNull();
+    expect(resolveRelativeContentPath('wiki/home', 'mailto:a@b.c')).toBeNull();
+    expect(resolveRelativeContentPath('wiki/home', '#section')).toBeNull();
+    expect(resolveRelativeContentPath('wiki/home', '/abs/path')).toBeNull();
+    expect(resolveRelativeContentPath('wiki/home', '../../../x')).toBeNull();
+  });
+});
+
+describe('findMarkdownFileByPath', () => {
+  const file = (path: string, type: string) => ({ id: path, path, type }) as ProjectFile;
+  const tree = {
+    rootFiles: [file('root.md', 'markdown')],
+    folders: [
+      {
+        files: [
+          file('wiki/home', 'markdown'),
+          file('adr/x.md', 'markdown'),
+          file('wiki/d', 'diagram')
+        ]
+      }
+    ]
+  };
+
+  it('matches paths with or without the .md extension', () => {
+    expect(findMarkdownFileByPath(tree, 'wiki/home')?.id).toBe('wiki/home');
+    expect(findMarkdownFileByPath(tree, 'adr/x')?.id).toBe('adr/x.md');
+    expect(findMarkdownFileByPath(tree, 'adr/x.md')?.id).toBe('adr/x.md');
+    expect(findMarkdownFileByPath(tree, 'root')?.id).toBe('root.md');
+  });
+
+  it('does not match non-markdown files or missing paths', () => {
+    expect(findMarkdownFileByPath(tree, 'wiki/d')).toBeUndefined();
+    expect(findMarkdownFileByPath(tree, 'nope')).toBeUndefined();
   });
 });

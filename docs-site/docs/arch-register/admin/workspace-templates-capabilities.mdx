@@ -14,6 +14,11 @@ saved views, and authored entity drawer profiles. Cross-cutting concerns can dep
 template. Resolve each dependency to a destination schema during workspace creation; an unresolved required mapping
 prevents creation. Concern dashboards remain separate from the full template's Overview dashboard.
 
+Each template also adds documentation pages to the **Data Model** folder at the top level of **Content**: an overview
+of the template and one page per schema describing its fields, how its entities relate to other entities (for example
+that a Component belongs to a System), and its relation types. They are created with the workspace and can be edited
+like any other page.
+
 To add a concern to an existing workspace, open **Workspace Settings → Export & Import → Definitions** and use the
 definition import flow. Review the proposed mappings and resolve dependencies before applying the import.
 

@@ -77,6 +77,31 @@ describe('Markdown Parser', () => {
     expect(list.children?.[0]).not.toHaveProperty('checked');
   });
 
+  test.each(['-', '*', '+'])(
+    'parses list items starting with emphasis after a "%s" marker',
+    marker => {
+      const result = parseMarkdown(
+        `${marker} **Bold** — one\n${marker} *Italic* two\n${marker} plain`
+      );
+
+      expect(result).toHaveLength(1);
+      const list = result[0];
+      expect(list?.type).toBe('list');
+      if (list?.type !== 'list') return;
+      expect(list.children).toHaveLength(3);
+      expect(list.children?.[0]?.children?.[0]?.type).toBe('strong');
+    }
+  );
+
+  test('still treats marker-only lines as horizontal rulers', () => {
+    for (const line of ['* * *', '- - -', '***', '---']) {
+      expect(
+        parseMarkdown(line).map(n => n.type),
+        line
+      ).toEqual(['hr']);
+    }
+  });
+
   test('renders checklist state to HTML', () => {
     const html = markdownToHTML('- [x] Done\n- [ ] Not done', 'gfm');
 

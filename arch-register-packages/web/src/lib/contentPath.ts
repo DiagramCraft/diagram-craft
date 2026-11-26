@@ -76,3 +76,45 @@ export const isContentPathTaken = (
 ): boolean =>
   tree.rootFiles.some(file => file.path === path) ||
   tree.folders.some(folder => folder.files.some(file => file.path === path));
+
+/**
+ * Resolves a relative markdown link (`./page`, `../other/page`) found in the file at
+ * `fromFilePath` to a content path. Returns null for anything that is not a relative path inside
+ * the content tree (absolute paths, URLs with a scheme, in-page anchors, links above the root).
+ */
+export const resolveRelativeContentPath = (fromFilePath: string, href: string): string | null => {
+  const target = href.split(/[?#]/)[0] ?? '';
+  if (!target || target.startsWith('/') || /^[a-z][a-z0-9+.-]*:/i.test(target)) return null;
+
+  let decoded = target;
+  try {
+    decoded = decodeURI(target);
+  } catch {
+    // Keep the raw target when it is not valid percent-encoding
+  }
+
+  const segments = (parentPath(fromFilePath) ?? '').split('/').filter(Boolean);
+  for (const segment of decoded.split('/')) {
+    if (segment === '' || segment === '.') continue;
+    if (segment === '..') {
+      if (segments.length === 0) return null;
+      segments.pop();
+    } else {
+      segments.push(segment);
+    }
+  }
+  return segments.length > 0 ? segments.join('/') : null;
+};
+
+/** Finds the markdown file at `path`, with or without the `.md` extension. */
+export const findMarkdownFileByPath = (
+  tree: { rootFiles: ProjectFile[]; folders: { files: ProjectFile[] }[] },
+  path: string
+): ProjectFile | undefined => {
+  const withoutExtension = path.replace(/\.md$/, '');
+  return [...tree.rootFiles, ...tree.folders.flatMap(folder => folder.files)].find(
+    file =>
+      file.type === 'markdown' &&
+      (file.path === withoutExtension || file.path === `${withoutExtension}.md`)
+  );
+};

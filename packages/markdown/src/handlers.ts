@@ -238,7 +238,11 @@ export class ListHandler implements BlockParser {
   private trimLeft = /^(\t| {0,4})/;
 
   parse(parser: Parser, stream: TokenStream, ast: ASTNode[]): boolean {
-    const m = stream.peek().match(/^( {0,3})([*+-](?!\s?[*+-])|[0-9]+\.) (.*)/);
+    // The lookahead keeps `* * *` / `- - -` (a marker followed by another marker and then
+    // whitespace or end of line) out of the list parser, so they end up as horizontal rulers. Item
+    // content that merely starts with a marker character, such as `- **bold**` or `- *italic*`,
+    // is a regular item.
+    const m = stream.peek().match(/^( {0,3})([*+-](?!\s?[*+-](?:\s|$))|[0-9]+\.) (.*)/);
     if (!m) return false;
 
     const l = m[1]!.length;
