@@ -57,7 +57,7 @@ export const createContentWorkspaceRoutes = <TParentRoute extends AnyRoute>(
   const contentMarkdownRoute = withWorkspaceShell(
     createRoute({
       getParentRoute: () => workspaceRoute,
-      path: 'content/wiki/$nodeId',
+      path: 'content/wiki/$',
       validateSearch: validateMarkdownSearch,
       component: LazyMarkdownEditorScreen
     }),

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useWikiNodeId } from '../../hooks/useWikiNodeId';
 import { useOpenDiagram } from '../diagram/useOpenDiagram';
 import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
@@ -78,6 +79,7 @@ export const ProjectContentSidebar = ({
   const navigate = useNavigate();
   const { openDiagram, dialog: openDiagramDialog } = useOpenDiagram();
   const params = useParams({ strict: false });
+  const { nodeId: wikiNodeId, isWikiRoute } = useWikiNodeId();
   const search = useSearch({ strict: false }) as ProjectSearchParams;
   useEffect(() => {
     setTab(search.baselineId != null ? 'baselines' : 'content');
@@ -86,8 +88,8 @@ export const ProjectContentSidebar = ({
     search.section === 'entities' || search.section === 'plan' || search.section === 'assessments'
       ? search.section
       : 'home';
-  const contentFolder = section === 'home' ? (params._splat ?? null) : null;
-  const activeFileId = params.nodeId ?? params.diagramId ?? null;
+  const contentFolder = section === 'home' && !isWikiRoute ? (params._splat ?? null) : null;
+  const activeFileId = wikiNodeId || (params.diagramId ?? null);
 
   const navigateProject = (next: { section?: ProjectSection; folder?: string }) => {
     const nextSection = next.section ?? section;

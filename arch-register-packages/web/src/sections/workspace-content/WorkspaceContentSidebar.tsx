@@ -1,4 +1,6 @@
 import { useRef, useState } from 'react';
+import { markdownPageRef } from '../../lib/contentPath';
+import { useWikiNodeId } from '../../hooks/useWikiNodeId';
 import { useOpenDiagram } from '../diagram/useOpenDiagram';
 import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
@@ -70,9 +72,10 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
   const navigate = useNavigate();
   const { openDiagram, dialog: openDiagramDialog } = useOpenDiagram();
   const params = useParams({ strict: false });
+  const { nodeId: wikiNodeId, isWikiRoute } = useWikiNodeId();
   const search = useSearch({ strict: false }) as WorkspaceContentSearchParams;
-  const contentFolder = params._splat ?? null;
-  const activeFileId = params.nodeId ?? params.diagramId ?? null;
+  const contentFolder = isWikiRoute ? null : (params._splat ?? null);
+  const activeFileId = wikiNodeId || (params.diagramId ?? null);
   const activeFolderData = contentFolder
     ? data?.folders.find(folder => folder.path === contentFolder)
     : undefined;
@@ -189,8 +192,8 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
           onFileClick={file => {
             if (file.type === 'markdown') {
               navigate({
-                to: '/$workspaceSlug/content/wiki/$nodeId',
-                params: { workspaceSlug, nodeId: file.id },
+                to: '/$workspaceSlug/content/wiki/$',
+                params: { workspaceSlug, _splat: markdownPageRef(file) },
                 search: file.read_only ? { mode: 'preview' } : undefined
               });
             } else {
@@ -244,8 +247,8 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
         onCreated={file => {
           setMarkdownFolder(undefined);
           navigate({
-            to: '/$workspaceSlug/content/wiki/$nodeId',
-            params: { workspaceSlug, nodeId: file.id },
+            to: '/$workspaceSlug/content/wiki/$',
+            params: { workspaceSlug, _splat: markdownPageRef(file) },
             search: { mode: 'edit' }
           });
         }}

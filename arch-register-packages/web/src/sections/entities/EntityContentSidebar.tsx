@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { useWikiNodeId } from '../../hooks/useWikiNodeId';
 import { useOpenDiagram } from '../diagram/useOpenDiagram';
 import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
@@ -93,9 +94,10 @@ export const EntityContentSidebar = ({
   const navigate = useNavigate();
   const { openDiagram, dialog: openDiagramDialog } = useOpenDiagram();
   const params = useParams({ strict: false });
+  const { nodeId: wikiNodeId, isWikiRoute } = useWikiNodeId();
   const search = useSearch({ strict: false }) as EntityDetailSearchParams;
-  const contentFolder = params._splat ?? null;
-  const activeFileId = params.nodeId ?? params.diagramId ?? null;
+  const contentFolder = isWikiRoute ? null : (params._splat ?? null);
+  const activeFileId = wikiNodeId || (params.diagramId ?? null);
   // The schema's configurable detail layout may define its own first tab id in place of the
   // static 'overview' id — mirrors EntityDetailScreen's default-tab resolution.
   const layout =

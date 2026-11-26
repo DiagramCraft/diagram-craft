@@ -166,7 +166,7 @@ export const createEntityWorkspaceRoutes = <TParentRoute extends AnyRoute>(
   const entityMarkdownRoute = withWorkspaceShell(
     createRoute({
       getParentRoute: () => workspaceRoute,
-      path: 'entities/$entityId/wiki/$nodeId',
+      path: 'entities/$entityId/wiki/$',
       validateSearch: validateMarkdownSearch,
       component: LazyMarkdownEditorScreen
     }),

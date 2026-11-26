@@ -14,6 +14,21 @@ test.describe('markdown editor', () => {
     await expect(page.getByText('Welcome to the Example Corp architecture wiki.')).toBeVisible();
   });
 
+  test('redirects an id-based wiki URL to the readable path URL', async ({ page }) => {
+    await page.goto(`/${defaultWorkspace.slug}/content/wiki/${WIKI_HOME_ID}`);
+
+    await expect(page).not.toHaveURL(new RegExp(WIKI_HOME_ID));
+    await expect(page).toHaveURL(/\/content\/wiki\/.+/);
+    await expect(
+      page.getByRole('heading', { name: 'Example Corp Wiki', exact: true })
+    ).toBeVisible();
+
+    await page.reload();
+    await expect(
+      page.getByRole('heading', { name: 'Example Corp Wiki', exact: true })
+    ).toBeVisible();
+  });
+
   test('restores editor mode through reload and browser history', async ({ page }) => {
     await page.goto(`/${defaultWorkspace.slug}/content/wiki/${WIKI_HOME_ID}`);
     await page.getByRole('button', { name: 'Edit', exact: true }).click();

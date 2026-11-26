@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 import {
+  markdownPageRef,
   baseName,
   buildContentFolderTree,
   findMarkdownFileByPath,
@@ -107,5 +108,22 @@ describe('findMarkdownFileByPath', () => {
   it('does not match non-markdown files or missing paths', () => {
     expect(findMarkdownFileByPath(tree, 'wiki/d')).toBeUndefined();
     expect(findMarkdownFileByPath(tree, 'nope')).toBeUndefined();
+  });
+});
+
+describe('markdownPageRef', () => {
+  it('strips the .md extension', () => {
+    expect(markdownPageRef({ id: 'a', path: 'standards/api-guide.md' })).toBe(
+      'standards/api-guide'
+    );
+  });
+
+  it('leaves seeded paths without extension unchanged', () => {
+    expect(markdownPageRef({ id: 'a', path: 'standards/api-guide' })).toBe('standards/api-guide');
+  });
+
+  it('falls back to the id without a path or for the reserved "new" path', () => {
+    expect(markdownPageRef({ id: 'a' })).toBe('a');
+    expect(markdownPageRef({ id: 'a', path: 'new.md' })).toBe('a');
   });
 });

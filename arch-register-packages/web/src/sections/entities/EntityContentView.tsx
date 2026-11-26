@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
+import { markdownPageRef } from '../../lib/contentPath';
 import { useOpenDiagram } from '../diagram/useOpenDiagram';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { useNavigate, useSearch } from '@tanstack/react-router';
@@ -88,8 +89,15 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
     });
   };
 
-  const handleMarkdownClick = (fileId: string, mode: 'edit' | 'preview' = 'preview') => {
-    navigate(entityMarkdownRoute(workspaceSlug, asEntityPublicId(entityId), fileId, { mode }));
+  const handleMarkdownClick = (
+    file: { id: string; path?: string | null },
+    mode: 'edit' | 'preview' = 'preview'
+  ) => {
+    navigate(
+      entityMarkdownRoute(workspaceSlug, asEntityPublicId(entityId), markdownPageRef(file), {
+        mode
+      })
+    );
   };
 
   const handleDownloadClick = (path: string, name: string, originalFilename: string | null) => {
@@ -185,7 +193,7 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
         onOpenDiagram={file =>
           handleDiagramClick(file.id, file.project_public_id ?? file.project_id)
         }
-        onOpenMarkdown={file => handleMarkdownClick(file.id)}
+        onOpenMarkdown={file => handleMarkdownClick(file)}
         onDownloadFile={file =>
           handleDownloadClick(file.path, file.name, file.original_filename ?? null)
         }
@@ -224,7 +232,7 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
         folder={folder || null}
         onCreated={file => {
           setAddMarkdownOpen(false);
-          handleMarkdownClick(file.id, 'edit');
+          handleMarkdownClick(file, 'edit');
         }}
         onOpenDraft={draft =>
           navigate(

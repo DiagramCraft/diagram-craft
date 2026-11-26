@@ -1276,6 +1276,8 @@
           wiki page from the text (toolbar, `/` menu, or by typing `[[` and picking a page); the link follows the page when it is renamed or moved, shows
           an unavailable state if the page is deleted or unreadable, and the linking page appears in the target's
           Backlinks under "Linked in text".
+          Pages have readable URLs based on their path (for example `…/wiki/standards/api-design-guide`); older
+          id-based links keep working and redirect to the path URL.
 
         - @id:ar.projects.revisions Users can inspect, create, restore, and validate revisions for supported project and
           workspace documents.
