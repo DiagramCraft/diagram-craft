@@ -219,11 +219,13 @@ export const MarkdownEditorScreen = () => {
             )
           );
         } else if (entityId) {
-          navigate(entityMarkdownRoute(
+          navigate(
+            entityMarkdownRoute(
               workspaceSlug,
               asEntityPublicId(entityId),
               markdownPageRef(attachment)
-            ));
+            )
+          );
         } else {
           navigate(workspaceMarkdownRoute(workspaceSlug, markdownPageRef(attachment)));
         }

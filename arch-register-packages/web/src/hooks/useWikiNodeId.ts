@@ -65,5 +65,10 @@ export const useWikiNodeId = (options: { redirect?: boolean } = {}) => {
     void navigate({ ...route, search: ((previous: object) => previous) as never, replace: true });
   }, [options.redirect, byId, splat, projectId, entityId, workspaceSlug, navigate]);
 
-  return { nodeId, isWikiRoute: isWiki, isDraft: !isWiki, resolving: isWiki && !nodeId && isLoading };
+  return {
+    nodeId,
+    isWikiRoute: isWiki,
+    isDraft: !isWiki,
+    resolving: isWiki && !nodeId && isLoading
+  };
 };

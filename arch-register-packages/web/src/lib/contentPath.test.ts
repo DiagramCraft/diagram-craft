@@ -113,7 +113,9 @@ describe('findMarkdownFileByPath', () => {
 
 describe('markdownPageRef', () => {
   it('strips the .md extension', () => {
-    expect(markdownPageRef({ id: 'a', path: 'standards/api-guide.md' })).toBe('standards/api-guide');
+    expect(markdownPageRef({ id: 'a', path: 'standards/api-guide.md' })).toBe(
+      'standards/api-guide'
+    );
   });
 
   it('leaves seeded paths without extension unchanged', () => {

@@ -221,7 +221,7 @@ const schemaPage = (template: SchemaTemplate, schema: TemplateSchema): string =>
 
   lines.push(...relationshipsSection(template, schema));
 
-  return lines.join('\n').trimEnd() + '\n';
+  return `${lines.join('\n').trimEnd()}\n`;
 };
 
 const overviewPage = (template: SchemaTemplate): string => {
@@ -277,7 +277,7 @@ const overviewPage = (template: SchemaTemplate): string => {
     lines.push('');
   }
 
-  return lines.join('\n').trimEnd() + '\n';
+  return `${lines.join('\n').trimEnd()}\n`;
 };
 
 const indexPage = (templates: readonly SchemaTemplate[]): string => {
@@ -290,7 +290,7 @@ const indexPage = (templates: readonly SchemaTemplate[]): string => {
   for (const template of templates) {
     lines.push(`- [${template.name}](./${template.id}/overview) — ${template.description}`);
   }
-  return lines.join('\n') + '\n';
+  return `${lines.join('\n')}\n`;
 };
 
 /**

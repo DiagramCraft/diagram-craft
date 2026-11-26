@@ -94,7 +94,9 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
     mode: 'edit' | 'preview' = 'preview'
   ) => {
     navigate(
-      entityMarkdownRoute(workspaceSlug, asEntityPublicId(entityId), markdownPageRef(file), { mode })
+      entityMarkdownRoute(workspaceSlug, asEntityPublicId(entityId), markdownPageRef(file), {
+        mode
+      })
     );
   };
 
